@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "attachmentId": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "quarantine",
+        "clean",
+        "rejected"
+      ]
+    }
+  },
+  "required": [
+    "attachmentId",
+    "status"
+  ],
+  "additionalProperties": true
+}

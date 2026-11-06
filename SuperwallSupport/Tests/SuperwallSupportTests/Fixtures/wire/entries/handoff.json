@@ -1,0 +1,15 @@
+{
+  "seq": 10,
+  "id": "ent_00000000000000000000000010",
+  "conversationId": "conv_00000000000000000000000001",
+  "visibility": "public",
+  "author": {
+    "type": "system"
+  },
+  "createdAt": "2026-11-05T10:00:00.000Z",
+  "kind": "handoff",
+  "text": "A teammate will reply here. Usually within an hour.",
+  "to": "human",
+  "reason": "requested",
+  "etaSeconds": 3600
+}

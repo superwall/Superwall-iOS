@@ -1,0 +1,15 @@
+{
+  "seq": 5,
+  "id": "ent_00000000000000000000000005",
+  "conversationId": "conv_00000000000000000000000001",
+  "visibility": "internal",
+  "author": {
+    "type": "human",
+    "name": "Maya",
+    "userId": 42
+  },
+  "createdAt": "2026-11-05T10:00:00.000Z",
+  "text": "Mention the order ids next time.",
+  "kind": "agent_feedback",
+  "turnId": "turn_00000000000000000000000001"
+}

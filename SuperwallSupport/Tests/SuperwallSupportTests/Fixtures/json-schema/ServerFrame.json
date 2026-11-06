@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "ready"
+          ]
+        },
+        "protocol": {
+          "type": "string",
+          "enum": [
+            "superwall-support/1"
+          ]
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "after": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "head": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "type",
+        "protocol",
+        "conversationId",
+        "after",
+        "head"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "entry"
+          ]
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "prev": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "entry": {}
+      },
+      "required": [
+        "type",
+        "seq",
+        "prev",
+        "entry"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "tail"
+          ]
+        },
+        "messageId": {
+          "type": "string"
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "messageId",
+        "offset",
+        "text"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "tail_cancel"
+          ]
+        },
+        "messageId": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "messageId"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "status"
+          ]
+        },
+        "state": {
+          "type": "string"
+        },
+        "etaSeconds": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "type",
+        "state"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "presence"
+          ]
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "person",
+                  "agent",
+                  "human",
+                  "system",
+                  "external"
+                ]
+              },
+              "name": {
+                "type": "string"
+              },
+              "avatarUrl": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "state"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": [
+        "type",
+        "participants"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "resync"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "head": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "type",
+        "reason",
+        "head"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "error"
+          ]
+        },
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "code",
+        "message",
+        "retryable"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "pong"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": true
+    }
+  ]
+}

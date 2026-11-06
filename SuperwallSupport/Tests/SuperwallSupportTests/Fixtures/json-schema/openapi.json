@@ -1,0 +1,2614 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "superwall-support/1",
+    "version": "0.0.1"
+  },
+  "paths": {
+    "/v1/sessions": {
+      "post": {
+        "tags": [
+          "Support sessions"
+        ],
+        "operationId": "sessions.start",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "protocol": {
+                      "type": "string",
+                      "enum": [
+                        "superwall-support/1"
+                      ]
+                    },
+                    "sessionId": {
+                      "type": "string"
+                    },
+                    "sessionToken": {
+                      "type": "string"
+                    },
+                    "expiresAt": {
+                      "type": "string"
+                    },
+                    "applicationId": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "conversationId": {
+                      "type": "string"
+                    },
+                    "proofs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string"
+                          },
+                          "level": {
+                            "type": "string",
+                            "enum": [
+                              "anonymous",
+                              "identified"
+                            ]
+                          },
+                          "expiresAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "level"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "caps": {
+                      "type": "object",
+                      "properties": {
+                        "ui": {
+                          "type": "object",
+                          "properties": {
+                            "v": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "elements": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              }
+                            }
+                          },
+                          "required": [
+                            "v",
+                            "elements"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "cards": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "actions": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "entryKinds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "attachments": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "ui",
+                        "cards",
+                        "actions"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "disclosure": {
+                      "type": "string"
+                    },
+                    "consentRequired": {
+                      "type": "boolean"
+                    },
+                    "theme": {
+                      "type": "object"
+                    },
+                    "human": {
+                      "type": "object",
+                      "properties": {
+                        "available": {
+                          "type": "boolean"
+                        },
+                        "etaSeconds": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "available"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "redirect": {
+                      "type": "object",
+                      "properties": {
+                        "reason": {
+                          "type": "string"
+                        },
+                        "url": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "reason",
+                        "url"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "heartbeatSeconds": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "protocol",
+                    "sessionId",
+                    "sessionToken",
+                    "expiresAt",
+                    "applicationId",
+                    "conversationId",
+                    "proofs",
+                    "caps",
+                    "consentRequired",
+                    "theme",
+                    "human",
+                    "heartbeatSeconds"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "WireBadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireBadRequest"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "NotPermitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "NotPermitted"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "426": {
+            "description": "ProtocolUnsupported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "ProtocolUnsupported"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "redirect": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RateLimited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "RateLimited"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "retryAfterMs": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message",
+                    "retryAfterMs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "WireUnavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireUnavailable"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "description": "Starts a session: declares the build's capabilities and proofs, and returns a session token, the conversation, the negotiated capabilities and the theme.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "protocol": {
+                    "type": "string"
+                  },
+                  "apiKey": {
+                    "type": "string"
+                  },
+                  "sdk": {
+                    "type": "object",
+                    "properties": {
+                      "platform": {
+                        "type": "string",
+                        "enum": [
+                          "ios",
+                          "android",
+                          "web",
+                          "expo",
+                          "flutter",
+                          "react_native",
+                          "unity",
+                          "kmp",
+                          "hosted",
+                          "test"
+                        ]
+                      },
+                      "version": {
+                        "type": "string"
+                      },
+                      "addonVersion": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "platform",
+                      "version"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "locale": {
+                    "type": "string"
+                  },
+                  "storefront": {
+                    "type": "string"
+                  },
+                  "capabilities": {
+                    "type": "object",
+                    "properties": {
+                      "ui": {
+                        "type": "object",
+                        "properties": {
+                          "v": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "elements": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          }
+                        },
+                        "required": [
+                          "v",
+                          "elements"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "cards": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "actions": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "entryKinds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "attachments": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "ui",
+                      "cards",
+                      "actions"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "appTools": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "string"
+                        },
+                        "schemaHash": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "version",
+                        "schemaHash"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "proofs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "conversationId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "protocol",
+                  "apiKey",
+                  "sdk",
+                  "locale",
+                  "capabilities",
+                  "proofs"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/v1/conversations/{conversationId}/entries": {
+      "get": {
+        "tags": [
+          "Support conversations"
+        ],
+        "operationId": "conversations.entries",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conversationId": {
+                      "type": "string"
+                    },
+                    "entries": {
+                      "type": "array"
+                    },
+                    "head": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "hasMore": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "conversationId",
+                    "entries",
+                    "head",
+                    "hasMore"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "WireBadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireBadRequest"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SessionInvalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "SessionInvalid"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "NotPermitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "NotPermitted"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ConversationNotFound",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "ConversationNotFound"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RateLimited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "RateLimited"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "retryAfterMs": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message",
+                    "retryAfterMs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "WireUnavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireUnavailable"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "description": "A window of entries: after a seq, before one, or the newest. About 60 by default, at most 200."
+      }
+    },
+    "/v1/conversations/{conversationId}/messages": {
+      "post": {
+        "tags": [
+          "Support conversations"
+        ],
+        "operationId": "conversations.send",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entry": {},
+                    "duplicate": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "entry",
+                    "duplicate"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "WireBadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireBadRequest"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SessionInvalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "SessionInvalid"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "NotPermitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "NotPermitted"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ConversationNotFound",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "ConversationNotFound"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "AttachmentRejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "AttachmentRejected"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "reason": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message",
+                    "reason"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RateLimited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "RateLimited"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "retryAfterMs": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message",
+                    "retryAfterMs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "WireUnavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireUnavailable"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "description": "Sends a person's message. Idempotent on clientMessageId: a retry returns the first entry with duplicate: true.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "clientMessageId": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string",
+                    "maxLength": 10000
+                  },
+                  "attachments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "attachmentId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "attachmentId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "seenSeq": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "clientMessageId",
+                  "text"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/v1/conversations/{conversationId}/read": {
+      "post": {
+        "tags": [
+          "Support conversations"
+        ],
+        "operationId": "conversations.markRead",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "<No Content>"
+          },
+          "400": {
+            "description": "WireBadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireBadRequest"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SessionInvalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "SessionInvalid"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "NotPermitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "NotPermitted"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ConversationNotFound",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "ConversationNotFound"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RateLimited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "RateLimited"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "retryAfterMs": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message",
+                    "retryAfterMs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "WireUnavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireUnavailable"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "seq": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "seq"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/v1/conversations/{conversationId}/attachments": {
+      "post": {
+        "tags": [
+          "Support conversations"
+        ],
+        "operationId": "conversations.createUpload",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "attachmentId": {
+                      "type": "string"
+                    },
+                    "upload": {
+                      "type": "object",
+                      "properties": {
+                        "method": {
+                          "type": "string",
+                          "enum": [
+                            "PUT"
+                          ]
+                        },
+                        "url": {
+                          "type": "string"
+                        },
+                        "headers": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "expiresAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "method",
+                        "url",
+                        "headers",
+                        "expiresAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "attachmentId",
+                    "upload"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "WireBadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireBadRequest"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SessionInvalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "SessionInvalid"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "NotPermitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "NotPermitted"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ConversationNotFound",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "ConversationNotFound"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "AttachmentRejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "AttachmentRejected"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "reason": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message",
+                    "reason"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RateLimited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "RateLimited"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "retryAfterMs": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message",
+                    "retryAfterMs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "WireUnavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireUnavailable"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "description": "Returns a presigned PUT for the bytes. Reference the attachment by id when sending.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "file",
+                      "diagnostics"
+                    ]
+                  },
+                  "filename": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "mime": {
+                    "type": "string",
+                    "maxLength": 127
+                  },
+                  "bytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 26214400
+                  },
+                  "sha256": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "filename",
+                  "mime",
+                  "bytes",
+                  "sha256"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/v1/attachments/{attachmentId}/complete": {
+      "post": {
+        "tags": [
+          "Support conversations"
+        ],
+        "operationId": "conversations.completeUpload",
+        "parameters": [
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "attachmentId": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "quarantine",
+                        "clean",
+                        "rejected"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "attachmentId",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "WireBadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireBadRequest"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SessionInvalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "SessionInvalid"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "NotPermitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "NotPermitted"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "AttachmentRejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "AttachmentRejected"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "reason": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message",
+                    "reason"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RateLimited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "RateLimited"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "retryAfterMs": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message",
+                    "retryAfterMs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "WireUnavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireUnavailable"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "description": "Marks an upload finished, after the PUT. The server checks size and hash."
+      }
+    },
+    "/v1/attachments/{attachmentId}/url": {
+      "get": {
+        "tags": [
+          "Support conversations"
+        ],
+        "operationId": "conversations.attachmentUrl",
+        "parameters": [
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    },
+                    "expiresAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "url",
+                    "expiresAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "WireBadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireBadRequest"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SessionInvalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "SessionInvalid"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "NotPermitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "NotPermitted"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "Gone"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RateLimited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "RateLimited"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "retryAfterMs": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message",
+                    "retryAfterMs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "WireUnavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireUnavailable"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "description": "A short-lived link to an attachment's bytes, fetched when it is shown."
+      }
+    },
+    "/v1/cards/{cardId}/actions": {
+      "post": {
+        "tags": [
+          "Support conversations"
+        ],
+        "operationId": "conversations.cardAction",
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entries": {
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "entries"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "WireBadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireBadRequest"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SessionInvalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "SessionInvalid"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "NotPermitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "NotPermitted"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "Gone"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RateLimited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "RateLimited"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "retryAfterMs": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message",
+                    "retryAfterMs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "WireUnavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireUnavailable"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "actionId": {
+                    "type": "string"
+                  },
+                  "token": {
+                    "type": "string"
+                  },
+                  "values": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "actionId",
+                  "token"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/v1/tool-calls/{callId}/result": {
+      "post": {
+        "tags": [
+          "Support conversations"
+        ],
+        "operationId": "conversations.toolCallResult",
+        "parameters": [
+          {
+            "name": "callId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "<No Content>"
+          },
+          "400": {
+            "description": "WireBadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireBadRequest"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SessionInvalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "SessionInvalid"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "NotPermitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "NotPermitted"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "Gone"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RateLimited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "RateLimited"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "retryAfterMs": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message",
+                    "retryAfterMs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "WireUnavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "WireUnavailable"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "ok",
+                      "error",
+                      "declined"
+                    ]
+                  },
+                  "data": {}
+                },
+                "required": [
+                  "status"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {},
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "Bearer"
+      }
+    }
+  },
+  "security": [],
+  "tags": [
+    {
+      "name": "Support sessions"
+    },
+    {
+      "name": "Support conversations"
+    }
+  ]
+}

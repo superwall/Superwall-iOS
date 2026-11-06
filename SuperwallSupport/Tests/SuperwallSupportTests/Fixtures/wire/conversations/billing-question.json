@@ -1,0 +1,349 @@
+{
+  "name": "billing-question",
+  "description": "A person asks about a charge; the agent streams an answer; a teammate leaves a note; a card offers a switch.",
+  "script": [
+    {
+      "op": "person",
+      "clientMessageId": "cm-billing-1",
+      "text": "Why was I charged $59.99?"
+    },
+    {
+      "op": "status",
+      "state": "typing"
+    },
+    {
+      "op": "wait",
+      "millis": 50
+    },
+    {
+      "op": "stream",
+      "chunks": [
+        "You ",
+        "renewed ",
+        "the ",
+        "Yearly ",
+        "plan ",
+        "on ",
+        "Nov ",
+        "4. ",
+        "That's ",
+        "the ",
+        "$59.99 ",
+        "charge."
+      ],
+      "pauseAfter": {
+        "chunks": 3,
+        "millis": 400
+      }
+    },
+    {
+      "op": "append",
+      "draft": {
+        "kind": "note",
+        "visibility": "internal",
+        "author": {
+          "type": "human",
+          "name": "Maya"
+        },
+        "text": "Renewal was on time. No refund needed."
+      }
+    },
+    {
+      "op": "person",
+      "clientMessageId": "cm-billing-2",
+      "text": "Can I switch to monthly instead?"
+    },
+    {
+      "op": "append",
+      "draft": {
+        "kind": "card",
+        "visibility": "public",
+        "author": {
+          "type": "agent",
+          "name": "Assistant"
+        },
+        "text": "You can switch to Monthly at $7.99/month from Nov 4, 2027. Reply 'switch' or 'not now'.",
+        "card": {
+          "v": 1,
+          "id": "card_00000000000000000000000001",
+          "card": "plan_choice",
+          "tpl": "plan_choice@2",
+          "ui": 1,
+          "text": "You can switch to Monthly at $7.99/month from Nov 4, 2027. Reply 'switch' or 'not now'.",
+          "nodes": [
+            {
+              "t": "card",
+              "n": 3
+            },
+            {
+              "t": "text",
+              "role": "title",
+              "value": "Switch to Monthly"
+            },
+            {
+              "t": "kv",
+              "label": "Price",
+              "value": "$7.99/month"
+            },
+            {
+              "t": "kv",
+              "label": "Starts",
+              "value": "Nov 4, 2027, at your renewal"
+            }
+          ],
+          "actions": {
+            "switch": {
+              "kind": "client",
+              "do": "purchase",
+              "productId": "monthly_8",
+              "token": "signed.fixture.token"
+            },
+            "not_now": {
+              "kind": "reply",
+              "reply": "Not now"
+            }
+          },
+          "resolved": {
+            "text": "You switched to Monthly."
+          }
+        }
+      }
+    },
+    {
+      "op": "status",
+      "state": "waiting_user"
+    }
+  ],
+  "frames": [
+    {
+      "type": "ready",
+      "protocol": "superwall-support/1",
+      "conversationId": "conv_00000000000000000000000001",
+      "after": 0,
+      "head": 5
+    },
+    {
+      "type": "entry",
+      "seq": 1,
+      "prev": 0,
+      "entry": {
+        "seq": 1,
+        "id": "ent_00000000000000000000000004",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "person"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "Why was I charged $59.99?",
+        "kind": "person_message",
+        "clientMessageId": "cm-billing-1"
+      }
+    },
+    {
+      "type": "entry",
+      "seq": 2,
+      "prev": 1,
+      "entry": {
+        "seq": 2,
+        "id": "ent_00000000000000000000000005",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "agent",
+          "name": "Assistant"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "You renewed the Yearly plan on Nov 4. That's the $59.99 charge.",
+        "kind": "agent_message"
+      }
+    },
+    {
+      "type": "entry",
+      "seq": 4,
+      "prev": 2,
+      "entry": {
+        "seq": 4,
+        "id": "ent_00000000000000000000000007",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "person"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "Can I switch to monthly instead?",
+        "kind": "person_message",
+        "clientMessageId": "cm-billing-2"
+      }
+    },
+    {
+      "type": "entry",
+      "seq": 5,
+      "prev": 4,
+      "entry": {
+        "seq": 5,
+        "id": "ent_00000000000000000000000008",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "agent",
+          "name": "Assistant"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "kind": "card",
+        "text": "You can switch to Monthly at $7.99/month from Nov 4, 2027. Reply 'switch' or 'not now'.",
+        "card": {
+          "v": 1,
+          "id": "card_00000000000000000000000001",
+          "card": "plan_choice",
+          "tpl": "plan_choice@2",
+          "ui": 1,
+          "text": "You can switch to Monthly at $7.99/month from Nov 4, 2027. Reply 'switch' or 'not now'.",
+          "nodes": [
+            {
+              "t": "card",
+              "n": 3
+            },
+            {
+              "t": "text",
+              "role": "title",
+              "value": "Switch to Monthly"
+            },
+            {
+              "t": "kv",
+              "label": "Price",
+              "value": "$7.99/month"
+            },
+            {
+              "t": "kv",
+              "label": "Starts",
+              "value": "Nov 4, 2027, at your renewal"
+            }
+          ],
+          "actions": {
+            "switch": {
+              "kind": "client",
+              "do": "purchase",
+              "productId": "monthly_8",
+              "token": "signed.fixture.token"
+            },
+            "not_now": {
+              "kind": "reply",
+              "reply": "Not now"
+            }
+          },
+          "resolved": {
+            "text": "You switched to Monthly."
+          }
+        }
+      }
+    },
+    {
+      "type": "status",
+      "state": "waiting_user"
+    }
+  ],
+  "window": {
+    "conversationId": "conv_00000000000000000000000001",
+    "entries": [
+      {
+        "seq": 1,
+        "id": "ent_00000000000000000000000004",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "person"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "Why was I charged $59.99?",
+        "kind": "person_message",
+        "clientMessageId": "cm-billing-1"
+      },
+      {
+        "seq": 2,
+        "id": "ent_00000000000000000000000005",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "agent",
+          "name": "Assistant"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "You renewed the Yearly plan on Nov 4. That's the $59.99 charge.",
+        "kind": "agent_message"
+      },
+      {
+        "seq": 4,
+        "id": "ent_00000000000000000000000007",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "person"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "Can I switch to monthly instead?",
+        "kind": "person_message",
+        "clientMessageId": "cm-billing-2"
+      },
+      {
+        "seq": 5,
+        "id": "ent_00000000000000000000000008",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "agent",
+          "name": "Assistant"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "kind": "card",
+        "text": "You can switch to Monthly at $7.99/month from Nov 4, 2027. Reply 'switch' or 'not now'.",
+        "card": {
+          "v": 1,
+          "id": "card_00000000000000000000000001",
+          "card": "plan_choice",
+          "tpl": "plan_choice@2",
+          "ui": 1,
+          "text": "You can switch to Monthly at $7.99/month from Nov 4, 2027. Reply 'switch' or 'not now'.",
+          "nodes": [
+            {
+              "t": "card",
+              "n": 3
+            },
+            {
+              "t": "text",
+              "role": "title",
+              "value": "Switch to Monthly"
+            },
+            {
+              "t": "kv",
+              "label": "Price",
+              "value": "$7.99/month"
+            },
+            {
+              "t": "kv",
+              "label": "Starts",
+              "value": "Nov 4, 2027, at your renewal"
+            }
+          ],
+          "actions": {
+            "switch": {
+              "kind": "client",
+              "do": "purchase",
+              "productId": "monthly_8",
+              "token": "signed.fixture.token"
+            },
+            "not_now": {
+              "kind": "reply",
+              "reply": "Not now"
+            }
+          },
+          "resolved": {
+            "text": "You switched to Monthly."
+          }
+        }
+      }
+    ],
+    "head": 5,
+    "hasMore": false
+  }
+}

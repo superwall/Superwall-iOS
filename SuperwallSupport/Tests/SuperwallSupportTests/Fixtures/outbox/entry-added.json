@@ -1,0 +1,15 @@
+{
+  "eventId": "obx_00000000000000000000000001",
+  "projectId": 1,
+  "occurredAt": "2026-11-05T10:00:00.000Z",
+  "type": "entry_added",
+  "applicationId": 12209,
+  "conversationId": "conv_00000000000000000000000001",
+  "seq": 1,
+  "entryId": "ent_00000000000000000000000001",
+  "kind": "person_message",
+  "visibility": "public",
+  "authorType": "person",
+  "conversationVersion": 2,
+  "lastPublicSeq": 1
+}

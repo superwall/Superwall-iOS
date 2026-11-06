@@ -1,0 +1,8 @@
+{
+  "type": "hello",
+  "protocol": "superwall-support/1",
+  "sessionToken": "tok_fixture",
+  "conversationId": "conv_00000000000000000000000001",
+  "after": 2,
+  "afterId": "ent_00000000000000000000000002"
+}

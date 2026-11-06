@@ -1,0 +1,26 @@
+{
+  "name": "internal-head",
+  "description": "The log ends on an internal entry: head is the last visible seq.",
+  "visible": [
+    {
+      "seq": 1,
+      "id": "ent_00000000000000000000000001"
+    },
+    {
+      "seq": 2,
+      "id": "ent_00000000000000000000000002"
+    }
+  ],
+  "lastSeq": 3,
+  "cursor": {
+    "after": 2,
+    "afterId": "ent_00000000000000000000000002"
+  },
+  "maxBacklog": 500,
+  "expected": {
+    "_tag": "Replay",
+    "head": 2,
+    "seqs": [],
+    "prevs": []
+  }
+}

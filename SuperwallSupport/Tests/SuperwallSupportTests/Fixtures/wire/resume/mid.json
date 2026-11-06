@@ -1,0 +1,40 @@
+{
+  "name": "mid",
+  "description": "Mid-log replays what follows.",
+  "visible": [
+    {
+      "seq": 1,
+      "id": "ent_00000000000000000000000001"
+    },
+    {
+      "seq": 2,
+      "id": "ent_00000000000000000000000002"
+    },
+    {
+      "seq": 3,
+      "id": "ent_00000000000000000000000003"
+    },
+    {
+      "seq": 4,
+      "id": "ent_00000000000000000000000004"
+    }
+  ],
+  "lastSeq": 4,
+  "cursor": {
+    "after": 2,
+    "afterId": "ent_00000000000000000000000002"
+  },
+  "maxBacklog": 500,
+  "expected": {
+    "_tag": "Replay",
+    "head": 4,
+    "seqs": [
+      3,
+      4
+    ],
+    "prevs": [
+      2,
+      3
+    ]
+  }
+}

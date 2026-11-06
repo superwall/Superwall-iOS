@@ -1,0 +1,253 @@
+{
+  "name": "future-kinds",
+  "description": "An unknown entry kind and a cancelled tail between ordinary messages. Old clients keep going.",
+  "script": [
+    {
+      "op": "append",
+      "draft": {
+        "kind": "system_notice",
+        "visibility": "public",
+        "author": {
+          "type": "system"
+        },
+        "text": "You're chatting with an AI assistant. A person is one tap away.",
+        "code": "ai_disclosure"
+      }
+    },
+    {
+      "op": "person",
+      "clientMessageId": "cm-future-1",
+      "text": "Can I get a refund?"
+    },
+    {
+      "op": "cancelled_stream",
+      "chunks": [
+        "Sure, ",
+        "I've ",
+        "refunded "
+      ],
+      "reason": "guard"
+    },
+    {
+      "op": "raw",
+      "draft": {
+        "kind": "poll",
+        "visibility": "public",
+        "author": {
+          "type": "agent",
+          "name": "Assistant"
+        },
+        "text": "Which purchase? Reply 1 for Yearly or 2 for the Lifetime pack.",
+        "options": [
+          "Yearly",
+          "Lifetime pack"
+        ]
+      }
+    },
+    {
+      "op": "person",
+      "clientMessageId": "cm-future-2",
+      "text": "1"
+    },
+    {
+      "op": "stream",
+      "chunks": [
+        "Thanks. ",
+        "Apple ",
+        "handles ",
+        "refunds ",
+        "for ",
+        "App ",
+        "Store ",
+        "purchases, ",
+        "so ",
+        "here's ",
+        "their ",
+        "form."
+      ]
+    }
+  ],
+  "frames": [
+    {
+      "type": "ready",
+      "protocol": "superwall-support/1",
+      "conversationId": "conv_00000000000000000000000001",
+      "after": 0,
+      "head": 5
+    },
+    {
+      "type": "entry",
+      "seq": 1,
+      "prev": 0,
+      "entry": {
+        "seq": 1,
+        "id": "ent_00000000000000000000000004",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "system"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "kind": "system_notice",
+        "text": "You're chatting with an AI assistant. A person is one tap away.",
+        "code": "ai_disclosure"
+      }
+    },
+    {
+      "type": "entry",
+      "seq": 2,
+      "prev": 1,
+      "entry": {
+        "seq": 2,
+        "id": "ent_00000000000000000000000005",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "person"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "Can I get a refund?",
+        "kind": "person_message",
+        "clientMessageId": "cm-future-1"
+      }
+    },
+    {
+      "type": "entry",
+      "seq": 3,
+      "prev": 2,
+      "entry": {
+        "author": {
+          "type": "agent",
+          "name": "Assistant"
+        },
+        "kind": "poll",
+        "visibility": "public",
+        "text": "Which purchase? Reply 1 for Yearly or 2 for the Lifetime pack.",
+        "options": [
+          "Yearly",
+          "Lifetime pack"
+        ],
+        "seq": 3,
+        "id": "ent_00000000000000000000000007",
+        "conversationId": "conv_00000000000000000000000001",
+        "createdAt": "2026-11-05T10:00:00.000Z"
+      }
+    },
+    {
+      "type": "entry",
+      "seq": 4,
+      "prev": 3,
+      "entry": {
+        "seq": 4,
+        "id": "ent_00000000000000000000000008",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "person"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "1",
+        "kind": "person_message",
+        "clientMessageId": "cm-future-2"
+      }
+    },
+    {
+      "type": "entry",
+      "seq": 5,
+      "prev": 4,
+      "entry": {
+        "seq": 5,
+        "id": "ent_00000000000000000000000009",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "agent",
+          "name": "Assistant"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "Thanks. Apple handles refunds for App Store purchases, so here's their form.",
+        "kind": "agent_message"
+      }
+    },
+    {
+      "type": "status",
+      "state": "idle"
+    }
+  ],
+  "window": {
+    "conversationId": "conv_00000000000000000000000001",
+    "entries": [
+      {
+        "seq": 1,
+        "id": "ent_00000000000000000000000004",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "system"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "kind": "system_notice",
+        "text": "You're chatting with an AI assistant. A person is one tap away.",
+        "code": "ai_disclosure"
+      },
+      {
+        "seq": 2,
+        "id": "ent_00000000000000000000000005",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "person"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "Can I get a refund?",
+        "kind": "person_message",
+        "clientMessageId": "cm-future-1"
+      },
+      {
+        "author": {
+          "type": "agent",
+          "name": "Assistant"
+        },
+        "kind": "poll",
+        "visibility": "public",
+        "text": "Which purchase? Reply 1 for Yearly or 2 for the Lifetime pack.",
+        "options": [
+          "Yearly",
+          "Lifetime pack"
+        ],
+        "seq": 3,
+        "id": "ent_00000000000000000000000007",
+        "conversationId": "conv_00000000000000000000000001",
+        "createdAt": "2026-11-05T10:00:00.000Z"
+      },
+      {
+        "seq": 4,
+        "id": "ent_00000000000000000000000008",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "person"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "1",
+        "kind": "person_message",
+        "clientMessageId": "cm-future-2"
+      },
+      {
+        "seq": 5,
+        "id": "ent_00000000000000000000000009",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "agent",
+          "name": "Assistant"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "Thanks. Apple handles refunds for App Store purchases, so here's their form.",
+        "kind": "agent_message"
+      }
+    ],
+    "head": 5,
+    "hasMore": false
+  }
+}

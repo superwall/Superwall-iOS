@@ -1,0 +1,36 @@
+{
+  "name": "across-internal",
+  "description": "Internal entries (2, 4) are skipped; prev bridges them.",
+  "visible": [
+    {
+      "seq": 1,
+      "id": "ent_00000000000000000000000001"
+    },
+    {
+      "seq": 3,
+      "id": "ent_00000000000000000000000003"
+    },
+    {
+      "seq": 5,
+      "id": "ent_00000000000000000000000005"
+    }
+  ],
+  "lastSeq": 5,
+  "cursor": {
+    "after": 1,
+    "afterId": "ent_00000000000000000000000001"
+  },
+  "maxBacklog": 500,
+  "expected": {
+    "_tag": "Replay",
+    "head": 5,
+    "seqs": [
+      3,
+      5
+    ],
+    "prevs": [
+      1,
+      3
+    ]
+  }
+}

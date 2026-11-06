@@ -1,0 +1,6 @@
+{
+  "_tag": "ProtocolUnsupported",
+  "message": "superwall-support/9 is not served",
+  "retryable": false,
+  "redirect": "https://help.example.com/support"
+}

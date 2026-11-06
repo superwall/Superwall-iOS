@@ -1,0 +1,13 @@
+{
+  "seq": 13,
+  "id": "ent_00000000000000000000000013",
+  "conversationId": "conv_00000000000000000000000001",
+  "visibility": "public",
+  "author": {
+    "type": "system"
+  },
+  "createdAt": "2026-11-05T10:00:00.000Z",
+  "kind": "system_notice",
+  "text": "You're chatting with an AI assistant. A person is one tap away.",
+  "code": "ai_disclosure"
+}

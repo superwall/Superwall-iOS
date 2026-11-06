@@ -1,0 +1,6 @@
+{
+  "_tag": "RateLimited",
+  "message": "Slow down",
+  "retryable": true,
+  "retryAfterMs": 2000
+}

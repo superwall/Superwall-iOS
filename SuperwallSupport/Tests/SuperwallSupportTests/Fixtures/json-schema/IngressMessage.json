@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/IngressMessageEncoded",
+  "$defs": {
+    "IngressMessageEncoded": {
+      "type": "object",
+      "properties": {
+        "_tag": {
+          "type": "string",
+          "enum": [
+            "IngressMessage"
+          ]
+        },
+        "projectId": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "applicationId": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "channel": {
+          "type": "string",
+          "enum": [
+            "chat",
+            "messenger",
+            "form",
+            "email",
+            "hosted",
+            "outreach",
+            "store_review"
+          ]
+        },
+        "idempotencyKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "sender": {
+          "type": "object",
+          "properties": {
+            "personId": {
+              "type": "string"
+            },
+            "installId": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "appUserId": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        "proofs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string"
+              },
+              "level": {
+                "type": "string",
+                "enum": [
+                  "anonymous",
+                  "identified"
+                ]
+              },
+              "ref": {
+                "type": "string"
+              },
+              "verifiedAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "level",
+              "verifiedAt"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "thread": {
+          "type": "object",
+          "properties": {
+            "conversationId": {
+              "type": "string"
+            },
+            "channelRef": {
+              "type": "string"
+            },
+            "inReplyTo": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": true
+        },
+        "text": {
+          "type": "string"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "diagnostics": {
+          "type": "object",
+          "properties": {
+            "appVersion": {
+              "type": "string"
+            },
+            "sdkVersion": {
+              "type": "string"
+            },
+            "platform": {
+              "type": "string"
+            },
+            "osVersion": {
+              "type": "string"
+            },
+            "device": {
+              "type": "string"
+            },
+            "locale": {
+              "type": "string"
+            },
+            "storefront": {
+              "type": "string"
+            },
+            "attachmentId": {
+              "type": "string"
+            },
+            "extra": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": true
+        },
+        "locale": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "receivedAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_tag",
+        "projectId",
+        "applicationId",
+        "channel",
+        "idempotencyKey",
+        "sender",
+        "proofs",
+        "thread",
+        "text",
+        "attachments",
+        "receivedAt"
+      ],
+      "additionalProperties": true
+    }
+  }
+}

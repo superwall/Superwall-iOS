@@ -1,0 +1,5 @@
+{
+  "type": "tail_cancel",
+  "messageId": "ent_00000000000000000000000016",
+  "reason": "guard"
+}

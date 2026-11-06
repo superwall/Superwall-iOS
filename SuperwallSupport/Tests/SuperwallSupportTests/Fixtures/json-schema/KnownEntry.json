@@ -1,0 +1,2882 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "person",
+                "agent",
+                "human",
+                "system",
+                "external"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": "string"
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "text": {
+          "type": "string"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "paragraph"
+                    ]
+                  },
+                  "spans": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "text"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "marks": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "bold",
+                                  "italic",
+                                  "code",
+                                  "strike"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "link"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "href": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text",
+                            "href"
+                          ],
+                          "additionalProperties": true
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "spans"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "list"
+                    ]
+                  },
+                  "ordered": {
+                    "type": "boolean"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "t": {
+                                "type": "string",
+                                "enum": [
+                                  "text"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "marks": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "bold",
+                                    "italic",
+                                    "code",
+                                    "strike"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "t",
+                              "text"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "t": {
+                                "type": "string",
+                                "enum": [
+                                  "link"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "href": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "t",
+                              "text",
+                              "href"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "ordered",
+                  "items"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "quote"
+                    ]
+                  },
+                  "spans": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "text"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "marks": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "bold",
+                                  "italic",
+                                  "code",
+                                  "strike"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "link"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "href": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text",
+                            "href"
+                          ],
+                          "additionalProperties": true
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "spans"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "code"
+                    ]
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "t",
+                  "text"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          }
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "person_message"
+          ]
+        },
+        "clientMessageId": {
+          "type": "string"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "file",
+                  "diagnostics"
+                ]
+              },
+              "filename": {
+                "type": "string"
+              },
+              "mime": {
+                "type": "string"
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "quarantine",
+                  "clean",
+                  "rejected"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "mime",
+              "bytes",
+              "status"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": [
+        "seq",
+        "id",
+        "conversationId",
+        "visibility",
+        "author",
+        "createdAt",
+        "text",
+        "kind"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "person",
+                "agent",
+                "human",
+                "system",
+                "external"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": "string"
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "text": {
+          "type": "string"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "paragraph"
+                    ]
+                  },
+                  "spans": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "text"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "marks": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "bold",
+                                  "italic",
+                                  "code",
+                                  "strike"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "link"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "href": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text",
+                            "href"
+                          ],
+                          "additionalProperties": true
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "spans"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "list"
+                    ]
+                  },
+                  "ordered": {
+                    "type": "boolean"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "t": {
+                                "type": "string",
+                                "enum": [
+                                  "text"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "marks": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "bold",
+                                    "italic",
+                                    "code",
+                                    "strike"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "t",
+                              "text"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "t": {
+                                "type": "string",
+                                "enum": [
+                                  "link"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "href": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "t",
+                              "text",
+                              "href"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "ordered",
+                  "items"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "quote"
+                    ]
+                  },
+                  "spans": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "text"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "marks": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "bold",
+                                  "italic",
+                                  "code",
+                                  "strike"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "link"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "href": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text",
+                            "href"
+                          ],
+                          "additionalProperties": true
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "spans"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "code"
+                    ]
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "t",
+                  "text"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          }
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "agent_message"
+          ]
+        },
+        "turnId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "seq",
+        "id",
+        "conversationId",
+        "visibility",
+        "author",
+        "createdAt",
+        "text",
+        "kind"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "person",
+                "agent",
+                "human",
+                "system",
+                "external"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": "string"
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "text": {
+          "type": "string"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "paragraph"
+                    ]
+                  },
+                  "spans": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "text"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "marks": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "bold",
+                                  "italic",
+                                  "code",
+                                  "strike"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "link"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "href": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text",
+                            "href"
+                          ],
+                          "additionalProperties": true
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "spans"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "list"
+                    ]
+                  },
+                  "ordered": {
+                    "type": "boolean"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "t": {
+                                "type": "string",
+                                "enum": [
+                                  "text"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "marks": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "bold",
+                                    "italic",
+                                    "code",
+                                    "strike"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "t",
+                              "text"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "t": {
+                                "type": "string",
+                                "enum": [
+                                  "link"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "href": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "t",
+                              "text",
+                              "href"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "ordered",
+                  "items"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "quote"
+                    ]
+                  },
+                  "spans": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "text"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "marks": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "bold",
+                                  "italic",
+                                  "code",
+                                  "strike"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "link"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "href": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text",
+                            "href"
+                          ],
+                          "additionalProperties": true
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "spans"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "code"
+                    ]
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "t",
+                  "text"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          }
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "human_message"
+          ]
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "file",
+                  "diagnostics"
+                ]
+              },
+              "filename": {
+                "type": "string"
+              },
+              "mime": {
+                "type": "string"
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "quarantine",
+                  "clean",
+                  "rejected"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "mime",
+              "bytes",
+              "status"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": [
+        "seq",
+        "id",
+        "conversationId",
+        "visibility",
+        "author",
+        "createdAt",
+        "text",
+        "kind"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "person",
+                "agent",
+                "human",
+                "system",
+                "external"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": "string"
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "text": {
+          "type": "string"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "paragraph"
+                    ]
+                  },
+                  "spans": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "text"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "marks": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "bold",
+                                  "italic",
+                                  "code",
+                                  "strike"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "link"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "href": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text",
+                            "href"
+                          ],
+                          "additionalProperties": true
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "spans"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "list"
+                    ]
+                  },
+                  "ordered": {
+                    "type": "boolean"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "t": {
+                                "type": "string",
+                                "enum": [
+                                  "text"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "marks": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "bold",
+                                    "italic",
+                                    "code",
+                                    "strike"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "t",
+                              "text"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "t": {
+                                "type": "string",
+                                "enum": [
+                                  "link"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "href": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "t",
+                              "text",
+                              "href"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "ordered",
+                  "items"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "quote"
+                    ]
+                  },
+                  "spans": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "text"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "marks": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "bold",
+                                  "italic",
+                                  "code",
+                                  "strike"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "link"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "href": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text",
+                            "href"
+                          ],
+                          "additionalProperties": true
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "spans"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "code"
+                    ]
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "t",
+                  "text"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          }
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "note"
+          ]
+        },
+        "mentions": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "Infinity",
+                  "-Infinity",
+                  "NaN"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "seq",
+        "id",
+        "conversationId",
+        "visibility",
+        "author",
+        "createdAt",
+        "text",
+        "kind"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "person",
+                "agent",
+                "human",
+                "system",
+                "external"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": "string"
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "text": {
+          "type": "string"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "paragraph"
+                    ]
+                  },
+                  "spans": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "text"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "marks": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "bold",
+                                  "italic",
+                                  "code",
+                                  "strike"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "link"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "href": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text",
+                            "href"
+                          ],
+                          "additionalProperties": true
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "spans"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "list"
+                    ]
+                  },
+                  "ordered": {
+                    "type": "boolean"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "t": {
+                                "type": "string",
+                                "enum": [
+                                  "text"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "marks": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "bold",
+                                    "italic",
+                                    "code",
+                                    "strike"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "t",
+                              "text"
+                            ],
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "t": {
+                                "type": "string",
+                                "enum": [
+                                  "link"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "href": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "t",
+                              "text",
+                              "href"
+                            ],
+                            "additionalProperties": true
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "ordered",
+                  "items"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "quote"
+                    ]
+                  },
+                  "spans": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "text"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "marks": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "bold",
+                                  "italic",
+                                  "code",
+                                  "strike"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "t": {
+                              "type": "string",
+                              "enum": [
+                                "link"
+                              ]
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "href": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "t",
+                            "text",
+                            "href"
+                          ],
+                          "additionalProperties": true
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "t",
+                  "spans"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "type": "string",
+                    "enum": [
+                      "code"
+                    ]
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "t",
+                  "text"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          }
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "agent_feedback"
+          ]
+        },
+        "turnId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "seq",
+        "id",
+        "conversationId",
+        "visibility",
+        "author",
+        "createdAt",
+        "text",
+        "kind"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "person",
+                "agent",
+                "human",
+                "system",
+                "external"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": "string"
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "card"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "card": {
+          "type": "object",
+          "properties": {
+            "v": {
+              "type": "number",
+              "enum": [
+                1
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "card": {
+              "type": "string"
+            },
+            "tpl": {
+              "type": "string"
+            },
+            "ui": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "text": {
+              "type": "string"
+            },
+            "expiresAt": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "live",
+                "resolved",
+                "expired"
+              ]
+            },
+            "nodes": {
+              "type": "array"
+            },
+            "bind": {
+              "type": "object"
+            },
+            "actions": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string"
+                  },
+                  "reply": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "allOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                ]
+              }
+            },
+            "resolved": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "v",
+            "id",
+            "card",
+            "tpl",
+            "ui",
+            "text",
+            "nodes",
+            "actions"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "seq",
+        "id",
+        "conversationId",
+        "visibility",
+        "author",
+        "createdAt",
+        "kind",
+        "text",
+        "card"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "person",
+                "agent",
+                "human",
+                "system",
+                "external"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": "string"
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "card_response"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "cardId": {
+          "type": "string"
+        },
+        "actionId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "seq",
+        "id",
+        "conversationId",
+        "visibility",
+        "author",
+        "createdAt",
+        "kind",
+        "text",
+        "cardId",
+        "actionId"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "person",
+                "agent",
+                "human",
+                "system",
+                "external"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": "string"
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "tool_call"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "callId": {
+          "type": "string"
+        },
+        "tool": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string",
+          "enum": [
+            "app",
+            "server"
+          ]
+        },
+        "args": {},
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "seq",
+        "id",
+        "conversationId",
+        "visibility",
+        "author",
+        "createdAt",
+        "kind",
+        "callId",
+        "tool",
+        "target",
+        "state"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "person",
+                "agent",
+                "human",
+                "system",
+                "external"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": "string"
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "tool_result"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "callId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "error",
+            "declined"
+          ]
+        }
+      },
+      "required": [
+        "seq",
+        "id",
+        "conversationId",
+        "visibility",
+        "author",
+        "createdAt",
+        "kind",
+        "callId",
+        "status"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "person",
+                "agent",
+                "human",
+                "system",
+                "external"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": "string"
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "handoff"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string",
+          "enum": [
+            "human",
+            "agent"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "etaSeconds": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "seq",
+        "id",
+        "conversationId",
+        "visibility",
+        "author",
+        "createdAt",
+        "kind",
+        "text",
+        "to"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "person",
+                "agent",
+                "human",
+                "system",
+                "external"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": "string"
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "status_change"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "seq",
+        "id",
+        "conversationId",
+        "visibility",
+        "author",
+        "createdAt",
+        "kind",
+        "text",
+        "to"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "person",
+                "agent",
+                "human",
+                "system",
+                "external"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": "string"
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "resolution"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "outcome": {
+          "type": "string"
+        },
+        "actionId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "seq",
+        "id",
+        "conversationId",
+        "visibility",
+        "author",
+        "createdAt",
+        "kind",
+        "text",
+        "outcome"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "id": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "person",
+                "agent",
+                "human",
+                "system",
+                "external"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "avatarUrl": {
+              "type": "string"
+            },
+            "userId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "system_notice"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "seq",
+        "id",
+        "conversationId",
+        "visibility",
+        "author",
+        "createdAt",
+        "kind",
+        "text",
+        "code"
+      ],
+      "additionalProperties": true
+    }
+  ]
+}

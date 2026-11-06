@@ -1,0 +1,10 @@
+{
+  "type": "entry",
+  "seq": 4,
+  "prev": 3,
+  "entry": {
+    "kind": "card",
+    "text": "Reply 'yes'.",
+    "card": "broken"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "seq": 11,
+  "id": "ent_00000000000000000000000011",
+  "conversationId": "conv_00000000000000000000000001",
+  "visibility": "public",
+  "author": {
+    "type": "system"
+  },
+  "createdAt": "2026-11-05T10:00:00.000Z",
+  "kind": "status_change",
+  "text": "Conversation closed",
+  "from": "open",
+  "to": "closed"
+}

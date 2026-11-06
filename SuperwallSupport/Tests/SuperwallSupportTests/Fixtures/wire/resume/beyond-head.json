@@ -1,0 +1,24 @@
+{
+  "name": "beyond-head",
+  "description": "Past the log's end: resync.",
+  "visible": [
+    {
+      "seq": 1,
+      "id": "ent_00000000000000000000000001"
+    },
+    {
+      "seq": 2,
+      "id": "ent_00000000000000000000000002"
+    }
+  ],
+  "lastSeq": 2,
+  "cursor": {
+    "after": 7
+  },
+  "maxBacklog": 500,
+  "expected": {
+    "_tag": "Resync",
+    "head": 2,
+    "reason": "beyond_head"
+  }
+}

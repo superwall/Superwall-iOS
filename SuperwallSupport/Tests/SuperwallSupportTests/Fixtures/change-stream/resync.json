@@ -1,0 +1,5 @@
+{
+  "type": "resync",
+  "reason": "too_far_behind",
+  "head": 90210
+}

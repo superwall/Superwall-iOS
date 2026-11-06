@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "attachmentId": {
+      "type": "string"
+    },
+    "upload": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": [
+            "PUT"
+          ]
+        },
+        "url": {
+          "type": "string"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "expiresAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "method",
+        "url",
+        "headers",
+        "expiresAt"
+      ],
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "attachmentId",
+    "upload"
+  ],
+  "additionalProperties": true
+}

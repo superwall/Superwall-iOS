@@ -1,0 +1,40 @@
+{
+  "name": "after-seal",
+  "description": "The client held a tail but missed its seal: entry 3 (its id is the tail's messageId) is replayed, and drawing it drops the tail.",
+  "visible": [
+    {
+      "seq": 1,
+      "id": "ent_00000000000000000000000001"
+    },
+    {
+      "seq": 2,
+      "id": "ent_00000000000000000000000002"
+    },
+    {
+      "seq": 3,
+      "id": "ent_00000000000000000000000003"
+    }
+  ],
+  "lastSeq": 3,
+  "cursor": {
+    "after": 2,
+    "afterId": "ent_00000000000000000000000002"
+  },
+  "maxBacklog": 500,
+  "heldTail": {
+    "messageId": "ent_00000000000000000000000003",
+    "text": "You renewed the Year"
+  },
+  "expected": {
+    "_tag": "Replay",
+    "head": 3,
+    "seqs": [
+      3
+    ],
+    "prevs": [
+      2
+    ],
+    "tailAfter": "dropped",
+    "sealedBy": 3
+  }
+}

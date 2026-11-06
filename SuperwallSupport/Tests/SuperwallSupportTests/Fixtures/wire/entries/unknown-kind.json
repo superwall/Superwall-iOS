@@ -1,0 +1,17 @@
+{
+  "seq": 14,
+  "id": "ent_00000000000000000000000014",
+  "conversationId": "conv_00000000000000000000000001",
+  "kind": "poll",
+  "visibility": "public",
+  "author": {
+    "type": "agent",
+    "name": "Assistant"
+  },
+  "createdAt": "2026-11-05T10:00:00.000Z",
+  "text": "Which plan? Reply 1 for Monthly or 2 for Yearly.",
+  "options": [
+    "Monthly",
+    "Yearly"
+  ]
+}

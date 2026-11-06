@@ -1,0 +1,19 @@
+{
+  "type": "entry",
+  "seq": 3,
+  "prev": 2,
+  "entry": {
+    "seq": 3,
+    "id": "ent_00000000000000000000000003",
+    "conversationId": "conv_00000000000000000000000001",
+    "visibility": "public",
+    "author": {
+      "type": "human",
+      "name": "Maya",
+      "avatarUrl": "https://inbox.superwall.com/avatars/maya.png"
+    },
+    "createdAt": "2026-11-05T10:00:00.000Z",
+    "text": "Hi, I'm Maya. Let me check that for you.",
+    "kind": "human_message"
+  }
+}

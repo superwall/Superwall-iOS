@@ -1,0 +1,32 @@
+name: SupportTransportTestApp
+options:
+  bundleIdPrefix: com.superwall
+  deploymentTarget:
+    iOS: "15.0"
+packages:
+  SuperwallSupport:
+    path: ..
+targets:
+  SupportTransportTestApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: TransportTestApp
+    dependencies:
+      - package: SuperwallSupport
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.superwall.support.transporttest
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: SupportTransport
+        INFOPLIST_KEY_NSAppTransportSecurity: ""
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGNING_ALLOWED: NO
+    info:
+      path: TransportTestApp/Info.plist
+      properties:
+        UILaunchScreen: {}
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true

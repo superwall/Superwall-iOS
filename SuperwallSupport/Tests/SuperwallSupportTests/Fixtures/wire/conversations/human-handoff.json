@@ -1,0 +1,318 @@
+{
+  "name": "human-handoff",
+  "description": "A person asks for a human; the conversation hands off, a teammate replies and resolves it.",
+  "script": [
+    {
+      "op": "person",
+      "clientMessageId": "cm-human-1",
+      "text": "I want to talk to a person."
+    },
+    {
+      "op": "append",
+      "draft": {
+        "kind": "handoff",
+        "visibility": "public",
+        "author": {
+          "type": "system"
+        },
+        "text": "A teammate will reply here. Usually within an hour.",
+        "to": "human",
+        "reason": "requested",
+        "etaSeconds": 3600
+      }
+    },
+    {
+      "op": "status",
+      "state": "human",
+      "etaSeconds": 3600
+    },
+    {
+      "op": "append",
+      "draft": {
+        "kind": "human_message",
+        "visibility": "public",
+        "author": {
+          "type": "human",
+          "name": "Maya"
+        },
+        "text": "Hi, I'm Maya. I've cancelled your renewal; you keep access until Dec 4.",
+        "blocks": [
+          {
+            "t": "paragraph",
+            "spans": [
+              {
+                "t": "text",
+                "text": "Hi, I'm Maya. I've "
+              },
+              {
+                "t": "text",
+                "text": "cancelled",
+                "marks": [
+                  "bold"
+                ]
+              },
+              {
+                "t": "text",
+                "text": " your renewal; you keep access until Dec 4."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "op": "append",
+      "draft": {
+        "kind": "status_change",
+        "visibility": "public",
+        "author": {
+          "type": "system"
+        },
+        "text": "Conversation closed",
+        "from": "open",
+        "to": "closed"
+      }
+    },
+    {
+      "op": "append",
+      "draft": {
+        "kind": "resolution",
+        "visibility": "public",
+        "author": {
+          "type": "system"
+        },
+        "text": "Your renewal is cancelled.",
+        "outcome": "cancelled"
+      }
+    },
+    {
+      "op": "status",
+      "state": "idle"
+    }
+  ],
+  "frames": [
+    {
+      "type": "ready",
+      "protocol": "superwall-support/1",
+      "conversationId": "conv_00000000000000000000000001",
+      "after": 0,
+      "head": 5
+    },
+    {
+      "type": "entry",
+      "seq": 1,
+      "prev": 0,
+      "entry": {
+        "seq": 1,
+        "id": "ent_00000000000000000000000004",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "person"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "I want to talk to a person.",
+        "kind": "person_message",
+        "clientMessageId": "cm-human-1"
+      }
+    },
+    {
+      "type": "entry",
+      "seq": 2,
+      "prev": 1,
+      "entry": {
+        "seq": 2,
+        "id": "ent_00000000000000000000000005",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "system"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "kind": "handoff",
+        "text": "A teammate will reply here. Usually within an hour.",
+        "to": "human",
+        "reason": "requested",
+        "etaSeconds": 3600
+      }
+    },
+    {
+      "type": "entry",
+      "seq": 3,
+      "prev": 2,
+      "entry": {
+        "seq": 3,
+        "id": "ent_00000000000000000000000006",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "human",
+          "name": "Maya"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "Hi, I'm Maya. I've cancelled your renewal; you keep access until Dec 4.",
+        "blocks": [
+          {
+            "t": "paragraph",
+            "spans": [
+              {
+                "t": "text",
+                "text": "Hi, I'm Maya. I've "
+              },
+              {
+                "t": "text",
+                "text": "cancelled",
+                "marks": [
+                  "bold"
+                ]
+              },
+              {
+                "t": "text",
+                "text": " your renewal; you keep access until Dec 4."
+              }
+            ]
+          }
+        ],
+        "kind": "human_message"
+      }
+    },
+    {
+      "type": "entry",
+      "seq": 4,
+      "prev": 3,
+      "entry": {
+        "seq": 4,
+        "id": "ent_00000000000000000000000007",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "system"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "kind": "status_change",
+        "text": "Conversation closed",
+        "from": "open",
+        "to": "closed"
+      }
+    },
+    {
+      "type": "entry",
+      "seq": 5,
+      "prev": 4,
+      "entry": {
+        "seq": 5,
+        "id": "ent_00000000000000000000000008",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "system"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "kind": "resolution",
+        "text": "Your renewal is cancelled.",
+        "outcome": "cancelled"
+      }
+    },
+    {
+      "type": "status",
+      "state": "idle"
+    }
+  ],
+  "window": {
+    "conversationId": "conv_00000000000000000000000001",
+    "entries": [
+      {
+        "seq": 1,
+        "id": "ent_00000000000000000000000004",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "person"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "I want to talk to a person.",
+        "kind": "person_message",
+        "clientMessageId": "cm-human-1"
+      },
+      {
+        "seq": 2,
+        "id": "ent_00000000000000000000000005",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "system"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "kind": "handoff",
+        "text": "A teammate will reply here. Usually within an hour.",
+        "to": "human",
+        "reason": "requested",
+        "etaSeconds": 3600
+      },
+      {
+        "seq": 3,
+        "id": "ent_00000000000000000000000006",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "human",
+          "name": "Maya"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "text": "Hi, I'm Maya. I've cancelled your renewal; you keep access until Dec 4.",
+        "blocks": [
+          {
+            "t": "paragraph",
+            "spans": [
+              {
+                "t": "text",
+                "text": "Hi, I'm Maya. I've "
+              },
+              {
+                "t": "text",
+                "text": "cancelled",
+                "marks": [
+                  "bold"
+                ]
+              },
+              {
+                "t": "text",
+                "text": " your renewal; you keep access until Dec 4."
+              }
+            ]
+          }
+        ],
+        "kind": "human_message"
+      },
+      {
+        "seq": 4,
+        "id": "ent_00000000000000000000000007",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "system"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "kind": "status_change",
+        "text": "Conversation closed",
+        "from": "open",
+        "to": "closed"
+      },
+      {
+        "seq": 5,
+        "id": "ent_00000000000000000000000008",
+        "conversationId": "conv_00000000000000000000000001",
+        "visibility": "public",
+        "author": {
+          "type": "system"
+        },
+        "createdAt": "2026-11-05T10:00:00.000Z",
+        "kind": "resolution",
+        "text": "Your renewal is cancelled.",
+        "outcome": "cancelled"
+      }
+    ],
+    "head": 5,
+    "hasMore": false
+  }
+}

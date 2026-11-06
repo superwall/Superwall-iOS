@@ -1,0 +1,37 @@
+{
+  "name": "at-zero",
+  "description": "A cold start replays everything.",
+  "visible": [
+    {
+      "seq": 1,
+      "id": "ent_00000000000000000000000001"
+    },
+    {
+      "seq": 2,
+      "id": "ent_00000000000000000000000002"
+    },
+    {
+      "seq": 3,
+      "id": "ent_00000000000000000000000003"
+    }
+  ],
+  "lastSeq": 3,
+  "cursor": {
+    "after": 0
+  },
+  "maxBacklog": 500,
+  "expected": {
+    "_tag": "Replay",
+    "head": 3,
+    "seqs": [
+      1,
+      2,
+      3
+    ],
+    "prevs": [
+      0,
+      1,
+      2
+    ]
+  }
+}

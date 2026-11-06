@@ -1,0 +1,13 @@
+{
+  "seq": 12,
+  "id": "ent_00000000000000000000000012",
+  "conversationId": "conv_00000000000000000000000001",
+  "visibility": "public",
+  "author": {
+    "type": "system"
+  },
+  "createdAt": "2026-11-05T10:00:00.000Z",
+  "kind": "resolution",
+  "text": "Your renewal is cancelled.",
+  "outcome": "cancelled"
+}

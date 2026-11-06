@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "protocol": {
+      "type": "string"
+    },
+    "apiKey": {
+      "type": "string"
+    },
+    "sdk": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "type": "string",
+          "enum": [
+            "ios",
+            "android",
+            "web",
+            "expo",
+            "flutter",
+            "react_native",
+            "unity",
+            "kmp",
+            "hosted",
+            "test"
+          ]
+        },
+        "version": {
+          "type": "string"
+        },
+        "addonVersion": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "platform",
+        "version"
+      ],
+      "additionalProperties": true
+    },
+    "locale": {
+      "type": "string"
+    },
+    "storefront": {
+      "type": "string"
+    },
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "ui": {
+          "type": "object",
+          "properties": {
+            "v": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "elements": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            }
+          },
+          "required": [
+            "v",
+            "elements"
+          ],
+          "additionalProperties": true
+        },
+        "cards": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "entryKinds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "attachments": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ui",
+        "cards",
+        "actions"
+      ],
+      "additionalProperties": true
+    },
+    "appTools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "schemaHash": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "version",
+          "schemaHash"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "proofs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "conversationId": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "protocol",
+    "apiKey",
+    "sdk",
+    "locale",
+    "capabilities",
+    "proofs"
+  ],
+  "additionalProperties": true
+}

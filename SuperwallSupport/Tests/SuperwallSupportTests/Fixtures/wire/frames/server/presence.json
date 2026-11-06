@@ -1,0 +1,10 @@
+{
+  "type": "presence",
+  "participants": [
+    {
+      "type": "human",
+      "name": "Maya",
+      "state": "typing"
+    }
+  ]
+}

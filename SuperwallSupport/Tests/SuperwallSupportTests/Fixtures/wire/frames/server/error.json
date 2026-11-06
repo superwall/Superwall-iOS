@@ -1,0 +1,6 @@
+{
+  "type": "error",
+  "code": "session_invalid",
+  "message": "Session expired",
+  "retryable": false
+}

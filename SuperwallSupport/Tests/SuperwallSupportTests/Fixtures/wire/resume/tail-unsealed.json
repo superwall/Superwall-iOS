@@ -1,0 +1,31 @@
+{
+  "name": "tail-unsealed",
+  "description": "The client held a tail that is still streaming: nothing seals it, so ready clears it and the server re-sends it from offset 0.",
+  "visible": [
+    {
+      "seq": 1,
+      "id": "ent_00000000000000000000000001"
+    },
+    {
+      "seq": 2,
+      "id": "ent_00000000000000000000000002"
+    }
+  ],
+  "lastSeq": 2,
+  "cursor": {
+    "after": 2,
+    "afterId": "ent_00000000000000000000000002"
+  },
+  "maxBacklog": 500,
+  "heldTail": {
+    "messageId": "ent_00000000000000000000000003",
+    "text": "You renewed the Year"
+  },
+  "expected": {
+    "_tag": "Replay",
+    "head": 2,
+    "seqs": [],
+    "prevs": [],
+    "tailAfter": "dropped"
+  }
+}

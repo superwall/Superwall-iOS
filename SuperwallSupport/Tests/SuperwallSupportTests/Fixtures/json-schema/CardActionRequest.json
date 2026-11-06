@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "actionId": {
+      "type": "string"
+    },
+    "token": {
+      "type": "string"
+    },
+    "values": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "actionId",
+    "token"
+  ],
+  "additionalProperties": true
+}

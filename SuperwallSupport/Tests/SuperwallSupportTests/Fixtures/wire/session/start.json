@@ -1,0 +1,58 @@
+{
+  "protocol": "superwall-support/1",
+  "apiKey": "pk_fixture_billing-question",
+  "sdk": {
+    "platform": "ios",
+    "version": "4.20.0",
+    "addonVersion": "1.0.0"
+  },
+  "locale": "en-US",
+  "storefront": "USA",
+  "capabilities": {
+    "ui": {
+      "v": 1,
+      "elements": {
+        "card": 1,
+        "text": 1,
+        "kv": 1,
+        "hstack": 1,
+        "button": 1,
+        "segmented": 1
+      }
+    },
+    "cards": [
+      "plan_choice",
+      "receipt",
+      "handoff_status"
+    ],
+    "actions": [
+      "purchase",
+      "restore",
+      "manage",
+      "refund",
+      "open_url",
+      "tool"
+    ],
+    "entryKinds": [
+      "person_message",
+      "agent_message",
+      "human_message",
+      "card",
+      "handoff"
+    ],
+    "attachments": true
+  },
+  "appTools": [
+    {
+      "name": "app.downloads.status",
+      "version": "1",
+      "schemaHash": "sha256:3f1c"
+    }
+  ],
+  "proofs": [
+    {
+      "kind": "install_secret",
+      "value": "isk_fixture_secret"
+    }
+  ]
+}

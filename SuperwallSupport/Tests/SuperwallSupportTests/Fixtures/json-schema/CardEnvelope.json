@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "v": {
+      "type": "number",
+      "enum": [
+        1
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "card": {
+      "type": "string"
+    },
+    "tpl": {
+      "type": "string"
+    },
+    "ui": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "text": {
+      "type": "string"
+    },
+    "expiresAt": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "live",
+        "resolved",
+        "expired"
+      ]
+    },
+    "nodes": {
+      "type": "array"
+    },
+    "bind": {
+      "type": "object"
+    },
+    "actions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "reply": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "allOf": [
+          {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        ]
+      }
+    },
+    "resolved": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "v",
+    "id",
+    "card",
+    "tpl",
+    "ui",
+    "text",
+    "nodes",
+    "actions"
+  ],
+  "additionalProperties": true
+}

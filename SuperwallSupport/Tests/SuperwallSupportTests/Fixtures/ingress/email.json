@@ -1,0 +1,33 @@
+{
+  "_tag": "IngressMessage",
+  "projectId": 1,
+  "applicationId": 12209,
+  "channel": "email",
+  "idempotencyKey": "<CAF=fixture@mail.example.com>",
+  "sender": {
+    "email": "person@example.com",
+    "name": "Sam"
+  },
+  "proofs": [
+    {
+      "kind": "email_code",
+      "level": "identified",
+      "verifiedAt": "2026-11-05T10:00:00.000Z"
+    }
+  ],
+  "thread": {
+    "inReplyTo": [
+      "<reply-1@inbox.superwall.com>"
+    ]
+  },
+  "text": "I was charged twice this month.",
+  "attachments": [],
+  "diagnostics": {
+    "appVersion": "3.2.1",
+    "sdkVersion": "4.20.0",
+    "platform": "ios",
+    "osVersion": "26.1"
+  },
+  "subject": "Charged twice",
+  "receivedAt": "2026-11-05T10:00:00.000Z"
+}

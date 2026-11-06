@@ -1,0 +1,5 @@
+{
+  "_tag": "SessionInvalid",
+  "message": "Session expired",
+  "retryable": false
+}

@@ -1,0 +1,11 @@
+{
+  "changeSeq": 41,
+  "projectId": 1,
+  "entity": "conversation",
+  "entityId": "conv_00000000000000000000000001",
+  "op": "upsert",
+  "version": 3,
+  "conversationId": "conv_00000000000000000000000001",
+  "mutationId": "01JC0000000000000000000001",
+  "at": "2026-11-05T10:00:00.000Z"
+}

@@ -1,0 +1,10 @@
+{
+  "eventId": "obx_00000000000000000000000003",
+  "projectId": 1,
+  "occurredAt": "2026-11-05T10:00:00.000Z",
+  "type": "person_erased",
+  "personId": "per_00000000000000000000000001",
+  "conversationIds": [
+    "conv_00000000000000000000000001"
+  ]
+}

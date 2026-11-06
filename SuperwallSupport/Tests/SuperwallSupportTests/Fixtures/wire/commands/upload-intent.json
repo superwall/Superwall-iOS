@@ -1,0 +1,11 @@
+{
+  "attachmentId": "att_00000000000000000000000001",
+  "upload": {
+    "method": "PUT",
+    "url": "https://support-uploads.example.r2.cloudflarestorage.com/p/1/conv_x/att_x?X-Amz-Signature=fixture",
+    "headers": {
+      "content-type": "image/png"
+    },
+    "expiresAt": "2026-11-05T10:15:00.000Z"
+  }
+}

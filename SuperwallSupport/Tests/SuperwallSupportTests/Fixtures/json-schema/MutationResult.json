@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "mutationId": {
+      "type": "string",
+      "pattern": "^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$"
+    },
+    "result": {
+      "type": "string",
+      "enum": [
+        "applied",
+        "rejected",
+        "collision"
+      ]
+    },
+    "replayed": {
+      "type": "boolean"
+    },
+    "changeSeq": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "detail": {}
+  },
+  "required": [
+    "mutationId",
+    "result",
+    "replayed"
+  ],
+  "additionalProperties": true
+}

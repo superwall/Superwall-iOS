@@ -1,0 +1,12 @@
+{
+  "clientId": "01JC0000000000000000000009",
+  "mutationId": "01JC0000000000000000000001",
+  "clientSeq": 12,
+  "name": "conversation.reply",
+  "args": {
+    "text": "I've refunded the second charge."
+  },
+  "conversationId": "conv_00000000000000000000000001",
+  "seenPublicSeq": 6,
+  "queuedAt": "2026-11-05T10:00:00.000Z"
+}

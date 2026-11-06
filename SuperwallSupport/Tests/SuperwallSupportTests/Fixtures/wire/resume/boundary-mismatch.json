@@ -1,0 +1,29 @@
+{
+  "name": "boundary-mismatch",
+  "description": "The entry at the cursor isn't the one the client holds: resync.",
+  "visible": [
+    {
+      "seq": 1,
+      "id": "ent_00000000000000000000000001"
+    },
+    {
+      "seq": 2,
+      "id": "ent_00000000000000000000000002"
+    },
+    {
+      "seq": 3,
+      "id": "ent_00000000000000000000000003"
+    }
+  ],
+  "lastSeq": 3,
+  "cursor": {
+    "after": 2,
+    "afterId": "ent_00000000000000000000000009"
+  },
+  "maxBacklog": 500,
+  "expected": {
+    "_tag": "Resync",
+    "head": 3,
+    "reason": "boundary_mismatch"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "protocol": "superwall-support/1",
+  "sessionId": "sess_00000000000000000000000001",
+  "sessionToken": "tok_fixture",
+  "expiresAt": "2026-11-05T11:00:00.000Z",
+  "applicationId": 12209,
+  "conversationId": "conv_00000000000000000000000001",
+  "proofs": [
+    {
+      "kind": "install_secret",
+      "level": "anonymous"
+    }
+  ],
+  "caps": {
+    "ui": {
+      "v": 1,
+      "elements": {
+        "card": 1,
+        "text": 1,
+        "kv": 1,
+        "hstack": 1,
+        "button": 1,
+        "segmented": 1
+      }
+    },
+    "cards": [
+      "plan_choice",
+      "receipt",
+      "handoff_status"
+    ],
+    "actions": [
+      "purchase",
+      "restore",
+      "manage",
+      "refund",
+      "open_url",
+      "tool"
+    ],
+    "entryKinds": [
+      "person_message",
+      "agent_message",
+      "human_message",
+      "card",
+      "handoff"
+    ],
+    "attachments": true
+  },
+  "disclosure": "You're chatting with an AI assistant. A person is one tap away.",
+  "consentRequired": false,
+  "theme": {
+    "accent": "#5B4CF0",
+    "mode": "system"
+  },
+  "human": {
+    "available": true,
+    "etaSeconds": 3600
+  },
+  "redirect": {
+    "reason": "sdk_version_disabled",
+    "url": "https://help.example.com/support"
+  },
+  "heartbeatSeconds": 25
+}

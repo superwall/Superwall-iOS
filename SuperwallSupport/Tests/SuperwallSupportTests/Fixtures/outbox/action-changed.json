@@ -1,0 +1,11 @@
+{
+  "eventId": "obx_00000000000000000000000004",
+  "projectId": 1,
+  "occurredAt": "2026-11-05T10:00:00.000Z",
+  "type": "action_changed",
+  "actionId": "act_00000000000000000000000001",
+  "conversationId": "conv_00000000000000000000000001",
+  "version": 1,
+  "kind": "refund",
+  "state": "needs_founder"
+}

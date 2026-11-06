@@ -1,0 +1,365 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "occurredAt": {
+          "type": "string"
+        },
+        "mutationId": {
+          "type": "string",
+          "pattern": "^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "entry_added"
+          ]
+        },
+        "applicationId": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "entryId": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "public",
+            "internal"
+          ]
+        },
+        "authorType": {
+          "type": "string",
+          "enum": [
+            "person",
+            "agent",
+            "human",
+            "system",
+            "external"
+          ]
+        },
+        "authorUserId": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "Infinity",
+                "-Infinity",
+                "NaN"
+              ]
+            }
+          ]
+        },
+        "automationLevel": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "assisted",
+            "autonomous",
+            "external"
+          ]
+        },
+        "conversationVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "lastPublicSeq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "eventId",
+        "projectId",
+        "occurredAt",
+        "type",
+        "applicationId",
+        "conversationId",
+        "seq",
+        "entryId",
+        "kind",
+        "visibility",
+        "authorType",
+        "conversationVersion",
+        "lastPublicSeq"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "occurredAt": {
+          "type": "string"
+        },
+        "mutationId": {
+          "type": "string",
+          "pattern": "^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "conversation_changed"
+          ]
+        },
+        "applicationId": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "created": {
+          "type": "boolean"
+        },
+        "changed": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string"
+            },
+            "queue": {
+              "type": "string"
+            },
+            "assigneeUserId": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "Infinity",
+                    "-Infinity",
+                    "NaN"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "teamId": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "urgent": {
+              "type": "boolean"
+            },
+            "intent": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "snoozedUntil": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "outcome": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "personId": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "eventId",
+        "projectId",
+        "occurredAt",
+        "type",
+        "applicationId",
+        "conversationId",
+        "version",
+        "created",
+        "changed"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "occurredAt": {
+          "type": "string"
+        },
+        "mutationId": {
+          "type": "string",
+          "pattern": "^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "action_changed"
+          ]
+        },
+        "actionId": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "kind": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "projectId",
+        "occurredAt",
+        "type",
+        "actionId",
+        "version",
+        "kind",
+        "state"
+      ],
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "occurredAt": {
+          "type": "string"
+        },
+        "mutationId": {
+          "type": "string",
+          "pattern": "^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "person_erased"
+          ]
+        },
+        "personId": {
+          "type": "string"
+        },
+        "conversationIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "eventId",
+        "projectId",
+        "occurredAt",
+        "type",
+        "personId",
+        "conversationIds"
+      ],
+      "additionalProperties": true
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "clientId": {
+      "type": "string",
+      "pattern": "^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$"
+    },
+    "mutationId": {
+      "type": "string",
+      "pattern": "^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$"
+    },
+    "clientSeq": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "name": {
+      "type": "string"
+    },
+    "args": {},
+    "conversationId": {
+      "type": "string"
+    },
+    "seenPublicSeq": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "queuedAt": {
+      "type": "string"
+    },
+    "force": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "clientId",
+    "mutationId",
+    "clientSeq",
+    "name",
+    "args",
+    "queuedAt"
+  ],
+  "additionalProperties": true
+}

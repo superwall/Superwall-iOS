@@ -1,0 +1,7 @@
+{
+  "type": "ready",
+  "protocol": "superwall-support/1",
+  "conversationId": "conv_00000000000000000000000001",
+  "after": 2,
+  "head": 5
+}

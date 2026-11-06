@@ -1,0 +1,6 @@
+{
+  "_tag": "AttachmentRejected",
+  "message": "Upload isn't complete",
+  "retryable": false,
+  "reason": "not_uploaded"
+}

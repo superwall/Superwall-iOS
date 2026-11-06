@@ -1,0 +1,14 @@
+{
+  "seq": 7,
+  "id": "ent_00000000000000000000000007",
+  "conversationId": "conv_00000000000000000000000001",
+  "visibility": "public",
+  "author": {
+    "type": "person"
+  },
+  "createdAt": "2026-11-05T10:00:00.000Z",
+  "kind": "card_response",
+  "text": "Not now",
+  "cardId": "card_00000000000000000000000001",
+  "actionId": "not_now"
+}

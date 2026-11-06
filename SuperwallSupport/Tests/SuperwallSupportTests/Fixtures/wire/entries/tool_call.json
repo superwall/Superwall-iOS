@@ -1,0 +1,19 @@
+{
+  "seq": 8,
+  "id": "ent_00000000000000000000000008",
+  "conversationId": "conv_00000000000000000000000001",
+  "visibility": "public",
+  "author": {
+    "type": "agent"
+  },
+  "createdAt": "2026-11-05T10:00:00.000Z",
+  "kind": "tool_call",
+  "text": "Checking your downloads…",
+  "callId": "call_00000000000000000000000001",
+  "tool": "app.downloads.status",
+  "target": "app",
+  "args": {
+    "since": "2026-11-01"
+  },
+  "state": "pending"
+}

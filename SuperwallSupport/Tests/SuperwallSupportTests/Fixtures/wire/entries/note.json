@@ -1,0 +1,17 @@
+{
+  "seq": 4,
+  "id": "ent_00000000000000000000000004",
+  "conversationId": "conv_00000000000000000000000001",
+  "visibility": "internal",
+  "author": {
+    "type": "human",
+    "name": "Maya",
+    "userId": 42
+  },
+  "createdAt": "2026-11-05T10:00:00.000Z",
+  "text": "Second charge is the Lifetime pack. Not a duplicate.",
+  "kind": "note",
+  "mentions": [
+    7
+  ]
+}

@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "protocol": {
+      "type": "string",
+      "enum": [
+        "superwall-support/1"
+      ]
+    },
+    "sessionId": {
+      "type": "string"
+    },
+    "sessionToken": {
+      "type": "string"
+    },
+    "expiresAt": {
+      "type": "string"
+    },
+    "applicationId": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "conversationId": {
+      "type": "string"
+    },
+    "proofs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "anonymous",
+              "identified"
+            ]
+          },
+          "expiresAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "level"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "caps": {
+      "type": "object",
+      "properties": {
+        "ui": {
+          "type": "object",
+          "properties": {
+            "v": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "elements": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            }
+          },
+          "required": [
+            "v",
+            "elements"
+          ],
+          "additionalProperties": true
+        },
+        "cards": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "entryKinds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "attachments": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ui",
+        "cards",
+        "actions"
+      ],
+      "additionalProperties": true
+    },
+    "disclosure": {
+      "type": "string"
+    },
+    "consentRequired": {
+      "type": "boolean"
+    },
+    "theme": {
+      "type": "object"
+    },
+    "human": {
+      "type": "object",
+      "properties": {
+        "available": {
+          "type": "boolean"
+        },
+        "etaSeconds": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "available"
+      ],
+      "additionalProperties": true
+    },
+    "redirect": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason",
+        "url"
+      ],
+      "additionalProperties": true
+    },
+    "heartbeatSeconds": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "protocol",
+    "sessionId",
+    "sessionToken",
+    "expiresAt",
+    "applicationId",
+    "conversationId",
+    "proofs",
+    "caps",
+    "consentRequired",
+    "theme",
+    "human",
+    "heartbeatSeconds"
+  ],
+  "additionalProperties": true
+}

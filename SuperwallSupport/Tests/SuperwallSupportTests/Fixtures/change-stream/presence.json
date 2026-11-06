@@ -1,0 +1,11 @@
+{
+  "type": "presence",
+  "conversationId": "conv_00000000000000000000000001",
+  "viewers": [
+    {
+      "userId": 42,
+      "state": "replying",
+      "expiresAt": "2026-11-05T10:00:15.000Z"
+    }
+  ]
+}

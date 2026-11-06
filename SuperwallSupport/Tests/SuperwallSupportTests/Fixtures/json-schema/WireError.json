@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    {
+      "$ref": "#/$defs/WireBadRequestEncoded"
+    },
+    {
+      "$ref": "#/$defs/SessionInvalidEncoded"
+    },
+    {
+      "$ref": "#/$defs/NotPermittedEncoded"
+    },
+    {
+      "$ref": "#/$defs/ConversationNotFoundEncoded"
+    },
+    {
+      "$ref": "#/$defs/GoneEncoded"
+    },
+    {
+      "$ref": "#/$defs/ProtocolUnsupportedEncoded"
+    },
+    {
+      "$ref": "#/$defs/AttachmentRejectedEncoded"
+    },
+    {
+      "$ref": "#/$defs/RateLimitedEncoded"
+    },
+    {
+      "$ref": "#/$defs/WireUnavailableEncoded"
+    }
+  ],
+  "$defs": {
+    "WireBadRequestEncoded": {
+      "type": "object",
+      "properties": {
+        "_tag": {
+          "type": "string",
+          "enum": [
+            "WireBadRequest"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "_tag",
+        "message"
+      ],
+      "additionalProperties": true
+    },
+    "SessionInvalidEncoded": {
+      "type": "object",
+      "properties": {
+        "_tag": {
+          "type": "string",
+          "enum": [
+            "SessionInvalid"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "_tag",
+        "message"
+      ],
+      "additionalProperties": true
+    },
+    "NotPermittedEncoded": {
+      "type": "object",
+      "properties": {
+        "_tag": {
+          "type": "string",
+          "enum": [
+            "NotPermitted"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "_tag",
+        "message"
+      ],
+      "additionalProperties": true
+    },
+    "ConversationNotFoundEncoded": {
+      "type": "object",
+      "properties": {
+        "_tag": {
+          "type": "string",
+          "enum": [
+            "ConversationNotFound"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "_tag",
+        "message"
+      ],
+      "additionalProperties": true
+    },
+    "GoneEncoded": {
+      "type": "object",
+      "properties": {
+        "_tag": {
+          "type": "string",
+          "enum": [
+            "Gone"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "_tag",
+        "message"
+      ],
+      "additionalProperties": true
+    },
+    "ProtocolUnsupportedEncoded": {
+      "type": "object",
+      "properties": {
+        "_tag": {
+          "type": "string",
+          "enum": [
+            "ProtocolUnsupported"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "redirect": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_tag",
+        "message"
+      ],
+      "additionalProperties": true
+    },
+    "AttachmentRejectedEncoded": {
+      "type": "object",
+      "properties": {
+        "_tag": {
+          "type": "string",
+          "enum": [
+            "AttachmentRejected"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_tag",
+        "message",
+        "reason"
+      ],
+      "additionalProperties": true
+    },
+    "RateLimitedEncoded": {
+      "type": "object",
+      "properties": {
+        "_tag": {
+          "type": "string",
+          "enum": [
+            "RateLimited"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "retryAfterMs": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "_tag",
+        "message",
+        "retryAfterMs"
+      ],
+      "additionalProperties": true
+    },
+    "WireUnavailableEncoded": {
+      "type": "object",
+      "properties": {
+        "_tag": {
+          "type": "string",
+          "enum": [
+            "WireUnavailable"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "_tag",
+        "message"
+      ],
+      "additionalProperties": true
+    }
+  }
+}

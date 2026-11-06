@@ -1,0 +1,338 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Api",
+    "version": "0.0.1"
+  },
+  "paths": {
+    "/v1/projects/{projectId}/mutations": {
+      "post": {
+        "tags": [
+          "changeStream"
+        ],
+        "operationId": "changeStream.mutate",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^[+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:[Ee][+-]?\\d+)?$"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mutationId": {
+                      "type": "string",
+                      "pattern": "^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$"
+                    },
+                    "result": {
+                      "type": "string",
+                      "enum": [
+                        "applied",
+                        "rejected",
+                        "collision"
+                      ]
+                    },
+                    "replayed": {
+                      "type": "boolean"
+                    },
+                    "changeSeq": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "detail": {}
+                  },
+                  "required": [
+                    "mutationId",
+                    "result",
+                    "replayed"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ChangeBadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "ChangeBadRequest"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "StaffSessionInvalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "StaffSessionInvalid"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "MutationFailed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "MutationFailed"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message",
+                    "retryable"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "clientId": {
+                    "type": "string",
+                    "pattern": "^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$"
+                  },
+                  "mutationId": {
+                    "type": "string",
+                    "pattern": "^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$"
+                  },
+                  "clientSeq": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "args": {},
+                  "conversationId": {
+                    "type": "string"
+                  },
+                  "seenPublicSeq": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "queuedAt": {
+                    "type": "string"
+                  },
+                  "force": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "clientId",
+                  "mutationId",
+                  "clientSeq",
+                  "name",
+                  "args",
+                  "queuedAt"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/v1/projects/{projectId}/presence": {
+      "post": {
+        "tags": [
+          "changeStream"
+        ],
+        "operationId": "changeStream.heartbeat",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^[+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:[Ee][+-]?\\d+)?$"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "<No Content>"
+          },
+          "400": {
+            "description": "ChangeBadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "ChangeBadRequest"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "StaffSessionInvalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_tag": {
+                      "type": "string",
+                      "enum": [
+                        "StaffSessionInvalid"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "_tag",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "presence"
+                    ]
+                  },
+                  "conversationId": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "viewing",
+                      "replying"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "conversationId",
+                  "state"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {},
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "Bearer"
+      }
+    }
+  },
+  "security": [],
+  "tags": [
+    {
+      "name": "changeStream"
+    }
+  ]
+}
