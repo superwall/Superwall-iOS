@@ -215,15 +215,24 @@ behind itself. Use `enqueue` for follow-up work, as the fetch does for its refre
 
 ### Observer mode store
 
-`ObserverModeTracker` keeps what observer mode remembers (the StoreKit 1 products being purchased,
-the StoreKit 2 transactions already handled, and whether the legacy transactions were cached) in a
-`StateStore`, changed only by `ObserverModeUpdate` reducers. Its observer saves each change to
-storage, which only hands the write to a background queue, so it's safe with the lock held. Read the
-state from the store, not storage. Checking and marking a purchase as handled happens in one
-`ObserverModeAction`, so two threads can't both track it. Product lookups and tracking run outside
-the lock. StoreKit 2 legacy caching and detection run one at a time on a `SerialTaskCoordinator`;
-nothing they call may `await` that coordinator's `run` or `flush`, including
-`detectUnobservedTransactions()`.
+`ObserverModeTracker` keeps what observer mode remembers in an `ObserverModeState`: the StoreKit 1
+products being purchased, the StoreKit 2 transactions already handled, and `LegacyRecording`
+(whether the transactions from before observer mode were recorded; detection doesn't run until
+they are). `ObserverModeUpdate` events are the only changes, and `ObserverModeAction`s the only
+place they're applied: each checks and changes the state in one locked step and returns an
+`ObserverModeOutcome`, so two threads can't both act on one purchase. Side effects are the
+`ObserverModeContext` methods (saving, starting to observe, tracking, reading StoreKit); the tracker
+is the real context and tests use a fake. Saving runs with the lock held so saves keep their order;
+starting to observe and tracking are deferred until unlocked and queued on the tracker's
+`SerialTaskCoordinator`, which also runs legacy recording and detection one at a time. Nothing on
+that lane may `await` its `run` or `flush`, including `detectUnobservedTransactions()` and
+`observeSK1Purchase(ofProductId:)`.
+
+- An empty StoreKit read only forgets the transactions that were handled when the read started,
+  so a Superwall purchase finishing meanwhile stays handled.
+- The "purchase in progress" check is repeated inside the claim, since a purchase can start while
+  StoreKit is being read. It reads `PurchasingCoordinator.hasPurchaseInProgress`, which doesn't
+  wait.
 
 ### Native macOS
 

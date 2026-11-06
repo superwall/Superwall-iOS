@@ -56,10 +56,10 @@ private final class ObserverModeStorage: Storage, @unchecked Sendable {
     lock.lock()
     defer { lock.unlock() }
     values[keyType.key] = value
-    if let ids = value as? Set<String> {
+    if keyType.key == PurchasingProductIds.key, let ids = value as? Set<String> {
       savedPurchasingIds.append(ids)
     }
-    if let ids = value as? Set<UInt64> {
+    if keyType.key == SK2TransactionIds.key, let ids = value as? Set<UInt64> {
       savedTransactionIds.append(ids)
     }
   }
@@ -140,44 +140,341 @@ private func makeTracker(
   return (tracker, container)
 }
 
-@Suite("ObserverModeUpdate reducers")
+/// Records every side effect observer mode's actions cause, and returns the
+/// transactions it's given.
+private final class FakeObserverModeContext: ObserverModeContext, @unchecked Sendable {
+  let store: ObserverModeStore
+  private let lock = NSLock()
+  private var internalObservesPurchases = true
+  private var internalIsPurchaseInProgress = false
+  private var internalTransactions = StoreKitTransactions(ids: [], latest: nil)
+  private var internalSaves: [ObserverModeState] = []
+  private var internalStartedObserving: [String] = []
+  private var internalTracked: [ObservedTransaction] = []
+  private var internalFetches = 0
+  private var internalFollowUpsRanUnlocked: [Bool] = []
+  /// Runs while a fetch is in progress, so a test can act during one.
+  var duringFetch: (() -> Void)?
+
+  init(_ state: ObserverModeState = ObserverModeState()) {
+    store = ObserverModeStore(initial: state)
+  }
+
+  private func locked<T>(_ body: () -> T) -> T {
+    lock.lock()
+    defer { lock.unlock() }
+    return body()
+  }
+
+  var observesPurchases: Bool {
+    get { locked { internalObservesPurchases } }
+    set { locked { internalObservesPurchases = newValue } }
+  }
+  var isPurchaseInProgress: Bool {
+    get { locked { internalIsPurchaseInProgress } }
+    set { locked { internalIsPurchaseInProgress = newValue } }
+  }
+  var transactions: StoreKitTransactions {
+    get { locked { internalTransactions } }
+    set { locked { internalTransactions = newValue } }
+  }
+  var saves: [ObserverModeState] { locked { internalSaves } }
+  var startedObserving: [String] { locked { internalStartedObserving } }
+  var tracked: [ObservedTransaction] { locked { internalTracked } }
+  var fetches: Int { locked { internalFetches } }
+  var followUpsRanUnlocked: [Bool] { locked { internalFollowUpsRanUnlocked } }
+
+  func fetchTransactions() async -> StoreKitTransactions {
+    locked { internalFetches += 1 }
+    duringFetch?()
+    return transactions
+  }
+
+  func save(_ state: ObserverModeState) {
+    locked { internalSaves.append(state) }
+  }
+
+  func startObserving(productId: String) {
+    let unlocked = isStoreUnlocked()
+    locked {
+      internalStartedObserving.append(productId)
+      internalFollowUpsRanUnlocked.append(unlocked)
+    }
+  }
+
+  func trackObservedPurchase(_ transaction: ObservedTransaction) {
+    let unlocked = isStoreUnlocked()
+    locked {
+      internalTracked.append(transaction)
+      internalFollowUpsRanUnlocked.append(unlocked)
+    }
+  }
+
+  /// Whether another thread can read the store right now.
+  private func isStoreUnlocked() -> Bool {
+    let read = DispatchSemaphore(value: 0)
+    let store = self.store
+    DispatchQueue.global().async {
+      _ = store.state
+      read.signal()
+    }
+    return read.wait(timeout: .now() + 1) == .success
+  }
+
+  @discardableResult
+  func dispatch(_ action: ObserverModeAction) -> ObserverModeOutcome {
+    store.dispatch(action, in: self)
+  }
+}
+
+private func purchase(_ id: UInt64, product: String = "monthly", offer: Bool = false) -> ObservedTransaction {
+  ObservedTransaction(id: id, productId: product, isPurchase: true, startedOffer: offer)
+}
+
+private func renewal(_ id: UInt64) -> ObservedTransaction {
+  ObservedTransaction(id: id, productId: "monthly", isPurchase: false, startedOffer: false)
+}
+
+@Suite("ObserverModeUpdate events")
 struct ObserverModeUpdateTests {
-  @Test("startedPurchasing and removedFromQueue change the purchasing products")
-  func purchasing() {
-    let started = ObserverModeUpdate.startedPurchasing(productId: "a")
+  @Test("purchasingStarted adds the product")
+  func purchasingStarted() {
+    let state = ObserverModeUpdate.purchasingStarted(productId: "a")
       .reduce(ObserverModeState(purchasingProductIds: ["b"]))
-    #expect(started.purchasingProductIds == ["a", "b"])
-
-    let removed = ObserverModeUpdate.removedFromQueue(productIds: ["a", "c"]).reduce(started)
-    #expect(removed.purchasingProductIds == ["b"])
+    #expect(state.purchasingProductIds == ["a", "b"])
   }
 
-  @Test("synced adds to the handled transactions")
-  func synced() {
-    let state = ObserverModeUpdate.synced(transactionIds: [2, 3])
-      .reduce(ObserverModeState(syncedTransactionIds: [1]))
-    #expect(state.syncedTransactionIds == [1, 2, 3])
+  @Test("leftPaymentQueue removes only the given products")
+  func leftPaymentQueue() {
+    let state = ObserverModeUpdate.leftPaymentQueue(productIds: ["a", "c"])
+      .reduce(ObserverModeState(purchasingProductIds: ["a", "b"]))
+    #expect(state.purchasingProductIds == ["b"])
   }
 
-  @Test("clearedSyncedTransactions forgets the handled transactions only")
-  func cleared() {
+  @Test("transactionsHandled adds to the handled transactions")
+  func transactionsHandled() {
+    let state = ObserverModeUpdate.transactionsHandled([2, 3])
+      .reduce(ObserverModeState(handledTransactionIds: [1]))
+    #expect(state.handledTransactionIds == [1, 2, 3])
+  }
+
+  @Test("transactionsDisappeared removes only those transactions")
+  func transactionsDisappeared() {
     let start = ObserverModeState(
       purchasingProductIds: ["a"],
-      syncedTransactionIds: [1],
-      didCacheLegacyTransactions: true
+      handledTransactionIds: [1, 2, 42],
+      legacyRecording: .recorded
     )
-    let state = ObserverModeUpdate.clearedSyncedTransactions.reduce(start)
-    #expect(state.syncedTransactionIds.isEmpty)
+    let state = ObserverModeUpdate.transactionsDisappeared([1, 2]).reduce(start)
+    #expect(state.handledTransactionIds == [42])
     #expect(state.purchasingProductIds == ["a"])
-    #expect(state.didCacheLegacyTransactions)
+    #expect(state.legacyRecording == .recorded)
   }
 
-  @Test("cachedLegacyTransactions adds the transactions and sets the flag")
-  func cachedLegacy() {
-    let state = ObserverModeUpdate.cachedLegacyTransactions([4])
-      .reduce(ObserverModeState(syncedTransactionIds: [1]))
-    #expect(state.syncedTransactionIds == [1, 4])
-    #expect(state.didCacheLegacyTransactions)
+  @Test("legacyTransactionsRecorded keeps what's handled and marks the recording done")
+  func legacyTransactionsRecorded() {
+    let state = ObserverModeUpdate.legacyTransactionsRecorded([4])
+      .reduce(ObserverModeState(handledTransactionIds: [1]))
+    #expect(state.handledTransactionIds == [1, 4])
+    #expect(state.legacyRecording == .recorded)
+  }
+
+  @Test("StoreKit 1 and StoreKit 2 events leave each other's fields alone")
+  func independentFields() {
+    let start = ObserverModeState(purchasingProductIds: ["a"], handledTransactionIds: [1])
+    let handled = ObserverModeUpdate.transactionsHandled([2]).reduce(start)
+    #expect(handled.purchasingProductIds == ["a"])
+    #expect(handled.legacyRecording == .notRecorded)
+    let left = ObserverModeUpdate.leftPaymentQueue(productIds: ["a"]).reduce(handled)
+    #expect(left.handledTransactionIds == [1, 2])
+  }
+}
+
+@Suite("ObserverModeAction")
+struct ObserverModeActionTests {
+  @Test("a StoreKit 1 purchase starts being observed once, however many threads try")
+  func sk1PurchaseStartedOnce() async {
+    let context = FakeObserverModeContext()
+    let outcomes = OutcomeLog()
+
+    await withTaskGroup(of: Void.self) { group in
+      for _ in 0..<200 {
+        group.addTask {
+          outcomes.add(context.dispatch(.sk1PurchaseStarted(productId: "monthly")))
+        }
+      }
+    }
+
+    #expect(outcomes.count(of: .startedObserving) == 1)
+    #expect(outcomes.count(of: .unchanged) == 199)
+    #expect(context.startedObserving == ["monthly"])
+    #expect(context.saves.map(\.purchasingProductIds) == [["monthly"]])
+    #expect(context.followUpsRanUnlocked == [true])
+  }
+
+  @Test("leaving the queue frees the product to be observed again")
+  func sk1TransactionsLeftQueue() {
+    let context = FakeObserverModeContext(ObserverModeState(purchasingProductIds: ["a", "b"]))
+
+    #expect(context.dispatch(.sk1TransactionsLeftQueue(productIds: ["c"])) == .unchanged)
+    #expect(context.dispatch(.sk1TransactionsLeftQueue(productIds: ["a"])) == .updated)
+    #expect(context.store.state.purchasingProductIds == ["b"])
+    #expect(context.dispatch(.sk1PurchaseStarted(productId: "a")) == .startedObserving)
+  }
+
+  @Test("a Superwall purchase is marked handled only when observing purchases")
+  func sdkPurchaseCompleted() {
+    let context = FakeObserverModeContext()
+    context.observesPurchases = false
+    #expect(context.dispatch(.sdkPurchaseCompleted(transactionIds: [1])) == .unchanged)
+    #expect(context.saves.isEmpty)
+
+    context.observesPurchases = true
+    #expect(context.dispatch(.sdkPurchaseCompleted(transactionIds: [1])) == .updated)
+    #expect(context.dispatch(.sdkPurchaseCompleted(transactionIds: [1])) == .unchanged)
+    #expect(context.store.state.handledTransactionIds == [1])
+    #expect(context.saves.count == 1)
+  }
+
+  @Test("legacy transactions are recorded once")
+  func legacyTransactionsFetched() {
+    let context = FakeObserverModeContext(ObserverModeState(handledTransactionIds: [9]))
+
+    #expect(context.dispatch(.legacyTransactionsFetched([1, 2])) == .updated)
+    #expect(context.dispatch(.legacyTransactionsFetched([3])) == .unchanged)
+    #expect(context.store.state == ObserverModeState(
+      handledTransactionIds: [1, 2, 9],
+      legacyRecording: .recorded
+    ))
+  }
+
+  @Test("a new purchase made by the app is handled and tracked once, after the store is unlocked")
+  func tracksNewPurchase() {
+    let context = FakeObserverModeContext(ObserverModeState(handledTransactionIds: [1]))
+    let fetched = StoreKitTransactions(ids: [1, 2, 3], latest: purchase(3, offer: true))
+
+    #expect(context.dispatch(.transactionsFetched(fetched, handledBeforeFetch: [1])) == .tracked)
+    #expect(context.dispatch(.transactionsFetched(fetched, handledBeforeFetch: [1, 2, 3])) == .unchanged)
+
+    #expect(context.tracked == [purchase(3, offer: true)])
+    #expect(context.store.state.handledTransactionIds == [1, 2, 3])
+    #expect(context.saves.last?.handledTransactionIds == [1, 2, 3])
+    #expect(context.followUpsRanUnlocked == [true])
+  }
+
+  @Test("a renewal is marked handled but not tracked")
+  func renewalIsNotTracked() {
+    let context = FakeObserverModeContext()
+    let fetched = StoreKitTransactions(ids: [1, 2], latest: renewal(2))
+
+    #expect(context.dispatch(.transactionsFetched(fetched, handledBeforeFetch: [])) == .updated)
+    #expect(context.tracked.isEmpty)
+    #expect(context.store.state.handledTransactionIds == [1, 2])
+  }
+
+  @Test("nothing is tracked while a purchase is in progress")
+  func purchaseInProgress() {
+    let context = FakeObserverModeContext()
+    context.isPurchaseInProgress = true
+    let fetched = StoreKitTransactions(ids: [1], latest: purchase(1))
+
+    #expect(context.dispatch(.transactionsFetched(fetched, handledBeforeFetch: [])) == .unchanged)
+    #expect(context.tracked.isEmpty)
+    #expect(context.store.state.handledTransactionIds.isEmpty)
+  }
+
+  @Test("a Superwall purchase marked handled first isn't tracked again by detection")
+  func sdkPurchaseBeforeDetection() {
+    let context = FakeObserverModeContext()
+    context.dispatch(.sdkPurchaseCompleted(transactionIds: [5]))
+
+    let fetched = StoreKitTransactions(ids: [5], latest: purchase(5))
+    #expect(context.dispatch(.transactionsFetched(fetched, handledBeforeFetch: [5])) == .unchanged)
+    #expect(context.tracked.isEmpty)
+  }
+
+  @Test("an empty fetch forgets only the transactions handled before it started")
+  func emptyFetchForgetsWhatItSaw() {
+    let context = FakeObserverModeContext(ObserverModeState(handledTransactionIds: [1, 2, 42]))
+    let empty = StoreKitTransactions(ids: [], latest: nil)
+
+    #expect(context.dispatch(.transactionsFetched(empty, handledBeforeFetch: [1, 2])) == .updated)
+    #expect(context.store.state.handledTransactionIds == [42])
+    #expect(context.dispatch(.transactionsFetched(empty, handledBeforeFetch: [1, 2])) == .unchanged)
+  }
+
+  @Test("transactions with no verified one are left alone")
+  func noVerifiedTransaction() {
+    let context = FakeObserverModeContext()
+    let fetched = StoreKitTransactions(ids: [1], latest: nil)
+    #expect(context.dispatch(.transactionsFetched(fetched, handledBeforeFetch: [])) == .unchanged)
+    #expect(context.saves.isEmpty)
+  }
+}
+
+@Suite("Observer mode lane steps")
+struct ObserverModeLaneStepTests {
+  @Test("detection does nothing until the legacy transactions are recorded")
+  func needsLegacyRecording() async {
+    let context = FakeObserverModeContext()
+    context.transactions = StoreKitTransactions(ids: [1], latest: purchase(1))
+
+    await context.detectUnobservedPurchase()
+    #expect(context.fetches == 0)
+
+    await context.recordLegacyTransactions()
+    await context.recordLegacyTransactions()
+    #expect(context.fetches == 1)
+    #expect(context.store.state.legacyRecording == .recorded)
+    // The purchase existed before observer mode, so it isn't tracked.
+    await context.detectUnobservedPurchase()
+    #expect(context.tracked.isEmpty)
+  }
+
+  @Test("detection skips the fetch while a purchase is in progress")
+  func skipsWhilePurchasing() async {
+    let context = FakeObserverModeContext(ObserverModeState(legacyRecording: .recorded))
+    context.isPurchaseInProgress = true
+
+    await context.detectUnobservedPurchase()
+
+    #expect(context.fetches == 0)
+  }
+
+  @Test("a purchase that starts during the fetch isn't tracked by detection")
+  func purchaseStartsDuringFetch() async {
+    let context = FakeObserverModeContext(ObserverModeState(legacyRecording: .recorded))
+    context.transactions = StoreKitTransactions(ids: [1], latest: purchase(1))
+    context.duringFetch = { context.isPurchaseInProgress = true }
+
+    await context.detectUnobservedPurchase()
+
+    #expect(context.tracked.isEmpty)
+    #expect(context.store.state.handledTransactionIds.isEmpty)
+  }
+
+  @Test("a Superwall purchase finished during an empty fetch stays handled")
+  func sdkPurchaseDuringEmptyFetch() async {
+    let context = FakeObserverModeContext(ObserverModeState(
+      handledTransactionIds: [1],
+      legacyRecording: .recorded
+    ))
+    context.duringFetch = { context.dispatch(.sdkPurchaseCompleted(transactionIds: [42])) }
+
+    await context.detectUnobservedPurchase()
+
+    #expect(context.store.state.handledTransactionIds == [42])
+  }
+
+  @Test("a new purchase is tracked through the context")
+  func tracksThroughContext() async {
+    let context = FakeObserverModeContext(ObserverModeState(legacyRecording: .recorded))
+    context.transactions = StoreKitTransactions(ids: [7], latest: purchase(7, product: "annual"))
+
+    await context.detectUnobservedPurchase()
+    await context.detectUnobservedPurchase()
+
+    #expect(context.tracked == [purchase(7, product: "annual")])
   }
 }
 
@@ -193,70 +490,12 @@ struct ObserverModeTrackerTests {
     let (tracker, _) = makeTracker(storage: storage)
     #expect(tracker.state == ObserverModeState(
       purchasingProductIds: ["a"],
-      syncedTransactionIds: [1, 2],
-      didCacheLegacyTransactions: true
+      handledTransactionIds: [1, 2],
+      legacyRecording: .recorded
     ))
-  }
 
-  @Test("a StoreKit 1 purchase is claimed once, however many threads try")
-  func claimsSK1PurchaseOnce() async {
-    let storage = ObserverModeStorage()
-    let (tracker, _) = makeTracker(storage: storage)
-    let claims = Claims()
-
-    await withTaskGroup(of: Void.self) { group in
-      for _ in 0..<200 {
-        group.addTask {
-          tracker.store.dispatch(
-            ObserverModeAction.claimSK1Purchase(productId: "product") { claims.add($0) },
-            in: tracker
-          )
-        }
-      }
-    }
-
-    #expect(claims.trueCount == 1)
-    #expect(claims.count == 200)
-    #expect(tracker.state.purchasingProductIds == ["product"])
-    #expect(storage.saves.purchasing == [["product"]])
-  }
-
-  @Test("removing from the queue frees the product to be observed again")
-  func removeFromQueue() {
-    let storage = ObserverModeStorage(purchasingIds: ["a", "b"])
-    let (tracker, _) = makeTracker(storage: storage)
-
-    tracker.removeFromQueue(productIds: ["a"])
-
-    #expect(tracker.state.purchasingProductIds == ["b"])
-    #expect(storage.get(PurchasingProductIds.self) == ["b"])
-
-    var isNew = false
-    tracker.store.dispatch(
-      ObserverModeAction.claimSK1Purchase(productId: "a") { isNew = $0 },
-      in: tracker
-    )
-    #expect(isNew)
-  }
-
-  @Test("unsynced transactions are claimed only while the latest is unhandled")
-  func claimsUnsyncedTransactions() {
-    let (tracker, _) = makeTracker(storage: ObserverModeStorage(transactionIds: [1]))
-
-    var first = false
-    tracker.store.dispatch(
-      ObserverModeAction.claimUnsyncedTransactions(transactionIds: [1, 2, 3], latestTransactionId: 3) { first = $0 },
-      in: tracker
-    )
-    var second = true
-    tracker.store.dispatch(
-      ObserverModeAction.claimUnsyncedTransactions(transactionIds: [1, 2, 3], latestTransactionId: 3) { second = $0 },
-      in: tracker
-    )
-
-    #expect(first)
-    #expect(!second)
-    #expect(tracker.state.syncedTransactionIds == [1, 2, 3])
+    let (fresh, _) = makeTracker()
+    #expect(fresh.state.legacyRecording == .notRecorded)
   }
 
   @Test("200 concurrent updates are saved in the order they were applied")
@@ -279,23 +518,25 @@ struct ObserverModeTrackerTests {
       #expect(next.isStrictSuperset(of: previous))
     }
     #expect(saves.last == Set((0..<200).map { UInt64($0) }))
-    #expect(tracker.state.syncedTransactionIds == saves.last)
+    #expect(tracker.state.handledTransactionIds == saves.last)
   }
 
-  @Test("markSynced does nothing unless observing purchases")
-  func markSyncedNeedsObserverMode() {
-    let storage = ObserverModeStorage()
-    let (tracker, _) = makeTracker(storage: storage, shouldObservePurchases: false)
+  @Test("a purchase in progress is seen without waiting")
+  func seesPurchaseInProgress() async {
+    let (tracker, container) = makeTracker()
+    let coordinator = container.makePurchasingCoordinator()
+    #expect(!tracker.isPurchaseInProgress)
 
-    tracker.markSynced(transactionIds: [1])
+    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "monthly"))
+    await coordinator.beginPurchase(of: product, source: .purchaseFunc(product), isFreeTrialAvailable: false)
+    #expect(tracker.isPurchaseInProgress)
 
-    #expect(tracker.state.syncedTransactionIds.isEmpty)
-    #expect(storage.saves.transactions.isEmpty)
+    await coordinator.reset()
+    #expect(!tracker.isPurchaseInProgress)
   }
 
-  @available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
-  @Test("legacy transactions are cached once")
-  func cachesLegacyTransactionsOnce() async {
+  @Test("legacy transactions are recorded once")
+  func recordsLegacyTransactionsOnce() async {
     let provider = SlowEmptyTransactionsProvider()
     let storage = ObserverModeStorage(transactionIds: [7])
     let (tracker, _) = makeTracker(storage: storage, provider: provider)
@@ -305,26 +546,11 @@ struct ObserverModeTrackerTests {
     await tracker.operations.flush()
 
     #expect(provider.counts.calls == 1)
-    #expect(tracker.state.didCacheLegacyTransactions)
-    #expect(tracker.state.syncedTransactionIds == [7])
+    #expect(tracker.state.legacyRecording == .recorded)
+    #expect(tracker.state.handledTransactionIds == [7])
     #expect(storage.get(DidCacheLegacyTransactions.self) == true)
   }
 
-  @available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
-  @Test("detection waits for the legacy transactions to be cached")
-  func detectionNeedsLegacyCache() async {
-    let provider = SlowEmptyTransactionsProvider()
-    let (tracker, _) = makeTracker(provider: provider)
-
-    await tracker.detectUnobservedTransactions()
-    #expect(provider.counts.calls == 0)
-
-    tracker.cacheLegacyTransactions()
-    await tracker.detectUnobservedTransactions()
-    #expect(provider.counts.calls == 2)
-  }
-
-  @available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
   @Test("detections run one at a time")
   func detectionsDontOverlap() async {
     let provider = SlowEmptyTransactionsProvider()
@@ -341,9 +567,26 @@ struct ObserverModeTrackerTests {
 
     #expect(provider.counts.calls == 20)
     #expect(provider.counts.maxInFlight == 1)
-    // StoreKit had no transactions, so none are remembered.
-    #expect(tracker.state.syncedTransactionIds.isEmpty)
+    // StoreKit had no transactions, so the one handled before is forgotten.
+    #expect(tracker.state.handledTransactionIds.isEmpty)
     #expect(storage.get(SK2TransactionIds.self) == [])
+  }
+}
+
+private final class OutcomeLog: @unchecked Sendable {
+  private let lock = NSLock()
+  private var outcomes: [ObserverModeOutcome] = []
+
+  func add(_ outcome: ObserverModeOutcome) {
+    lock.lock()
+    outcomes.append(outcome)
+    lock.unlock()
+  }
+
+  func count(of outcome: ObserverModeOutcome) -> Int {
+    lock.lock()
+    defer { lock.unlock() }
+    return outcomes.filter { $0 == outcome }.count
   }
 }
 
@@ -454,25 +697,91 @@ struct ObserverModeSK1PurchaseTests {
   }
 }
 
-private final class Claims: @unchecked Sendable {
+/// Returns no transactions, but only once `release()` is called, so a test
+/// can act while a fetch is in progress.
+private final class HeldEmptyTransactionsProvider: AllTransactionsProviderType, @unchecked Sendable {
   private let lock = NSLock()
-  private var results: [Bool] = []
+  private var holdNext = false
+  private var waiting: [CheckedContinuation<Void, Never>] = []
+  private var onHeld: [CheckedContinuation<Void, Never>] = []
 
-  func add(_ result: Bool) {
+  /// Holds the next fetch until `release()`.
+  func holdNextFetch() {
     lock.lock()
-    results.append(result)
+    holdNext = true
     lock.unlock()
   }
 
-  var count: Int {
-    lock.lock()
-    defer { lock.unlock() }
-    return results.count
+  /// Returns once a fetch is being held.
+  func waitUntilHeld() async {
+    await withCheckedContinuation { continuation in
+      lock.lock()
+      if !waiting.isEmpty {
+        lock.unlock()
+        continuation.resume()
+        return
+      }
+      onHeld.append(continuation)
+      lock.unlock()
+    }
   }
 
-  var trueCount: Int {
+  func release() {
     lock.lock()
-    defer { lock.unlock() }
-    return results.filter { $0 }.count
+    let held = waiting
+    waiting = []
+    lock.unlock()
+    held.forEach { $0.resume() }
+  }
+
+  func getAllTransactions() async -> [StoreKit.VerificationResult<StoreKit.Transaction>] {
+    await withCheckedContinuation { continuation in
+      lock.lock()
+      if !holdNext {
+        lock.unlock()
+        continuation.resume()
+        return
+      }
+      holdNext = false
+      waiting.append(continuation)
+      let held = onHeld
+      onHeld = []
+      lock.unlock()
+      held.forEach { $0.resume() }
+    }
+    return []
+  }
+
+  func getMostRecentVerifiedTransaction(
+    from transactions: [StoreKit.VerificationResult<StoreKit.Transaction>]
+  ) async -> StoreKit.VerificationResult<StoreKit.Transaction>? {
+    return nil
+  }
+}
+
+@Suite("Observer mode regressions")
+struct ObserverModeRegressionTests {
+  @available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
+  @Test("a purchase finished during a fetch that found nothing stays handled")
+  func clearKeepsTransactionsHandledDuringFetch() async {
+    let provider = HeldEmptyTransactionsProvider()
+    let (tracker, _) = makeTracker(
+      storage: ObserverModeStorage(transactionIds: [1], didCacheLegacyTransactions: true),
+      provider: provider
+    )
+
+    provider.holdNextFetch()
+    let detection = Task {
+      await tracker.detectUnobservedTransactions()
+    }
+    await provider.waitUntilHeld()
+
+    // A purchase made through Superwall finishes while the fetch is running.
+    tracker.markSynced(transactionIds: [42])
+    provider.release()
+    await detection.value
+
+    // The fetch only proves the transactions it could have seen are gone.
+    #expect(tracker.state.handledTransactionIds == [42])
   }
 }

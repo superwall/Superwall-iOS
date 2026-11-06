@@ -8,24 +8,24 @@
 import Foundation
 
 /// Tracks the purchases the app makes itself when `shouldObservePurchases`
-/// is on, keeping what it knows about them in an ``ObserverModeStore``.
+/// is on.
 ///
-/// The store is read and changed with its lock held, and saved by an observer
-/// that only hands the write to storage's background queue. Product lookups
-/// and tracking happen outside the lock. StoreKit 2 detection runs one at a
-/// time on a ``SerialTaskCoordinator``, behind the caching of the transactions
-/// made before observer mode was turned on.
+/// What it remembers lives in an ``ObserverModeStore``, changed only by
+/// ``ObserverModeAction``s, with this class as their context. Async work
+/// (reading StoreKit 2, looking up products and tracking) runs one step at a
+/// time on a ``SerialTaskCoordinator``, like Android's `SequentialActor`.
 final class ObserverModeTracker: ObserverModeContext, @unchecked Sendable {
   typealias Factory = OptionsFactory
     & PurchasedTransactionsFactory
     & TransactionManagerFactory
 
   let store: ObserverModeStore
-  let allTransactionsProvider: AllTransactionsProviderType
-  let factory: Factory
-  /// Runs the StoreKit 2 legacy caching and detection one at a time.
+  /// Runs the async steps one at a time, in order.
   let operations = SerialTaskCoordinator()
+  let allTransactionsProvider: AllTransactionsProviderType
   let productsManager: ProductsManager
+  let factory: Factory
+  private let storage: Storage
 
   init(
     storage: Storage,
@@ -33,57 +33,107 @@ final class ObserverModeTracker: ObserverModeContext, @unchecked Sendable {
     allTransactionsProvider: AllTransactionsProviderType = SK2AllTransactionsProvider(),
     factory: Factory
   ) {
+    self.storage = storage
     self.productsManager = productsManager
     self.allTransactionsProvider = allTransactionsProvider
     self.factory = factory
+    let didRecordLegacy = storage.get(DidCacheLegacyTransactions.self) ?? false
     store = ObserverModeStore(
       initial: ObserverModeState(
         purchasingProductIds: storage.get(PurchasingProductIds.self) ?? [],
-        syncedTransactionIds: storage.get(SK2TransactionIds.self) ?? [],
-        didCacheLegacyTransactions: storage.get(DidCacheLegacyTransactions.self) ?? false
+        handledTransactionIds: storage.get(SK2TransactionIds.self) ?? [],
+        legacyRecording: didRecordLegacy ? .recorded : .notRecorded
       )
     )
-
-    // Saving only hands the write to storage's queue, so it's safe with the
-    // store locked, and the saves happen in the order the changes did.
-    store.observe { before, after in
-      if after.purchasingProductIds != before.purchasingProductIds {
-        storage.save(after.purchasingProductIds, forType: PurchasingProductIds.self)
-      }
-      if after.syncedTransactionIds != before.syncedTransactionIds {
-        storage.save(after.syncedTransactionIds, forType: SK2TransactionIds.self)
-      }
-      if after.didCacheLegacyTransactions != before.didCacheLegacyTransactions {
-        storage.save(after.didCacheLegacyTransactions, forType: DidCacheLegacyTransactions.self)
-      }
-    }
   }
 
   var state: ObserverModeState {
     store.state
   }
 
-  // MARK: - StoreKit 1
+  // MARK: - Calls from the purchase flow
 
   /// Starts observing a StoreKit 1 purchase the app started, unless it's
   /// already being observed, such as a purchase put back on the queue.
+  /// Returns once the purchase is being followed.
   func observeSK1Purchase(ofProductId productId: String) async {
-    var isNew = false
-    store.dispatch(
-      ObserverModeAction.claimSK1Purchase(productId: productId) { isNew = $0 },
-      in: self
-    )
-    if !isNew {
-      return
+    let outcome = store.dispatch(ObserverModeAction.sk1PurchaseStarted(productId: productId), in: self)
+    if outcome == .startedObserving {
+      await operations.flush()
     }
+  }
 
-    guard
-      let storeProduct = try? await productsManager.products(
-        identifiers: [productId],
-        forPaywall: nil,
-        placement: nil
-      ).first
-    else {
+  /// Forgets the StoreKit 1 purchases of products whose transactions left
+  /// the payment queue.
+  func removeFromQueue(productIds: Set<String>) {
+    store.dispatch(ObserverModeAction.sk1TransactionsLeftQueue(productIds: productIds), in: self)
+  }
+
+  /// Marks the transactions of a purchase made through Superwall as handled,
+  /// so detection doesn't track them again.
+  func markSynced(transactionIds: Set<UInt64>) {
+    store.dispatch(ObserverModeAction.sdkPurchaseCompleted(transactionIds: transactionIds), in: self)
+  }
+
+  /// Records the transactions made before observer mode was turned on, the
+  /// first time it's on, so detection doesn't track them.
+  func cacheLegacyTransactions() {
+    operations.enqueue { [weak self] in
+      await self?.recordLegacyTransactions()
+    }
+  }
+
+  /// Tracks the latest StoreKit 2 purchase if the app made it itself and it
+  /// hasn't been handled yet. Returns once it's been tracked. Detections run
+  /// one at a time, after the legacy transactions have been recorded.
+  func detectUnobservedTransactions() async {
+    await operations.run { [weak self] in
+      await self?.detectUnobservedPurchase()
+    }
+    // Waits for the tracking the detection queued.
+    await operations.flush()
+  }
+
+  // MARK: - ObserverModeContext
+
+  var observesPurchases: Bool {
+    factory.makeSuperwallOptions().shouldObservePurchases
+  }
+
+  var isPurchaseInProgress: Bool {
+    factory.makePurchasingCoordinator().hasPurchaseInProgress
+  }
+
+  func save(_ state: ObserverModeState) {
+    storage.save(state.purchasingProductIds, forType: PurchasingProductIds.self)
+    storage.save(state.handledTransactionIds, forType: SK2TransactionIds.self)
+    storage.save(state.legacyRecording == .recorded, forType: DidCacheLegacyTransactions.self)
+  }
+
+  func startObserving(productId: String) {
+    operations.enqueue { [weak self] in
+      await self?.followSK1Purchase(ofProductId: productId)
+    }
+  }
+
+  func trackObservedPurchase(_ transaction: ObservedTransaction) {
+    operations.enqueue { [weak self] in
+      await self?.trackSK2Purchase(transaction)
+    }
+  }
+
+  // MARK: - Lane steps
+
+  private func product(withId productId: String) async -> StoreProduct? {
+    return try? await productsManager.products(
+      identifiers: [productId],
+      forPaywall: nil,
+      placement: nil
+    ).first
+  }
+
+  private func followSK1Purchase(ofProductId productId: String) async {
+    guard let storeProduct = await product(withId: productId) else {
       Logger.debug(
         logLevel: .debug,
         scope: .superwallCore,
@@ -107,20 +157,16 @@ final class ObserverModeTracker: ObserverModeContext, @unchecked Sendable {
     }
   }
 
-  /// Forgets the StoreKit 1 purchases of products whose transactions left
-  /// the payment queue.
-  func removeFromQueue(productIds: Set<String>) {
-    store.update(ObserverModeUpdate.removedFromQueue(productIds: productIds))
-  }
-
-  // MARK: - StoreKit 2
-
-  /// Marks StoreKit 2 transactions as handled, so detection doesn't track
-  /// them again. Does nothing unless the SDK observes purchases.
-  func markSynced(transactionIds: Set<UInt64>) {
-    if !factory.makeSuperwallOptions().shouldObservePurchases {
+  private func trackSK2Purchase(_ transaction: ObservedTransaction) async {
+    guard let product = await product(withId: transaction.productId) else {
       return
     }
-    store.update(ObserverModeUpdate.synced(transactionIds: transactionIds))
+    let transactionManager = factory.makeTransactionManager()
+    await transactionManager.prepareToPurchase(
+      product: product,
+      purchaseSource: .observeFunc(product)
+    )
+    await factory.makePurchasingCoordinator().setIsFreeTrialAvailable(to: transaction.startedOffer)
+    await transactionManager.didPurchase()
   }
 }

@@ -15,107 +15,27 @@
 import Foundation
 import StoreKit
 
-@available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
 extension ObserverModeTracker {
-  /// Records the transactions made before observer mode was turned on as
-  /// handled, the first time it's on, so detection doesn't track them.
-  func cacheLegacyTransactions() {
-    operations.enqueue { [weak self] in
-      await self?.cacheLegacyTransactionsNow()
-    }
-  }
-
-  private func cacheLegacyTransactionsNow() async {
-    if state.didCacheLegacyTransactions {
-      return
-    }
+  func fetchTransactions() async -> StoreKitTransactions {
     let allTransactions = await allTransactionsProvider.getAllTransactions()
-    let legacyTransactionIds = Set(allTransactions.map { $0.underlyingTransaction.id })
-    store.update(ObserverModeUpdate.cachedLegacyTransactions(legacyTransactionIds))
-  }
-
-  /// Tracks the latest StoreKit 2 purchase if the app made it itself and it
-  /// hasn't been handled yet. Detections run one at a time, after the legacy
-  /// transactions have been cached.
-  func detectUnobservedTransactions() async {
-    await operations.run { [weak self] in
-      await self?.detectUnobservedTransactionsNow()
-    }
-  }
-
-  private func detectUnobservedTransactionsNow() async {
-    // Legacy transactions are cached ahead of any detection, unless observer
-    // mode was off at launch.
-    if !state.didCacheLegacyTransactions {
-      return
-    }
-
-    // Check that a Superwall purchase hasn't already started.
-    // This could race with a transactionDidSucceed, however, in that function
-    // we insert the transaction ID into the cache. That means that even if it
-    // races, we won't continue. This needs to be here incase this calls before
-    // transactionDidSucceed.
-    let source = await factory.makePurchasingCoordinator().source
-    if source != nil {
-      return
-    }
-
-    let allTransactions = await allTransactionsProvider.getAllTransactions()
-
-    // Clear saved transaction IDs if empty transaction list, e.g. if removed from Xcode transactions.
-    if allTransactions.isEmpty {
-      store.update(ObserverModeUpdate.clearedSyncedTransactions)
-    }
-
+    let ids = Set(allTransactions.map { $0.underlyingTransaction.id })
     guard
-      let mostRecentTransaction = await allTransactionsProvider.getMostRecentVerifiedTransaction(
+      #available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *),
+      let latest = await allTransactionsProvider.getMostRecentVerifiedTransaction(
         from: allTransactions
-      ),
-      let transaction = mostRecentTransaction.verifiedTransaction
+      )?.verifiedTransaction
     else {
-      return
+      return StoreKitTransactions(ids: ids, latest: nil)
     }
-
-    // Mark every transaction as handled, unless the latest one already was.
-    var isNew = false
-    store.dispatch(
-      ObserverModeAction.claimUnsyncedTransactions(
-        transactionIds: Set(allTransactions.map { $0.underlyingTransaction.id }),
-        latestTransactionId: transaction.id
-      ) { isNew = $0 },
-      in: self
+    return StoreKitTransactions(
+      ids: ids,
+      latest: ObservedTransaction(
+        id: latest.id,
+        productId: latest.productID,
+        isPurchase: latest.reason == .purchase,
+        startedOffer: latest.offer != nil
+      )
     )
-    if !isNew {
-      return
-    }
-
-    // Check that the transaction reason is purchase and not renewal.
-    if transaction.reason != .purchase {
-      return
-    }
-
-    await logPurchase(transaction)
-  }
-
-  private func logPurchase(_ transaction: SK2Transaction) async {
-    guard let product = try? await productsManager.products(
-      identifiers: [transaction.productID],
-      forPaywall: nil,
-      placement: nil
-    ).first else {
-      return
-    }
-    let transactionManager = factory.makeTransactionManager()
-    await transactionManager.prepareToPurchase(
-      product: product,
-      purchaseSource: .observeFunc(product)
-    )
-
-    let hasOffer = transaction.offer != nil
-    let coordinator = factory.makePurchasingCoordinator()
-    await coordinator.setIsFreeTrialAvailable(to: hasOffer)
-
-    await transactionManager.didPurchase()
   }
 }
 
