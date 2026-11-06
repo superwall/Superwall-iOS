@@ -22,6 +22,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes `refreshCustomerInfo()` returning empty customer info when the fetch fails, instead of the device's purchases.
 - Fixes the Mac preview window sometimes selecting a different paywall than the one linked, without saying why.
 - Stops sending user and device attributes for enrichment, such as the demand score, while `eventTrackingBehavior` is `.none`.
+- Fixes a paywall shown again while it was still closing being marked as closed, so its next close wasn't reported.
 - Fixes a paywall showing and charging the wrong billing plan when the same App Store product is sold on both the up-front and monthly plans, on one paywall or across paywalls. Each paywall slot now keeps its own plan. Product identifiers are unchanged.
 
 ## 4.19.0

@@ -215,17 +215,28 @@ behind itself. Use `enqueue` for follow-up work, as the fetch does for its refre
 
 ### Paywall view store
 
-`PaywallViewController` keeps its paywall, request, claims, loading state and presentation,
-dismissal and checkout flags in a `PaywallViewStore`, changed only by `PaywallViewUpdate` reducers.
-Views, timers, tasks, continuations and other UIKit/AppKit objects stay on the view controller.
-Nothing in a reducer or store observer touches UIKit or waits on the main thread: the loading state
-observer hands changes to an `OrderedDelivery`, delivered on the main thread once the store is
-unlocked, which sets the public `@Published loadingState`, updates the loading views and tells the
-delegate. That property is a mirror and can briefly lag the store while a change is being
-published, so SDK code reads `viewState.loadingState` to decide things and changes it with
-`setLoadingState(_:)` (or `togglePaywallSpinner`/`endManualLoading()` for conditional changes),
-never by assigning the property. Every loading state write bumps `loadingStatePublications`, so
-setting the same state again is still published, as it always was.
+`PaywallViewController` is the `PaywallViewContext` of a `PaywallViewStore`. Its state
+(`PaywallViewState`) holds the paywall, the claims (`currentClaim` and `HandedOut`), the
+presentation `Phase` (idle, requested, appearing, presented, dismissing), the `Browser` (with the
+`CheckoutSheet` and what settled it) and the loading state. Request and occurrence are read from the
+claim; `isPresented`, `isSafariVCPresented`, macOS `isClosing` and friends are computed from the phase.
+Publishers, dismiss completions, views, timers and tasks stay on the view controller.
+
+- Change the state only by dispatching a `PaywallViewAction`: `.event(update)` for a plain
+  `PaywallViewUpdate`, or a named action for anything with side effects. Never call `store.update`
+  directly from the view controller: actions publish every loading state write (even an unchanged
+  one, as `@Published` always did) through `publishLoadingState`, which delivers on the main thread
+  through `OrderedDelivery` once the store is unlocked.
+- Side effects are `PaywallViewContext` methods, run through `effect` once the store is unlocked.
+  Add a method there (and to the test fake) rather than calling UIKit, the delegate, storage or
+  tracking from an action.
+- Use what `dispatch` returns (`Outcome`) instead of reading the state again after an action.
+  Read with `store.read` rather than copying the whole state when you need one field.
+- Each presentation has an id. A dismissal finishes on the `dismissalCoordinator` and reports to its
+  own presentation only: if the paywall is shown again before it finishes, the old presentation
+  moves to `supersededDismissals` and the new one is left alone.
+- The public `loadingState` mirrors the store and can briefly lag it; SDK code changes it with
+  `updateLoading(_:)` and a named `PaywallLoadingChange`, and reads the store to decide things.
 
 ### Native macOS
 

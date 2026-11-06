@@ -128,9 +128,25 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
     customStoreCheckouts.append(checkout)
   }
 
-  func revealWebViewBehindSpinner() {}
+  var didRevealWebViewBehindSpinner = false
 
-  func setLoadingState(_ loadingState: SuperwallKit.PaywallLoadingState) {
-    self.loadingState = loadingState
+  func webContentDidLoad() {
+    if loadingState == .manualLoading {
+      didRevealWebViewBehindSpinner = true
+    } else {
+      loadingState = .ready
+    }
+  }
+
+  func paywallJSVersionReceived(_ version: String?) {
+    paywall.paywalljsVersion = version
+  }
+
+  func webViewLoadEnded(at date: Date) {
+    paywall.webviewLoadingInfo.endAt = date
+  }
+
+  func webViewLoadFailed(at date: Date) {
+    paywall.webviewLoadingInfo.failAt = date
   }
 }

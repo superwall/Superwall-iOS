@@ -4,126 +4,247 @@
 //
 //  Created by Superwall on 05/11/2026.
 //
-// swiftlint:disable file_length
+// swiftlint:disable file_length strict_fileprivate
 
-import Combine
 import Foundation
-
-/// Holds ``PaywallViewState``. It has no store actions: the view controller
-/// runs on the main thread and does its UIKit work itself, outside the store.
-typealias PaywallViewStore = StateStore<Void, PaywallViewState>
 
 /// What ``PaywallViewController`` knows about its paywall and presentation.
 /// Changed only by ``PaywallViewUpdate`` reducers on its store.
 ///
-/// Views, timers, tasks and other objects the view controller drives stay on
-/// the view controller. This holds the values its decisions are made from.
+/// Views, timers, tasks, publishers, completion blocks and other objects the
+/// view controller drives stay on the view controller, which is the store's
+/// ``PaywallViewContext``. This holds the values its decisions are made from.
 struct PaywallViewState {
   /// What a request applies when it claims the view controller.
-  ///
-  /// The occurrence and publisher are cleared once used, so restoring the
-  /// claim later doesn't save the occurrence again or reinstall a publisher
-  /// that has already completed.
   struct Claim {
-    /// Tells the current claim and the handed out one apart, as the same
-    /// claim can be both.
-    let id = UUID()
+    /// Tells claims apart, so their state publishers, which the view
+    /// controller holds, can be found.
+    let id: UUID
     let request: PresentationRequest
     let paywall: Paywall
-    var paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
+    /// Saved when the presentation that uses the claim appears, then cleared,
+    /// so restoring the claim later doesn't save it again.
     var unsavedOccurrence: TriggerAudienceOccurrence?
+
+    init(
+      id: UUID = UUID(),
+      request: PresentationRequest,
+      paywall: Paywall,
+      unsavedOccurrence: TriggerAudienceOccurrence?
+    ) {
+      self.id = id
+      self.request = request
+      self.paywall = paywall
+      self.unsavedOccurrence = unsavedOccurrence
+    }
   }
 
-  // MARK: Paywall and request
+  /// The claim made through `getPaywall`. It's kept so that a view controller
+  /// the app is holding reports that placement when the app shows it, even if
+  /// the SDK presented this paywall for another placement in the meantime.
+  ///
+  /// It's held for the life of the cached view controller on purpose: the app
+  /// can show the handle it was given at any time.
+  enum HandedOut {
+    case none
+    /// The handed out claim is the current claim.
+    case current
+    /// Another claim replaced it, so the app showing the view controller
+    /// applies it again.
+    case awaitingRestore(Claim)
+  }
+
+  /// One time the paywall is on screen, from its first appearance until its
+  /// dismissal has finished.
+  struct Presentation {
+    let id: UUID
+    /// Whether the SDK presented it, rather than the app showing a view
+    /// controller it got from `getPaywall`.
+    let isPresentedBySDK: Bool
+    /// The claim the presentation reports to.
+    let claimId: UUID?
+    /// Whether the delegate has been told the presentation finished.
+    var didCallDelegate = false
+    /// Whether swiping the paywall away is blocked so a survey can show.
+    var isSwipeDisabledForSurvey = false
+    /// Set once something asks for the paywall to be dismissed.
+    var dismissal: Dismissal?
+    #if os(macOS)
+    /// Whether the SDK is dismissing it, or it's animating out of an overlay.
+    var isClosing = false
+    /// Whether it went off screen with its window, which was minimised or
+    /// hidden with the app, and hasn't come back yet.
+    var isHiddenWithWindow = false
+    #endif
+
+    init(
+      id: UUID = UUID(),
+      isPresentedBySDK: Bool,
+      claimId: UUID?
+    ) {
+      self.id = id
+      self.isPresentedBySDK = isPresentedBySDK
+      self.claimId = claimId
+    }
+  }
+
+  /// How a presentation was asked to end.
+  struct Dismissal: Equatable {
+    let result: PaywallResult
+    let closeReason: PaywallCloseReason
+  }
+
+  enum Phase {
+    /// Not on screen. Its next appearance starts a presentation.
+    case idle
+    /// The SDK has asked for it to be shown, and it hasn't started appearing.
+    case requested
+    /// It has started appearing.
+    case appearing(Presentation)
+    /// It has appeared.
+    case presented(Presentation)
+    /// It has gone off screen and its dismissal is finishing. A new
+    /// presentation can start meanwhile, which moves this one to
+    /// ``PaywallViewState/supersededDismissals``.
+    case dismissing(Presentation)
+  }
+
+  /// What the paywall has open in app.
+  enum Browser: Equatable {
+    case none
+    case safari
+    case checkout(CheckoutSheet)
+    /// The SDK closed the checkout sheet, which reports when it has gone.
+    case closingCheckout(CheckoutSheet)
+  }
+
+  /// A checkout sheet, and why closing it isn't an abandoned Stripe checkout,
+  /// once something makes it so.
+  struct CheckoutSheet: Equatable {
+    enum Settled: Equatable {
+      /// A redeem succeeded while it was open.
+      case redeemed
+      /// The page reported the checkout completed or abandoned.
+      case pageReportedOutcome
+      /// A custom store checkout ended while it stayed open, as one that
+      /// timed out does.
+      case customStoreCheckoutEnded
+      /// The SDK closed it, as it does when a redemption starts.
+      case closedBySDK
+    }
+
+    let id: UUID
+    var settled: Settled?
+  }
+
   var paywall: Paywall
-  /// The request associated with the presentation of the paywall.
-  var request: PresentationRequest?
   var presentationStyle: PaywallPresentationStyle
-  /// Sends the ``PaywallState``s of the current presentation to the caller of
-  /// `register`. Set when a claim is applied.
-  var paywallStateSubject: PassthroughSubject<PaywallState, Never>?
-  /// If the user matches an audience with an occurrence, this needs to be
-  /// saved on paywall presentation.
-  var unsavedOccurrence: TriggerAudienceOccurrence?
+  var loadingState: PaywallLoadingState = .unknown
+  /// Counts the loading state writes, which are all published, even one that
+  /// leaves it as it was.
+  var loadingStateWrites = 0
   /// The claim currently applied to the view controller.
   var currentClaim: Claim?
-  /// The claim made through `getPaywall`. Kept so that a view controller the
-  /// app is holding reports that placement when the app shows it, even if the
-  /// SDK presented this paywall for another placement in the meantime.
-  ///
-  /// This is held for the life of the cached view controller on purpose: the
-  /// app can show the handle it was given at any time.
-  var handedOutClaim: Claim?
-  /// Whether the SDK claimed the view controller after it was handed out.
-  var handedOutClaimNeedsRestoring = false
-
-  // MARK: Loading
-  var loadingState: PaywallLoadingState = .unknown
-  /// Counts the loading state writes the view controller publishes. Its
-  /// observer sends whenever this changes, so a write is published even when
-  /// it leaves the loading state as it was.
-  var loadingStatePublications = 0
-
-  // MARK: Presentation
-  /// Whether the paywall has finished appearing and not yet been dismissed.
-  var isPresented = false
-  /// Whether the SDK started the current presentation via `present(on:...)`.
-  var isPresentedBySDK = false
-  /// Whether the next appearance starts a presentation.
-  var presentationWillPrepare = true
-  /// Whether the current presentation has finished appearing.
-  var presentationDidFinishPrepare = false
-  /// Whether the delegate has been told the presentation finished.
-  var didCallDelegate = false
-  /// `true` if there's a survey to complete and the paywall is displayed in a
-  /// modal style.
-  var didDisableSwipeForSurvey = false
+  var handedOut: HandedOut = .none
+  var phase: Phase = .idle
+  /// Presentations whose dismissal is still finishing after a new
+  /// presentation started. Each finishes for itself only, without touching
+  /// the one on screen.
+  var supersededDismissals: [Presentation] = []
+  var browser: Browser = .none
+  /// The custom product whose checkout the paywall is running, if any. The
+  /// paywall reports how that checkout ends, so closing its sheet isn't
+  /// tracked as an abandoned Stripe checkout.
+  var customStoreCheckoutProductId: String?
+  /// The product bought since the last presentation began, App Store or web.
+  /// A close that follows a purchase, such as a `close` among the button's
+  /// after-purchase actions, finishes the presentation as purchased.
+  var completedPurchase: StoreProduct?
   /// Whether a popup is animating out after a tap on its background.
-  var isCustomBackgroundDismissal = false
-  /// When the paywall was last opened.
+  var isPopupBackgroundDismissing = false
+  /// When the paywall was last opened, until it's closed.
   var lastOpen: Date?
-
-  // MARK: Dismissal
-  /// The result the paywall is being dismissed with.
-  var paywallResult: PaywallResult?
-  /// Runs once the paywall has been dismissed.
-  var dismissCompletionBlock: (() -> Void)?
   /// Whether the survey was shown, not shown, or in a holdout.
   var surveyPresentationResult: SurveyPresentationResult = .noShow
-  /// The product bought from this presentation, App Store or web. A close
-  /// that follows a purchase finishes the presentation as purchased rather
-  /// than declined.
-  var completedPurchaseProduct: StoreProduct?
-
-  // MARK: Browser and checkout
-  /// Whether Safari or the checkout sheet is open in app.
-  var isSafariVCPresented = false
-  /// Whether a redeem succeeded while the checkout sheet is open.
-  var didRedeemSucceedDuringCheckout = false
-  /// Whether the SDK is closing the checkout sheet.
-  var isCheckoutDismissedProgrammatically = false
-  /// Whether the page reported the Stripe checkout abandoned or completed.
-  var didReceiveStripeCheckoutAbandonMessage = false
-  /// The custom product whose checkout the paywall is running, if any.
-  var customStoreCheckoutProductId: String?
-  /// Whether the open checkout sheet belongs to a custom store checkout that
-  /// ended while it stayed open, as one that timed out does.
-  var isCustomStoreCheckoutSheetLeftOpen = false
-
-  #if os(macOS)
-  // MARK: macOS
-  /// From when the SDK starts presenting until the paywall appears.
-  var isMacPresentationInFlight = false
-  /// Whether the paywall went off screen with its window and hasn't come back.
-  var isHiddenWithWindow = false
-  /// Whether the SDK is dismissing the paywall, or it's animating out of an
-  /// overlay.
-  var isClosing = false
-  #endif
 
   init(paywall: Paywall) {
     self.paywall = paywall
     self.presentationStyle = paywall.presentation.style
+  }
+
+  // MARK: Derived values
+
+  var request: PresentationRequest? {
+    currentClaim?.request
+  }
+
+  var unsavedOccurrence: TriggerAudienceOccurrence? {
+    currentClaim?.unsavedOccurrence
+  }
+
+  /// The presentation on screen or starting, not one finishing its dismissal.
+  var activePresentation: Presentation? {
+    switch phase {
+    case .appearing(let presentation),
+      .presented(let presentation):
+      return presentation
+    case .idle,
+      .requested,
+      .dismissing:
+      return nil
+    }
+  }
+
+  /// Whether the paywall has appeared and its dismissal hasn't finished.
+  var isPresented: Bool {
+    switch phase {
+    case .presented,
+      .dismissing:
+      return true
+    case .idle,
+      .requested,
+      .appearing:
+      return false
+    }
+  }
+
+  /// Whether the next appearance starts a presentation.
+  var startsPresentationOnAppear: Bool {
+    switch phase {
+    case .idle,
+      .requested,
+      .dismissing:
+      return true
+    case .appearing,
+      .presented:
+      return false
+    }
+  }
+
+  /// Whether the SDK asked for the paywall to be shown, for the appearance
+  /// about to start or the one on screen.
+  var isPresentedBySDK: Bool {
+    switch phase {
+    case .requested:
+      return true
+    case .appearing(let presentation),
+      .presented(let presentation):
+      return presentation.isPresentedBySDK
+    case .idle,
+      .dismissing:
+      return false
+    }
+  }
+
+  var isBrowserOpen: Bool {
+    switch browser {
+    case .safari,
+      .checkout:
+      return true
+    case .none,
+      .closingCheckout:
+      return false
+    }
   }
 
   /// Whether the paywall's spinner is showing.
@@ -131,24 +252,115 @@ struct PaywallViewState {
     return loadingState == .loadingPurchase || loadingState == .manualLoading
   }
 
-  /// Whether the buyer closing the checkout sheet abandons a Stripe checkout:
-  /// no redeem succeeded, the SDK didn't close it, the page didn't report the
-  /// abandon itself, and it isn't a custom store checkout, whose outcome the
-  /// page reports.
-  var isCheckoutSheetDismissalAnAbandon: Bool {
-    return !didRedeemSucceedDuringCheckout
-      && !isCheckoutDismissedProgrammatically
-      && customStoreCheckoutProductId == nil
-      && !isCustomStoreCheckoutSheetLeftOpen
-      && !didReceiveStripeCheckoutAbandonMessage
+  #if os(macOS)
+  var isClosing: Bool {
+    activePresentation?.isClosing ?? false
+  }
+
+  var isHiddenWithWindow: Bool {
+    activePresentation?.isHiddenWithWindow ?? false
+  }
+
+  /// From when the SDK starts presenting until the paywall appears: the span
+  /// UIKit reports through `isBeingPresented`, which AppKit doesn't have.
+  var isMacPresentationInFlight: Bool {
+    switch phase {
+    case .requested,
+      .appearing:
+      return true
+    case .idle,
+      .presented,
+      .dismissing:
+      return false
+    }
+  }
+  #endif
+
+  /// Whether the buyer closing this checkout sheet abandons a Stripe
+  /// checkout: nothing settled it, and it isn't a custom store checkout,
+  /// whose outcome the page reports.
+  func isAbandon(closing sheet: CheckoutSheet) -> Bool {
+    return sheet.settled == nil && customStoreCheckoutProductId == nil
+  }
+
+  /// The result a dismissal reports: a decline after a completed purchase is
+  /// a purchase. A close to show the next paywall stays as it is, so that
+  /// paywall keeps the presentation's state.
+  func resolvedDismissal(
+    result: PaywallResult,
+    closeReason: PaywallCloseReason
+  ) -> Dismissal {
+    if closeReason == .forNextPaywall {
+      return Dismissal(result: result, closeReason: closeReason)
+    }
+    if result == .declined, let product = completedPurchase {
+      return Dismissal(result: .purchased(product), closeReason: .systemLogic)
+    }
+    return Dismissal(result: result, closeReason: closeReason)
+  }
+}
+
+/// A change to the loading state, named for what happened.
+enum PaywallLoadingChange: Equatable {
+  /// The web view started loading the page.
+  case webViewLoadStarted
+  /// The page finished loading. A spinner showing for something else, such
+  /// as a Stripe recovery, stays up.
+  case webContentLoaded
+  case purchaseStarted
+  /// The SDK started work the buyer waits on, such as a redemption.
+  case manualLoadingStarted
+  /// What the buyer was waiting on finished.
+  case finished
+  /// The app or page asked for the spinner, which shows if the paywall is ready.
+  case spinnerRequested
+  /// The app or page asked to hide the spinner, if it's showing.
+  case spinnerDismissed
+  /// Manual loading finished. A purchase's spinner stays up.
+  case manualLoadingEnded
+
+  /// The loading state this change writes, or `nil` if it leaves it alone.
+  func loadingState(after current: PaywallLoadingState) -> PaywallLoadingState? {
+    switch self {
+    case .webViewLoadStarted:
+      return .loadingURL
+    case .webContentLoaded:
+      return current == .manualLoading ? nil : .ready
+    case .purchaseStarted:
+      return .loadingPurchase
+    case .manualLoadingStarted:
+      return .manualLoading
+    case .finished:
+      return .ready
+    case .spinnerRequested:
+      return current == .ready ? .manualLoading : nil
+    case .spinnerDismissed:
+      return current == .manualLoading || current == .loadingPurchase ? .ready : nil
+    case .manualLoadingEnded:
+      return current == .manualLoading ? .ready : nil
+    }
   }
 }
 
 /// The ways ``PaywallViewState`` can change.
 enum PaywallViewUpdate: Reducer {
-  // MARK: Paywall and request
-  /// Replaces the paywall.
-  case paywall(Paywall)
+  // MARK: Paywall
+  /// The SDK fetched a new version of the paywall for this view controller.
+  case paywallReplaced(Paywall)
+  case presentationStyleChosen(override: PaywallPresentationStyle?)
+  /// A popup embedded in the app's view fills it like the fullscreen style.
+  case embedded
+  case webViewLoadStarted(Date)
+  case webViewLoadEnded(Date)
+  case webViewLoadFailed(Date)
+  case paywallJSVersionReceived(String?)
+  case shimmerStarted(Date)
+  case shimmerEnded(Date)
+  /// The page's state, saved on dismissal.
+  case pageStateSaved([String: Any])
+  case loading(PaywallLoadingChange)
+
+  // MARK: Claims
   /// A request claimed the view controller while it wasn't on screen.
   case claimed(PaywallViewState.Claim, isHandedOut: Bool)
   /// `getPaywall` claimed the view controller while it was on screen, so the
@@ -157,100 +369,62 @@ enum PaywallViewUpdate: Reducer {
   /// The app is showing the view controller it got from `getPaywall`, so
   /// that claim is applied again.
   case handedOutClaimRestored
-  /// The claim's audience occurrence has been saved.
+  /// The current claim's audience occurrence has been saved.
   case occurrenceSaved
-  /// The presentation's state publisher completed.
-  case paywallStatePublisherCompleted
-  case presentationStyle(override: PaywallPresentationStyle?)
-  /// A popup embedded in the app's view fills it like the fullscreen style.
-  case embedded
-  case webviewLoadStarted(Date)
-  case shimmerStarted(Date)
-  case shimmerEnded(Date)
-  /// The page's state, saved on dismissal.
-  case pageState([String: Any])
-
-  // MARK: Loading
-  case loadingState(PaywallLoadingState)
-  /// Shows the spinner, if the paywall is ready.
-  case showSpinner
-  /// Hides the spinner, if it's showing.
-  case hideSpinner
-  /// Hides the spinner, if it's showing for something other than a purchase.
-  case endManualLoading
 
   // MARK: Presentation
-  case presentedBySDK
-  case presentationWillBegin
-  case presentationPrepared
-  case presented
-  case presentationReset
-  case lastOpen(Date?)
-  case swipeDisabledForSurvey(Bool)
-  case customBackgroundDismissal(Bool)
-
-  // MARK: Dismissal
-  case dismissing(
-    result: PaywallResult,
-    closeReason: PaywallCloseReason,
-    completion: (() -> Void)?
-  )
-  case surveyPresentationResult(SurveyPresentationResult)
+  case sdkPresentationRequested
+  /// The SDK's presentation stopped before it began.
+  case presentationAbandoned
+  case presentationWillBegin(PaywallViewState.Presentation)
+  case presentationDidFinish
+  case dismissRequested(PaywallViewState.Dismissal)
+  case surveyFinished(SurveyPresentationResult)
   case delegateCalled
-  case dismissed
+  /// The paywall went off screen and its dismissal started finishing.
+  case disappeared
+  /// The dismissal of the presentation with this id finished.
+  case dismissalFinished(UUID)
+  /// Swiping the paywall away is blocked so its survey can show.
+  case surveySwipeBlocked
   case purchaseCompleted(StoreProduct)
+  case opened(Date)
+  case closed
+  case popupBackgroundTapped
+  case popupBackgroundAnimationEnded
 
   // MARK: Browser and checkout
-  case safariPresented(Bool)
-  /// A checkout sheet opened, which starts a new checkout flow.
-  case checkoutOpened
-  /// The checkout sheet closed. Its loading state is ready unless the SDK
-  /// closed it, as it does when a redeem starts.
-  case checkoutClosed
-  case checkoutDismissedProgrammatically
-  case redeemSucceededDuringCheckout
+  case safariOpened
+  case safariClosed
+  case checkoutOpened(UUID)
+  /// The checkout sheet with this id has gone.
+  case checkoutClosed(UUID)
+  /// The SDK closed whatever was open in app.
+  case browserClosedBySDK
+  case redeemSucceeded
   case stripeCheckoutAbandoned
+  /// The page reported a Stripe checkout completed: it isn't an abandon, and
+  /// the spinner shows while the purchase finishes.
   case stripeCheckoutCompleted
-  case customStoreCheckoutProductId(String?)
-  case customStoreCheckoutSheetLeftOpen(Bool)
+  /// A custom store checkout moved on a step.
+  case customStoreCheckoutAdvanced(productId: String?, closesBrowser: Bool)
+  case customStoreCheckoutFinished
 
   #if os(macOS)
   // MARK: macOS
-  case macPresentationInFlight(Bool)
-  case hiddenWithWindow(Bool)
-  case closing(Bool)
+  case macCloseStarted
+  case macCloseEnded
+  case hidWithWindow
+  case cameBackWithWindow
   #endif
 
-  // swiftlint:disable:next function_body_length
+  // swiftlint:disable:next function_body_length cyclomatic_complexity
   func reduce(_ state: PaywallViewState) -> PaywallViewState {
     var state = state
     switch self {
-    case .paywall(let paywall):
+    case .paywallReplaced(let paywall):
       state.paywall = paywall
-    case let .claimed(claim, isHandedOut):
-      state = state.applying(claim)
-      state.isPresentedBySDK = false
-      if isHandedOut {
-        state.handedOutClaim = state.currentClaim
-        state.handedOutClaimNeedsRestoring = false
-      } else if state.handedOutClaim != nil {
-        state.handedOutClaimNeedsRestoring = true
-      }
-    case .handedOutClaimDeferred(let claim):
-      state.handedOutClaim = claim
-      state.handedOutClaimNeedsRestoring = true
-    case .handedOutClaimRestored:
-      if let claim = state.handedOutClaim {
-        state = state.applying(claim)
-      }
-      state.handedOutClaimNeedsRestoring = false
-    case .occurrenceSaved:
-      state.unsavedOccurrence = nil
-      state.updateCurrentClaim { $0.unsavedOccurrence = nil }
-    case .paywallStatePublisherCompleted:
-      state.paywallStateSubject = nil
-      state.updateCurrentClaim { $0.paywallStatePublisher = nil }
-    case .presentationStyle(let override):
+    case .presentationStyleChosen(let override):
       if let override = override,
         override != .none {
         state.presentationStyle = override
@@ -261,104 +435,158 @@ enum PaywallViewUpdate: Reducer {
       if case .popup = state.presentationStyle {
         state.presentationStyle = .fullscreen
       }
-    case .webviewLoadStarted(let date):
+    case .webViewLoadStarted(let date):
       if state.paywall.webviewLoadingInfo.startAt == nil {
         state.paywall.webviewLoadingInfo.startAt = date
       }
+      state.writeLoadingState(.loadingURL)
+    case .webViewLoadEnded(let date):
+      state.paywall.webviewLoadingInfo.endAt = date
+    case .webViewLoadFailed(let date):
+      state.paywall.webviewLoadingInfo.failAt = date
+    case .paywallJSVersionReceived(let version):
+      state.paywall.paywalljsVersion = version
     case .shimmerStarted(let date):
       state.paywall.shimmerLoadingInfo.startAt = date
     case .shimmerEnded(let date):
       state.paywall.shimmerLoadingInfo.endAt = date
-    case .pageState(let pageState):
+    case .pageStateSaved(let pageState):
       state.paywall.state = pageState
-    case .loadingState(let loadingState):
-      state.setLoadingState(loadingState)
-    case .showSpinner:
-      if state.loadingState == .ready {
-        state.setLoadingState(.manualLoading)
+    case .loading(let change):
+      if let loadingState = change.loadingState(after: state.loadingState) {
+        state.writeLoadingState(loadingState)
       }
-    case .hideSpinner:
-      if state.isShowingSpinner {
-        state.setLoadingState(.ready)
+    case let .claimed(claim, isHandedOut):
+      let previous = state.currentClaim
+      state.apply(claim)
+      if case .requested = state.phase {
+        state.phase = .idle
       }
-    case .endManualLoading:
-      if state.loadingState == .manualLoading {
-        state.setLoadingState(.ready)
+      if isHandedOut {
+        state.handedOut = .current
+      } else if case .current = state.handedOut,
+        let previous = previous {
+        state.handedOut = .awaitingRestore(previous)
       }
-    case .presentedBySDK:
-      state.isPresentedBySDK = true
-    case .presentationWillBegin:
-      state.didCallDelegate = false
+    case .handedOutClaimDeferred(let claim):
+      state.handedOut = .awaitingRestore(claim)
+    case .handedOutClaimRestored:
+      if case .awaitingRestore(let claim) = state.handedOut {
+        state.apply(claim)
+        state.handedOut = .current
+      }
+    case .occurrenceSaved:
+      state.currentClaim?.unsavedOccurrence = nil
+    case .sdkPresentationRequested:
+      if state.startsPresentationOnAppear {
+        state.supersedeFinishingDismissal()
+        state.phase = .requested
+      }
+    case .presentationAbandoned:
+      if case .requested = state.phase {
+        state.phase = .idle
+      }
+    case .presentationWillBegin(let presentation):
+      state.supersedeFinishingDismissal()
+      state.phase = .appearing(presentation)
       state.paywall.closeReason = .none
       // A purchase belongs to the presentation it was made in. It's cleared
       // here rather than when the view disappears: a sheet swiped away
       // disappears before its close is reported.
-      state.completedPurchaseProduct = nil
-    case .presentationPrepared:
-      state.presentationWillPrepare = false
-    case .presented:
-      state.isPresented = true
-      state.presentationDidFinishPrepare = true
-    case .presentationReset:
-      state.presentationWillPrepare = true
-      state.presentationDidFinishPrepare = false
-    case .lastOpen(let date):
-      state.lastOpen = date
-    case .swipeDisabledForSurvey(let isDisabled):
-      state.didDisableSwipeForSurvey = isDisabled
-    case .customBackgroundDismissal(let isDismissing):
-      state.isCustomBackgroundDismissal = isDismissing
-    case let .dismissing(result, closeReason, completion):
-      state.paywallResult = result
-      state.paywall.closeReason = closeReason
-      state.dismissCompletionBlock = completion
-    case .surveyPresentationResult(let result):
+      state.completedPurchase = nil
+    case .presentationDidFinish:
+      if case .appearing(let presentation) = state.phase {
+        state.phase = .presented(presentation)
+      }
+    case .dismissRequested(let dismissal):
+      // A sheet swiped away asks to be dismissed after it has gone, so this
+      // also reaches a presentation whose dismissal is finishing.
+      state.paywall.closeReason = dismissal.closeReason
+      state.updateLatestPresentation { $0.dismissal = dismissal }
+    case .surveyFinished(let result):
       state.surveyPresentationResult = result
     case .delegateCalled:
-      state.didCallDelegate = true
-    case .dismissed:
-      state.paywallResult = nil
-      state.dismissCompletionBlock = nil
-      state.isPresented = false
-      state.isPresentedBySDK = false
-    case .purchaseCompleted(let product):
-      state.completedPurchaseProduct = product
-    case .safariPresented(let isPresented):
-      state.isSafariVCPresented = isPresented
-    case .checkoutOpened:
-      state.didRedeemSucceedDuringCheckout = false
-      state.isCheckoutDismissedProgrammatically = false
-      state.didReceiveStripeCheckoutAbandonMessage = false
-      state.isCustomStoreCheckoutSheetLeftOpen = false
-    case .checkoutClosed:
-      state.isSafariVCPresented = false
-      if !state.isCheckoutDismissedProgrammatically {
-        state.setLoadingState(.ready)
+      state.updateLatestPresentation { $0.didCallDelegate = true }
+    case .disappeared:
+      if case .presented(let presentation) = state.phase {
+        state.phase = .dismissing(presentation)
       }
-      state.isCustomStoreCheckoutSheetLeftOpen = false
-      state.didRedeemSucceedDuringCheckout = false
-      state.isCheckoutDismissedProgrammatically = false
-      state.didReceiveStripeCheckoutAbandonMessage = false
-    case .checkoutDismissedProgrammatically:
-      state.isCheckoutDismissedProgrammatically = true
-    case .redeemSucceededDuringCheckout:
-      state.didRedeemSucceedDuringCheckout = true
+    case .dismissalFinished(let id):
+      if case .dismissing(let presentation) = state.phase,
+        presentation.id == id {
+        state.phase = .idle
+      }
+      state.supersededDismissals.removeAll { $0.id == id }
+    case .surveySwipeBlocked:
+      state.updateActivePresentation { $0.isSwipeDisabledForSurvey = true }
+    case .purchaseCompleted(let product):
+      state.completedPurchase = product
+    case .opened(let date):
+      state.lastOpen = date
+    case .closed:
+      state.lastOpen = nil
+    case .popupBackgroundTapped:
+      state.isPopupBackgroundDismissing = true
+    case .popupBackgroundAnimationEnded:
+      state.isPopupBackgroundDismissing = false
+    case .safariOpened:
+      state.browser = .safari
+    case .safariClosed:
+      if state.browser == .safari {
+        state.browser = .none
+      }
+    case .checkoutOpened(let id):
+      state.browser = .checkout(PaywallViewState.CheckoutSheet(id: id))
+    case .checkoutClosed(let id):
+      switch state.browser {
+      case .checkout(let sheet),
+        .closingCheckout(let sheet):
+        if sheet.id == id {
+          state.browser = .none
+          if sheet.settled != .closedBySDK {
+            state.writeLoadingState(.ready)
+          }
+        }
+      case .none,
+        .safari:
+        break
+      }
+    case .browserClosedBySDK:
+      switch state.browser {
+      case .checkout(var sheet):
+        sheet.settled = .closedBySDK
+        state.browser = .closingCheckout(sheet)
+      case .safari:
+        state.browser = .none
+      case .none,
+        .closingCheckout:
+        break
+      }
+    case .redeemSucceeded:
+      state.settleCheckout(.redeemed)
     case .stripeCheckoutAbandoned:
-      state.didReceiveStripeCheckoutAbandonMessage = true
+      state.settleCheckout(.pageReportedOutcome)
     case .stripeCheckoutCompleted:
-      state.didReceiveStripeCheckoutAbandonMessage = true
-      state.setLoadingState(.manualLoading)
-    case .customStoreCheckoutProductId(let productId):
+      state.settleCheckout(.pageReportedOutcome)
+      state.writeLoadingState(.manualLoading)
+    case let .customStoreCheckoutAdvanced(productId, closesBrowser):
       state.customStoreCheckoutProductId = productId
-    case .customStoreCheckoutSheetLeftOpen(let isLeftOpen):
-      state.isCustomStoreCheckoutSheetLeftOpen = isLeftOpen
+      if !closesBrowser {
+        // The checkout already ended, so the buyer closing its sheet later
+        // abandons nothing.
+        state.settleCheckout(.customStoreCheckoutEnded)
+      }
+    case .customStoreCheckoutFinished:
+      state.customStoreCheckoutProductId = nil
     #if os(macOS)
-    case .macPresentationInFlight(let isInFlight):
-      state.isMacPresentationInFlight = isInFlight
-    case .hiddenWithWindow(let isHidden):
-      state.isHiddenWithWindow = isHidden
-    case .closing(let isClosing):
-      state.isClosing = isClosing
+    case .macCloseStarted:
+      state.updateActivePresentation { $0.isClosing = true }
+    case .macCloseEnded:
+      state.updateActivePresentation { $0.isClosing = false }
+    case .hidWithWindow:
+      state.updateActivePresentation { $0.isHiddenWithWindow = true }
+    case .cameBackWithWindow:
+      state.updateActivePresentation { $0.isHiddenWithWindow = false }
     #endif
     }
     return state
@@ -366,50 +594,74 @@ enum PaywallViewUpdate: Reducer {
 }
 
 extension PaywallViewState {
-  /// Applies a claim: binds its request, publisher and occurrence, and its
-  /// paywall. A version of the paywall with the same cache key only updates
-  /// the loaded one, while a different version replaces it.
-  // swiftlint:disable:next strict_fileprivate
-  fileprivate func applying(_ claim: Claim) -> PaywallViewState {
-    var state = self
-    var claim = claim
-    if claim.paywallStatePublisher == nil {
-      // The previous one completed when the paywall was last dismissed.
-      claim.paywallStatePublisher = PassthroughSubject()
-    }
-    state.request = claim.request
-    state.paywallStateSubject = claim.paywallStatePublisher
-    state.unsavedOccurrence = claim.unsavedOccurrence
-    state.currentClaim = claim
-    if state.handedOutClaim?.id == claim.id {
-      state.handedOutClaim = claim
-    }
-
-    if claim.paywall.cacheKey == state.paywall.cacheKey {
-      state.paywall.update(from: claim.paywall)
+  /// Applies a claim's request, occurrence and paywall. A version of the
+  /// paywall with the same cache key only updates the loaded one, while a
+  /// different version replaces it.
+  fileprivate mutating func apply(_ claim: Claim) {
+    currentClaim = claim
+    if claim.paywall.cacheKey == paywall.cacheKey {
+      paywall.update(from: claim.paywall)
     } else {
-      state.paywall = claim.paywall
+      paywall = claim.paywall
     }
-    return state
   }
 
-  /// Changes the current claim, and the handed out claim too when it's the
-  /// same one.
-  // swiftlint:disable:next strict_fileprivate
-  fileprivate mutating func updateCurrentClaim(_ change: (inout Claim) -> Void) {
-    guard var claim = currentClaim else {
+  /// The presentation whose dismissal is finishing, with this id, whether
+  /// it's still the latest or a new one has started since.
+  func finishingDismissal(_ id: UUID) -> Presentation? {
+    if case .dismissing(let presentation) = phase,
+      presentation.id == id {
+      return presentation
+    }
+    return supersededDismissals.first { $0.id == id }
+  }
+
+  /// Changes the presentation on screen, starting, or finishing its
+  /// dismissal.
+  fileprivate mutating func updateLatestPresentation(_ change: (inout Presentation) -> Void) {
+    if case .dismissing(var presentation) = phase {
+      change(&presentation)
+      phase = .dismissing(presentation)
       return
     }
-    change(&claim)
-    currentClaim = claim
-    if handedOutClaim?.id == claim.id {
-      handedOutClaim = claim
+    updateActivePresentation(change)
+  }
+
+  fileprivate mutating func updateActivePresentation(_ change: (inout Presentation) -> Void) {
+    switch phase {
+    case .appearing(var presentation):
+      change(&presentation)
+      phase = .appearing(presentation)
+    case .presented(var presentation):
+      change(&presentation)
+      phase = .presented(presentation)
+    case .idle,
+      .requested,
+      .dismissing:
+      break
     }
   }
 
-  // swiftlint:disable:next strict_fileprivate
-  fileprivate mutating func setLoadingState(_ state: PaywallLoadingState) {
+  /// Moves a presentation whose dismissal is finishing aside, so it can
+  /// finish for itself once another presentation starts.
+  fileprivate mutating func supersedeFinishingDismissal() {
+    if case .dismissing(let presentation) = phase {
+      supersededDismissals.append(presentation)
+    }
+  }
+
+  fileprivate mutating func writeLoadingState(_ state: PaywallLoadingState) {
     loadingState = state
-    loadingStatePublications += 1
+    loadingStateWrites += 1
+  }
+
+  /// Settles the open checkout sheet, unless something settled it already.
+  fileprivate mutating func settleCheckout(_ settled: CheckoutSheet.Settled) {
+    guard case .checkout(var sheet) = browser,
+      sheet.settled == nil else {
+      return
+    }
+    sheet.settled = settled
+    browser = .checkout(sheet)
   }
 }

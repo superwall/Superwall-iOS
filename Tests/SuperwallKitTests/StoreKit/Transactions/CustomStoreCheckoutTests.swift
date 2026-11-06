@@ -292,7 +292,7 @@ struct CustomStoreCheckoutTests {
   func start_tracksTransactionStart() async throws {
     let (checkoutHandler, product) = await makeCheckoutHandler()
     let (paywallVc, _) = makePaywall()
-    paywallVc.setLoadingState(.ready)
+    paywallVc.updateLoading(.finished)
 
     await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
@@ -485,16 +485,17 @@ struct CustomStoreCheckoutTests {
       paywallViewController: paywallVc
     )
     // The checkout's sheet is open when the paywall gives up on it.
-    paywallVc.isSafariVCPresented = true
+    let checkoutId = UUID()
+    paywallVc.dispatch(.openCheckout(checkoutId))
     await checkoutHandler.handle(
       .abandon(productId: productId, reason: .timeout),
       paywallViewController: paywallVc
     )
 
     #expect(await trackedStates() == ["start", "abandon"])
-    #expect(paywallVc.isCustomStoreCheckoutSheetLeftOpen)
-    #expect(paywallVc.isCheckoutSheetDismissalAnAbandon == false)
-    paywallVc.isSafariVCPresented = false
+    #expect(paywallVc.viewState.checkoutSheet(checkoutId)?.settled == .customStoreCheckoutEnded)
+    #expect(paywallVc.dispatch(.closeCheckout(checkoutId)) == .checkoutClosed(wasAbandon: false))
+    #expect(!paywallVc.isSafariVCPresented)
   }
 
   @Test("A buyer's abandon that arrives as the paywall closes doesn't present a paywall")
