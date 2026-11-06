@@ -34,6 +34,8 @@ public enum SupportConnectionState: Equatable, Sendable {
 /// - ping every 10 s with a 5 s deadline, during catch-up as well as live;
 /// - on foreground, probe a socket that survived before trusting it;
 /// - replay at most about 60 entries over the socket, anything older over HTTP windows.
+// One state machine; splitting it across files would widen every private member.
+// swiftlint:disable:next type_body_length
 public actor SupportTransport {
   public struct Configuration: Sendable, CustomStringConvertible, CustomDebugStringConvertible {
     /// Never prints the API key or proof values.
@@ -108,12 +110,15 @@ public actor SupportTransport {
   private var foreground = true
   private var networkAvailable = true
   private var started = false
-  private var starting = false
+  private var startInFlight: Task<Void, Error>?
   private var stopped = false
   /// A start that failed retryably: retried on backoff, and at once on network or foreground.
   private var startWanted = false
   private var startConversationId: String?
   private var startRetryTask: Task<Void, Never>?
+  private var startRetryToken = 0
+  /// A 4001 renewal is running: no socket opens with the old token meanwhile.
+  private var renewing = false
   /// An HTTP read that replaces the socket (catch-up, resync, the first window) is
   /// running: no socket may open until it ends, or two would race over the cursor.
   private var httpBusy = false
@@ -189,23 +194,45 @@ public actor SupportTransport {
   /// session can't start (call again to retry). A window that fails to load doesn't
   /// stop it: the socket's catch-up reads it over HTTP instead.
   public func start(conversationId: String? = nil) async throws {
-    guard !started, !starting else { return }
-    starting = true
-    defer { starting = false }
+    guard !started else { return }
+    // A start already running (the background retry, or another caller): share its outcome.
+    if let inFlight = startInFlight {
+      try await inFlight.value
+      return
+    }
+    let task = Task { try await self.startOnce(conversationId: conversationId) }
+    startInFlight = task
+    defer { startInFlight = nil }
+    try await task.value
+  }
+
+  private func startOnce(conversationId: String?) async throws {
     startRetryTask?.cancel()
     // A previous start that ended in a redirect may be retried.
     stopped = false
     do {
       try await startSession(conversationId: conversationId)
     } catch let error as SupportTransportError where error.isRetryable {
+      // stop() ran meanwhile: it wins.
+      if stopped { throw error }
       // Opened offline, or the server is down: keep trying without the caller.
       startWanted = true
       startConversationId = conversationId
-      state = networkAvailable ? .waitingToRetry(seconds: backoff) : .offline
+      state = !foreground ? .idle : networkAvailable ? .waitingToRetry(seconds: backoff) : .offline
       scheduleStartRetry()
       throw error
+    } catch {
+      // Not worth retrying (a 4xx, a redirect): say so and stop asking.
+      if startWanted, !stopped {
+        startWanted = false
+        state = .stopped(reason: "start_failed")
+      }
+      emit(.error(code: Self.code(of: error), retryable: false))
+      throw error
     }
+    if stopped { return }
     startWanted = false
+    backoff = configuration.backoffInitial
     httpBusy = true
     do {
       try await reloadNewestWindow()
@@ -223,17 +250,25 @@ public actor SupportTransport {
     guard networkAvailable, foreground else { return }
     let wait = backoff
     backoff = min(backoff * 2, configuration.backoffMax)
+    startRetryToken += 1
+    let token = startRetryToken
     startRetryTask = Task { [weak self] in
       try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
       guard !Task.isCancelled else { return }
-      await self?.retryStartFromTimer()
+      await self?.retryStartFromTimer(token)
     }
   }
 
-  private func retryStartFromTimer() async {
-    // Not cancelled by the start it runs.
+  private func retryStartFromTimer(_ token: Int) async {
+    // Only the latest timer runs, and the start it runs doesn't cancel it.
+    guard token == startRetryToken else { return }
     startRetryTask = nil
     await retryStart()
+  }
+
+  static func code(of error: Error) -> String {
+    if case SupportTransportError.wire(let body) = error { return body.tag }
+    return String(describing: error)
   }
 
   private func retryStart() async {
@@ -280,7 +315,12 @@ public actor SupportTransport {
 
   /// The OS reported the network path changed.
   public func setNetworkAvailable(_ available: Bool) {
-    guard available != networkAvailable else { return }
+    guard available != networkAvailable else {
+      // The path changed but stayed usable (Wi-Fi to cell): the socket may be bound to
+      // the interface going away, so probe it now instead of waiting for a ping.
+      if available { probeOrConnect() }
+      return
+    }
     networkAvailable = available
     if available {
       backoff = configuration.backoffInitial
@@ -301,6 +341,8 @@ public actor SupportTransport {
 
   private func probeOrConnect() {
     backoff = configuration.backoffInitial
+    // Still connecting: its handshake has no frame to answer with yet, so don't probe it.
+    if state == .connecting { return }
     if let socket {
       // A socket that survived suspension may be dead without knowing it: ping now
       // and drop it if nothing comes back within the deadline.
@@ -324,14 +366,17 @@ public actor SupportTransport {
       stopForGood(reason: "redirect")
       throw SupportTransportError.redirected(url: redirect.url)
     }
+    let switched = session != nil && session?.conversationId != started.conversationId
     if session?.conversationId != started.conversationId {
       // A new conversation: the old socket and the old log belong to the old one.
-      if session != nil { closeSocket(reason: "new conversation") }
+      if switched { closeSocket(reason: "new conversation") }
       log.reset(conversationId: started.conversationId)
       logEpoch += 1
     }
     session = started
     logger("session started, conversation \(started.conversationId)")
+    // The socket was closed for the old conversation: open one for the new one.
+    if switched, self.started { connect() }
   }
 
   /// Runs an authenticated command, starting a new session once if the token is refused.
@@ -341,7 +386,10 @@ public actor SupportTransport {
       return try await call(session.sessionToken, session.conversationId)
     } catch SupportTransportError.wire(let body) where body.tag == "SessionInvalid" || body.tag == "HTTP401" {
       try await startSession(conversationId: session.conversationId)
-      guard let renewed = self.session else { throw SupportTransportError.notStarted }
+      // Never replay a command against another conversation: a message for A must not land in B.
+      guard let renewed = self.session, renewed.conversationId == session.conversationId else {
+        throw SupportTransportError.wire(body)
+      }
       return try await call(renewed.sessionToken, renewed.conversationId)
     }
   }
@@ -363,14 +411,17 @@ public actor SupportTransport {
   /// up on the gap and loads the newest window instead; scrolling back fills the rest.
   private func catchUpOverHTTP() async throws {
     stats.httpCatchUps += 1
+    let epoch = logEpoch
     for _ in 0..<Self.maxCatchUpWindows {
-      guard foreground, !stopped else { return }
+      // Backgrounded, stopped, or the log was replaced (a new conversation): stop reading.
+      guard foreground, !stopped, epoch == logEpoch else { return }
       let cursor = log.cursor
       let window = try await authenticated { token, conversationId in
         try await self.http.entries(
           token: token, conversationId: conversationId, after: cursor,
           limit: self.configuration.windowSize)
       }
+      guard epoch == logEpoch else { return }
       log.applyCatchUp(window)
       reconcileQueue(with: window)
       emit(.logChanged)
@@ -417,7 +468,7 @@ public actor SupportTransport {
   }
 
   private func connect() {
-    guard started, !stopped, !httpBusy, foreground, networkAvailable, socket == nil,
+    guard started, !stopped, !httpBusy, !renewing, foreground, networkAvailable, socket == nil,
       let session, let url = liveURL(conversationId: session.conversationId)
     else {
       if !networkAvailable, !stopped { state = .offline }
@@ -453,7 +504,9 @@ public actor SupportTransport {
       guard generation == self.generation else { return }
       // URLSession can report the close code after `receive` throws; the `error`
       // frame sent before the close says the same thing.
-      let code = socket.closeCode ?? Self.closeCode(forErrorFrame: lastErrorCode)
+      // 1005/1006 (no status, abnormal) say nothing either.
+      let reported = socket.closeCode.flatMap { [1005, 1006].contains($0) ? nil : $0 }
+      let code = reported ?? Self.closeCode(forErrorFrame: lastErrorCode)
       dropped(closeCode: code, reason: SupportHTTPClient.describe(error))
     }
   }
@@ -479,6 +532,8 @@ public actor SupportTransport {
   }
 
   private func handle(frame: ServerFrame, socket: SupportSocket, generation: Int) async {
+    // Only an error frame right before the close explains it; any later frame clears it.
+    if case .error = frame {} else { lastErrorCode = nil }
     switch frame {
     case .ready(_, _, let head):
       log.ready()
@@ -520,7 +575,7 @@ public actor SupportTransport {
         consecutiveGaps += 1
         logger("gap: holding \(expected), frame prev \(prev); reconnecting")
         // Reconnect with the cursor at once, unless gaps keep repeating.
-        await replaceSocket(reason: "gap", backoff: consecutiveGaps > 3) {}
+        await replaceSocket(reason: "gap", backoff: consecutiveGaps > 3, readsHTTP: false) {}
       }
 
     case .tail(let messageId, let offset, let text):
@@ -566,9 +621,12 @@ public actor SupportTransport {
 
   /// Drops this socket, runs `work` (an HTTP read), then reconnects.
   private func replaceSocket(
-    reason: String, backoff useBackoff: Bool = false, work: () async throws -> Void
+    reason: String, backoff useBackoff: Bool = false, readsHTTP: Bool = true,
+    work: () async throws -> Void
   ) async {
     closeSocket(reason: reason)
+    let cursorBefore = log.cursor
+    let epochBefore = logEpoch
     httpBusy = true
     state = .catchingUp
     defer { httpBusy = false }
@@ -581,7 +639,9 @@ public actor SupportTransport {
       return
     }
     httpBusy = false
-    if useBackoff { scheduleRetry() } else { connect() }
+    // An HTTP read that moved nothing (bad data) must not loop ready → read → connect.
+    let noProgress = readsHTTP && log.cursor == cursorBefore && logEpoch == epochBefore
+    if useBackoff || noProgress { scheduleRetry() } else { connect() }
   }
 
   private func closeSocket(reason: String) {
@@ -614,11 +674,14 @@ public actor SupportTransport {
 
   private func renewSessionThenConnect() async {
     sessionRenewals += 1
+    renewing = true
     do {
       try await startSession(conversationId: session?.conversationId)
+      renewing = false
       // A server that keeps refusing new tokens gets backoff, not a tight loop.
       if sessionRenewals > 1 { scheduleRetry() } else { connect() }
     } catch {
+      renewing = false
       scheduleRetry()
     }
   }
@@ -630,7 +693,8 @@ public actor SupportTransport {
     closeSocket(reason: reason)
     sendTask?.cancel()
     var changed = false
-    for item in queue.all where item.state == .pending {
+    let conversationId = session?.conversationId
+    for item in queue.all where item.state == .pending && item.conversationId == conversationId {
       queue.update(clientMessageId: item.clientMessageId) {
         $0.state = .failed
         $0.failure = reason
@@ -642,7 +706,7 @@ public actor SupportTransport {
   }
 
   private func scheduleRetry() {
-    guard !stopped else { return }
+    guard !stopped, socket == nil else { return }
     guard foreground else {
       state = .idle
       return
@@ -672,7 +736,8 @@ public actor SupportTransport {
   private func startPings(on socket: SupportSocket, generation: Int) {
     pingTask?.cancel()
     // The server's heartbeat is an upper bound; never below a second, whatever it says.
-    let interval = max(1, min(configuration.pingInterval, Double(session?.heartbeatSeconds ?? 10)))
+    let heartbeat = session.map { Double($0.heartbeatSeconds) }.flatMap { $0 > 0 ? $0 : nil } ?? 10
+    let interval = max(1, min(configuration.pingInterval, heartbeat))
     pingTask = Task { [weak self] in
       while !Task.isCancelled {
         try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
@@ -729,6 +794,8 @@ public actor SupportTransport {
 
   /// Retries a failed send by hand, with the same `clientMessageId`.
   public func retry(clientMessageId: String) {
+    // Stopped for good: it can't be sent from here.
+    guard !stopped else { return }
     queue.update(clientMessageId: clientMessageId) {
       $0.state = .pending
       $0.failure = nil
@@ -783,6 +850,8 @@ public actor SupportTransport {
         emit(.pendingChanged)
         emit(.logChanged)
       } catch let error as SupportTransportError where error.isRetryable {
+        // Cancelled to restart at once: leave the backoff to the new drain.
+        if Task.isCancelled { break }
         logger("send retry after \(error)")
         let delay = max(sendBackoff, error.retryAfter ?? 0)
         sendBackoff = min(sendBackoff * 2, configuration.sendBackoffMax)

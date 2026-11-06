@@ -21,10 +21,15 @@ public struct SupportSdk: Codable, Equatable, Sendable {
 
 public struct SupportCapabilities: Codable, Equatable, Sendable {
   public struct UI: Codable, Equatable, Sendable {
-    public var v: Int
+    /// The element-set version (`v` on the wire).
+    public var version: Int
     public var elements: [String: Int]
-    public init(v: Int, elements: [String: Int]) {
-      self.v = v
+    enum CodingKeys: String, CodingKey {
+      case version = "v"
+      case elements
+    }
+    public init(version: Int, elements: [String: Int]) {
+      self.version = version
       self.elements = elements
     }
   }
@@ -48,7 +53,7 @@ public struct SupportCapabilities: Codable, Equatable, Sendable {
 
   /// What the transport-only build can draw: text for everything (M2 adds renderers).
   public static let textOnly = SupportCapabilities(
-    ui: UI(v: 1, elements: [:]), cards: [], actions: [], entryKinds: nil, attachments: true)
+    ui: UI(version: 1, elements: [:]), cards: [], actions: [], entryKinds: nil, attachments: true)
 }
 
 public struct SupportAppTool: Codable, Equatable, Sendable {

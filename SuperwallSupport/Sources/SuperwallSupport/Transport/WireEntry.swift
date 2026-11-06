@@ -305,6 +305,19 @@ public struct KnownEntry: Equatable, Sendable {
   }
 }
 
+/// A known kind that didn't decode, or JSON with no usable envelope.
+public struct FailedEntry: Equatable, Sendable {
+  public let seq: Int?
+  public let id: String?
+  public let kind: String?
+  /// Drawn instead of the entry.
+  public let text: String?
+  /// Erased: expected to fail; draw `text` (`SupportWire.redactedText`) and nothing else.
+  public let redacted: Bool
+  public let issue: String
+  public let raw: JSONValue
+}
+
 /// One entry, decoded on its own so a bad one never blanks a conversation.
 public enum WireEntry: Equatable, Sendable {
   /// A kind this version knows, and it decoded. `raw` keeps unknown keys.
@@ -312,16 +325,13 @@ public enum WireEntry: Equatable, Sendable {
   /// A kind this version doesn't know. Drawn from `text` if present, else skipped.
   case unknown(seq: Int, id: String, kind: String, text: String?, raw: [String: JSONValue])
   /// A known kind that didn't decode, or JSON with no usable envelope. Drawn from `text`.
-  case failed(
-    seq: Int?, id: String?, kind: String?, text: String?, redacted: Bool, issue: String,
-    raw: JSONValue
-  )
+  case failed(FailedEntry)
 
   public var seq: Int? {
     switch self {
     case .known(let entry, _): return entry.seq
     case .unknown(let seq, _, _, _, _): return seq
-    case .failed(let seq, _, _, _, _, _, _): return seq
+    case .failed(let failed): return failed.seq
     }
   }
 
@@ -329,7 +339,7 @@ public enum WireEntry: Equatable, Sendable {
     switch self {
     case .known(let entry, _): return entry.id
     case .unknown(_, let id, _, _, _): return id
-    case .failed(_, let id, _, _, _, _, _): return id
+    case .failed(let failed): return failed.id
     }
   }
 
@@ -337,7 +347,7 @@ public enum WireEntry: Equatable, Sendable {
     switch self {
     case .known(let entry, _): return entry.kind
     case .unknown(_, _, let kind, _, _): return kind
-    case .failed(_, _, let kind, _, _, _, _): return kind
+    case .failed(let failed): return failed.kind
     }
   }
 
@@ -346,7 +356,7 @@ public enum WireEntry: Equatable, Sendable {
     switch self {
     case .known(let entry, _): return entry.text
     case .unknown(_, _, _, let text, _): return text
-    case .failed(_, _, _, let text, _, _, _): return text
+    case .failed(let failed): return failed.text
     }
   }
 
@@ -359,7 +369,7 @@ public enum WireEntry: Equatable, Sendable {
   public static func decode(_ raw: JSONValue) -> WireEntry {
     let object = raw.objectValue
     // The envelope every entry carries: seq, id, kind, and an optional string text.
-    let envelope: (seq: Int, id: String, kind: String, text: String?)? = {
+    let envelope: Envelope? = {
       guard let object,
         let seq = object["seq"]?.intValue, seq >= 0,
         let id = object["id"]?.stringValue, WireIds.matches(id, prefix: "ent"),
@@ -367,7 +377,7 @@ public enum WireEntry: Equatable, Sendable {
       else { return nil }
       let text = object["text"]
       if let text, text.stringValue == nil { return nil }
-      return (seq, id, kind, text?.stringValue)
+      return Envelope(seq: seq, id: id, kind: kind, text: text?.stringValue)
     }()
 
     guard let envelope, let object else {
@@ -376,14 +386,15 @@ public enum WireEntry: Equatable, Sendable {
       let seq = object?["seq"]?.intValue.flatMap { $0 >= 0 ? $0 : nil }
       let id = object?["id"]?.stringValue.flatMap { WireIds.matches($0, prefix: "ent") ? $0 : nil }
       return .failed(
-        seq: seq,
-        id: id,
-        kind: object?["kind"]?.stringValue,
-        text: object?["text"]?.stringValue,
-        redacted: object?["redacted"]?.boolValue == true,
-        issue: "No usable envelope",
-        raw: raw
-      )
+        FailedEntry(
+          seq: seq,
+          id: id,
+          kind: object?["kind"]?.stringValue,
+          text: object?["text"]?.stringValue,
+          redacted: object?["redacted"]?.boolValue == true,
+          issue: "No usable envelope",
+          raw: raw
+        ))
     }
     guard SupportWire.knownEntryKinds.contains(envelope.kind) else {
       return .unknown(
@@ -393,15 +404,24 @@ public enum WireEntry: Equatable, Sendable {
       return .known(try KnownEntry.decode(raw), raw: object)
     } catch {
       return .failed(
-        seq: envelope.seq,
-        id: envelope.id,
-        kind: envelope.kind,
-        text: envelope.text,
-        redacted: object["redacted"]?.boolValue == true,
-        issue: String(describing: error),
-        raw: raw
-      )
+        FailedEntry(
+          seq: envelope.seq,
+          id: envelope.id,
+          kind: envelope.kind,
+          text: envelope.text,
+          redacted: object["redacted"]?.boolValue == true,
+          issue: String(describing: error),
+          raw: raw
+        ))
     }
+  }
+
+  /// The fields every entry carries, read on their own.
+  private struct Envelope {
+    let seq: Int
+    let id: String
+    let kind: String
+    let text: String?
   }
 
   /// Decodes a window's entries one by one. A non-array decodes to no entries.

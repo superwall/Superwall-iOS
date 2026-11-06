@@ -8,6 +8,10 @@ excluded:
   - ${PWD}/.claude
   - ${PWD}/Examples
   - ${PWD}/Tests
+  # The Support add-on's tests, test app and SwiftPM build output, like core's.
+  - ${PWD}/SuperwallSupport/Tests
+  - ${PWD}/SuperwallSupport/TestApp
+  - ${PWD}/SuperwallSupport/.build
   - ${PWD}/Sources/SuperwallKit/StoreKit/Products/Receipt Manager/ASN1Swift
 
 disabled_rules:

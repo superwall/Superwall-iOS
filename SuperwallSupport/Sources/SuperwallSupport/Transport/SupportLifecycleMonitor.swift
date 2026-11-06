@@ -31,6 +31,8 @@ public final class SupportLifecycleMonitor: @unchecked Sendable {
   /// Starts observing. Call on the main thread.
   @MainActor
   public func start() {
+    // Once only: a finished stream and a cancelled path monitor can't restart.
+    guard drain == nil else { return }
     let transport = transport
     let signals = signals
     drain = Task {
