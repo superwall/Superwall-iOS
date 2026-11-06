@@ -78,9 +78,8 @@ struct AppStoreEntitlementLookupTests {
       )
 
     // Setting a grant assigns `customerInfo` before the setter returns on both
-    // paths — `refreshAutomaticCustomerInfoAfterGrantChange` without a purchase
-    // controller, `refreshExternalControllerCustomerInfo` with one — so the
-    // load has nothing to add either way.
+    // paths, with or without a purchase controller (`entitlementsDidPublish`),
+    // so the load has nothing to add either way.
     let automatic = DependencyContainer()
     automatic.configManager.store.update(ConfigUpdate.retrieved(webOnly))
     automatic.entitlementsInfo.publish(.grantChange([Entitlement(id: "web_only")]))

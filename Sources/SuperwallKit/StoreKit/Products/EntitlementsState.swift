@@ -7,57 +7,40 @@
 
 import Foundation
 
-/// Holds ``EntitlementsState``. Most changes are a single
-/// ``EntitlementsUpdate``; saving and publishing are done by observers.
-typealias EntitlementsStore = StateStore<EntitlementsInfo, EntitlementsState>
-
-/// Publishes a subscription status change, reading the test-mode override
-/// with the store locked.
-///
-/// Reading it before taking the lock would let a writer read an override,
-/// lose the race for the lock to a writer that read a newer one, and then
-/// publish the older override last. Read with the lock held, the writer that
-/// applies last also read last.
-struct PublishSubscriptionStatus: StoreAction {
-  let change: SubscriptionStatusChange
-  /// Returns the test-mode override, if test mode has one. Runs with the
-  /// store locked, so it must only read values, never wait.
-  let testModeOverride: () -> SubscriptionStatus?
-
-  func execute(in context: EntitlementsInfo) {
-    context.store.update(
-      EntitlementsUpdate.publish(change, testModeOverride: testModeOverride())
-    )
-  }
-}
+/// Holds ``EntitlementsState``. Changed by ``EntitlementsAction``s, whose
+/// side effects are the methods of ``EntitlementsContext``.
+typealias EntitlementsStore = StateStore<EntitlementsContext, EntitlementsState>
 
 /// What the SDK knows about the user's entitlements and subscription status.
 /// Changed only by ``EntitlementsUpdate`` reducers on its store.
 ///
-/// Two statuses are kept:
-/// - The **assigned** status: what a writer handed the SDK. Device and web
-///   entitlements on the automatic path, or the developer's own value when
-///   using a purchase controller. It's saved, and the published status is
-///   always worked out from it, so clearing granted entitlements can remove
-///   them again.
-/// - The **published** status: the assigned status with active granted
-///   entitlements merged in, any test-mode override applied, and an empty
-///   `.active` turned into `.inactive`. This is ``Superwall/subscriptionStatus``.
-///
-/// ``active``, ``all`` and ``inactive`` are worked out on each read rather
-/// than stored, so they always match the status and product map they come
-/// from.
+/// The **assigned** status is what a writer handed the SDK: device and web
+/// entitlements on the automatic path, or the developer's own value when using
+/// a purchase controller. The published ``status`` is worked out from it, the
+/// granted entitlements and the test-mode override on every read, so clearing
+/// granted entitlements removes them again and the published status can never
+/// disagree with what it's made from.
 struct EntitlementsState: Equatable {
   /// The entitlements that belong to each product ID, from the config.
   var entitlementsByProductId: [String: Set<Entitlement>] = [:]
   /// The entitlements set through ``Superwall/grantedEntitlements``.
   var granted: Set<Entitlement> = []
   var assignedStatus: SubscriptionStatus = .unknown
-  var status: SubscriptionStatus = .unknown
-  /// Whether the warning about granted entitlements keeping an `.inactive`
-  /// assignment active is due or has been logged. It's logged once per
-  /// session.
-  var hasGrantedEntitlementsWarning = false
+  /// The test-mode override as of the last status change.
+  var testMode: TestModeOverride = .off
+  var grantWarning: GrantWarning = .notDue
+
+  /// ``Superwall/subscriptionStatus``: the test-mode override if there is
+  /// one, otherwise the assigned status with active grants merged in and an
+  /// empty `.active` turned into `.inactive`.
+  var status: SubscriptionStatus {
+    switch testMode {
+    case .overriding(let status):
+      return status
+    case .off:
+      return Self.merged(assigned: assignedStatus, granted: granted)
+    }
+  }
 
   /// All entitlements from the config, whether active or not.
   var all: Set<Entitlement> {
@@ -89,76 +72,11 @@ struct EntitlementsState: Equatable {
     }
     return entitlements
   }
-}
 
-/// The ways ``EntitlementsState`` can change.
-enum EntitlementsUpdate: Reducer {
-  /// Replaces the entitlements of every product.
-  case productEntitlements([String: Set<Entitlement>])
-  /// Records a new assigned status, or new granted entitlements, and works
-  /// out the published status from them. `testModeOverride`, when set,
-  /// replaces the published status.
-  case publish(SubscriptionStatusChange, testModeOverride: SubscriptionStatus?)
-
-  func reduce(_ state: EntitlementsState) -> EntitlementsState {
-    var state = state
-    switch self {
-    case .productEntitlements(let entitlementsByProductId):
-      state.entitlementsByProductId = entitlementsByProductId
-    case let .publish(change, testModeOverride):
-      Self.publish(change, testModeOverride: testModeOverride, into: &state)
-    }
-    return state
-  }
-
-  private static func publish(
-    _ change: SubscriptionStatusChange,
-    testModeOverride: SubscriptionStatus?,
-    into state: inout EntitlementsState
-  ) {
-    switch change {
-    case .developerAssignment(let status):
-      state.assignedStatus = status
-      // A developer who reads the published status and writes it back would
-      // otherwise hand the grants back as their own, and clearing them could
-      // never revoke them. Compared ignoring product IDs: the merge unions
-      // those across a shared ID, so a grant that won a collision comes back
-      // carrying the loser's product IDs.
-      if case .active(let assigned) = status {
-        state.assignedStatus = .active(
-          assigned.filter { record in
-            !state.granted.contains { $0.isEqualIgnoringProductIds(to: record) }
-          }
-        )
-      }
-      // The status publishes as active, so the assignment would otherwise
-      // look ignored.
-      if case .inactive = status,
-        state.granted.contains(where: \.isActive) {
-        state.hasGrantedEntitlementsWarning = true
-      }
-    case .sdkAssignment(let status):
-      state.assignedStatus = status
-    case .grantChange(let granted):
-      state.granted = granted
-    }
-
-    state.status = mergedStatus(
-      assigned: state.assignedStatus,
-      granted: state.granted,
-      testModeOverride: testModeOverride
-    )
-  }
-
-  /// The status the SDK reports for `assigned`.
-  static func mergedStatus(
+  private static func merged(
     assigned: SubscriptionStatus,
-    granted: Set<Entitlement>,
-    testModeOverride: SubscriptionStatus?
+    granted: Set<Entitlement>
   ) -> SubscriptionStatus {
-    if let testModeOverride = testModeOverride {
-      return testModeOverride
-    }
     // Only active grants merge in, as with web entitlements. Inactive grants
     // still reach customer info. Merged first so two grants sharing an ID
     // become one record.
@@ -185,5 +103,160 @@ enum EntitlementsUpdate: Reducer {
       return .inactive
     }
     return status
+  }
+}
+
+/// Whether test mode replaces the published status.
+enum TestModeOverride: Equatable {
+  case off
+  case overriding(SubscriptionStatus)
+
+  init(_ status: SubscriptionStatus?) {
+    if let status = status {
+      self = .overriding(status)
+    } else {
+      self = .off
+    }
+  }
+}
+
+/// The once-per-session warning that an `.inactive` assignment stays active
+/// because of granted entitlements.
+enum GrantWarning: Equatable {
+  case notDue
+  case logged
+}
+
+/// The ways ``EntitlementsState`` can change.
+enum EntitlementsUpdate: Reducer {
+  /// The config's product entitlements arrived, replacing the old ones.
+  case productEntitlementsReceived([String: Set<Entitlement>])
+  /// The developer assigned ``Superwall/subscriptionStatus``.
+  case developerAssignedStatus(SubscriptionStatus, testMode: TestModeOverride)
+  /// The SDK assigned a status it worked out itself.
+  case sdkAssignedStatus(SubscriptionStatus, testMode: TestModeOverride)
+  /// ``Superwall/grantedEntitlements`` changed.
+  case grantsChanged(Set<Entitlement>, testMode: TestModeOverride)
+
+  func reduce(_ state: EntitlementsState) -> EntitlementsState {
+    var state = state
+    switch self {
+    case .productEntitlementsReceived(let entitlementsByProductId):
+      state.entitlementsByProductId = entitlementsByProductId
+    case let .developerAssignedStatus(status, testMode):
+      state.testMode = testMode
+      state.assignedStatus = status
+      // A developer who reads the published status and writes it back would
+      // otherwise hand the grants back as their own, and clearing them could
+      // never revoke them. Compared ignoring product IDs: the merge unions
+      // those across a shared ID, so a grant that won a collision comes back
+      // carrying the loser's product IDs.
+      if case .active(let assigned) = status {
+        state.assignedStatus = .active(
+          assigned.filter { record in
+            !state.granted.contains { $0.isEqualIgnoringProductIds(to: record) }
+          }
+        )
+      }
+      // The status publishes as active, so the assignment would otherwise
+      // look ignored.
+      if case .inactive = status,
+        state.granted.contains(where: \.isActive) {
+        state.grantWarning = .logged
+      }
+    case let .sdkAssignedStatus(status, testMode):
+      state.testMode = testMode
+      state.assignedStatus = status
+    case let .grantsChanged(granted, testMode):
+      state.testMode = testMode
+      state.granted = granted
+    }
+    return state
+  }
+}
+
+/// One status change, handed to ``EntitlementsPublishing`` once the store is
+/// unlocked, in the order the changes were applied.
+struct EntitlementsPublication {
+  let change: SubscriptionStatusChange
+  let before: EntitlementsState
+  let after: EntitlementsState
+}
+
+/// Everything an ``EntitlementsAction`` can cause. Methods that run with the
+/// store locked must not wait on another thread.
+protocol EntitlementsContext: AnyObject {
+  var store: EntitlementsStore { get }
+
+  /// The status test mode wants published, if any. Read with the store
+  /// locked, so the writer that publishes last also read it last.
+  func currentTestModeOverride() -> SubscriptionStatus?
+
+  func saveProductMap(_ entitlementsByProductId: [String: Set<Entitlement>])
+  func saveGranted(_ granted: Set<Entitlement>)
+  /// Saves the assigned status, not the published one: restoring a published
+  /// value would make granted entitlements part of the assigned status for
+  /// good, so they couldn't be cleared after a relaunch.
+  func saveAssignedStatus(_ status: SubscriptionStatus)
+
+  /// Runs once the store is unlocked.
+  func logGrantWarning()
+
+  /// Queues `publication` behind the ones before it. Doesn't wait.
+  func queuePublication(_ publication: EntitlementsPublication)
+  /// Hands the queued publications over in order. Runs once the store is
+  /// unlocked.
+  func deliverPublications()
+}
+
+/// The changes to the entitlements. Each runs with the store locked and
+/// returns the state it left.
+enum EntitlementsAction: StoreAction {
+  case changeStatus(SubscriptionStatusChange)
+  case receiveProductEntitlements([String: Set<Entitlement>])
+
+  @discardableResult
+  func execute(in context: EntitlementsContext) -> EntitlementsState {
+    let store = context.store
+    let before = store.state
+    switch self {
+    case .changeStatus(let change):
+      let testMode = TestModeOverride(context.currentTestModeOverride())
+      switch change {
+      case .developerAssignment(let status):
+        store.update(EntitlementsUpdate.developerAssignedStatus(status, testMode: testMode))
+      case .sdkAssignment(let status):
+        store.update(EntitlementsUpdate.sdkAssignedStatus(status, testMode: testMode))
+      case .grantChange(let granted):
+        store.update(EntitlementsUpdate.grantsChanged(granted, testMode: testMode))
+      }
+      let after = store.state
+      if before.granted != after.granted {
+        context.saveGranted(after.granted)
+      }
+      if before.assignedStatus != after.assignedStatus {
+        context.saveAssignedStatus(after.assignedStatus)
+      }
+      if before.grantWarning == .notDue,
+        after.grantWarning == .logged {
+        store.deferUntilUnlocked {
+          context.logGrantWarning()
+        }
+      }
+      context.queuePublication(
+        EntitlementsPublication(change: change, before: before, after: after)
+      )
+      store.deferUntilUnlocked {
+        context.deliverPublications()
+      }
+      return after
+    case .receiveProductEntitlements(let entitlementsByProductId):
+      store.update(EntitlementsUpdate.productEntitlementsReceived(entitlementsByProductId))
+      let after = store.state
+      if before.entitlementsByProductId != after.entitlementsByProductId {
+        context.saveProductMap(after.entitlementsByProductId)
+      }
+      return after
+    }
   }
 }

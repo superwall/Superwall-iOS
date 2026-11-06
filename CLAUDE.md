@@ -215,16 +215,20 @@ behind itself. Use `enqueue` for follow-up work, as the fetch does for its refre
 
 ### Entitlements store
 
-`EntitlementsInfo` keeps the entitlements in a `StateStore` (`EntitlementsState`), changed only by
-`EntitlementsUpdate` reducers: the by-product map, granted entitlements, and both the assigned and
-the published subscription status, so `Superwall.subscriptionStatus` and `entitlements.active`
-always change together. `active`, `all` and `inactive` are worked out from the state on each read;
-don't store anything derived from the status or from `isActive`, or it can fall behind it. Every
-status write goes through `publishSubscriptionStatus`, which dispatches `PublishSubscriptionStatus`:
-it reads the test-mode override with the store locked, then hands it to the reducer, so the
-writer that publishes last read the override last. Don't read it before the dispatch. Observers save changes with the
-store locked (storage writes hand off) and emit `$subscriptionStatus` through `OrderedDelivery` once
-it's unlocked. `web` still reads the saved redeem response, outside the store.
+`EntitlementsInfo` keeps the entitlements in a `StateStore` (`EntitlementsState`): the by-product
+map, granted entitlements, the assigned subscription status, the test-mode override as of the last
+change (`TestModeOverride`) and the grant warning (`GrantWarning`). The published status
+(`Superwall.subscriptionStatus`), `active`, `all` and `inactive` are computed from those on each
+read; don't store anything derived from the status or from `isActive`, or it can fall behind.
+`EntitlementsUpdate` cases are named events (`developerAssignedStatus`, `grantsChanged`, ...).
+Changes go through the closed `EntitlementsAction` enum, and its side effects are the methods of
+`EntitlementsContext`, which `EntitlementsInfo` implements: saving, the warning log (deferred until
+unlocked), and queuing each change as an `EntitlementsPublication` that's delivered in order once
+the store is unlocked. The test-mode override is read inside the action, with the store locked, so
+the writer that publishes last read it last; don't read it before dispatching. `Superwall` is the
+`EntitlementsPublishing` receiver: it emits `$subscriptionStatus` and `statusWithGrants`, and
+rebuilds `customerInfo` from the publication's `after` state, never by reading the store again.
+`web` still reads the saved redeem response, outside the store.
 
 ### Native macOS
 

@@ -309,6 +309,20 @@ public final class Superwall: NSObject, ObservableObject {
     return entitlements.assignedStatus
   }
 
+  /// Each published status with the granted entitlements it was published
+  /// with, so listeners never pair a status with a later grant set.
+  let statusWithGrants = CurrentValueSubject<StatusWithGrants, Never>(
+    StatusWithGrants(status: .unknown, granted: [])
+  )
+
+  /// Sends a newly published status to `$subscriptionStatus` and
+  /// `statusWithGrants` subscribers.
+  func emitSubscriptionStatus(_ status: SubscriptionStatus, granted: Set<Entitlement>) {
+    objectWillChange.send()
+    _subscriptionStatus.subject.send(status)
+    statusWithGrants.send(StatusWithGrants(status: status, granted: granted))
+  }
+
   /// Contains the latest information about all of the customer's purchase and subscription data.
   ///
   /// This is a published property, so you can subscribe to it to receive updates when it changes. Alternatively,
@@ -507,14 +521,10 @@ public final class Superwall: NSObject, ObservableObject {
     super.init()
     dependencyContainer.identityManager.resetHandler = self
 
-    // Changes are sent once the entitlements store is unlocked, in the order
-    // they were applied, so a subscriber that blocks on another thread can't
-    // deadlock a writer.
-    let statusSubject = _subscriptionStatus.subject
-    dependencyContainer.entitlementsInfo.publishStatusChanges { [weak self] status in
-      self?.objectWillChange.send()
-      statusSubject.send(status)
-    }
+    // Status changes are handed over once the entitlements store is unlocked,
+    // in the order they were applied, so a subscriber that blocks on another
+    // thread can't deadlock a writer.
+    dependencyContainer.entitlementsInfo.publisher = self
   }
 
   private convenience init(

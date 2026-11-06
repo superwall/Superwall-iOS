@@ -61,18 +61,30 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
       return store.state.entitlementsByProductId
     }
     set {
-      store.update(EntitlementsUpdate.productEntitlements(newValue))
+      setEntitlementsFromConfig(newValue)
     }
   }
 
-  /// Every change to the entitlements state goes through this store. Its
-  /// observers save each change and publish the status, in the order the
-  /// changes were applied.
+  /// Every change to the entitlements state goes through this store.
   let store: EntitlementsStore
+
+  /// Told about each status change once the store is unlocked, and asked for
+  /// the test-mode override with it locked. Held weakly, and set once by
+  /// ``Superwall``.
+  var publisher: EntitlementsPublishing? {
+    get {
+      return publisherSlot.value
+    }
+    set {
+      publisherSlot.value = newValue
+    }
+  }
 
   // MARK: - Private vars
   private unowned let storage: Storage
   private unowned let delegateAdapter: SuperwallDelegateAdapter
+  private let publisherSlot: PublisherSlot
+  private let publications: OrderedDelivery<EntitlementsPublication>
 
   init(
     storage: Storage,
@@ -89,11 +101,12 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
       initial.entitlementsByProductId = storage.get(EntitlementsByProductId.self) ?? [:]
     }
     store = EntitlementsStore(initial: initial)
-    super.init()
-
-    store.observe { [weak self] before, after in
-      self?.save(before: before, after: after)
+    let publisherSlot = PublisherSlot()
+    self.publisherSlot = publisherSlot
+    publications = OrderedDelivery { publication in
+      publisherSlot.value?.entitlementsDidPublish(publication)
     }
+    super.init()
   }
 
   // MARK: - Public API
@@ -117,71 +130,88 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   // MARK: - Internal API
 
   /// Applies `change` and works out the published status from it.
-  /// `testModeOverride` is called with the store locked, so it must only read
-  /// values, never wait.
   ///
-  /// When this returns, ``status`` and ``active`` reflect the change, and any
-  /// receiver given to ``publishStatusChanges(to:)`` has been handed the new
-  /// status, unless another thread is handing it statuses, in which case that
-  /// thread hands this one over next.
-  func publish(
-    _ change: SubscriptionStatusChange,
-    testModeOverride: @escaping () -> SubscriptionStatus? = { nil }
-  ) {
-    store.dispatch(
-      PublishSubscriptionStatus(change: change, testModeOverride: testModeOverride),
-      in: self
-    )
+  /// When this returns, ``status`` and ``active`` reflect the change, and the
+  /// ``publisher`` has been told about it, unless another thread is telling
+  /// it about earlier changes, in which case that thread hands this one over
+  /// next.
+  @discardableResult
+  func publish(_ change: SubscriptionStatusChange) -> EntitlementsState {
+    return store.dispatch(EntitlementsAction.changeStatus(change), in: self)
   }
 
   func setEntitlementsFromConfig(_ entitlementsByProductId: [String: Set<Entitlement>]) {
-    store.update(EntitlementsUpdate.productEntitlements(entitlementsByProductId))
+    store.dispatch(EntitlementsAction.receiveProductEntitlements(entitlementsByProductId), in: self)
+  }
+}
+
+// MARK: - EntitlementsContext
+
+extension EntitlementsInfo: EntitlementsContext {
+  func currentTestModeOverride() -> SubscriptionStatus? {
+    return publisher?.currentTestModeOverride()
   }
 
-  /// Hands every later change of the published status to `receive`, in the
-  /// order the changes were applied, with the store unlocked.
-  func publishStatusChanges(to receive: @escaping (SubscriptionStatus) -> Void) {
-    let delivery = OrderedDelivery(receive)
-    store.observe { [weak store] before, after in
-      if before.status == after.status {
-        return
-      }
-      delivery.add(after.status)
-      store?.deferUntilUnlocked {
-        delivery.deliver()
-      }
-    }
+  // Storage writes hand off to a background queue, so they're safe with the
+  // store locked, and they're made in the order the changes were applied.
+  func saveProductMap(_ entitlementsByProductId: [String: Set<Entitlement>]) {
+    storage.save(entitlementsByProductId, forType: EntitlementsByProductId.self)
   }
 
-  // MARK: - Private API
+  func saveGranted(_ granted: Set<Entitlement>) {
+    storage.save(granted, forType: GrantedEntitlements.self)
+  }
 
-  /// Saves what changed. Storage writes hand off to a background queue, so
-  /// they're safe with the store locked, and they're made in the order the
+  func saveAssignedStatus(_ status: SubscriptionStatus) {
+    storage.save(status, forType: SubscriptionStatusKey.self)
+  }
+
+  func logGrantWarning() {
+    Logger.debug(
+      logLevel: .warn,
+      scope: .grantedEntitlements,
+      message: "subscriptionStatus was set to .inactive but grantedEntitlements "
+        + "is not empty, so the status remains active. Assigning subscriptionStatus "
+        + "doesn't clear granted entitlements — set grantedEntitlements to an empty set to revoke them."
+    )
+  }
+
+  func queuePublication(_ publication: EntitlementsPublication) {
+    publications.add(publication)
+  }
+
+  func deliverPublications() {
+    publications.deliver()
+  }
+}
+
+/// What ``EntitlementsInfo`` asks of the object that publishes the status.
+protocol EntitlementsPublishing: AnyObject {
+  /// The status test mode wants published, if any. Called with the
+  /// entitlements store locked, so it must only read values, never wait.
+  func currentTestModeOverride() -> SubscriptionStatus?
+
+  /// Called once the store is unlocked, one change at a time, in the order the
   /// changes were applied.
-  private func save(before: EntitlementsState, after: EntitlementsState) {
-    if before.entitlementsByProductId != after.entitlementsByProductId {
-      storage.save(after.entitlementsByProductId, forType: EntitlementsByProductId.self)
+  func entitlementsDidPublish(_ publication: EntitlementsPublication)
+}
+
+/// Holds the publisher weakly, behind a lock, so the delivery closure can
+/// reach it without holding on to ``EntitlementsInfo``.
+private final class PublisherSlot: @unchecked Sendable {
+  private let lock = NSLock()
+  private weak var publisher: EntitlementsPublishing?
+
+  var value: EntitlementsPublishing? {
+    get {
+      lock.lock()
+      defer { lock.unlock() }
+      return publisher
     }
-    if before.granted != after.granted {
-      storage.save(after.granted, forType: GrantedEntitlements.self)
-    }
-    // The assigned value is saved, not the published one: restoring a
-    // published value would make granted entitlements part of the assigned
-    // status for good, so they couldn't be cleared after a relaunch.
-    if before.assignedStatus != after.assignedStatus {
-      storage.save(after.assignedStatus, forType: SubscriptionStatusKey.self)
-    }
-    if !before.hasGrantedEntitlementsWarning,
-      after.hasGrantedEntitlementsWarning {
-      store.deferUntilUnlocked {
-        Logger.debug(
-          logLevel: .warn,
-          scope: .grantedEntitlements,
-          message: "subscriptionStatus was set to .inactive but grantedEntitlements "
-            + "is not empty, so the status remains active. Assigning subscriptionStatus "
-            + "doesn't clear granted entitlements — set grantedEntitlements to an empty set to revoke them."
-        )
-      }
+    set {
+      lock.lock()
+      publisher = newValue
+      lock.unlock()
     }
   }
 }
