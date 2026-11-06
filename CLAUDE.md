@@ -213,6 +213,23 @@ subscribe to it to hear about changes, but read `configManager.config` (or the f
 directly or through `fetchConfiguration()`/`refreshConfiguration()`: it would wait on work queued
 behind itself. Use `enqueue` for follow-up work, as the fetch does for its refreshes.
 
+### Purchase and restore stores
+
+`PurchasingCoordinator` keeps the purchase flow in a `StateStore<PurchaseContext, PurchaseState>`.
+`PurchasePhase` is `idle`, `awaitingResult(completion)` (a StoreKit 1 purchase with no purchase begun)
+or `inFlight(purchase, completion?)`, and `PurchaseMethod` says whether it's a StoreKit/purchase
+controller purchase or a custom store checkout. Each `InFlightPurchase` has an id: whoever handles a
+purchase ends it with `finish(purchase)`, which does nothing once another purchase has begun. Read
+`coordinator.purchase` once and pass it on, never `source` then `product`. A `PurchaseAction` that
+drops a waiting StoreKit 1 completion resumes it as cancelled, so a purchase can't wait forever.
+Results and StoreKit lookups go through the `PurchaseContext` protocol. `TransactionManager.purchase`
+and `RestoreFlow.restore` each run on their own `SerialTaskCoordinator`. A call made from inside one
+(the app's purchase controller calling `Superwall.purchase` or `restorePurchases` from its own
+purchase or restore) runs straight away, through a task-local flag and the "purchase function with a
+purchase controller" check. Don't make that inner call wait on the queue, or it deadlocks.
+`RestoreFlow` has no state; everything it causes goes through `RestoreContext`. Observer-mode
+tracking stays in `TransactionManager`.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.
