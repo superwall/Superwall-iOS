@@ -215,7 +215,15 @@ final class DependencyContainer {
     testModeManager = TestModeManager(
       identityManager: identityManager,
       deviceHelper: deviceHelper,
-      storage: storage
+      storage: storage,
+      statusSink: SuperwallTestModeStatusSink(
+        hasExternalPurchaseController: { [unowned self] in
+          self.makeHasExternalPurchaseController()
+        },
+        grantedEntitlements: { [unowned self] in
+          self.entitlementsInfo.granted
+        }
+      )
     )
 
     deviceHelper.testModeManager = testModeManager
@@ -705,16 +713,14 @@ extension DependencyContainer: ReceiptFactory {
   }
 
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool {
-    // Check test mode override first
-    if testModeManager.isTestMode {
-      switch testModeManager.freeTrialOverride {
-      case .useDefault:
-        break
-      case .forceAvailable:
-        return true
-      case .forceUnavailable:
-        return false
-      }
+    // Check test mode override first. It's `.useDefault` while test mode is off.
+    switch testModeManager.freeTrialOverride {
+    case .useDefault:
+      break
+    case .forceAvailable:
+      return true
+    case .forceUnavailable:
+      return false
     }
     // Config can be published before the first purchases load finishes (see
     // `ConfigManager.fetchConfiguration`). Only the upgrade check inside reads

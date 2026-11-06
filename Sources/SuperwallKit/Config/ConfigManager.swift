@@ -563,38 +563,24 @@ class ConfigManager {
     let testModeManager = factory.makeTestModeManager()
 
     // Evaluate test mode before loading products
-    let wasTestMode = testModeManager.isTestMode
-    let testModeReason = testModeManager.evaluateTestMode(config: config, options: options)
+    let testMode = testModeManager.evaluateTestMode(config: config, options: options)
+    let isTestMode = testMode.after.isActive
     storeAndApply(
       config,
-      keepingForNextLaunch: testModeReason?.comesFromConfig != true
+      keepingForNextLaunch: testMode.after.reason?.comesFromConfig != true
     )
-    let testModeJustActivated = !wasTestMode && testModeManager.isTestMode
-    let testModeJustDeactivated = wasTestMode && !testModeManager.isTestMode
+    // Turning test mode off hands the status back to the SDK. That has to
+    // land before the purchases below set the real one.
+    await testModeManager.finishPublishing()
 
     var hasPublishedConfig = false
-    if testModeManager.isTestMode {
+    if isTestMode {
       // In test mode, fetch products from API instead of StoreKit
       await fetchTestModeProducts(testModeManager: testModeManager)
     } else {
-      // If test mode was just turned off, reset subscription status
-      // so stale test entitlements don't persist. Skip when using an
-      // external purchase controller — it owns the status and
-      // loadPurchasedProducts / the controller itself will restore it.
-      if testModeJustDeactivated,
-        !factory.makeHasExternalPurchaseController() {
-        Superwall.shared.setSubscriptionStatus(assigned: .inactive)
-        // Granted entitlements survive test mode, so the customer info has
-        // to keep carrying them while the status does.
-        Superwall.shared.customerInfo = CustomerInfo(
-          subscriptions: [],
-          nonSubscriptions: [],
-          entitlements: []
-        ).merging(with: .blank(), granting: entitlementsInfo.granted)
-      }
       // The saved copy from a test-mode launch can still hold test
       // entitlements, so it isn't restored when test mode just turned off.
-      if let savedCustomerInfo = savedCustomerInfo, !testModeJustDeactivated {
+      if let savedCustomerInfo = savedCustomerInfo, !testMode.justDeactivated {
         await factory.restorePurchases(
           from: savedCustomerInfo,
           grantedEntitlements: entitlementsInfo.granted,
@@ -614,7 +600,7 @@ class ConfigManager {
       }
     }
 
-    if !testModeManager.isTestMode {
+    if !isTestMode {
       Task {
         await webEntitlementRedeemer.pollWebEntitlements(config: config, isFirstTime: isFirstTime)
       }
@@ -624,9 +610,8 @@ class ConfigManager {
     }
 
     // Show test mode alert if it's the first time OR if test mode just became active
-    if isFirstTime || testModeJustActivated,
-      testModeManager.isTestMode,
-      let reason = testModeManager.testModeReason {
+    if isFirstTime || testMode.justActivated,
+      let reason = testMode.after.reason {
       if DevMode.isActive(options) {
         await applyDefaultTestModeState(testModeManager: testModeManager)
       } else {
@@ -892,7 +877,7 @@ class ConfigManager {
   private func fetchTestModeProducts(testModeManager: TestModeManager) async {
     do {
       let response = try await network.getSuperwallProducts()
-      testModeManager.setProducts(response.data)
+      testModeManager.dispatch(.productsLoaded(response.data))
 
       // Also populate storeKitManager.productsById with test products
       for superwallProduct in response.data {
@@ -921,9 +906,8 @@ class ConfigManager {
   /// starts inactive so paywalls present, and purchases flip them for real.
   @MainActor
   private func applyDefaultTestModeState(testModeManager: TestModeManager) async {
-    let session = testModeManager.choose([])
-    testModeManager.sendOverrides(of: session)
-    storage.save(false, forType: IsTestModeActiveSubscription.self)
+    testModeManager.dispatch(.defaultsApplied)
+    await testModeManager.finishPublishing()
   }
 
   /// Test mode never turns on where the SDK has no screens to show, so this
@@ -969,12 +953,11 @@ class ConfigManager {
       freeTrialOverride: result.freeTrialOverride.rawValue
     ))
 
-    testModeManager.setFreeTrialOverride(result.freeTrialOverride)
-    let session = testModeManager.choose(result.entitlements)
-    testModeManager.sendOverrides(of: session)
-
-    let hasActiveEntitlements = result.entitlements.contains { $0.isActive }
-    storage.save(hasActiveEntitlements, forType: IsTestModeActiveSubscription.self)
+    testModeManager.dispatch(.modalClosed(
+      entitlements: result.entitlements,
+      freeTrialOverride: result.freeTrialOverride
+    ))
+    await testModeManager.finishPublishing()
     #endif
   }
 }

@@ -30,7 +30,7 @@ struct SubscriptionStatusResolutionTests {
     // Set a test mode override
     let overrideEntitlement = Entitlement(id: "test_premium")
     let overrideStatus: SubscriptionStatus = .active(Set([overrideEntitlement]))
-    testModeManager.choose([overrideEntitlement])
+    testModeManager.dispatch(.restored([overrideEntitlement]))
     #expect(testModeManager.overriddenSubscriptionStatus == overrideStatus)
 
     // Attempt to set a different status externally
@@ -55,7 +55,7 @@ struct SubscriptionStatusResolutionTests {
     testModeManager.evaluateTestMode(config: config, options: SuperwallOptions())
 
     // Set override to inactive
-    testModeManager.choose([])
+    testModeManager.dispatch(.restored([]))
 
     // Set the same value — should not trigger re-assignment
     superwall.subscriptionStatus = .inactive
@@ -98,7 +98,7 @@ struct SubscriptionStatusResolutionTests {
     #expect(testModeManager.isTestMode == false)
 
     // Even if someone incorrectly sets an override, it shouldn't apply
-    testModeManager.choose([Entitlement(id: "hack")])
+    testModeManager.dispatch(.restored([Entitlement(id: "hack")]))
     #expect(testModeManager.overriddenSubscriptionStatus == nil)
 
     superwall.subscriptionStatus = .inactive
@@ -151,7 +151,7 @@ struct SubscriptionStatusResolutionTests {
       nonSubscriptions: [],
       entitlements: [Entitlement(id: "test_entitlement")]
     )
-    testModeManager.choose([Entitlement(id: "test_entitlement")])
+    testModeManager.dispatch(.restored([Entitlement(id: "test_entitlement")]))
     #expect(testModeManager.overriddenCustomerInfo == overrideInfo)
 
     // Attempt to set different customer info
@@ -189,7 +189,7 @@ struct SubscriptionStatusResolutionTests {
 
     #expect(testModeManager.isTestMode == false)
 
-    testModeManager.choose([Entitlement(id: "should_not_apply")])
+    testModeManager.dispatch(.restored([Entitlement(id: "should_not_apply")]))
     #expect(testModeManager.overriddenCustomerInfo == nil)
 
     let externalInfo = CustomerInfo(

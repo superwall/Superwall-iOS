@@ -71,9 +71,13 @@ enum TestModeReason: Sendable {
 /// StoreKit or external purchase controllers. When active, purchases are
 /// faked and entitlements are set directly.
 ///
-/// The state lives in a ``TestModeStore``, so it can be read from any thread.
-final class TestModeManager {
-  let store = TestModeStore(initial: .inactive)
+/// The state lives in a ``TestModeStore`` and changes only through
+/// ``TestModeAction``s, so it can be read from any thread. The manager is the
+/// actions' context. It sends test mode's status and customer info to the
+/// rest of the SDK one send at a time, in order, on a
+/// ``SerialTaskCoordinator``.
+final class TestModeManager: TestModeContext {
+  let store = TestModeStore(initial: TestModeState())
 
   /// What test mode knows right now.
   var state: TestModeState {
@@ -82,39 +86,40 @@ final class TestModeManager {
 
   /// Whether the current user is in test mode.
   var isTestMode: Bool {
-    state.isActive
+    store.read { $0.isActive }
   }
 
   /// The reason test mode is active, if applicable.
   var testModeReason: TestModeReason? {
-    state.reason
+    store.read { $0.reason }
   }
 
   /// Products fetched from the `/v1/products` endpoint for test mode use.
   var products: [SuperwallProduct] {
-    state.session?.products ?? []
+    store.read { $0.session?.products ?? [] }
   }
 
   /// The entitlements the tester has picked or bought.
   var testEntitlementIds: Set<String> {
-    state.session?.entitlementIds ?? []
+    store.read { $0.session?.entitlementIds ?? [] }
   }
 
-  /// Override for free trial availability.
+  /// Override for free trial availability. `.useDefault` while test mode is
+  /// off.
   var freeTrialOverride: FreeTrialOverride {
-    state.session?.freeTrialOverride ?? .useDefault
+    store.read { $0.session?.freeTrialOverride ?? .useDefault }
   }
 
   /// The subscription status test mode keeps, which replaces other writes to
   /// `subscriptionStatus`. Always `nil` while test mode is off.
   var overriddenSubscriptionStatus: SubscriptionStatus? {
-    state.session?.overriddenSubscriptionStatus
+    store.read { $0.session?.overriddenSubscriptionStatus }
   }
 
   /// The customer info test mode keeps, which replaces other writes to
   /// `customerInfo`. Always `nil` while test mode is off.
   var overriddenCustomerInfo: CustomerInfo? {
-    state.session?.overriddenCustomerInfo
+    store.read { $0.session?.overriddenCustomerInfo }
   }
 
   /// Whether the process is running inside a test environment.
@@ -136,36 +141,49 @@ final class TestModeManager {
   private unowned let storage: Storage
   /// Where the test mode modal saves the tester's choices.
   let defaults: UserDefaults
+  private let statusSink: TestModeStatusSink
+  /// Sends the status and customer info one at a time, in order.
+  private let publishing = SerialTaskCoordinator()
 
   init(
     identityManager: IdentityManager,
     deviceHelper: DeviceHelper,
     storage: Storage,
-    defaults: UserDefaults = .standard
+    defaults: UserDefaults = .standard,
+    statusSink: TestModeStatusSink = SuperwallTestModeStatusSink()
   ) {
     self.identityManager = identityManager
     self.deviceHelper = deviceHelper
     self.storage = storage
     self.defaults = defaults
+    self.statusSink = statusSink
+  }
+
+  /// Runs `action` and returns the state before and after it.
+  @discardableResult
+  func dispatch(_ action: TestModeAction) -> TestModeChange {
+    store.dispatch(action, in: self)
+  }
+
+  /// Waits for the status and customer info sends queued so far.
+  func finishPublishing() async {
+    await publishing.flush()
   }
 
   /// Evaluates whether the current user should be in test mode based on the config
   /// and the `testModeBehavior` option. Called on every config refresh.
   ///
-  /// - Returns: The reason test mode is now on, or `nil` if it's off.
+  /// - Returns: The state before and after, so callers can tell whether test
+  ///   mode just turned on or off.
   @discardableResult
-  func evaluateTestMode(config: Config, options: SuperwallOptions) -> TestModeReason? {
-    guard let reason = reasonForTestMode(
+  func evaluateTestMode(config: Config, options: SuperwallOptions) -> TestModeChange {
+    // Worked out before dispatching, since it reads the identity.
+    let reason = reasonForTestMode(
       config: config,
       options: options,
       warnAboutIgnoredMismatch: true
-    ) else {
-      store.update(TestModeUpdate.deactivate)
-      clearSavedSettings()
-      return nil
-    }
-    store.update(TestModeUpdate.activate(reason))
-    return reason
+    )
+    return dispatch(.evaluated(reason))
   }
 
   /// Why `config` and `options` would put the current user in test mode, or
@@ -273,57 +291,56 @@ final class TestModeManager {
     return .bundleIdMismatch(expected: expectedBundleId, actual: actualBundleId)
   }
 
-  /// Forgets the tester's saved choices, so the next time test mode turns
-  /// on starts from the defaults.
-  private func clearSavedSettings() {
+  // MARK: - TestModeContext
+
+  func clearSavedSettings() {
     #if canImport(WebKit)
     TestModeSettingsStore.clear(in: defaults)
     #endif
     storage.save(false, forType: IsTestModeActiveSubscription.self)
   }
 
-  /// Sets the products available for test mode purchases.
-  func setProducts(_ products: [SuperwallProduct]) {
-    store.update(TestModeUpdate.products(products))
+  func saveHasActiveSubscription(_ hasActiveSubscription: Bool) {
+    storage.save(hasActiveSubscription, forType: IsTestModeActiveSubscription.self)
   }
 
-  func setFreeTrialOverride(_ override: FreeTrialOverride) {
-    store.update(TestModeUpdate.freeTrialOverride(override))
+  func publishOverrides() {
+    publishing.enqueue { [weak self] in
+      await self?.sendOverrides()
+    }
   }
 
-  /// Adds the entitlements of a simulated purchase.
-  ///
-  /// - Returns: The session afterwards, or `nil` if test mode is off.
-  @discardableResult
-  func recordPurchase(of entitlements: [SuperwallEntitlementRef]) -> TestModeSession? {
-    store.update(TestModeUpdate.purchased(entitlementIds: Set(entitlements.map { $0.identifier })))
-    return state.session
+  func publishTestModeEnded() {
+    publishing.enqueue { [weak self] in
+      await self?.sendTestModeEnded()
+    }
   }
 
-  /// Replaces the entitlements with those the tester picked.
-  ///
-  /// - Returns: The session afterwards, or `nil` if test mode is off.
-  @discardableResult
-  func choose(_ entitlements: Set<Entitlement>) -> TestModeSession? {
-    store.update(TestModeUpdate.chose(entitlements: entitlements))
-    return state.session
-  }
-
-  /// Sends the customer info and subscription status that `session` keeps to
-  /// the SDK.
   @MainActor
-  func sendOverrides(of session: TestModeSession?) {
-    if let customerInfo = session?.overriddenCustomerInfo {
-      Superwall.shared.customerInfo = customerInfo
+  private func sendOverrides() {
+    let session = store.read { $0.session }
+    guard
+      let status = session?.overriddenSubscriptionStatus,
+      let customerInfo = session?.overriddenCustomerInfo
+    else {
+      return
     }
-    if let status = session?.overriddenSubscriptionStatus {
-      Superwall.shared.setSubscriptionStatus(assigned: status)
-    }
+    statusSink.send(customerInfo: customerInfo, status: status)
   }
 
-  /// Returns whether free trial should be shown for a product, applying the override.
-  func shouldShowFreeTrial(for product: StoreProduct) -> Bool {
-    switch freeTrialOverride {
+  @MainActor
+  private func sendTestModeEnded() {
+    if isTestMode {
+      return
+    }
+    statusSink.sendTestModeEnded()
+  }
+}
+
+extension FreeTrialOverride {
+  /// Whether a free trial should be shown for `product`, with this override.
+  func showsFreeTrial(for product: StoreProduct) -> Bool {
+    switch self {
     case .useDefault:
       return product.hasFreeTrial
     case .forceAvailable:

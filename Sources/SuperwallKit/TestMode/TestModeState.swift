@@ -7,36 +7,31 @@
 
 import Foundation
 
-/// Holds ``TestModeState``. Test mode has no store actions: the reducers are
-/// applied by ``TestModeManager``, which saves to storage once the store is
-/// unlocked.
-typealias TestModeStore = StateStore<Void, TestModeState>
-
 /// Whether test mode is on and, while it is, what the tester has set up.
 /// Changed only by ``TestModeUpdate`` reducers on its store.
-///
-/// Everything the tester sets up lives in the session, so turning test mode
-/// off forgets it all in one step.
-enum TestModeState {
-  case inactive
-  case active(reason: TestModeReason, session: TestModeSession)
+struct TestModeState {
+  enum Mode {
+    case inactive
+    /// Everything the tester sets up lives in the session, so turning test
+    /// mode off forgets it all in one step.
+    case active(reason: TestModeReason, session: TestModeSession)
+  }
+
+  var mode: Mode = .inactive
 
   var isActive: Bool {
-    if case .active = self {
-      return true
-    }
-    return false
+    session != nil
   }
 
   var reason: TestModeReason? {
-    if case let .active(reason, _) = self {
+    if case let .active(reason, _) = mode {
       return reason
     }
     return nil
   }
 
   var session: TestModeSession? {
-    if case let .active(_, session) = self {
+    if case let .active(_, session) = mode {
       return session
     }
     return nil
@@ -48,51 +43,99 @@ struct TestModeSession {
   /// Products fetched from the `/v1/products` endpoint for test mode use.
   var products: [SuperwallProduct] = []
 
-  /// The IDs of the entitlements the tester has picked or bought.
-  var entitlementIds: Set<String> = []
-
   /// Override for free trial availability.
   var freeTrialOverride: FreeTrialOverride = .useDefault
 
-  /// The subscription status test mode keeps. While set, other writes to
-  /// `subscriptionStatus` are replaced with this value.
-  var overriddenSubscriptionStatus: SubscriptionStatus?
+  /// The entitlements test mode keeps. The IDs, the subscription status and
+  /// the customer info are all worked out from this.
+  var entitlements: TestModeEntitlements = .untouched
 
-  /// The customer info test mode keeps. While set, other writes to
-  /// `customerInfo` are replaced with this value.
-  var overriddenCustomerInfo: CustomerInfo?
+  /// The IDs of the entitlements kept, active or not.
+  var entitlementIds: Set<String> {
+    Set(entitlements.kept?.map(\.id) ?? [])
+  }
+
+  /// The subscription status test mode keeps, which replaces other writes to
+  /// `subscriptionStatus`. `nil` until the tester has chosen or bought
+  /// something.
+  var overriddenSubscriptionStatus: SubscriptionStatus? {
+    guard let kept = entitlements.kept else {
+      return nil
+    }
+    if kept.contains(where: { $0.isActive }) {
+      return .active(kept)
+    }
+    return .inactive
+  }
+
+  /// The customer info test mode keeps, which replaces other writes to
+  /// `customerInfo`. `nil` until the tester has chosen or bought something.
+  var overriddenCustomerInfo: CustomerInfo? {
+    guard let kept = entitlements.kept else {
+      return nil
+    }
+    return CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: kept.sorted { $0.id < $1.id }
+    )
+  }
+
+  var hasActiveEntitlement: Bool {
+    entitlements.kept?.contains { $0.isActive } ?? false
+  }
+}
+
+/// The entitlements test mode keeps.
+enum TestModeEntitlements {
+  /// The tester hasn't chosen or bought anything yet, so the SDK's own
+  /// subscription status and customer info stand.
+  case untouched
+  /// What the tester chose or bought, which replaces the SDK's own
+  /// subscription status and customer info. Can be empty.
+  case kept(Set<Entitlement>)
+
+  var kept: Set<Entitlement>? {
+    if case .kept(let entitlements) = self {
+      return entitlements
+    }
+    return nil
+  }
 }
 
 /// The ways ``TestModeState`` can change. Every update other than
-/// ``activate(_:)`` leaves an inactive state as it is.
+/// ``activated(_:)`` leaves an inactive state as it is.
 enum TestModeUpdate: Reducer {
-  /// Turns test mode on, or changes why it's on, keeping the session.
-  case activate(TestModeReason)
-  /// Turns test mode off and forgets the session.
-  case deactivate
-  case products([SuperwallProduct])
-  case freeTrialOverride(FreeTrialOverride)
-  /// Adds the entitlements of a simulated purchase to those already held, all
-  /// of them subscribed.
+  /// Test mode turned on, or is on for a different reason. Keeps the
+  /// session.
+  case activated(TestModeReason)
+  /// Test mode turned off. Forgets the session.
+  case deactivated
+  case productsLoaded([SuperwallProduct])
+  /// The tester bought something with these entitlements. They're kept as
+  /// subscribed, alongside the others as they were.
   case purchased(entitlementIds: Set<String>)
-  /// Replaces the entitlements with those the tester picked, in the modal or
-  /// when restoring.
-  case chose(entitlements: Set<Entitlement>)
+  /// The tester picked these entitlements and free trial override in the
+  /// test mode modal.
+  case settingsChosen(entitlements: Set<Entitlement>, freeTrialOverride: FreeTrialOverride)
+  /// The tester picked these entitlements when restoring.
+  case restored(Set<Entitlement>)
+  /// A dev server drives the SDK, so every entitlement starts inactive
+  /// without asking the tester.
+  case defaultsApplied
 
   func reduce(_ state: TestModeState) -> TestModeState {
+    var state = state
     switch self {
-    case .activate(let reason):
-      return .active(reason: reason, session: state.session ?? TestModeSession())
-    case .deactivate:
-      return .inactive
-    case .products(let products):
-      return state.changingSession { $0.products = products }
-    case .freeTrialOverride(let override):
-      return state.changingSession { $0.freeTrialOverride = override }
+    case .activated(let reason):
+      state.mode = .active(reason: reason, session: state.session ?? TestModeSession())
+    case .deactivated:
+      state.mode = .inactive
+    case .productsLoaded(let products):
+      state.changeSession { $0.products = products }
     case .purchased(let entitlementIds):
-      return state.changingSession { session in
-        session.entitlementIds.formUnion(entitlementIds)
-        let entitlements = session.entitlementIds.map {
+      state.changeSession { session in
+        let bought = entitlementIds.map {
           Entitlement(
             id: $0,
             type: .serviceLevel,
@@ -101,42 +144,30 @@ enum TestModeUpdate: Reducer {
             state: .subscribed
           )
         }
-        session.keep(Set(entitlements))
+        let others = (session.entitlements.kept ?? []).filter { !entitlementIds.contains($0.id) }
+        session.entitlements = .kept(others.union(bought))
       }
-    case .chose(let entitlements):
-      return state.changingSession { session in
-        session.entitlementIds = Set(entitlements.map { $0.id })
-        session.keep(entitlements)
+    case let .settingsChosen(entitlements, freeTrialOverride):
+      state.changeSession { session in
+        session.entitlements = .kept(entitlements)
+        session.freeTrialOverride = freeTrialOverride
       }
+    case .restored(let entitlements):
+      state.changeSession { $0.entitlements = .kept(entitlements) }
+    case .defaultsApplied:
+      state.changeSession { $0.entitlements = .kept([]) }
     }
+    return state
   }
 }
 
 private extension TestModeState {
-  /// The state with `change` made to its session, or the same state when
-  /// test mode is off.
-  func changingSession(_ change: (inout TestModeSession) -> Void) -> TestModeState {
-    guard case .active(let reason, var session) = self else {
-      return self
+  /// Makes `change` to the session, or nothing when test mode is off.
+  mutating func changeSession(_ change: (inout TestModeSession) -> Void) {
+    guard case .active(let reason, var session) = mode else {
+      return
     }
     change(&session)
-    return .active(reason: reason, session: session)
-  }
-}
-
-private extension TestModeSession {
-  /// Sets the customer info and subscription status test mode keeps from
-  /// `entitlements`.
-  mutating func keep(_ entitlements: Set<Entitlement>) {
-    overriddenCustomerInfo = CustomerInfo(
-      subscriptions: [],
-      nonSubscriptions: [],
-      entitlements: Array(entitlements)
-    )
-    if entitlements.contains(where: { $0.isActive }) {
-      overriddenSubscriptionStatus = .active(entitlements)
-    } else {
-      overriddenSubscriptionStatus = .inactive
-    }
+    mode = .active(reason: reason, session: session)
   }
 }

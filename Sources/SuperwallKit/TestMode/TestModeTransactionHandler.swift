@@ -33,13 +33,17 @@ final class TestModeTransactionHandler {
       return .failed(PurchaseError.productUnavailable)
     }
 
+    // Read once, so the products and the override come from the same state.
+    let session = testModeManager.state.session
+
     // Find entitlements for this product from test mode products
-    let productEntitlements = testModeManager.products
+    let productEntitlements = session?.products
       .first { $0.identifier == product.productIdentifier }?
       .entitlements ?? []
     let entitlementIds = productEntitlements.map { $0.identifier }
 
-    let showFreeTrial = testModeManager.shouldShowFreeTrial(for: product)
+    let freeTrialOverride = session?.freeTrialOverride ?? .useDefault
+    let showFreeTrial = freeTrialOverride.showsFreeTrial(for: product)
 
     let result = await withCheckedContinuation { (continuation: CheckedContinuation<TestModePurchaseResult, Never>) in
       TestModePurchaseDrawer.present(
@@ -54,8 +58,8 @@ final class TestModeTransactionHandler {
 
     switch result {
     case .purchased:
-      let session = testModeManager.recordPurchase(of: productEntitlements)
-      testModeManager.sendOverrides(of: session)
+      testModeManager.dispatch(.purchased(entitlementIds: Set(entitlementIds)))
+      await testModeManager.finishPublishing()
 
       // Track free trial start if free trial is shown (respecting override)
       if showFreeTrial {
@@ -106,8 +110,8 @@ final class TestModeTransactionHandler {
 
     switch result {
     case .restored(let entitlements):
-      let session = testModeManager.choose(entitlements)
-      testModeManager.sendOverrides(of: session)
+      testModeManager.dispatch(.restored(entitlements))
+      await testModeManager.finishPublishing()
 
       // Only count as restored if there are active entitlements
       let hasActive = entitlements.contains { $0.isActive }

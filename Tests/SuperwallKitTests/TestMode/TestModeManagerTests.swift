@@ -90,8 +90,10 @@ struct TestModeManagerTests {
     #expect(manager.isTestMode == true)
 
     // Simulate user selecting entitlements and free trial override
-    manager.choose([Entitlement(id: "premium"), Entitlement(id: "pro")])
-    manager.setFreeTrialOverride(.forceAvailable)
+    manager.dispatch(.modalClosed(
+      entitlements: [Entitlement(id: "premium"), Entitlement(id: "pro")],
+      freeTrialOverride: .forceAvailable
+    ))
 
     // Save settings to UserDefaults (as the modal would)
     isolated.defaults.set(
@@ -143,8 +145,10 @@ struct TestModeManagerTests {
     manager.evaluateTestMode(config: config, options: SuperwallOptions())
 
     // Set some state
-    manager.choose([Entitlement(id: "premium")])
-    manager.setFreeTrialOverride(.forceAvailable)
+    manager.dispatch(.modalClosed(
+      entitlements: [Entitlement(id: "premium")],
+      freeTrialOverride: .forceAvailable
+    ))
 
     // Re-evaluate with the same config (still active)
     manager.evaluateTestMode(config: config, options: SuperwallOptions())
