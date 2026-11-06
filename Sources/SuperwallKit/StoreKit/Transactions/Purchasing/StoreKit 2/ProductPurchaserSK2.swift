@@ -12,48 +12,31 @@ final class ProductPurchaserSK2: Purchasing {
   private unowned let identityManager: IdentityManager
   private unowned let receiptManager: ReceiptManager
   private let coordinator: PurchasingCoordinator
+  private let observerModeTracker: ObserverModeTracker
   private unowned let factory: Factory
   typealias Factory = HasExternalPurchaseControllerFactory
     & OptionsFactory
     & TransactionManagerFactory
     & PurchasedTransactionsFactory
 
-  // swiftlint:disable:next identifier_name
-  var _sk2ObserverModePurchaseDetector: Any?
-  @available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, *)
-  var sk2ObserverModePurchaseDetector: SK2ObserverModePurchaseDetector {
-    // swiftlint:disable:next force_cast force_unwrapping
-    return self._sk2ObserverModePurchaseDetector! as! SK2ObserverModePurchaseDetector
-  }
-
   init(
     identityManager: IdentityManager,
     receiptManager: ReceiptManager,
-    storage: Storage,
+    observerModeTracker: ObserverModeTracker,
     coordinator: PurchasingCoordinator,
     factory: Factory
   ) {
     self.identityManager = identityManager
     self.receiptManager = receiptManager
+    self.observerModeTracker = observerModeTracker
     self.coordinator = coordinator
     self.factory = factory
 
-    if #available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, *) {
-      _sk2ObserverModePurchaseDetector = SK2ObserverModePurchaseDetector(
-        storage: storage,
-        allTransactionsProvider: SK2AllTransactionsProvider(),
-        factory: factory
-      )
-
-      // Cache legacy transactions if observer mode turned on.
-      let options = factory.makeSuperwallOptions()
-      if options.shouldObservePurchases {
-        Task {
-          await sk2ObserverModePurchaseDetector.cacheLegacyTransactions()
-        }
-      }
+    // Cache legacy transactions if observer mode turned on.
+    if #available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *),
+      factory.makeSuperwallOptions().shouldObservePurchases {
+      observerModeTracker.cacheLegacyTransactions()
     }
-
 
     NotificationCenter.default.addObserver(
       self,
@@ -72,11 +55,8 @@ final class ProductPurchaserSK2: Purchasing {
     if shouldObservePurchases,
       storeKitVersion == .storeKit2,
       #available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *) {
-      Task(priority: .utility) { [weak self] in
-        guard let self = self else {
-          return
-        }
-        await self.sk2ObserverModePurchaseDetector.detectUnobservedTransactions(delegate: self)
+      Task(priority: .utility) { [observerModeTracker] in
+        await observerModeTracker.detectUnobservedTransactions()
       }
     }
   }
@@ -193,15 +173,5 @@ final class ProductPurchaserSK2: Purchasing {
       )
       return .failed(error)
     }
-  }
-}
-
-@available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
-extension ProductPurchaserSK2: SK2ObserverModePurchaseDetectorDelegate {
-  func logSK2ObserverModeTransaction(_ transaction: SK2Transaction) async throws {
-    let transactionManager = factory.makeTransactionManager()
-    await transactionManager.logSK2ObserverModeTransaction(
-      transaction
-    )
   }
 }

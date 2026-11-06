@@ -12,7 +12,17 @@ import StoreKit
 actor PurchasingCoordinator {
   var lastInternalTransaction: StoreTransaction?
   var purchaseDate: Date?
-  var source: PurchaseSource?
+  var source: PurchaseSource? {
+    didSet {
+      purchaseInProgress.set(source != nil)
+    }
+  }
+  /// Whether a purchase is in progress, readable from any thread without
+  /// waiting for the actor.
+  nonisolated var hasPurchaseInProgress: Bool {
+    purchaseInProgress.value
+  }
+  private nonisolated let purchaseInProgress = PurchaseInProgressFlag()
   var transactions: [String: StoreTransaction] = [:]
   var isFreeTrialAvailable = false
   var product: StoreProduct?
@@ -249,5 +259,23 @@ actor PurchasingCoordinator {
     source = nil
     isFreeTrialAvailable = false
     isCustomStoreCheckout = false
+  }
+}
+
+/// A flag behind a lock, read without waiting on the coordinator.
+private final class PurchaseInProgressFlag: @unchecked Sendable {
+  private let lock = NSLock()
+  private var internalValue = false
+
+  var value: Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    return internalValue
+  }
+
+  func set(_ newValue: Bool) {
+    lock.lock()
+    internalValue = newValue
+    lock.unlock()
   }
 }
