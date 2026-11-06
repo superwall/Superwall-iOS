@@ -102,15 +102,16 @@ final class StateStore<Context, State>: @unchecked Sendable {
   }
 
   /// Runs `action` with the store locked, then any work deferred with
-  /// ``deferUntilUnlocked(_:)``, before returning.
+  /// ``deferUntilUnlocked(_:)``, before returning what the action returned.
   ///
   /// Dispatches on other threads wait for the lock, so actions never
   /// interleave. Dispatched from inside an action, `action` runs straight
   /// away, inside the outer one.
+  @discardableResult
   func dispatch<A: StoreAction>(
     _ action: A,
     in context: Context
-  ) where A.Context == Context {
+  ) -> A.Result where A.Context == Context {
     locked {
       action.execute(in: context)
     }
@@ -143,10 +144,10 @@ final class StateStore<Context, State>: @unchecked Sendable {
 
   /// Runs `body` with the store locked, then, if it was the outermost
   /// update or dispatch, the work deferred meanwhile.
-  private func locked(_ body: () -> Void) {
+  private func locked<Value>(_ body: () -> Value) -> Value {
     lock.lock()
     depth += 1
-    body()
+    let value = body()
     depth -= 1
     var work: [() -> Void] = []
     if depth == 0 {
@@ -158,5 +159,6 @@ final class StateStore<Context, State>: @unchecked Sendable {
     for item in work {
       item()
     }
+    return value
   }
 }
