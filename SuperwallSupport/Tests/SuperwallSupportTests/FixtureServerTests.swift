@@ -8,9 +8,36 @@ import XCTest
 ///   PORT=8791 pnpm --filter @superwall/inbox-test-client fixture-server
 ///   SUPPORT_FIXTURE_URL=http://localhost:8791 swift test
 ///
-/// Skipped when `SUPPORT_FIXTURE_URL` isn't set.
+/// Skipped when `SUPPORT_FIXTURE_URL` isn't set. Against a real inbox-api (the Core
+/// lane's preview) set `SUPPORT_API_KEY` (e.g. `pk_echo`) and `SUPPORT_FIXTURE_SCRIPTS=0`:
+/// the scripted conversations are fixture-server only and are skipped.
 final class FixtureServerTests: XCTestCase {
   var baseURL: URL!
+  var plainKey: String { ProcessInfo.processInfo.environment["SUPPORT_API_KEY"] ?? "pk_test_plain" }
+  var scriptsAvailable: Bool { ProcessInfo.processInfo.environment["SUPPORT_FIXTURE_SCRIPTS"] != "0" }
+
+  /// 256 random bits, as inbox-api requires of an install secret (43 base64url characters).
+  static func installSecret() -> String {
+    var bytes = [UInt8](repeating: 0, count: 32)
+    _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+    return Data(bytes).base64EncodedString()
+      .replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_")
+      .replacingOccurrences(of: "=", with: "")
+  }
+
+  func requireScripts() throws {
+    if !scriptsAvailable { throw XCTSkip("Scripted conversations run on the fixture server only") }
+  }
+
+  /// Waits until the client holds exactly what the server's window holds.
+  func waitInSync(_ transport: SupportTransport, atLeast count: Int, _ timeout: TimeInterval = 30)
+    async throws
+  {
+    try await waitUntil(timeout, "in sync with the server (≥ \(count) entries)") {
+      guard let server = try? await self.serverEntries(transport), server.count >= count else { return false }
+      return await transport.log.entries == server
+    }
+  }
 
   override func setUpWithError() throws {
     guard let value = ProcessInfo.processInfo.environment["SUPPORT_FIXTURE_URL"],
@@ -22,7 +49,7 @@ final class FixtureServerTests: XCTestCase {
   }
 
   func makeTransport(
-    apiKey: String, install: String = UUID().uuidString, queueFile: URL? = nil,
+    apiKey: String, install: String = FixtureServerTests.installSecret(), queueFile: URL? = nil,
     configure: (inout SupportTransport.Configuration) -> Void = { _ in }
   ) -> SupportTransport {
     var configuration = SupportTransport.Configuration(
@@ -70,6 +97,7 @@ final class FixtureServerTests: XCTestCase {
   }
 
   func testPacedConversationArrivesExact() async throws {
+    try requireScripts()
     let transport = makeTransport(apiKey: "pk_fixture_billing-question")
     try await transport.start()
     try await waitForScript(transport, "billing-question")
@@ -86,6 +114,7 @@ final class FixtureServerTests: XCTestCase {
   /// The socket is cut after every new seq (no close frame, as a network cut would);
   /// each reconnect resumes from the cursor, and the log ends exact.
   func testDropAtEverySeq() async throws {
+    try requireScripts()
     for script in ["billing-question", "human-handoff", "future-kinds"] {
       let transport = makeTransport(apiKey: "pk_fixture_\(script)")
       let dropper = SeqDropper(transport: transport)
@@ -111,7 +140,7 @@ final class FixtureServerTests: XCTestCase {
   /// new seq, so it resumes from every position, while 30 messages land.
   func testResumeFromEverySeq() async throws {
     let seen = SeenSeqs()
-    let transport = makeTransport(apiKey: "pk_test_plain") { configuration in
+    let transport = makeTransport(apiKey: plainKey) { configuration in
       configuration.dropAfterAcceptingForTesting = { seq in seen.firstTime(seq) }
     }
     try await transport.start()
@@ -124,20 +153,44 @@ final class FixtureServerTests: XCTestCase {
         token: session.sessionToken, conversationId: session.conversationId,
         SendMessage(clientMessageId: "every-\(index)", text: "Message \(index)", attachments: nil))
     }
-    try await waitUntil(20, "30 entries") { await transport.log.entries.count == 30 }
+    // One reconnect per entry: against a remote server each is a fresh TLS handshake.
+    try await waitInSync(transport, atLeast: 30, 120)
     try await waitUntil(5, "live") { await transport.state == .live }
     let held = await transport.log.entries
     let server = try await serverEntries(transport)
     XCTAssertEqual(held, server)
-    XCTAssertEqual(held.compactMap(\.seq), Array(1...30))
+    let seqs = held.compactMap(\.seq)
+    XCTAssertEqual(seqs, Array(1...seqs.count))
     let stats = await transport.stats
-    XCTAssertEqual(seen.count, 30, "dropped after every seq")
+    XCTAssertEqual(seen.count, held.count, "dropped after every seq")
     XCTAssertEqual(stats.gaps, 0)
     print("resume from every seq: \(seen.count) drops, \(stats.connects) connects, gaps \(stats.gaps), dups \(stats.duplicates)")
     await transport.stop()
   }
 
+  func testBackgroundThenForegroundOverHTTPPosts() async throws {
+    let transport = makeTransport(apiKey: plainKey)
+    try await transport.start()
+    try await waitUntil(5, "live") { await transport.state == .live }
+    await transport.setForeground(false)
+    try await post(transport, 10, "bg")
+    await transport.setForeground(true)
+    try await waitInSync(transport, atLeast: 10)
+  }
+
+  func post(_ transport: SupportTransport, _ count: Int, _ prefix: String) async throws {
+    let current = await transport.session
+    let session = try XCTUnwrap(current)
+    let http = SupportHTTPClient(baseURL: baseURL, urlSession: .shared)
+    for index in 0..<count {
+      _ = try await http.sendMessage(
+        token: session.sessionToken, conversationId: session.conversationId,
+        SendMessage(clientMessageId: "\(prefix)-\(index)", text: "Message \(index)", attachments: nil))
+    }
+  }
+
   func testBackgroundThenForegroundResumes() async throws {
+    try requireScripts()
     let transport = makeTransport(apiKey: "pk_fixture_human-handoff")
     try await transport.start()
     try await waitUntil(10, "first entry") { await transport.log.entries.count >= 1 }
@@ -157,6 +210,7 @@ final class FixtureServerTests: XCTestCase {
   }
 
   func testNetworkLossThenReturn() async throws {
+    try requireScripts()
     let transport = makeTransport(apiKey: "pk_fixture_future-kinds")
     try await transport.start()
     try await waitUntil(10, "first entry") { await transport.log.entries.count >= 1 }
@@ -178,12 +232,12 @@ final class FixtureServerTests: XCTestCase {
   /// A send made offline is persisted, survives the transport going away, and
   /// lands exactly once when a new transport (a relaunch) drains the queue.
   func testSendQueueSurvivesRelaunchAndLandsOnce() async throws {
-    let install = UUID().uuidString
+    let install = Self.installSecret()
     let file = FileManager.default.temporaryDirectory
       .appendingPathComponent("send-queue-\(UUID().uuidString).json")
     defer { try? FileManager.default.removeItem(at: file) }
 
-    let first = makeTransport(apiKey: "pk_test_plain", install: install, queueFile: file)
+    let first = makeTransport(apiKey: plainKey, install: install, queueFile: file)
     try await first.start()
     let firstSession = await first.session
     let conversationId = try XCTUnwrap(firstSession?.conversationId)
@@ -197,7 +251,7 @@ final class FixtureServerTests: XCTestCase {
     let saved = try JSONDecoder.iso.decode([PendingMessage].self, from: Data(contentsOf: file))
     XCTAssertEqual(saved.map(\.clientMessageId), [pending.clientMessageId])
 
-    let second = makeTransport(apiKey: "pk_test_plain", install: install, queueFile: file)
+    let second = makeTransport(apiKey: plainKey, install: install, queueFile: file)
     try await second.start(conversationId: conversationId)
     try await waitUntil(10, "queue drained") { await second.pendingMessages.isEmpty }
     try await waitUntil(10, "entry over the socket") {
@@ -212,17 +266,16 @@ final class FixtureServerTests: XCTestCase {
       token: session.sessionToken, conversationId: conversationId,
       SendMessage(clientMessageId: pending.clientMessageId, text: "ignored", attachments: nil))
     XCTAssertTrue(again.duplicate)
+    try await waitInSync(second, atLeast: 1)
     let server = try await serverEntries(second)
     XCTAssertEqual(server.filter { $0.clientMessageId == pending.clientMessageId }.count, 1)
-    let secondEntries = await second.log.entries
-    XCTAssertEqual(secondEntries, server)
     await second.stop()
   }
 
   /// Far behind at `ready` (more than the socket replay cap): the client reads
   /// windows over HTTP, then the socket only carries what's new.
   func testFarBehindCatchesUpOverHTTP() async throws {
-    let transport = makeTransport(apiKey: "pk_test_plain") { $0.socketReplayCap = 10 }
+    let transport = makeTransport(apiKey: plainKey) { $0.socketReplayCap = 10 }
     try await transport.start()
     try await waitUntil(5, "live") { await transport.state == .live }
     let current = await transport.session
@@ -234,7 +287,7 @@ final class FixtureServerTests: XCTestCase {
         token: session.sessionToken, conversationId: session.conversationId,
         SendMessage(clientMessageId: "held-\(index)", text: "Held \(index)", attachments: nil))
     }
-    try await waitUntil(5, "2 held") { await transport.log.cursor == 2 }
+    try await waitInSync(transport, atLeast: 2)
     await transport.setForeground(false)
 
     // …then 25 more land while it holds no socket.
@@ -244,7 +297,7 @@ final class FixtureServerTests: XCTestCase {
         SendMessage(clientMessageId: "bulk-\(index)", text: "Message \(index)", attachments: nil))
     }
     await transport.setForeground(true)
-    try await waitUntil(10, "caught up") { await transport.log.entries.count == 27 }
+    try await waitInSync(transport, atLeast: 27)
     try await waitUntil(5, "live") { await transport.state == .live }
     let stats = await transport.stats
     XCTAssertEqual(stats.httpCatchUps, 1)
@@ -256,7 +309,7 @@ final class FixtureServerTests: XCTestCase {
   }
 
   func testOverlongMessageIsRefusedBeforeQueueing() async throws {
-    let transport = makeTransport(apiKey: "pk_test_plain")
+    let transport = makeTransport(apiKey: plainKey)
     try await transport.start()
     do {
       _ = try await transport.send(text: String(repeating: "a", count: SupportWire.maxMessageLength + 1))

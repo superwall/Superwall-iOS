@@ -111,6 +111,9 @@ public actor SupportTransport {
   private var networkAvailable = true
   private var started = false
   private var startInFlight: Task<Void, Error>?
+  /// `stop()` was called: terminal, a later `start()` throws.
+  private var stoppedByCaller = false
+  private var consecutiveResyncs = 0
   private var stopped = false
   /// A start that failed retryably: retried on backoff, and at once on network or foreground.
   private var startWanted = false
@@ -200,13 +203,15 @@ public actor SupportTransport {
       try await inFlight.value
       return
     }
+    guard !stoppedByCaller else { throw SupportTransportError.notStarted }
     let task = Task { try await self.startOnce(conversationId: conversationId) }
     startInFlight = task
-    defer { startInFlight = nil }
     try await task.value
   }
 
   private func startOnce(conversationId: String?) async throws {
+    // Cleared on the actor before the task completes, so a retry can't join a finished start.
+    defer { startInFlight = nil }
     startRetryTask?.cancel()
     // A previous start that ended in a redirect may be retried.
     stopped = false
@@ -230,7 +235,7 @@ public actor SupportTransport {
       emit(.error(code: Self.code(of: error), retryable: false))
       throw error
     }
-    if stopped { return }
+    if stopped { throw SupportTransportError.notStarted }
     startWanted = false
     backoff = configuration.backoffInitial
     httpBusy = true
@@ -282,6 +287,7 @@ public actor SupportTransport {
   /// until this is called, so always call it when chat closes.
   public func stop() {
     stopped = true
+    stoppedByCaller = true
     startWanted = false
     startRetryTask?.cancel()
     closeSocket(reason: "stopped")
@@ -317,8 +323,9 @@ public actor SupportTransport {
   public func setNetworkAvailable(_ available: Bool) {
     guard available != networkAvailable else {
       // The path changed but stayed usable (Wi-Fi to cell): the socket may be bound to
-      // the interface going away, so probe it now instead of waiting for a ping.
-      if available { probeOrConnect() }
+      // the interface going away, so probe it. Without a socket, leave any pending retry
+      // and its backoff alone.
+      if available, let socket, state != .connecting { sendPing(on: socket, generation: generation) }
       return
     }
     networkAvailable = available
@@ -373,8 +380,18 @@ public actor SupportTransport {
       log.reset(conversationId: started.conversationId)
       logEpoch += 1
     }
+    let previous = session?.conversationId
     session = started
     logger("session started, conversation \(started.conversationId)")
+    if switched, let previous {
+      // The old conversation's queued sends can't go anywhere now: fail them visibly.
+      for item in queue.all where item.conversationId == previous && item.state == .pending {
+        queue.update(clientMessageId: item.clientMessageId) {
+          $0.state = .failed
+          $0.failure = "conversation_changed"
+        }
+      }
+    }
     // The socket was closed for the old conversation: open one for the new one.
     if switched, self.started { connect() }
   }
@@ -555,6 +572,7 @@ public actor SupportTransport {
       switch log.applyEntryFrame(seq: seq, prev: prev, raw: raw) {
       case .accept:
         consecutiveGaps = 0
+        consecutiveResyncs = 0
         // Progress: the path works, so a drop after this retries from the first step.
         backoff = configuration.backoffInitial
         let entry = log.entriesBySeq[seq]
@@ -596,8 +614,10 @@ public actor SupportTransport {
 
     case .resync(let reason, _):
       stats.resyncs += 1
+      consecutiveResyncs += 1
       logger("resync: \(reason)")
-      await replaceSocket(reason: "resync") {
+      // A server that keeps answering resync gets backoff, not a reload loop.
+      await replaceSocket(reason: "resync", backoff: consecutiveResyncs > 3) {
         try await self.reloadNewestWindow()
       }
 
