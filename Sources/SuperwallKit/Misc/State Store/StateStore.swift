@@ -51,6 +51,20 @@ final class StateStore<Context, State>: @unchecked Sendable {
     return _state
   }
 
+  /// Returns what `body` reads from the state, with the store locked.
+  ///
+  /// Use it to read part of the state without copying all of it out of the
+  /// store, for state whose last reference must be let go of in a certain
+  /// place. A copy from ``state`` can outlive a change that removes
+  /// something from the store, and become its last owner. `body` must not
+  /// wait on another thread. If it updates the store or dispatches, the work
+  /// those defer runs once the store is unlocked, as for an update.
+  func read<Value>(_ body: (State) -> Value) -> Value {
+    locked {
+      body(_state)
+    }
+  }
+
   init(initial: State) {
     _state = initial
   }
@@ -89,15 +103,16 @@ final class StateStore<Context, State>: @unchecked Sendable {
   }
 
   /// Runs `action` with the store locked, then any work deferred with
-  /// ``deferUntilUnlocked(_:)``, before returning.
+  /// ``deferUntilUnlocked(_:)``, before returning what the action returned.
   ///
   /// Dispatches on other threads wait for the lock, so actions never
   /// interleave. Dispatched from inside an action, `action` runs straight
   /// away, inside the outer one.
+  @discardableResult
   func dispatch<A: StoreAction>(
     _ action: A,
     in context: Context
-  ) where A.Context == Context {
+  ) -> A.Result where A.Context == Context {
     locked {
       action.execute(in: context)
     }
@@ -130,10 +145,10 @@ final class StateStore<Context, State>: @unchecked Sendable {
 
   /// Runs `body` with the store locked, then, if it was the outermost
   /// update or dispatch, the work deferred meanwhile.
-  private func locked(_ body: () -> Void) {
+  private func locked<Value>(_ body: () -> Value) -> Value {
     lock.lock()
     depth += 1
-    body()
+    let value = body()
     depth -= 1
     var work: [() -> Void] = []
     if depth == 0 {
@@ -145,5 +160,6 @@ final class StateStore<Context, State>: @unchecked Sendable {
     for item in work {
       item()
     }
+    return value
   }
 }
