@@ -162,6 +162,31 @@ ATT revocation. ATT is serialized as a numeric string in integration attributes.
 change to that set in the changelog and the online docs. Don't gate the IDFA on
 the ATT status: `identifierForAdvertisers` already filters the all-zero id.
 
+### State stores
+
+Stateful parts of the SDK follow the same shape as Android's `misc/primitives` (compare with the
+matching Android `*State.kt` when changing one):
+
+- **State** is a struct, apart from the class that owns it. Use enums with associated values so
+  impossible combinations can't be built (a completion can't exist without a purchase, a
+  dismissal result can't exist outside a dismissal). Compute derived values instead of storing
+  them twice.
+- **Updates** are the only way the state changes: a `Reducer` enum whose cases are named events
+  (`checkoutClosed`, not `setCheckoutOpen(false)`), pure, each one tested, plus the combinations
+  that matter.
+- **Actions** are a closed `StoreAction` enum. They're the only place side effects start. An action
+  that needs to report back returns a value from `dispatch`, read in the same locked step, so
+  callers never update and then read the state in a second call.
+- **Side effects** are methods on the action's Context protocol: storage, tracking, publishing,
+  delegate calls, main-thread hops. The protocol is the full list, and tests use a fake that
+  records the calls. Anything that may wait runs through `deferUntilUnlocked`.
+- **Ordering:** synchronous work goes through the store's lock. Async work that must not overlap or
+  must keep its order (StoreKit, the network, the paywall page) runs on a `SerialTaskCoordinator`
+  owned by the same object, so one async action finishes before the next starts, like Android's
+  `SequentialActor`. Don't use a Swift `actor` for this: it lets other calls in at every `await`.
+- Read part of the state with `store.read { }` when a copy of the whole state could outlive a
+  removal and become the last owner of something that must be released in a certain place.
+
 ### Identity store
 
 `IdentityManager` keeps its state in a `StateStore`, guarded by one recursive lock. Identity
