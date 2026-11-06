@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 23/09/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 #if os(macOS)
 import AppKit
@@ -183,4 +184,5 @@ final class CustomerCenterLifecycleProbeController: UIViewController {
     return top.presentingViewController == nil && top !== window?.rootViewController
   }
 }
+#endif
 #endif

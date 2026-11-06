@@ -16,6 +16,9 @@ final class NetworkMock: Network {
   var assignmentsConfirmed = false
   var assignments: [PostbackAssignment] = []
   var configReturnValue: Result<Config, Error> = .success(.stub())
+  /// When set, `getConfig` returns what this returns instead of
+  /// `configReturnValue`, so a test can hold a request open.
+  var getConfigHandler: (() async throws -> Config)?
   var getWebEntitlementsResponse: RedeemResponse?
   var getEntitlementsResponse: EntitlementsResponse?
   /// Returned in order, one per call, before falling back to `getEntitlementsResponse`.
@@ -35,6 +38,8 @@ final class NetworkMock: Network {
   var pollRedemptionResultCallCount = 0
   var onRedeemEntitlements: (() -> Void)?
   var onPollRedemptionResult: (() -> Void)?
+  var getEnrichmentCallCount = 0
+  var onGetEnrichment: (() -> Void)?
 
   override func sendEvents(events: EventsRequest) async {
     sentEvents.append(events)
@@ -52,6 +57,9 @@ final class NetworkMock: Network {
     timeout: Seconds? = nil
   ) async throws -> Config {
     getConfigCalled = true
+    if let getConfigHandler = getConfigHandler {
+      return try await getConfigHandler()
+    }
 
     switch configReturnValue {
     case .success(let success):
@@ -136,6 +144,17 @@ final class NetworkMock: Network {
       throw redeemError
     }
     throw NetworkError.unknown
+  }
+
+  override func getEnrichment(
+    request: EnrichmentRequest,
+    injectedApplicationStatePublisher: (AnyPublisher<ApplicationState, Never>)? = nil,
+    maxRetry: Int?,
+    timeout: Seconds?
+  ) async throws -> Enrichment {
+    getEnrichmentCallCount += 1
+    onGetEnrichment?()
+    return Enrichment(user: JSON([:]), device: JSON(["demandScore": 42]))
   }
 
   override func getIntroOfferToken(

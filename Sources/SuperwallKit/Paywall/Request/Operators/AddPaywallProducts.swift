@@ -52,7 +52,7 @@ extension PaywallRequestManager {
 
       // Merge custom products into the composite-keyed map so they appear in
       // product variables and templating. Custom products have unique IDs,
-      // so composite ID == Apple ID for them and the lookup is direct.
+      // so their cache key is their ID and the lookup is direct.
       var mergedProductsByCompositeId = result.productsByCompositeId
       for product in customProducts {
         if let cached = await storeKitManager.productsById[product.id] {
@@ -253,7 +253,7 @@ extension PaywallRequestManager {
 
     for productItem in paywall.products {
       let storeProduct: StoreProduct?
-      if let composite = productsByCompositeId[productItem.id] {
+      if let composite = productsByCompositeId[productItem.cacheKey] {
         storeProduct = composite
       } else if case .appStore(let appStoreProduct) = productItem.type {
         storeProduct = productsByAppleId[appStoreProduct.id]

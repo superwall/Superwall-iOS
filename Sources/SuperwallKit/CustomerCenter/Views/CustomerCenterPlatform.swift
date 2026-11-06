@@ -7,6 +7,7 @@
 // The SwiftUI the Customer Center uses that only iOS has, with the macOS
 // equivalent beside it, so the screens themselves read the same on both.
 
+#if canImport(WebKit)
 import SwiftUI
 
 enum CustomerCenterPlatform {
@@ -101,3 +102,4 @@ struct CustomerCenterNavigationContainer<Content: View>: View {
     #endif
   }
 }
+#endif

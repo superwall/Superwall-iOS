@@ -178,20 +178,189 @@ struct FirstSessionDeepLinkRouterTests {
     try await Task.sleep(nanoseconds: 500_000_000)
   }
 
-  @Test("Re-applies the stored deep link to user attributes after a reset")
-  func reapply_appliesStoredLink() {
-    let urlString = "myapp://home?promo=\(UUID().uuidString)"
-    storage.save(urlString, forType: FirstSessionDeepLinkURL.self)
-
-    router.reapplyFirstSessionDeepLinkAttribute()
-
-    #expect(storedAttribute == urlString)
+  private func storedAttribute(_ key: String) -> String? {
+    dependencyContainer.identityManager.userAttributes[key] as? String
   }
 
-  @Test("Reapply is a no-op when no deep link was stored")
-  func reapply_noStoredLink_doesNotSetAttribute() {
-    router.reapplyFirstSessionDeepLinkAttribute()
+  private func clearPageAttributes() {
+    let removal: [String: Any?] = [
+      DeepLinkRouter.customProductPageIdAttributeKey: nil,
+      DeepLinkRouter.customProductPageNameAttributeKey: nil
+    ]
+    dependencyContainer.identityManager.mergeUserAttributes(removal)
+  }
 
-    #expect(storedAttribute == nil)
+  @Test("Sets the custom product page whose deep link is the first deep link")
+  func route_matchingPage_setsPageAttributes() throws {
+    clearPageAttributes()
+    let deepLink = "myapp://home?promo=\(UUID().uuidString)"
+    let page = CustomProductPage(id: "ppid-1", name: "Fitness", deepLink: deepLink)
+    var config = Config.stub()
+    config.customProductPages = [page]
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(config))
+
+    router.route(url: try #require(URL(string: deepLink)))
+
+    #expect(storage.get(FirstSessionCustomProductPage.self) == page)
+    #expect(storedAttribute(DeepLinkRouter.customProductPageIdAttributeKey) == "ppid-1")
+    #expect(storedAttribute(DeepLinkRouter.customProductPageNameAttributeKey) == "Fitness")
+  }
+
+  @Test("Matches a page whose deep link is a Superwall app-link before it's mapped")
+  func route_appLinkPage_matchesOriginalUrl() throws {
+    clearPageAttributes()
+    let deepLink = "https://myapp.superwall.app/app-link/home?promo=\(UUID().uuidString)"
+    let page = CustomProductPage(id: "ppid-2", name: nil, deepLink: deepLink)
+    var config = Config.stub()
+    config.customProductPages = [page]
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(config))
+
+    router.route(url: try #require(URL(string: deepLink)))
+
+    #expect(storage.get(FirstSessionCustomProductPage.self) == page)
+    #expect(storedAttribute(DeepLinkRouter.customProductPageIdAttributeKey) == "ppid-2")
+  }
+
+  @Test("Sets only the deep link when no custom product page matches it")
+  func route_noMatchingPage_setsOnlyUrl() throws {
+    clearPageAttributes()
+    var config = Config.stub()
+    config.customProductPages = [
+      CustomProductPage(id: "ppid-1", name: "Fitness", deepLink: "myapp://other")
+    ]
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(config))
+    let url = try #require(URL(string: "myapp://home?promo=\(UUID().uuidString)"))
+
+    router.route(url: url)
+
+    #expect(storedAttribute == url.absoluteString)
+    #expect(storage.get(FirstSessionCustomProductPage.self) == nil)
+    #expect(storedAttribute(DeepLinkRouter.customProductPageIdAttributeKey) == nil)
+  }
+
+  @Test("A new user keeps the first deep link and its custom product page")
+  func keptAcrossReset_includesUrlAndPage() {
+    let urlString = "myapp://home?promo=\(UUID().uuidString)"
+    storage.save(urlString, forType: FirstSessionDeepLinkURL.self)
+    storage.save(
+      CustomProductPage(id: "ppid-1", name: "Fitness", deepLink: urlString),
+      forType: FirstSessionCustomProductPage.self
+    )
+
+    let kept = router.firstDeepLinkAttributesKeptAcrossReset()
+
+    #expect(kept[DeepLinkRouter.firstDeepLinkUrlAttributeKey] as? String == urlString)
+    #expect(kept[DeepLinkRouter.customProductPageIdAttributeKey] as? String == "ppid-1")
+    #expect(kept[DeepLinkRouter.customProductPageNameAttributeKey] as? String == "Fitness")
+  }
+
+  @Test("A new user keeps nothing when no deep link was stored")
+  func keptAcrossReset_noStoredLink_isEmpty() {
+    #expect(router.firstDeepLinkAttributesKeptAcrossReset().isEmpty)
+  }
+}
+
+// MARK: - Custom product page matching
+
+@Suite
+struct CustomProductPageMatchingTests {
+  private let url = URL(string: "myapp://home")!
+
+  @Test("Finds the page whose deep link is the URL")
+  func matching_findsPage() {
+    let page = CustomProductPage(id: "a", name: "A", deepLink: "myapp://home")
+    let other = CustomProductPage(id: "b", name: "B", deepLink: "myapp://other")
+
+    #expect(CustomProductPage.matching([url], in: [other, page]) == page)
+  }
+
+  @Test("Finds nothing when no page has the URL as its deep link")
+  func matching_noMatch_isNil() {
+    let page = CustomProductPage(id: "a", name: "A", deepLink: "myapp://other")
+
+    #expect(CustomProductPage.matching([url], in: [page]) == nil)
+    #expect(CustomProductPage.matching([url], in: []) == nil)
+  }
+
+  @Test("Finds nothing when different pages share the deep link")
+  func matching_sharedDeepLink_isNil() {
+    let first = CustomProductPage(id: "a", name: "A", deepLink: "myapp://home")
+    let second = CustomProductPage(id: "b", name: "B", deepLink: "myapp://home")
+
+    #expect(CustomProductPage.matching([url], in: [first, second]) == nil)
+  }
+
+  @Test("Finds the page when several of its versions have the deep link")
+  func matching_samePageTwice_findsPage() {
+    let page = CustomProductPage(id: "a", name: "A", deepLink: "myapp://home")
+
+    #expect(CustomProductPage.matching([url], in: [page, page]) == page)
+  }
+
+  @Test("Matches any of the given URLs")
+  func matching_secondUrl_findsPage() {
+    let page = CustomProductPage(id: "a", name: "A", deepLink: "myapp://home")
+    let original = URL(string: "https://myapp.superwall.app/app-link/x")!
+
+    #expect(CustomProductPage.matching([original, url], in: [page]) == page)
+  }
+}
+
+// MARK: - Config decoding
+
+@Suite
+struct CustomProductPagesConfigTests {
+  private func configJson(_ extra: String) -> Data {
+    """
+    {
+      "buildId": "abc",
+      "triggerOptions": [],
+      "paywallResponses": [],
+      "logLevel": 0,
+      "localization": { "locales": [] },
+      "appSessionTimeoutMs": 3600000,
+      "toggles": [{ "key": "enable_expression_params", "enabled": true }],
+      "disablePreload": { "all": false, "triggers": [] }\(extra)
+    }
+    """.data(using: .utf8)!
+  }
+
+  @Test("Decodes the custom product pages, skipping any that are malformed")
+  func decodes_skipsMalformed() throws {
+    let json = configJson("""
+    ,
+      "custom_product_pages": [
+        { "id": "a", "name": "Fitness", "deep_link": "myapp://fitness" },
+        { "id": "b", "deep_link": "myapp://sleep" },
+        { "name": "No ID", "deep_link": "myapp://broken" }
+      ]
+    """)
+
+    let config = try JSONDecoder.fromSnakeCase.decode(Config.self, from: json)
+
+    #expect(config.customProductPages == [
+      CustomProductPage(id: "a", name: "Fitness", deepLink: "myapp://fitness"),
+      CustomProductPage(id: "b", name: nil, deepLink: "myapp://sleep")
+    ])
+  }
+
+  @Test("Leaves the custom product pages empty when the config has none")
+  func decodes_missing_isNil() throws {
+    let config = try JSONDecoder.fromSnakeCase.decode(Config.self, from: configJson(""))
+
+    #expect(config.customProductPages == nil)
+  }
+
+  @Test("Keeps the custom product pages when the config is cached")
+  func encodes_roundTrips() throws {
+    var config = Config.stub()
+    config.customProductPages = [
+      CustomProductPage(id: "a", name: "Fitness", deepLink: "myapp://fitness")
+    ]
+
+    let data = try JSONEncoder().encode(config)
+    let decoded = try JSONDecoder().decode(Config.self, from: data)
+
+    #expect(decoded.customProductPages == config.customProductPages)
   }
 }

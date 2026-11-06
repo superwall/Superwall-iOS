@@ -41,6 +41,26 @@ public final class Product: NSObject, Codable, Sendable {
   /// The entitlement associated with the product.
   public let entitlements: Set<Entitlement>
 
+  /// The key the SDK caches this slot's `StoreProduct` under.
+  ///
+  /// Two slots can sell the same Apple product on different billing plans, and
+  /// both have the same `id`, so the plan has to be part of the key. This is
+  /// internal only: `id` stays the bare identifier on every public surface.
+  var cacheKey: String {
+    guard
+      case .appStore(let product) = type,
+      let plan = product.billingPlanType
+    else {
+      return id
+    }
+    switch plan {
+    case .upFront:
+      return "\(product.id):\(AppStoreProduct.BillingPlanType.StringValue.upFront.rawValue)"
+    case .monthly:
+      return "\(product.id):\(AppStoreProduct.BillingPlanType.StringValue.monthly.rawValue)"
+    }
+  }
+
   /// The objc-only type of product.
   @objc(adapter)
   public let objcAdapter: StoreProductAdapterObjc

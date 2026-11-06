@@ -19,6 +19,8 @@ enum NetworkError: LocalizedError, Equatable {
   case notFound
   case invalidUrl
   case noInternet
+  /// The app turned off event tracking, so the request wasn't sent.
+  case trackingDisabled
 
   /// The server responded with a status code outside the 2xx range that isn't
   /// covered by a more specific case.
@@ -32,6 +34,7 @@ enum NetworkError: LocalizedError, Equatable {
     case .notFound: return NSLocalizedString("Not found", comment: "")
     case .invalidUrl: return NSLocalizedString("URL invalid", comment: "")
     case .noInternet: return NSLocalizedString("No Internet", comment: "")
+    case .trackingDisabled: return NSLocalizedString("Event tracking turned off", comment: "")
     case .http(let statusCode):
       return String(
         format: NSLocalizedString("HTTP error %d.", comment: ""),
@@ -131,12 +134,17 @@ class CustomURLSession {
     )
 
     let startTime = Date().timeIntervalSince1970
+    let canSend = endpoint.canSend
     let (data, response) = try await Task.retrying(
       maxRetryCount: endpoint.retryCount,
       retryInterval: endpoint.retryInterval,
       timeout: endpoint.timeout,
       isRetryingCallback: isRetryingCallback
     ) {
+      if let canSend = canSend,
+        !canSend() {
+        throw NetworkError.trackingDisabled
+      }
       return try await self.urlSession.data(for: request)
     }.value
 

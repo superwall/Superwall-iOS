@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 04/03/2022.
 //
 
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 #else
@@ -70,3 +71,4 @@ extension Superwall {
     }
   }
 }
+#endif

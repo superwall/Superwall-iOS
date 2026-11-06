@@ -259,7 +259,7 @@ struct StoreKitManagerTests {
         .init(
           name: "annual",
           type: .appStore(.init(id: "annual", billingPlanType: .monthly)),
-          id: "annual:MONTHLY",
+          id: "annual",
           entitlements: []
         )
       ])
@@ -268,7 +268,7 @@ struct StoreKitManagerTests {
         .init(
           name: "annual",
           type: .appStore(.init(id: "annual", billingPlanType: .upFront)),
-          id: "annual:UP_FRONT",
+          id: "annual",
           entitlements: []
         )
       ])
@@ -283,5 +283,50 @@ struct StoreKitManagerTests {
     let composite = await manager.productsByCompositeId
     #expect(composite["annual:MONTHLY"] != nil)
     #expect(composite["annual:UP_FRONT"] != nil)
+  }
+
+  @Test("Two slots selling one product on different plans get separate cache entries")
+  func getProducts_slotsSharingAppleId_doNotOverwrite() async throws {
+    let annual = MockSkProduct(productIdentifier: "annual")
+    let productsFetcher = ProductsFetcherSK1Mock(
+      productCompletionResult: .success([StoreProduct(sk1Product: annual, entitlements: [])]),
+      entitlementsInfo: dependencyContainer.entitlementsInfo
+    )
+    let manager = StoreKitManager(
+      productsManager: ProductsManager(
+        entitlementsInfo: dependencyContainer.entitlementsInfo,
+        storeKitVersion: .storeKit1,
+        productsFetcher: productsFetcher
+      )
+    )
+    let paywall = Paywall.stub()
+      .setting(\.products, to: [
+        .init(
+          name: "upFront",
+          type: .appStore(.init(id: "annual", billingPlanType: .upFront)),
+          id: "annual",
+          entitlements: []
+        ),
+        .init(
+          name: "instalments",
+          type: .appStore(.init(id: "annual", billingPlanType: .monthly)),
+          id: "annual",
+          entitlements: []
+        )
+      ])
+
+    let (products, items) = try await manager.getProducts(forPaywall: paywall, placement: nil)
+
+    #expect(products["annual:UP_FRONT"] != nil)
+    #expect(products["annual:MONTHLY"] != nil)
+    #expect(products["annual:UP_FRONT"] !== products["annual:MONTHLY"])
+    #expect(products["annual"] == nil)
+    #expect(items.map(\.id) == ["annual", "annual"])
+    #expect(await manager.product(withId: "annual:UP_FRONT") != nil)
+    #expect(await manager.product(withId: "annual:MONTHLY") != nil)
+
+    let outcome = PaywallLogic.getProductVariables(productItems: items, productsById: products)
+    #expect(outcome.productVariables.map(\.name) == ["upFront", "instalments"])
+    #expect(outcome.productVariables.map(\.id) == ["annual", "annual"])
   }
 }

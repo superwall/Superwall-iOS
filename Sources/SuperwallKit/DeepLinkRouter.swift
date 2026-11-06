@@ -9,16 +9,19 @@
 import Foundation
 import Combine
 
-final class DeepLinkRouter {
-  /// The user attribute key holding the first deep link URL received
-  /// during the first app session after install.
-  static let firstDeepLinkUrlAttributeKey = "firstDeepLinkUrl"
+extension Notification.Name {
+  /// A Superwall return link (`scheme://superwall/return`) opened the app.
+  static let superwallReturnLinkOpened = Notification.Name("SuperwallReturnLinkOpened")
+}
 
+final class DeepLinkRouter {
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
+  #if canImport(WebKit)
   private unowned let debugManager: DebugManager
-  private unowned let configManager: ConfigManager
-  private unowned let storage: Storage
-  private unowned let identityManager: IdentityManager
+  #endif
+  unowned let configManager: ConfigManager
+  unowned let storage: Storage
+  unowned let identityManager: IdentityManager
   private static var pendingDeepLink: URL?
 
   /// Tracks an event. Replaced in tests to observe what's tracked.
@@ -28,9 +31,14 @@ final class DeepLinkRouter {
 
   /// The ``PaywallInfo`` of the presented paywall, if one is presented. Replaced in tests.
   var presentedPaywallInfo: () async -> PaywallInfo? = {
-    await Superwall.shared.paywallViewController?.info
+    #if canImport(WebKit)
+    return await Superwall.shared.paywallViewController?.info
+    #else
+    return nil
+    #endif
   }
 
+  #if canImport(WebKit)
   init(
     webEntitlementRedeemer: WebEntitlementRedeemer,
     debugManager: DebugManager,
@@ -46,6 +54,21 @@ final class DeepLinkRouter {
 
     listenToConfig()
   }
+  #else
+  init(
+    webEntitlementRedeemer: WebEntitlementRedeemer,
+    configManager: ConfigManager,
+    storage: Storage,
+    identityManager: IdentityManager
+  ) {
+    self.webEntitlementRedeemer = webEntitlementRedeemer
+    self.configManager = configManager
+    self.storage = storage
+    self.identityManager = identityManager
+
+    listenToConfig()
+  }
+  #endif
 
   @discardableResult
   func route(url: URL) -> Bool {
@@ -82,13 +105,14 @@ final class DeepLinkRouter {
       deepLinkUrl = url
     }
 
-    captureFirstSessionDeepLink(deepLinkUrl)
+    captureFirstSessionDeepLink(deepLinkUrl, originalUrl: url)
 
     let trackEvent = self.trackEvent
     Task {
       await trackEvent(InternalSuperwallEvent.DeepLink(url: deepLinkUrl))
     }
 
+    #if canImport(WebKit)
     // Check if this is a debug URL
     if debugManager.handle(deepLinkUrl: deepLinkUrl) {
       return true
@@ -97,6 +121,7 @@ final class DeepLinkRouter {
     if DevServerPreview.handle(url: deepLinkUrl) {
       return true
     }
+    #endif
 
     // Return true for Superwall deep links (we handled it above)
     if isSuperwallDeepLink {
@@ -109,21 +134,6 @@ final class DeepLinkRouter {
     }
 
     return false
-  }
-
-  /// Captures the first deep link received during the first app session
-  /// as a user attribute.
-  ///
-  /// App Store custom product pages can each specify a deep link, which is
-  /// delivered on the first app open after install. Storing it as a user
-  /// attribute means campaign results can be broken down by custom product
-  /// page.
-  private func captureFirstSessionDeepLink(_ url: URL) {
-    if storage.recordFirstSessionDeepLink(url) {
-      identityManager.mergeUserAttributes(
-        [Self.firstDeepLinkUrlAttributeKey: url.absoluteString]
-      )
-    }
   }
 
   private func handleReturnLink(_ url: URL) {
@@ -156,25 +166,6 @@ final class DeepLinkRouter {
         )
       )
     }
-  }
-
-  /// Re-applies the stored first-session deep link to the current user's
-  /// attributes. Called from `reset(duringIdentify:)` after user files are
-  /// wiped — the deep link is install-scoped, so the new user identity
-  /// inherits it, mirroring Apple Search Ads and MMP install attribution.
-  ///
-  /// - Warning: This must not read `identityManager.userAttributes`:
-  ///   `identify()` triggers the reset from the identity serial queue and the
-  ///   attributes getter is `queue.sync` on that same queue, which would
-  ///   deadlock. The merge is async and idempotent, so it's applied
-  ///   unconditionally.
-  func reapplyFirstSessionDeepLinkAttribute() {
-    guard let urlString = storage.get(FirstSessionDeepLinkURL.self) else {
-      return
-    }
-    identityManager.mergeUserAttributes(
-      [Self.firstDeepLinkUrlAttributeKey: urlString]
-    )
   }
 
   private func listenToConfig() {
@@ -236,6 +227,7 @@ final class DeepLinkRouter {
       return true
     }
 
+    #if canImport(WebKit)
     // Debug/preview URLs
     if DebugManager.outcomeForDeepLink(url: url) != nil {
       return true
@@ -249,6 +241,7 @@ final class DeepLinkRouter {
       DevServerPreview.canHandle(url: url, options: Superwall.shared.options) {
       return true
     }
+    #endif
 
     // Check cached config for deepLink_open trigger
     let cache = Cache()

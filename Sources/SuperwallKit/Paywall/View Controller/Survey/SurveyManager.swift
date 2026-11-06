@@ -6,6 +6,7 @@
 //
 // swiftlint:disable function_body_length
 
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 #else
@@ -364,4 +365,5 @@ extension SurveyManager {
     }
   }
 }
+#endif
 #endif

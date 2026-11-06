@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 25/11/2025.
 //
 
+#if canImport(WebKit)
 import Foundation
 import WebKit
 #if canImport(UIKit)
@@ -201,3 +202,4 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
     }
   }
 }
+#endif

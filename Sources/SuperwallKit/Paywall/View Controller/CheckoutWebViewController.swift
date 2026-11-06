@@ -4,8 +4,9 @@
 //
 //  Created by Yusuf Tör on 04/09/2025.
 //
-// swiftlint:disable implicitly_unwrapped_optional
+// swiftlint:disable implicitly_unwrapped_optional file_length
 
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 #else
@@ -396,4 +397,5 @@ extension CheckoutWebViewController {
     return .allow
   }
 }
+#endif
 #endif

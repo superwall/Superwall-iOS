@@ -76,7 +76,7 @@ enum IsEligibleForMMPInstallAttributionMatch: Storable {
 
 /// The decoded MMP `acquisition_*` payload from the last successful install
 /// match, cached so we can re-apply it to a new user's attributes after
-/// `reset(duringIdentify:)`. Install-scoped: the install source doesn't change
+/// `reset()`. Install-scoped: the install source doesn't change
 /// when one user logs out and another logs in on the same device. The backend
 /// match only runs within the 7-day install window, so re-matching after a
 /// reset can't be relied on — caching the resolved payload lets us repopulate
@@ -113,18 +113,23 @@ enum DidTrackFirstSession: Storable {
   typealias Value = Bool
 }
 
-/// The first deep link URL received during the first app session after
-/// install. App Store custom product pages can each specify a deep link
-/// that's delivered on the first app open, so this is stored for product
-/// page attribution. Install-scoped: survives identity reset so it can be
-/// re-applied to a new user's attributes, and is only cleared by app
-/// uninstall.
+/// The first deep link of the first app session, for custom product page
+/// attribution. Install-scoped: a new user keeps it across a reset.
 enum FirstSessionDeepLinkURL: Storable {
   static var key: String {
     "store.firstSessionDeepLinkUrl"
   }
   static var directory: SearchPathDirectory = .appSpecificDocuments
   typealias Value = String
+}
+
+/// The custom product page whose deep link is ``FirstSessionDeepLinkURL``.
+enum FirstSessionCustomProductPage: Storable {
+  static var key: String {
+    "store.firstSessionCustomProductPage"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = CustomProductPage
 }
 
 enum DidCleanUserAttributes: Storable {
@@ -268,7 +273,7 @@ enum LatestEnrichment: Storable {
 /// Apple Search Ads attribution is install-scoped — the campaign that drove
 /// the install doesn't change when a user logs out and another user logs in
 /// on the same device. So all the AdServices state lives in
-/// `.appSpecificDocuments`, surviving `reset(duringIdentify:)`. The cached
+/// `.appSpecificDocuments`, surviving `reset()`. The cached
 /// attribution dict (``AdServicesAttributionDataStorage``) is re-applied to
 /// the new user's attributes after a reset so they pick up the same
 /// `apple_search_ads_*` / `acquisition_*` keys without re-fetching.
@@ -309,7 +314,7 @@ enum AdServicesAttributionUnsupportedStorage: Storable {
 }
 
 /// The decoded attribution payload from the backend, cached so we can
-/// re-apply it to a new user's attributes after `reset(duringIdentify:)`.
+/// re-apply it to a new user's attributes after `reset()`.
 /// Install-scoped: the same campaign keys apply to whichever user is logged
 /// in on this install.
 enum AdServicesAttributionDataStorage: Storable {

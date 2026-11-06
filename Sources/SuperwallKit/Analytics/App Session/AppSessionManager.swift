@@ -60,12 +60,16 @@ class AppSessionManager {
       name: SystemInfo.applicationDidBecomeActiveNotification,
       object: nil
     )
-    notificationCenter.addObserver(
-      self,
-      selector: #selector(applicationWillTerminate),
-      name: SystemInfo.applicationWillTerminateNotification,
-      object: nil
-    )
+    // A nil name would observe every notification, so skip it where the
+    // platform has no terminate notification.
+    if let willTerminate = SystemInfo.applicationWillTerminateNotification {
+      notificationCenter.addObserver(
+        self,
+        selector: #selector(applicationWillTerminate),
+        name: willTerminate,
+        object: nil
+      )
+    }
   }
 
   func listenForAppSessionTimeout() {
