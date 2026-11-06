@@ -675,7 +675,7 @@ public actor SupportTransport {
     }
     httpBusy = false
     // An HTTP read that moved nothing (bad data) must not loop ready → read → connect.
-    let noProgress = readsHTTP && log.cursor == cursorBefore
+    let noProgress = readsHTTP && log.cursor <= cursorBefore
     if useBackoff || noProgress { scheduleRetry() } else { connect() }
   }
 
