@@ -225,19 +225,26 @@ final class FixtureServerTests: XCTestCase {
     let transport = makeTransport(apiKey: "pk_test_plain") { $0.socketReplayCap = 10 }
     try await transport.start()
     try await waitUntil(5, "live") { await transport.state == .live }
-    await transport.setForeground(false)
-
-    // 25 messages land while the client holds no socket.
     let current = await transport.session
     let session = try XCTUnwrap(current)
     let http = SupportHTTPClient(baseURL: baseURL, urlSession: .shared)
+    // The client holds two entries…
+    for index in 0..<2 {
+      _ = try await http.sendMessage(
+        token: session.sessionToken, conversationId: session.conversationId,
+        SendMessage(clientMessageId: "held-\(index)", text: "Held \(index)", attachments: nil))
+    }
+    try await waitUntil(5, "2 held") { await transport.log.cursor == 2 }
+    await transport.setForeground(false)
+
+    // …then 25 more land while it holds no socket.
     for index in 0..<25 {
       _ = try await http.sendMessage(
         token: session.sessionToken, conversationId: session.conversationId,
         SendMessage(clientMessageId: "bulk-\(index)", text: "Message \(index)", attachments: nil))
     }
     await transport.setForeground(true)
-    try await waitUntil(10, "caught up") { await transport.log.entries.count == 25 }
+    try await waitUntil(10, "caught up") { await transport.log.entries.count == 27 }
     try await waitUntil(5, "live") { await transport.state == .live }
     let stats = await transport.stats
     XCTAssertEqual(stats.httpCatchUps, 1)

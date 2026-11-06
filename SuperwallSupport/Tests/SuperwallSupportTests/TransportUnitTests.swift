@@ -279,6 +279,23 @@ final class TransportUnitTests: XCTestCase {
     await transport.stop()
   }
 
+  /// The network dies between session start and the first window: start still
+  /// connects, and a far-ahead `ready` loads the newest window, not all history.
+  func testFirstWindowFailureStillConnects() async throws {
+    http.failEntries = 1
+    http.windowEntries = Array(1...100)
+    let transport = makeTransport()
+    try await transport.start()
+    try await waitUntil("socket") { self.sockets.count == 1 }
+    sockets.latest.deliver(Self.ready(after: 0, head: 100))
+    try await waitUntil("newest window") { await transport.log.cursor == 100 }
+    let hasOlder = await transport.log.hasOlder
+    XCTAssertFalse(hasOlder)
+    XCTAssertTrue(http.calls.contains { $0.hasPrefix("GET") }, "reloaded over HTTP")
+    XCTAssertFalse(http.calls.contains { $0.contains("after=") }, "no catch-up from 0")
+    await transport.stop()
+  }
+
   func testBackgroundClosesAndForegroundReconnectsAtOnce() async throws {
     let transport = makeTransport()
     try await transport.start()
@@ -431,6 +448,7 @@ final class StubHTTP: @unchecked Sendable {
   var sessionsStarted = 0
   var calls: [String] = []
   var failSends = 0
+  var failEntries = 0
   var rejectSends = false
   var sendIds: [String] = []
   var uploadRequest: [String: JSONValue]?
@@ -443,13 +461,18 @@ final class StubHTTP: @unchecked Sendable {
     let url = request.url!
     let method = request.httpMethod ?? "GET"
     let body = request.bodyData()
-    calls.append(url.host == "uploads.test" ? "\(method) \(url.absoluteString)" : "\(method) \(url.path)")
+    calls.append(
+      url.host == "uploads.test"
+        ? "\(method) \(url.absoluteString)" : "\(method) \(url.path)\(url.query.map { "?" + $0 } ?? "")")
     switch (method, url.path) {
     case ("POST", "/v1/sessions"):
       sessionsStarted += 1
       return (200, Data(#"""
         {"protocol":"superwall-support/1","sessionId":"sess_01M6R13Q96S0JV0S92F7TEJ3CH","sessionToken":"tok_\#(sessionsStarted)","expiresAt":"2026-11-06T09:55:23.174Z","applicationId":1,"conversationId":"\#(TransportUnitTests.conversation)","proofs":[],"caps":{"ui":{"v":1,"elements":{}},"cards":[],"actions":[]},"consentRequired":false,"theme":{},"human":{"available":false},"heartbeatSeconds":25}
         """#.utf8))
+    case ("GET", _) where url.path.hasSuffix("/entries") && failEntries > 0:
+      failEntries -= 1
+      return (503, Data(#"{"_tag":"WireUnavailable","message":"Down"}"#.utf8))
     case ("GET", _) where url.path.hasSuffix("/entries"):
       let entries = windowEntries.map { FixtureTests.entry(seq: $0, id: TransportUnitTests.entryId($0)) }
       let json = JSONValue.object([

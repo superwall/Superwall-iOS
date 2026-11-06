@@ -104,6 +104,7 @@ public actor SupportTransport {
   private var foreground = true
   private var networkAvailable = true
   private var started = false
+  private var starting = false
   private var stopped = false
 
   // The socket and everything tied to it. `generation` invalidates old loops.
@@ -165,12 +166,20 @@ public actor SupportTransport {
 
   // MARK: - Lifecycle
 
-  /// Starts a session, loads the newest window and connects. Call once.
+  /// Starts a session, loads the newest window and connects. Throws only when the
+  /// session can't start (call again to retry). A window that fails to load doesn't
+  /// stop it: the socket's catch-up reads it over HTTP instead.
   public func start(conversationId: String? = nil) async throws {
-    guard !started else { return }
-    started = true
+    guard !started, !starting else { return }
+    starting = true
+    defer { starting = false }
     try await startSession(conversationId: conversationId)
-    try await reloadNewestWindow()
+    started = true
+    do {
+      try await reloadNewestWindow()
+    } catch {
+      logger("first window failed (\(error)); the socket catches up")
+    }
     connect()
     flushSends()
   }
@@ -375,8 +384,10 @@ public actor SupportTransport {
       emit(.logChanged)
       if head - log.cursor > configuration.socketReplayCap {
         // Too far behind for the socket: read windows over HTTP, then reconnect from there.
+        // Holding nothing (the first window failed): load the newest window, not all history.
+        let holdsNothing = log.cursor == 0
         await replaceSocket(reason: "catch up over HTTP") {
-          try await self.catchUpOverHTTP()
+          if holdsNothing { try await self.reloadNewestWindow() } else { try await self.catchUpOverHTTP() }
         }
         return
       }
