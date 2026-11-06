@@ -53,7 +53,7 @@ struct AppStoreEntitlementLookupTests {
           makeProduct(id: "com.app.web", entitlementId: "web_only", isAppStore: false)
         ]
       )
-    container.configManager.configState.send(.retrieved(config))
+    container.configManager.store.update(ConfigUpdate.retrieved(config))
 
     #expect(container.purchasesLoadCouldChange(entitlementIds: ["pro"]))
     #expect(container.purchasesLoadCouldChange(entitlementIds: ["web_only"]) == false)
@@ -82,13 +82,13 @@ struct AppStoreEntitlementLookupTests {
     // controller, `refreshExternalControllerCustomerInfo` with one — so the
     // load has nothing to add either way.
     let automatic = DependencyContainer()
-    automatic.configManager.configState.send(.retrieved(webOnly))
+    automatic.configManager.store.update(ConfigUpdate.retrieved(webOnly))
     automatic.entitlementsInfo.setGranted([Entitlement(id: "web_only")])
     defer { automatic.entitlementsInfo.setGranted([]) }
     #expect(automatic.purchasesLoadCouldChange(entitlementIds: ["web_only"]) == false)
 
     let controlled = DependencyContainer(purchaseController: MockPurchaseController())
-    controlled.configManager.configState.send(.retrieved(webOnly))
+    controlled.configManager.store.update(ConfigUpdate.retrieved(webOnly))
     controlled.entitlementsInfo.setGranted([Entitlement(id: "web_only")])
     defer { controlled.entitlementsInfo.setGranted([]) }
     #expect(controlled.purchasesLoadCouldChange(entitlementIds: ["web_only"]) == false)

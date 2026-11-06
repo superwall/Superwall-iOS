@@ -30,6 +30,8 @@ final class AttributionFetcher {
   /// is worth syncing: every sync costs a `user_attributes` event, a delegate
   /// callback, a Core Data row and a re-encode of the whole attribute dict.
   private var _lastSyncedDeviceIdentifiers: [String: String]?
+  /// The identifiers last handed to a reset's new user. The next read replaces them.
+  private var _resetDeviceIdentifiers: [String: String]?
 
   private unowned let storage: Storage
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
@@ -267,20 +269,11 @@ final class AttributionFetcher {
 
 // MARK: - Device identifiers
 extension AttributionFetcher {
-  /// Forgets what was last synced when a write lands on one of the SDK's keys
-  /// carrying something other than what the SDK put there, so the next merge
-  /// puts its own value back.
-  ///
-  /// The sync gate compares against what the SDK last sent rather than what the
-  /// user's attributes actually hold, so without this an app that removed
-  /// `idfv` would keep it missing until an identifier itself changed — which on
-  /// a settled device may be never.
-  ///
-  /// Compares the values rather than just the keys because the SDK's own sync
-  /// comes back through this same setter, as do internal writers like the
-  /// enrichment response, which echoes the user's attributes back verbatim. A
-  /// write that agrees with what was sent isn't an overwrite and mustn't cost a
-  /// resync.
+  /// Forgets what was last synced when a write puts something other than the
+  /// SDK's value on one of its keys, so the next merge restores it. Otherwise
+  /// an app that removed `idfv` would keep it missing until an identifier
+  /// changed. Compares values: the SDK's own sync and the enrichment echo come
+  /// back through this setter, and those aren't overwrites.
   func forgetSyncedDeviceIdentifiers(ifChangedBy attributes: [String: Any?]) {
     let touched = attributes.filter { DeviceIdentifiers.keys.contains($0.key) }
     if touched.isEmpty {
@@ -315,7 +308,12 @@ extension AttributionFetcher {
   private var currentDeviceIdentifiers: [String: String] {
     var attributes: [String: String] = [:]
 
+    #if os(macOS)
+    // macOS has no Apple IDFV. The SDK's installation UUID is not an MMP identifier.
+    let vendorId = vendorIdProvider?() ?? ""
+    #else
     let vendorId = vendorIdProvider?() ?? deviceHelper.vendorId
+    #endif
     if !vendorId.isEmpty {
       attributes["idfv"] = vendorId
     }
@@ -343,51 +341,60 @@ extension AttributionFetcher {
     }
   }
 
-  /// Re-scopes the integration attributes for the user that `reset()` just
-  /// created.
-  ///
-  /// Identifiers that describe the person — see `isInstallScoped` — belong to
-  /// whoever was just signed out, so they go. The install-scoped ones describe
-  /// the same device either way and stay, along with the device identifiers.
-  ///
-  /// A reset clears the user's attributes and deletes the stored copy, which
-  /// lives in the user-specific directory, while the in-memory copy outlives
-  /// it. So write what's kept back to disk and hand all of it — not just what
-  /// changed — to the new user, who has none of it. Without the file the next
-  /// cold launch would start empty and the activation refresh would never run
-  /// again, so a later consent change would never clear the IDFA.
-  ///
-  /// Runs synchronously: `identify` redeems for the new user right after the
-  /// reset, and that request reads the stored attributes rather than this
-  /// object. No redeem is scheduled here; the identity redeems on its own.
-  func resetIntegrationAttributes() {
+  /// What a reset's new user keeps: device identifiers and install-scoped ids.
+  func integrationAttributesKeptAcrossReset() -> [String: Any?] {
     queue.sync {
-      if _integrationAttributes.isEmpty {
-        return
+      guard let (kept, device) = _integrationAttributesKeptAcrossReset() else {
+        return [:]
       }
-      var kept = _integrationAttributes.filter { key, _ in
-        DeviceIdentifiers.keys.contains(key)
-          || IntegrationAttribute.installScopedKeys.contains(key)
-      }
-      if kept.isEmpty {
-        _integrationAttributes = [:]
-        _lastSyncedDeviceIdentifiers = nil
-        return
-      }
-
-      let device = currentDeviceIdentifiers
-      for key in DeviceIdentifiers.keys {
-        kept[key] = device[key]
-      }
-      _integrationAttributes = kept
-      _lastSyncedDeviceIdentifiers = device
-      storage.save(kept, forType: IntegrationAttributes.self)
-
+      _resetDeviceIdentifiers = device
       var userAttributes = DeviceIdentifiers.userAttributes(for: device)
       for (key, value) in kept where !DeviceIdentifiers.keys.contains(key) {
         userAttributes[key] = value
       }
-      syncUserAttributes(userAttributes)
+      return userAttributes
     }
+  }
+
+  /// After a reset, drops the ids that describe the person (see
+  /// `isInstallScoped`) and saves the rest to the wiped disk, or a later
+  /// consent change would never clear the IDFA. Synchronous, since the redeem
+  /// after an identify reads the stored copy.
+  func resetIntegrationAttributes() {
+    queue.sync {
+      let given = _resetDeviceIdentifiers
+      _resetDeviceIdentifiers = nil
+      if _integrationAttributes.isEmpty {
+        return
+      }
+      guard let (kept, device) = _integrationAttributesKeptAcrossReset() else {
+        _integrationAttributes = [:]
+        _lastSyncedDeviceIdentifiers = nil
+        return
+      }
+      _integrationAttributes = kept
+      _lastSyncedDeviceIdentifiers = device
+      storage.save(kept, forType: IntegrationAttributes.self)
+      // ATT or the IDFA changed since the new user was given identifiers.
+      if device != given {
+        syncUserAttributes(DeviceIdentifiers.userAttributes(for: device))
+      }
+    }
+  }
+
+  /// What survives a reset, with fresh device identifiers. Call on `queue`.
+  private func _integrationAttributesKeptAcrossReset() -> (kept: [String: String], device: [String: String])? {
+    var kept = _integrationAttributes.filter { key, _ in
+      DeviceIdentifiers.keys.contains(key)
+        || IntegrationAttribute.installScopedKeys.contains(key)
+    }
+    if kept.isEmpty {
+      return nil
+    }
+    let device = currentDeviceIdentifiers
+    for key in DeviceIdentifiers.keys {
+      kept[key] = device[key]
+    }
+    return (kept, device)
   }
 }

@@ -5,7 +5,7 @@
 //  Created by brian on 8/16/21.
 //
 
-import UIKit
+import Foundation
 import Combine
 
 /// Sends n analytical events to the Superwall servers every 20 seconds, where n is defined by `maxEventCount`.
@@ -65,7 +65,7 @@ actor PlacementsQueue {
   @MainActor
   private func addObserver() async {
     resignActiveObserver = NotificationCenter.default
-      .publisher(for: UIApplication.willResignActiveNotification)
+      .publisher(for: SystemInfo.applicationWillResignActiveNotification)
       .sink { [weak self] _ in
         Task {
           await self?.flushInternal()

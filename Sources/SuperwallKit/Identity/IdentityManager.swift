@@ -1,107 +1,102 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 16/09/2022.
 //
 
-// ********************** How to use this class **********************
-//
-// For variables and functions that could have race conditions, a private
-// variable/function is created with an underscore. Access to this is
-// synchronised via a dispatch queue. When writing, use queue.async, when
-// reading use a computed var with a queue.sync block. You do not need to
-// use the queue during init.
-// A Dispatch Group is used when calling functions that will call didSetIdentity.
-// This is to prevent the case where identitySubject sends a true value before
-// all functions affecting the identity have finished.
-//
-// *******************************************************************
-//
-// swiftlint:disable function_body_length file_length
-
 import Foundation
 import Combine
 
-class IdentityManager {
+/// What the identity needs from the rest of the SDK when it replaces the user
+/// with a new anonymous one, on `reset()` or on identifying a different user.
+protocol IdentityResetHandling: AnyObject {
+  /// The attributes a new user keeps, such as install-scoped attribution and
+  /// the device identifiers. Called with the identity unlocked, and doesn't
+  /// change the identity. Usually called before the identity changes. When another
+  /// thread changed the user at the same moment, it's called afterwards
+  /// instead, and what it returns is merged into the new user then.
+  func attributesKeptAcrossReset() -> [String: Any?]
+
+  /// Resets the rest of the SDK for the new user. Called once the identity
+  /// has changed, with it unlocked. The identity isn't ready until this
+  /// returns. Must not change the identity: it already holds what the new
+  /// user keeps.
+  func identityDidReset()
+}
+
+/// Holds the user's identity and serializes every change to it.
+///
+/// The identity lives in an ``IdentityState`` on a ``StateStore``. Changes
+/// are ``IdentityAction``s, which run one at a time with the store locked and
+/// have run when the call returns, so a read straight after a change sees it
+/// and a merge called after `identify(userId:)` lands on the identified user.
+/// Waiting on the config or on assignments happens in side effects, tracked
+/// as pending work in the state, so it never holds up later changes.
+///
+/// Replacing the user with a new anonymous one works as on Android: the
+/// identity owns it. The rest of the SDK hands over what the new user keeps
+/// beforehand, and resets itself afterwards, through ``resetHandler``. So
+/// nothing calls back into the identity while it changes.
+class IdentityManager: IdentityContext {
   /// The appUserId or the aliasId, depending on whether the user is logged in
   /// or not.
   var userId: String {
-    return queue.sync {
-      _appUserId ?? _aliasId
-    }
+    store.state.userId
   }
 
-  /// The identified userId or Superwall-assigned UUID used for purchasing.
+  /// The identified userId or Superwall-assigned UUID used for purchasing:
+  /// the `appUserId` if it's a UUID, otherwise the UUID in the alias.
   var appAccountToken: UUID? {
-    if let appUserId = appUserId,
+    let state = store.state
+    if let appUserId = state.appUserId,
       let uuid = UUID(uuidString: appUserId) {
       return uuid
-    } else {
-      return UUID(uuidString: aliasIdWithoutPrefix)
     }
+    return UUID(
+      uuidString: state.aliasId.replacingOccurrences(
+        of: IdentityLogic.superwallPrefix,
+        with: ""
+      )
+    )
   }
 
   /// The userId passed to the SDK.
   var appUserId: String? {
-    queue.sync {
-      _appUserId
-    }
-  }
-  private var _appUserId: String? {
-    didSet {
-      saveIds()
-    }
+    store.state.appUserId
   }
 
   /// User attributes that belong to the user.
   var userAttributes: [String: Any] {
-    queue.sync {
-      _userAttributes
-    }
+    store.state.userAttributes
   }
-  private var _userAttributes: [String: Any] = [:]
 
   /// The randomly generated aliasId used to identify an anonymous user.
   var aliasId: String {
-    queue.sync {
-      _aliasId
-    }
-  }
-  private var aliasIdWithoutPrefix: String {
-    return aliasId.replacingOccurrences(
-      of: IdentityLogic.superwallPrefix,
-      with: ""
-    )
-  }
-  private var _aliasId: String {
-    didSet {
-      saveIds()
-    }
+    store.state.aliasId
   }
 
   /// The randomly generated seed used to put users into cohorts.
   var seed: Int {
-    queue.sync {
-      _seed
-    }
-  }
-  private var _seed: Int {
-    didSet {
-      saveIds()
-    }
+    store.state.seed
   }
 
   /// Indicates whether the user has logged in or not.
   var isLoggedIn: Bool {
-    return appUserId != nil
+    store.state.isLoggedIn
   }
 
   /// A Publisher that only emits when `identitySubject` is `true`. When `true`,
   /// it means the SDK is ready to fire triggers.
   var hasIdentity: AnyPublisher<Bool, Error> {
     identitySubject
-      .filter { $0 == true }
+      // Readiness reaches the subject once the store is unlocked, so while a
+      // change is being applied the subject can still say ready. A `true` only
+      // counts if the identity is still ready. If it isn't, the subject hears
+      // `false` and then `true` again once it is.
+      .filter { [weak self] isReady in
+        isReady && self?.store.state.isReady == true
+      }
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
   }
@@ -109,108 +104,77 @@ class IdentityManager {
   /// Indicates whether the identity (i.e. anonymous or logged in with
   /// assignments) has been retrieved.
   ///
-  /// When `false`, the SDK is unable to present paywalls.
+  /// When `false`, the SDK is unable to present paywalls. Mirrors
+  /// ``IdentityState/isReady``.
   let identitySubject = CurrentValueSubject<Bool, Never>(false)
-  private let queue = DispatchQueue(label: "com.superwall.identitymanager")
-  private let group = DispatchGroup()
 
-  private unowned let deviceHelper: DeviceHelper
-  private unowned let storage: Storage
-  private unowned let configManager: ConfigManager
-  private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
-  private let notifyUserChange: (([String: Any]) -> Void)?
+  let store: IdentityStore
+  let userChangeLock = NSRecursiveLock()
+
+  /// Resets the rest of the SDK when the identity replaces the user.
+  weak var resetHandler: IdentityResetHandling?
+
+  // Weak rather than unowned: side effects and queued actions can outlive
+  // these, and then they should do nothing rather than crash.
+  private weak var storage: Storage?
+  private weak var configManager: ConfigManager?
+  private weak var webEntitlementRedeemer: WebEntitlementRedeemer?
+  private let notifyUserChangeHandler: (([String: Any]) -> Void)?
+  private let trackHandler: (Trackable) async -> Void
 
   init(
     deviceHelper: DeviceHelper,
     storage: Storage,
     configManager: ConfigManager,
     webEntitlementRedeemer: WebEntitlementRedeemer,
-    notifyUserChange: (([String: Any]) -> Void)? = nil
+    notifyUserChange: (([String: Any]) -> Void)? = nil,
+    track: @escaping (Trackable) async -> Void = {
+      _ = await Superwall.shared.track($0)
+    }
   ) {
-    self.deviceHelper = deviceHelper
     self.storage = storage
     self.configManager = configManager
     self.webEntitlementRedeemer = webEntitlementRedeemer
-    self.notifyUserChange = notifyUserChange
-    self._appUserId = storage.get(AppUserId.self)
+    self.notifyUserChangeHandler = notifyUserChange
+    self.trackHandler = track
 
-    var extraAttributes: [String: Any] = [:]
+    let initialState = IdentityState.load(
+      from: storage,
+      appInstalledAtString: deviceHelper.appInstalledAtString
+    )
+    store = IdentityStore(initial: initialState)
+    identitySubject.send(initialState.isReady)
 
-    if let aliasId = storage.get(AliasId.self) {
-      self._aliasId = aliasId
-    } else {
-      self._aliasId = IdentityLogic.generateAlias()
-      storage.save(_aliasId, forType: AliasId.self)
-      extraAttributes["aliasId"] = self._aliasId
-    }
-
-    if let seed = storage.get(Seed.self) {
-      self._seed = seed
-    } else {
-      self._seed = IdentityLogic.generateSeed()
-      storage.save(_seed, forType: Seed.self)
-      extraAttributes["seed"] = self._seed
-    }
-    self._userAttributes = storage.get(UserAttributes.self) ?? [:]
-
-    let didCleanUserAttributes = storage.get(DidCleanUserAttributes.self) ?? false
-    if !didCleanUserAttributes {
-      cleanUserAttributes()
-    }
-
-    if !extraAttributes.isEmpty {
-      mergeUserAttributes(extraAttributes, shouldTrackMerge: false)
-    }
-  }
-
-  /// Removes any attributes as JSON
-  private func cleanUserAttributes() {
-    queue.async { [weak self] in
-      guard let self = self else {
-        return
+    IdentityObservers.install(
+      on: store,
+      persist: { [weak self] before, after in
+        self?.persistChanges(from: before, to: after)
+      },
+      readinessChanged: { [weak self] isReady in
+        self?.identitySubject.send(isReady)
       }
-      var cleanedAttributes: [String: Any] = [:]
-
-      for attribute in self._userAttributes {
-        let key = attribute.key
-        var value = attribute.value
-
-        if let jsonValue = value as? JSON {
-          value = jsonValue.rawValue
-        }
-
-        if JSONSerialization.isValidJSONObject([key: value]) {
-          cleanedAttributes[key] = value
-        }
-        // Skip values that can't be represented in JSON.
-      }
-      self._userAttributes = cleanedAttributes
-      storage.save(cleanedAttributes, forType: UserAttributes.self)
-      storage.save(true, forType: DidCleanUserAttributes.self)
-    }
+    )
   }
 
   /// Checks for static config upgrade before setting identity.
   func configure() async {
-    group.enter()
-    let neverCalledStaticConfig = storage.neverCalledStaticConfig
-    let isFirstAppOpen = !(storage.get(DidTrackFirstSeen.self) ?? false)
+    store.update(IdentityUpdate.begin(.configuration))
+    let neverCalledStaticConfig = storage?.neverCalledStaticConfig ?? false
+    let isFirstAppOpen = !(storage?.get(DidTrackFirstSeen.self) ?? false)
 
     if IdentityLogic.shouldGetAssignments(
       isLoggedIn: isLoggedIn,
       neverCalledStaticConfig: neverCalledStaticConfig,
       isFirstAppOpen: isFirstAppOpen
     ) {
-      try? await configManager.getAssignments()
+      try? await configManager?.getAssignments()
     }
 
-    group.leave()
-
-    didSetIdentity()
+    store.update(IdentityUpdate.end(.configuration))
   }
 
   /// Creates an account and may or may not wait for assignments before
-  /// returning.
+  /// the identity is ready.
   func identify(
     userId: String,
     options: IdentityOptions?
@@ -224,162 +188,48 @@ class IdentityManager {
       return
     }
 
-    group.enter()
+    // Gathered before the identity is locked, since the rest of the SDK reads
+    // them under its own locks. If another thread changes the user in the
+    // meantime, the action sorts it out.
+    let currentUserId = store.state.appUserId
+    let switchesUser = currentUserId != nil && currentUserId != userId
+    let keptAttributes = switchesUser ? attributesKeptAcrossReset() : nil
 
-    queue.async { [weak self] in
-      guard let self = self else {
-        return
-      }
-      // If they're sending the same userId as before, then they're
-      // already logged in.
-      if self._appUserId == userId {
-        self.group.leave()
-        return
-      }
-
-      self.identitySubject.send(false)
-
-      let oldUserId = self._appUserId
-
-      // If user already logged in but identifying with a
-      // different userId, reset everything first.
-      if oldUserId != nil,
-        userId != oldUserId {
-        Superwall.shared.reset(duringIdentify: true)
-      }
-
-      self._appUserId = userId
-
-      Task {
-        let identityAlias = InternalSuperwallEvent.IdentityAlias()
-        await Superwall.shared.track(identityAlias)
-      }
-
-      // Regenerate seed based on userId.
-      self.group.enter()
-      Task {
-        let config = try? await self.configManager.configState
-          .compactMap { $0.getConfig() }
-          .throwableAsync()
-
-        if config?.featureFlags.enableUserIdSeed == true,
-          let seed = userId.sha256MappedToRange() {
-          self._seed = seed
-        }
-        self.group.leave()
-      }
-
-      func getAssignmentsAsync() {
-        Task.detached {
-          try? await self.configManager.getAssignments()
-        }
-        self.group.leave()
-        self.didSetIdentity()
-      }
-
-      // If they have set restore paywall assignments to true,
-      // Wait for assignments before setting identity. Otherwise,
-      // get assignments in the background.
-
-      Task {
-        await self.webEntitlementRedeemer.redeem(.existingCodes)
-      }
-
-      if let options = options {
-        if options.restorePaywallAssignments {
-          Task {
-            try? await self.configManager.getAssignments()
-            self.group.leave()
-            self.didSetIdentity()
-          }
-        } else {
-          getAssignmentsAsync()
-        }
-      } else {
-        getAssignmentsAsync()
-      }
-    }
-  }
-
-  /// Sends a `true` value to the `identitySubject` in order to fire
-  /// triggers after reset.
-  func didSetIdentity() {
-    group.notify(queue: .main) { [weak self] in
-      self?.identitySubject.send(true)
-    }
-  }
-
-  /// Saves the aliasId and appUserId to storage and user attributes.
-  private func saveIds() {
-    // This is not wrapped in an async block because is
-    // called from the didSet of vars, who are already
-    // being set within the queue.
-    if let appUserId = _appUserId {
-      storage.save(appUserId, forType: AppUserId.self)
-    }
-
-    // Save incase these have also changed.
-    storage.save(_aliasId, forType: AliasId.self)
-    storage.save(_seed, forType: Seed.self)
-
-    var newUserAttributes: [String: Any] = [
-      "aliasId": _aliasId,
-      "seed": _seed
-    ]
-    if let appUserId = _appUserId {
-      newUserAttributes["appUserId"] = appUserId
-    }
-
-    _mergeUserAttributes(newUserAttributes)
+    dispatch(
+      .identify(
+        userId: userId,
+        restoreAssignments: options?.restorePaywallAssignments ?? false,
+        keptAttributes: keptAttributes
+      )
+    )
   }
 }
 
 // MARK: - Reset
 extension IdentityManager {
-  /// Clears all stored user-specific variables.
-  ///
-  /// - Parameters:
-  ///   - duringIdentify: A boolean that indicates whether the reset
-  ///   call is happening during a call to `identify(userId:)`. If `false`,
-  ///   this happens
-  func reset(duringIdentify: Bool) {
-    identitySubject.send(false)
-
-    if duringIdentify {
-      self._reset()
-    } else {
-      group.enter()
-      queue.async { [weak self] in
-        self?._reset()
-        self?.group.leave()
-        self?.didSetIdentity()
-      }
-    }
-  }
-
-  /// Resets user values
-  private func _reset() {
-    _appUserId = nil
-    _aliasId = IdentityLogic.generateAlias()
-    _seed = IdentityLogic.generateSeed()
-    _userAttributes = [:]
+  /// Replaces the user with a new anonymous one, then resets the rest of the
+  /// SDK through ``resetHandler``, before returning. The identity isn't ready
+  /// until both are done.
+  func reset() {
+    dispatch(.reset(keptAttributes: attributesKeptAcrossReset()))
   }
 }
 
 // MARK: - User Attributes
 extension IdentityManager {
-  /// Merges the attributes on an async queue
+  /// Merges the attributes. From inside another identity change, such as the
+  /// reset an identify does, it lands once that change has finished.
   func mergeUserAttributes(
     _ newUserAttributes: [String: Any?],
     shouldTrackMerge: Bool = true
   ) {
-    queue.async { [weak self] in
-      self?._mergeUserAttributes(
+    dispatch(
+      .mergeAttributes(
         newUserAttributes,
-        shouldTrackMerge: shouldTrackMerge,
+        shouldTrack: shouldTrackMerge,
         shouldNotify: false
       )
-    }
+    )
   }
 
   /// Merges the attributes and notifies the delegate.
@@ -388,46 +238,108 @@ extension IdentityManager {
     _ newUserAttributes: [String: Any?],
     shouldTrackMerge: Bool = true
   ) {
-    queue.async { [weak self] in
-      self?._mergeUserAttributes(
+    dispatch(
+      .mergeAttributes(
         newUserAttributes,
-        shouldTrackMerge: shouldTrackMerge,
+        shouldTrack: shouldTrackMerge,
         shouldNotify: true
       )
+    )
+  }
+}
+
+// MARK: - IdentityContext
+extension IdentityManager {
+  func userIdSeed(for userId: String) async -> Int? {
+    guard let configManager = configManager else {
+      return nil
+    }
+    let config = try? await configManager.configState
+      .compactMap { $0.getConfig() }
+      .throwableAsync()
+    guard config?.featureFlags.enableUserIdSeed == true else {
+      return nil
+    }
+    return userId.sha256MappedToRange()
+  }
+
+  func fetchAssignments() async {
+    try? await configManager?.getAssignments()
+  }
+
+  func redeemExistingWebEntitlements() async {
+    await webEntitlementRedeemer?.redeem(.existingCodes)
+  }
+
+  func attributesKeptAcrossReset() -> [String: Any?] {
+    resetHandler?.attributesKeptAcrossReset() ?? [:]
+  }
+
+  func resetRestOfSDK() {
+    resetHandler?.identityDidReset()
+  }
+
+  func trackIdentityAlias() {
+    sideEffect { [trackHandler] in
+      await trackHandler(InternalSuperwallEvent.IdentityAlias())
     }
   }
 
-  /// Merges the provided user attributes with existing attributes then saves them.
-  ///
-  /// - Parameters:
-  ///   - shouldTrackMerge: A boolean indicated whether the merge should be tracked in analytics.
-  ///   - shouldNotify: A boolean indicating whether to notify the delegate of the change.
-  private func _mergeUserAttributes(
-    _ newUserAttributes: [String: Any?],
-    shouldTrackMerge: Bool = true,
-    shouldNotify: Bool = false
-  ) {
-    let mergedAttributes = IdentityLogic.mergeAttributes(
-      newUserAttributes,
-      with: _userAttributes,
-      appInstalledAtString: deviceHelper.appInstalledAtString
+  func trackUserAttributes(_ attributes: [String: Any]) {
+    let event = InternalSuperwallEvent.UserAttributes(
+      appInstalledAtString: store.state.appInstalledAtString,
+      audienceFilterParams: attributes
     )
+    sideEffect { [trackHandler] in
+      await trackHandler(event)
+    }
+  }
 
-    if shouldTrackMerge {
-      Task {
-        let attributes = InternalSuperwallEvent.UserAttributes(
-          appInstalledAtString: deviceHelper.appInstalledAtString,
-          audienceFilterParams: mergedAttributes
-        )
-        await Superwall.shared.track(attributes)
+  func notifyUserChange(_ attributes: [String: Any]) {
+    notifyUserChangeHandler?(attributes)
+  }
+
+  func persistIdentity(_ state: IdentityState) {
+    guard let storage = storage else {
+      return
+    }
+    if let appUserId = state.appUserId {
+      storage.save(appUserId, forType: AppUserId.self)
+    } else {
+      storage.delete(AppUserId.self)
+    }
+    storage.save(state.aliasId, forType: AliasId.self)
+    storage.save(state.seed, forType: Seed.self)
+    storage.save(state.userAttributes, forType: UserAttributes.self)
+  }
+
+  func sideEffect(_ work: @escaping () async -> Void) {
+    Task {
+      await work()
+    }
+  }
+
+  /// Saves only the fields an update changed. Updates that only touch
+  /// pending work save nothing.
+  private func persistChanges(from before: IdentityState, to after: IdentityState) {
+    guard let storage = storage else {
+      return
+    }
+    if after.appUserId != before.appUserId {
+      if let appUserId = after.appUserId {
+        storage.save(appUserId, forType: AppUserId.self)
+      } else {
+        storage.delete(AppUserId.self)
       }
     }
-
-    storage.save(mergedAttributes, forType: UserAttributes.self)
-    _userAttributes = mergedAttributes
-
-    if shouldNotify {
-      notifyUserChange?(mergedAttributes)
+    if after.aliasId != before.aliasId {
+      storage.save(after.aliasId, forType: AliasId.self)
+    }
+    if after.seed != before.seed {
+      storage.save(after.seed, forType: Seed.self)
+    }
+    if !NSDictionary(dictionary: after.userAttributes).isEqual(to: before.userAttributes) {
+      storage.save(after.userAttributes, forType: UserAttributes.self)
     }
   }
 }

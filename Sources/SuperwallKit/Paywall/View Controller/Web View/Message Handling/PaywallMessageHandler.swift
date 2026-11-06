@@ -6,7 +6,12 @@
 //
 // swiftlint:disable function_body_length type_body_length file_length
 
+#if canImport(WebKit)
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import WebKit
 
 protocol PaywallMessageHandlerDelegate: AnyObject {
@@ -32,6 +37,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
     shouldDismiss: Bool?
   )
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String)
+  func handleCustomStoreCheckout(_ checkout: CustomStoreCheckout)
   func revealWebViewBehindSpinner()
 }
 
@@ -151,14 +157,18 @@ final class PaywallMessageHandler: WebEventDelegate {
       Task {
         await self.pass(placement: transactionStart, from: paywall)
       }
-    case let .transactionComplete(trialEndDate, productIdentifier, didStartFreeTrial):
+    case let .transactionComplete(trialEndDate, productIdentifier, didStartFreeTrial, product):
       Task {
         // Send transaction_complete to trigger post-purchase actions
         let transactionComplete = SuperwallEventObjc.transactionComplete.description
+        var transactionCompletePayload: [String: Any] = ["product_identifier": productIdentifier]
+        if let product {
+          transactionCompletePayload["product"] = product
+        }
         await self.pass(
           placement: transactionComplete,
           from: paywall,
-          payload: ["product_identifier": productIdentifier]
+          payload: transactionCompletePayload
         )
 
         // Only tell the paywall a trial started when one actually did. The paywall
@@ -213,8 +223,8 @@ final class PaywallMessageHandler: WebEventDelegate {
       openDeepLink(url)
     case .restore:
       restorePurchases()
-    case let .purchase(productId: id, shouldDismiss: shouldDismiss):
-      purchaseProduct(withId: id, shouldDismiss: shouldDismiss)
+    case let .purchase(productId: id, shouldDismiss: shouldDismiss, product: product):
+      purchaseProduct(withId: id, referenceName: product, shouldDismiss: shouldDismiss)
     case .custom(data: let name):
       handleCustomEvent(name)
     case let .customPlacement(name: name, params: params):
@@ -260,6 +270,22 @@ final class PaywallMessageHandler: WebEventDelegate {
         checkoutContextId: checkoutContextId,
         productId: productId
       )
+    case let .customCheckoutStart(productId, customTransactionId):
+      delegate?.handleCustomStoreCheckout(
+        .start(productId: productId, customTransactionId: customTransactionId)
+      )
+    case let .customCheckoutComplete(productId, customTransactionId, shouldDismiss):
+      delegate?.handleCustomStoreCheckout(
+        .complete(
+          productId: productId,
+          customTransactionId: customTransactionId,
+          shouldDismiss: shouldDismiss
+        )
+      )
+    case let .customCheckoutAbandon(productId, reason):
+      delegate?.handleCustomStoreCheckout(.abandon(productId: productId, reason: reason))
+    case let .customCheckoutFail(productId, message):
+      delegate?.handleCustomStoreCheckout(.fail(productId: productId, message: message))
     case .requestStoreReview(let reviewType):
       requestReview(type: reviewType)
     case let .scheduleNotification(type, title, subtitle, body, delay):
@@ -463,7 +489,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       )
       await Superwall.shared.track(webViewLoad)
 
-      let behavior = await Superwall.shared.eventTrackingBehavior
+      let behavior = Superwall.shared.eventTrackingBehavior
       await self.passEventTrackingBehaviorToWebView(behavior)
     }
 
@@ -617,13 +643,15 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   private func purchaseProduct(
     withId id: String,
+    referenceName: String?,
     shouldDismiss: Bool
   ) {
     detectHiddenPaywallEvent("purchase")
     hapticFeedback()
+    let cacheKey = delegate?.paywall.cacheKey(forProductId: id, referenceName: referenceName) ?? id
     delegate?.eventDidOccur(
       .initiatePurchase(
-        productId: id,
+        productId: cacheKey,
         shouldDismiss: shouldDismiss
       )
     )
@@ -704,14 +732,29 @@ final class PaywallMessageHandler: WebEventDelegate {
     if Superwall.shared.options.isGameControllerEnabled {
       return
     }
-    #if !os(visionOS)
+    #if os(macOS)
+      NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
+    #elseif !os(visionOS)
       UIImpactFeedbackGenerator().impactOccurred(intensity: 0.7)
     #endif
   }
 
   /// Triggers haptic feedback based on the type specified from the paywall editor.
   private func triggerHapticFeedback(_ hapticType: String) {
-    #if !os(visionOS)
+    #if os(macOS)
+      // Only Force Touch trackpads have haptics, and they have two kinds of
+      // feedback that fit: a tap for selection changes, and a bump for the rest.
+      let pattern: NSHapticFeedbackManager.FeedbackPattern
+      switch hapticType {
+      case "selection":
+        pattern = .alignment
+      case "light", "medium", "heavy", "success", "warning", "error":
+        pattern = .generic
+      default:
+        return
+      }
+      NSHapticFeedbackManager.defaultPerformer.perform(pattern, performanceTime: .now)
+    #elseif !os(visionOS)
       switch hapticType {
       case "light":
         let generator = UIImpactFeedbackGenerator(style: .light)
@@ -871,3 +914,4 @@ final class PaywallMessageHandler: WebEventDelegate {
     await passMessageToWebView(base64Event)
   }
 }
+#endif

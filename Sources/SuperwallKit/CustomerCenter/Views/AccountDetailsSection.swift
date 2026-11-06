@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 struct AccountDetailsSection: View {
@@ -21,7 +22,12 @@ struct AccountDetailsSection: View {
         }
         Spacer()
         Button(strings.string(copied ? "customer_center_copied" : "customer_center_copy")) {
+          #if os(macOS)
+          NSPasteboard.general.clearContents()
+          NSPasteboard.general.setString(viewModel.userId, forType: .string)
+          #else
           UIPasteboard.general.string = viewModel.userId
+          #endif
           copied = true
         }
         .font(.footnote)
@@ -37,3 +43,4 @@ struct AccountDetailsSection: View {
     }
   }
 }
+#endif

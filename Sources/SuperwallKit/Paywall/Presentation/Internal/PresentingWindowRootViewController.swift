@@ -3,6 +3,7 @@
 //  SuperwallKit
 //
 
+#if canImport(WebKit) && !os(macOS)
 import UIKit
 
 /// The root of the window the SDK creates to present a paywall.
@@ -52,3 +53,4 @@ final class PresentingWindowRootViewController: UIViewController {
     }
   }
 }
+#endif

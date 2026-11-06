@@ -411,7 +411,7 @@ struct DeviceHelperTests {
   }
 
   private func setMMPFlag(_ isEnabled: Bool, on dependencyContainer: DependencyContainer) {
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: isEnabled)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: isEnabled)))
   }
 
   /// On a cold launch the first enrichment is read before config arrives. Its
@@ -441,7 +441,7 @@ struct DeviceHelperTests {
     await deviceHelper.startIPCollectionIfEnabled(for: config)?.value
     #expect(await fetches.count == 1)
 
-    dependencyContainer.configManager.configState.send(.retrieved(config))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(config))
     deviceHelper.enrichment = nil
     let afterConfig = await deviceHelper.getTemplateDevice()
     #expect(afterConfig["ipV6"] as? String == "2001:db8::1")
@@ -614,6 +614,137 @@ struct DeviceHelperTests {
     #expect(await ipV6Fetches.count == 1)
     #expect(template["ipV4"] as? String == "8.8.8.8")
     #expect(template["ipV6"] as? String == "2001:db8::1")
+  }
+
+  // MARK: - MMP install match addresses
+
+  private func makeCountingCollector(_ fetches: FetchCount, onFetch: @escaping () -> Void = {}) -> DeviceIPCollector {
+    return DeviceIPCollector(
+      ipV4Fetch: {
+        await fetches.increment()
+        onFetch()
+        return ["ipV4": "8.8.8.8", "ipV4ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      ipV6Fetch: {
+        await fetches.increment()
+        return ["ipV6": "2001:db8::2", "ipV6ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      now: { Date(timeIntervalSince1970: 1_789_505_000) }
+    )
+  }
+
+  /// The match waits for the lookups and carries both families.
+  @Test func mmpMatchAddresses_withMMPOn_returnsBothFamilies() async {
+    let fetches = FetchCount()
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: makeCountingCollector(fetches)
+    )
+    setMMPFlag(true, on: dependencyContainer)
+
+    let addresses = await deviceHelper.ipAttributesForMMPMatch()
+
+    #expect(addresses["ipV4"] == "8.8.8.8")
+    #expect(addresses["ipV6"] == "2001:db8::2")
+    #expect(addresses["ipV6ObservedAt"] == "2026-09-15T20:43:00Z")
+    #expect(await fetches.count == 2)
+  }
+
+  /// AppsFlyer alone doesn't put addresses on the MMP match.
+  @Test func mmpMatchAddresses_withMMPOff_returnsNothing() async {
+    let fetches = FetchCount()
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: makeCountingCollector(fetches)
+    )
+    setMMPFlag(false, on: dependencyContainer)
+    setAppsflyerId(on: dependencyContainer)
+
+    #expect(await deviceHelper.ipAttributesForMMPMatch().isEmpty)
+    #expect(await fetches.count == 0)
+  }
+
+  /// `configState` can briefly lag the store while another thread is still
+  /// publishing. The gate reads the store, so the MMP being turned off counts
+  /// straight away.
+  @Test func mmpMatchAddresses_whenPublishedStateLagsTheStore_followsTheStore() async {
+    let fetches = FetchCount()
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: makeCountingCollector(fetches)
+    )
+    setMMPFlag(false, on: dependencyContainer)
+    // Stands in for a publication that hasn't caught up yet.
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+
+    #expect(await deviceHelper.ipAttributesForMMPMatch().isEmpty)
+    #expect(await fetches.count == 0)
+  }
+
+  @Test func mmpMatchAddresses_withEventTrackingOff_returnsNothing() async {
+    let fetches = FetchCount()
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: makeCountingCollector(fetches)
+    )
+    dependencyContainer.configManager.options.eventTrackingBehavior = .none
+    setMMPFlag(true, on: dependencyContainer)
+
+    #expect(await deviceHelper.ipAttributesForMMPMatch().isEmpty)
+    #expect(await fetches.count == 0)
+  }
+
+  private final class ContainerBox: @unchecked Sendable {
+    var container: DependencyContainer?
+  }
+
+  /// Turning tracking off while the lookups run keeps the addresses off the match.
+  @Test func mmpMatchAddresses_whenTrackingTurnsOffDuringTheWait_returnsNothing() async {
+    let fetches = FetchCount()
+    let box = ContainerBox()
+    let collector = makeCountingCollector(fetches) {
+      box.container?.configManager.options.eventTrackingBehavior = .none
+    }
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    box.container = dependencyContainer
+    setMMPFlag(true, on: dependencyContainer)
+
+    #expect(await deviceHelper.ipAttributesForMMPMatch().isEmpty)
+    #expect(await fetches.count == 2)
+  }
+
+  /// Turning tracking off while the lookups run stops the match request
+  /// itself, not just its addresses.
+  @Test func mmpMatchRequest_whenTrackingTurnsOffDuringTheWait_isNotSent() async {
+    let fetches = FetchCount()
+    let box = ContainerBox()
+    let collector = makeCountingCollector(fetches) {
+      box.container?.configManager.options.eventTrackingBehavior = .none
+    }
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    box.container = dependencyContainer
+    // Other parts of the container hold `unowned` references to the device
+    // helper it made, so keep that one alive while the request uses this one.
+    let originalDeviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+    defer { withExtendedLifetime(originalDeviceHelper) {} }
+    dependencyContainer.deviceHelper = deviceHelper
+    setMMPFlag(true, on: dependencyContainer)
+
+    await #expect(throws: MMPMatchError.trackingDisabled) {
+      _ = try await dependencyContainer.network.matchMMPInstall(
+        idfa: nil,
+        advertiserTrackingEnabled: false,
+        applicationTrackingEnabled: true
+      )
+    }
+    // Tracking was on when the request started, so it did wait for the lookups.
+    #expect(await fetches.count == 2)
   }
 
   /// The lookups only serve install attribution, which the `.none` opt-out

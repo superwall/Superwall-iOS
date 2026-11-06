@@ -4,14 +4,38 @@
 //
 // swiftlint:disable file_length type_body_length
 
+#if canImport(WebKit)
+import Foundation
+#if !os(macOS)
 import UIKit
+#endif
 import WebKit
 
-extension Notification.Name {
-  /// A Superwall return link (`scheme://superwall/return`) opened the app.
-  static let superwallReturnLinkOpened = Notification.Name("SuperwallReturnLinkOpened")
+@MainActor
+extension TeleportReturnCover {
+  // Picks the function before calling it, so a page with both names only has one called.
+  static let showWaitingScreenScript = """
+    const app = window.app;
+    const show = app?.showTeleportWaitingScreen ?? app?.showCheckoutWaitingScreen;
+    return await show?.call(app) ?? false
+    """
+  static let returnScript = """
+    const app = window.app;
+    const handleReturn = app?.handleTeleportReturn ?? app?.hideCheckoutWaitingScreen;
+    return await handleReturn?.call(app, { reason }) ?? false
+    """
+
+  /// What the page hands over to check its teleport while the waiting screen is up.
+  struct Watch: Equatable {
+    let teleportId: String
+    let teleportStatusUrl: URL
+    /// Where a checkout the teleport led to is read. Nil for a web flow without a checkout.
+    let checkoutStatusUrl: URL?
+    let publicApiKey: String
+  }
 }
 
+#if !os(macOS)
 /// Decides what the user sees of a teleport's waiting screen as they leave the app for the
 /// browser and come back.
 ///
@@ -35,27 +59,6 @@ extension Notification.Name {
 /// have the old names, so each call falls back to them.
 @MainActor
 final class TeleportReturnCover: NSObject {
-  // Picks the function before calling it, so a page with both names only has one called.
-  static let showWaitingScreenScript = """
-    const app = window.app;
-    const show = app?.showTeleportWaitingScreen ?? app?.showCheckoutWaitingScreen;
-    return await show?.call(app) ?? false
-    """
-  static let returnScript = """
-    const app = window.app;
-    const handleReturn = app?.handleTeleportReturn ?? app?.hideCheckoutWaitingScreen;
-    return await handleReturn?.call(app, { reason }) ?? false
-    """
-
-  /// What the page hands over to check its teleport while the waiting screen is up.
-  struct Watch: Equatable {
-    let teleportId: String
-    let teleportStatusUrl: URL
-    /// Where a checkout the teleport led to is read. Nil for a web flow without a checkout.
-    let checkoutStatusUrl: URL?
-    let publicApiKey: String
-  }
-
   /// Why the waiting screen is covered.
   private enum Reason {
     /// The teleport settled while the app was in the background.
@@ -561,6 +564,8 @@ private extension TeleportReturnCover {
   }
 }
 
+#endif
+
 /// Reads a teleport's status from the background, where the paywall page cannot run.
 enum TeleportStatusCheck {
   /// Completed or expired, or the checkout it led to paid: the waiting screen goes, and the user
@@ -613,3 +618,4 @@ enum TeleportStatusCheck {
     return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
   }
 }
+#endif

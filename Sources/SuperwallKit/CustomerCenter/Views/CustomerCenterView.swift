@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 /// Navigation behaviour of ``CustomerCenterView``.
@@ -95,7 +96,7 @@ public struct CustomerCenterView: View {
       if navigationOptions.usesExistingNavigation {
         content
       } else {
-        NavigationView { content }.navigationViewStyle(.stack)
+        CustomerCenterNavigationContainer { content }.customerCenterSheetFrame()
       }
     }
     .environment(\.customerCenterStrings, viewModel.strings)
@@ -207,7 +208,7 @@ public struct CustomerCenterView: View {
         // exposes one, and honouring it here alone would tint the cover and then fade to an
         // untinted list — a colour flip on exactly the screens that configured a background.
         // It belongs here when background theming is wired up across the screens, not before.
-        Color(uiColor: .systemGroupedBackground)
+        Color.customerCenterGroupedBackground
         ProgressView().accessibilityIdentifier("customer_center.loading")
       }
       // Edge to edge, because the `List` this becomes already runs under the navigation bar and
@@ -220,7 +221,7 @@ public struct CustomerCenterView: View {
   }
 
   private var closeButtonToolbarItem: some ToolbarContent {
-    ToolbarItem(placement: .navigationBarTrailing) {
+    ToolbarItem(placement: .customerCenterDismissal) {
       Button {
         if let onClose = navigationOptions.onClose { onClose() } else { dismiss() }
       } label: {
@@ -239,3 +240,4 @@ public struct CustomerCenterView: View {
 
   private var themeAccent: Color? { theme.accent }
 }
+#endif

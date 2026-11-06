@@ -6,7 +6,11 @@
 //
 // swiftlint:disable function_body_length
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 enum NetworkError: LocalizedError, Equatable {
   case unknown
@@ -15,6 +19,8 @@ enum NetworkError: LocalizedError, Equatable {
   case notFound
   case invalidUrl
   case noInternet
+  /// The app turned off event tracking, so the request wasn't sent.
+  case trackingDisabled
 
   /// The server responded with a status code outside the 2xx range that isn't
   /// covered by a more specific case.
@@ -28,6 +34,7 @@ enum NetworkError: LocalizedError, Equatable {
     case .notFound: return NSLocalizedString("Not found", comment: "")
     case .invalidUrl: return NSLocalizedString("URL invalid", comment: "")
     case .noInternet: return NSLocalizedString("No Internet", comment: "")
+    case .trackingDisabled: return NSLocalizedString("Event tracking turned off", comment: "")
     case .http(let statusCode):
       return String(
         format: NSLocalizedString("HTTP error %d.", comment: ""),
@@ -65,6 +72,43 @@ class CustomURLSession {
     self.factory = factory
   }
 
+  /// Keys whose values are the device's public IP addresses. They're sent,
+  /// but never logged, since logs reach the app's logging delegate.
+  private static let ipAddressKeys: Set<String> = ["ipV4", "ipV6", "$ipV4", "$ipV6"]
+
+  /// The request body as text for the logs, with IP addresses redacted.
+  static func loggableBody(_ body: Data?) -> String {
+    guard let body = body else {
+      return "none"
+    }
+    // Most bodies carry no address, so only those that might are parsed.
+    guard
+      body.range(of: Data("ipV".utf8)) != nil,
+      let json = try? JSONSerialization.jsonObject(with: body),
+      let redacted = try? JSONSerialization.data(
+        withJSONObject: redactingIPAddresses(in: json),
+        options: [.sortedKeys]
+      )
+    else {
+      return String(data: body, encoding: .utf8) ?? "none"
+    }
+    return String(data: redacted, encoding: .utf8) ?? "none"
+  }
+
+  private static func redactingIPAddresses(in value: Any) -> Any {
+    if let dictionary = value as? [String: Any] {
+      var result: [String: Any] = [:]
+      for (key, child) in dictionary {
+        result[key] = ipAddressKeys.contains(key) ? "<redacted>" : redactingIPAddresses(in: child)
+      }
+      return result
+    }
+    if let array = value as? [Any] {
+      return array.map { redactingIPAddresses(in: $0) }
+    }
+    return value
+  }
+
   @discardableResult
   func request<Kind, Response>(
     _ endpoint: Endpoint<Kind, Response>,
@@ -84,18 +128,23 @@ class CustomURLSession {
       scope: .network,
       message: "Request Started",
       info: [
-        "body": String(data: request.httpBody ?? Data(), encoding: .utf8) ?? "none",
+        "body": Self.loggableBody(request.httpBody),
         "url": request.url?.absoluteString ?? "unknown"
       ]
     )
 
     let startTime = Date().timeIntervalSince1970
+    let canSend = endpoint.canSend
     let (data, response) = try await Task.retrying(
       maxRetryCount: endpoint.retryCount,
       retryInterval: endpoint.retryInterval,
       timeout: endpoint.timeout,
       isRetryingCallback: isRetryingCallback
     ) {
+      if let canSend = canSend,
+        !canSend() {
+        throw NetworkError.trackingDisabled
+      }
       return try await self.urlSession.data(for: request)
     }.value
 

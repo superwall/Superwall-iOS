@@ -5,6 +5,8 @@
 //  Created by Yusuf Tör on 28/02/2022.
 //
 
+#if canImport(WebKit)
+#if !os(macOS)
 import UIKit
 
 extension UIViewController {
@@ -19,3 +21,5 @@ extension UIViewController {
     return topViewController
   }
 }
+#endif
+#endif

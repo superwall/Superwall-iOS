@@ -7,14 +7,24 @@
 // swiftlint:disable type_body_length file_length
 
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Combine
 
 class Network {
   private let urlSession: CustomURLSession
   private let factory: ApiFactory
   private let options: SuperwallOptions
-  private var applicationStateSubject: CurrentValueSubject<UIApplication.State, Never> = .init(.background)
+  /// Requests wait while this is `background`. A Mac app is never suspended, so
+  /// there it starts out active rather than waiting for its first activation.
+  #if os(macOS)
+  private var applicationStateSubject: CurrentValueSubject<ApplicationState, Never> = .init(.active)
+  #else
+  private var applicationStateSubject: CurrentValueSubject<ApplicationState, Never> = .init(.background)
+  #endif
 
   init(
     urlSession: CustomURLSession? = nil,
@@ -32,13 +42,13 @@ class Network {
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(applicationStateDidChange),
-      name: UIApplication.didBecomeActiveNotification,
+      name: SystemInfo.applicationDidBecomeActiveNotification,
       object: nil
     )
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(applicationStateDidChange),
-      name: UIApplication.didEnterBackgroundNotification,
+      name: SystemInfo.applicationDidEnterBackgroundNotification,
       object: nil
     )
   }
@@ -46,7 +56,7 @@ class Network {
   @objc
   @MainActor
   private func applicationStateDidChange() {
-    guard let sharedApplication = UIApplication.sharedApplication else {
+    guard let sharedApplication = PlatformApplication.sharedApplication else {
       return
     }
     applicationStateSubject.send(sharedApplication.applicationState)
@@ -177,7 +187,7 @@ class Network {
   }
 
   func getConfig(
-    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
+    injectedApplicationStatePublisher: (AnyPublisher<ApplicationState, Never>)? = nil,
     maxRetry: Int? = nil,
     isRetryingCallback: ((Int) -> Void)? = nil,
     timeout: Seconds? = nil
@@ -213,7 +223,7 @@ class Network {
 
   @MainActor
   private func appInForeground(
-    _ injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
+    _ injectedApplicationStatePublisher: (AnyPublisher<ApplicationState, Never>)? = nil
   ) async throws {
     // Share extensions shouldn't need to wait for the app to be in the foreground to run.
     let isShareExtension = Bundle.main.bundlePath.hasSuffix(".appex")
@@ -233,12 +243,24 @@ class Network {
 
   func getEnrichment(
     request: EnrichmentRequest,
-    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
+    injectedApplicationStatePublisher: (AnyPublisher<ApplicationState, Never>)? = nil,
     maxRetry: Int?,
     timeout: Seconds?
   ) async throws -> Enrichment {
+    let configManager = factory.configManager
+    let canSend: @Sendable () -> Bool = { [weak configManager] in
+      guard let behavior = configManager?.options.eventTrackingBehavior else {
+        return false
+      }
+      return behavior != .none
+    }
     do {
       try await appInForeground(injectedApplicationStatePublisher)
+
+      // The app can opt out while waiting for the foreground.
+      if !canSend() {
+        throw NetworkError.trackingDisabled
+      }
 
       let start = InternalSuperwallEvent.EnrichmentLoad(state: .start)
       await Superwall.shared.track(start)
@@ -247,7 +269,8 @@ class Network {
         .enrichment(
           request: request,
           maxRetry: maxRetry ?? options.maxConfigRetryCount,
-          timeout: timeout
+          timeout: timeout,
+          canSend: canSend
         ),
         data: SuperwallRequestData(factory: factory)
       )
@@ -258,6 +281,14 @@ class Network {
       await Superwall.shared.track(complete)
 
       return response
+    } catch NetworkError.trackingDisabled {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .network,
+        message: "Skipped: /enrich",
+        info: ["reason": "Event tracking turned off"]
+      )
+      throw NetworkError.trackingDisabled
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -432,6 +463,9 @@ class Network {
     advertiserTrackingEnabled: Bool,
     applicationTrackingEnabled: Bool
   ) async throws -> MMPMatchResponse {
+    guard MMPAttributionManager.isSupported else {
+      throw MMPMatchError.unsupportedPlatform
+    }
     guard
       let deviceHelper = factory.deviceHelper,
       let identityManager = factory.identityManager
@@ -466,6 +500,18 @@ class Network {
     }
 
     let vendorId = deviceHelper.vendorId
+    let ipAttributes = await deviceHelper.ipAttributesForMMPMatch()
+
+    // The app can opt out of tracking while the IP lookup is awaited.
+    if factory.configManager.options.eventTrackingBehavior == .none {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .network,
+        message: "Skipped: /api/match",
+        info: ["reason": "Event tracking turned off"]
+      )
+      throw MMPMatchError.trackingDisabled
+    }
 
     let request = MMPMatchRequest(
       platform: "ios",
@@ -488,7 +534,11 @@ class Network {
       devicePixelRatio: deviceHelper.devicePixelRatio,
       bundleId: deviceHelper.bundleId,
       clientTimestamp: Date().isoString,
-      metadata: metadata
+      metadata: metadata,
+      ipV4: ipAttributes["ipV4"],
+      ipV4ObservedAt: ipAttributes["ipV4ObservedAt"],
+      ipV6: ipAttributes["ipV6"],
+      ipV6ObservedAt: ipAttributes["ipV6ObservedAt"]
     )
 
     do {
@@ -514,7 +564,7 @@ class Network {
         logLevel: .error,
         scope: .network,
         message: "Request Failed: /api/match",
-        info: ["payload": request],
+        info: ["payload": request.withoutIPAddresses()],
         error: error
       )
 

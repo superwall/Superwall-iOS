@@ -22,7 +22,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Package Management
 - Swift Package Manager: Primary dependency management via `Package.swift`
 - CocoaPods: Also supported via `SuperwallKit.podspec`
-- Dependencies: `superscript-ios-next` at exact version 1.0.15 (slim binary-target distribution; replaces the legacy `Superscript-iOS` repo whose committed xcframework bloated clones)
+- Dependencies: `superscript-ios-next` at exact version 1.0.18 (slim binary-target distribution; replaces the legacy `Superscript-iOS` repo whose committed xcframework bloated clones). The podspec stays on the `Superscript` pod 1.0.17, since CocoaPods Trunk didn't accept 1.0.18; 1.0.18 only adds watchOS and tvOS slices, which CocoaPods doesn't install anyway
 
 ## Architecture Overview
 
@@ -58,11 +58,17 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 
 ### Minimum Toolchain and Platforms
 
-- Xcode 26 / Swift 6.2 (`swift-tools-version:6.2`), iOS 15, macOS 12, watchOS 8. tvOS isn't supported (WebKit, SafariServices and Superscript have no tvOS build). CI builds iOS (tests), Mac Catalyst and visionOS (`build-platforms.yml`). Apple requires the iOS 26 SDK for App Store Connect uploads, so there's no reason to support older Xcodes.
+- Xcode 26 / Swift 6.2 (`swift-tools-version:6.2`), iOS 15, macOS 12, watchOS 8, tvOS 15. CI builds iOS (tests), native macOS (tests), Mac Catalyst, visionOS, watchOS and tvOS (`build-platforms.yml`). Apple requires the iOS 26 SDK for App Store Connect uploads, so there's no reason to support older Xcodes.
 - Don't add `#if compiler(...)` checks for anything below 6.2; only gate APIs newer than that (e.g. `compiler(>=6.3.2)` for iOS 26.4 StoreKit APIs).
 - Don't add `@available`/`#available` checks or fallback branches for iOS 15 or older (StoreKit 2, sheet detents, `UIMenu` buttons and friends are always there).
 - The package pins `swiftLanguageModes: [.v5]`. Moving to Swift 6 language mode is a separate change.
-- Keep `Package.swift`, `SuperwallKit.podspec` and `project.yml` deployment targets in sync.
+- Keep the iOS and macOS deployment targets in `Package.swift`, `SuperwallKit.podspec` and `project.yml` in sync. watchOS and tvOS are Swift Package Manager only.
+
+### watchOS and tvOS
+
+- Neither has WebKit, so `#if canImport(WebKit)` marks everything that needs a paywall on screen: the paywall view controller and presentation, debugger, Test Mode, Customer Center, permissions and the SDK's alerts. Build both after any change (`build-platforms.yml` shows the commands); the iOS build won't catch a paywall type leaking into shared code.
+- `register` evaluates audience filters, then `finishWithoutPaywallUI` unlocks the feature as iOS does when a paywall fails to load: skipped, or the paywall is fetched and a non-gated feature runs while a gated one gets error 106. No present or dismiss state is sent, so `register` passes the feature block down. Implicit triggers and paywall preloading do nothing.
+- When a shared `@available`/`#available` names iOS, also name the matching watchOS and tvOS versions, or the `*` lets them through.
 
 ### Code Conventions
 
@@ -135,6 +141,11 @@ SuperwallKit's privacy manifest doesn't declare IP collection, so apps that turn
 AppsFlyer ID declare it themselves. Keep collection
 independent of enrichment success and purchase/configuration latency, preserve each family
 separately, and filter stale cached `ipV4`/`ipV6` fields before exposing device attributes.
+The MMP `/api/match` request carries the fresh `ipV4`/`ipV6` observations (`ipAttributesForMMPMatch`),
+since it only arrives over one family itself. It waits for due or in-flight lookups, capped at 1.5s,
+because paywalls wait on the match at first launch. It rechecks the gates after that wait, since
+the app can turn tracking off meanwhile. Request logs reach the app's logging delegate, so
+`CustomURLSession.loggableBody` redacts `ipV4`/`ipV6` keys and the match failure log drops them.
 Do not add customer attributes or authentication headers to the public IP lookup requests.
 The IPv6 lookup must stay on a connection that may only use IPv6 (`NWConnection` with the IP
 version set): its host is reachable over both, so `URLSession` could quietly report IPv4.
@@ -150,3 +161,38 @@ ATT revocation. ATT is serialized as a numeric string in integration attributes.
 `idfv`, `idfa` and `attStatus` are SDK-owned user-attribute keys — document any
 change to that set in the changelog and the online docs. Don't gate the IDFA on
 the ATT status: `identifierForAdvertisers` already filters the all-zero id.
+
+### Identity store
+
+`IdentityManager` keeps its state in a `StateStore`, guarded by one recursive lock. Identity
+actions, reducers and store observers run with that lock held, so they must never wait on another
+thread: no `queue.sync`, semaphores, `DispatchQueue.main.sync`, or calls into objects that do. A
+thread reading the identity may hold what they'd wait for, and the two deadlock. Storage writes are
+fine (they hand off to a background queue). Anything that can wait, such as resetting the rest of
+the SDK, goes in `deferUntilUnlocked`; async work starts in a `Task` through `sideEffect`.
+`IdentityResetHandling.attributesKeptAcrossReset()` runs before the lock is taken and
+`identityDidReset()` after it's released; neither may change the identity.
+
+`identify` and `reset` also hold `userChangeLock`, taken before the store lock, until their
+deferred cleanup (wiping storage and caches) has finished, so user changes on different threads run
+one after another. That cleanup waits on other objects' queues, so nothing those queues run, and no
+action or observer, may call `identify` or `reset`: that would wait on the lock it's already behind.
+
+### Config store
+
+`ConfigManager` keeps the config in a `StateStore` too, changed only by `ConfigUpdate` reducers.
+`configState` is a copy sent to subscribers after the lock is released, so it can briefly lag:
+subscribe to it to hear about changes, but read `configManager.config` (or the factory's
+`currentConfig()`) for the current value. Fetches and refreshes run one at a time on a
+`SerialTaskCoordinator`. An operation on it must never `await` the coordinator's `run` or `flush`,
+directly or through `fetchConfiguration()`/`refreshConfiguration()`: it would wait on work queued
+behind itself. Use `enqueue` for follow-up work, as the fetch does for its refreshes.
+
+### Native macOS
+
+- `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.
+- `SuperwallKitMac` in `project.yml` builds the Mac framework and runs `Tests/SuperwallKitMacTests`. Use `xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKitMac -destination 'platform=macOS' test CODE_SIGNING_ALLOWED=NO` after `xcodegen`. The SDK minimum is macOS 12; the test runner requires macOS 14 with Xcode 26.
+- Paywall overlays use SDK-owned child windows, never add subviews directly to a customer's SwiftUI hosting view. Required host dimensions prevent cached `preferredContentSize` from resizing the window. Remove old web-view constraints when reusing a controller across styles.
+- Native Mac device identity is an app-scoped persistent UUID, not Apple's IDFV. Do not forward it as `idfv` to attribution partners. Native macOS skips MMP install matching until the backend accepts a Mac platform; never send it as an iOS install.
+- Native teleport returns forward the page waiting-screen and return functions directly. iOS snapshot/background-task handling stays in the UIKit implementation; Mac pages keep rendering when the browser opens. Keep the page-function names and legacy fallbacks shared.
+- See `Sources/SuperwallKit/Documentation.docc/macOS.md` and `Examples/macOS` for platform behavior and integration instructions.

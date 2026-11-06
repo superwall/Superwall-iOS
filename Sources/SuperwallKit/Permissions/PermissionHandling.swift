@@ -5,6 +5,7 @@
 //  Created by Superwall on 2024.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Protocol for handling user permission requests.
@@ -19,3 +20,4 @@ protocol PermissionHandling {
   /// - Returns: The resulting status after the request
   func requestPermission(_ permission: PermissionType) async -> PermissionStatus
 }
+#endif

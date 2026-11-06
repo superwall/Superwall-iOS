@@ -9,7 +9,8 @@ let package = Package(
   platforms: [
     .iOS(.v15),
     .macOS(.v12),
-    .watchOS(.v8)
+    .watchOS(.v8),
+    .tvOS(.v15)
   ],
   products: [
     // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -19,7 +20,7 @@ let package = Package(
     )
   ],
   dependencies: [
-    .package(url: "https://github.com/superwall/superscript-ios-next", exact: "1.0.15")
+    .package(url: "https://github.com/superwall/superscript-ios-next", exact: "1.0.18")
   ],
   targets: [
     // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -32,9 +33,15 @@ let package = Package(
       exclude: ["Resources/BundleHelper.swift"],
       resources: [
         .process("Resources/Certificates"),
+        .process("Resources/Superwall_Assets.xcassets"),
         .process("Resources/Localizations"),
         .copy("Resources/PrivacyInfo.xcprivacy")
       ]
+    ),
+    .testTarget(
+      name: "SuperwallKitSharedTests",
+      dependencies: ["SuperwallKit"],
+      path: "Tests/Shared"
     ),
     .testTarget(
       name: "SuperwallKitTests",

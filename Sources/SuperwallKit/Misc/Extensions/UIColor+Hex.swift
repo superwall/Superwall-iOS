@@ -5,9 +5,13 @@
 //  Created by Yusuf Tör on 28/02/2022.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
-internal extension UIColor {
+internal extension PlatformColor {
   convenience init(hexString: String) {
     let hex = hexString.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
     var int = UInt64()
@@ -32,19 +36,40 @@ internal extension UIColor {
     )
   }
 
-  var readableOverlayColor: UIColor {
+  var readableOverlayColor: PlatformColor {
     return isDarkColor ? .white : .black
   }
 
-  var inverseReadableOverlayColor: UIColor {
+  var inverseReadableOverlayColor: PlatformColor {
     return isDarkColor ? .black : .white
   }
 
   var isDarkColor: Bool {
     var red, green, blue, alpha: CGFloat
     (red, green, blue, alpha) = (0, 0, 0, 0)
+    #if os(macOS)
+    // AppKit raises if the color isn't in an RGB space, and system colors like
+    // `.white` are grayscale, so convert first.
+    (usingColorSpace(.sRGB) ?? NSColor.black).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+    #else
     self.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+    #endif
     let lum = 0.2126 * red + 0.7152 * green + 0.0722 * blue
     return  lum < 0.50
+  }
+}
+
+extension PlatformColor {
+  /// Parses `#RRGGBB` / `#RRGGBBAA` / `RRGGBB`.
+  convenience init?(hex: String) {
+    var value = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+    if value.hasPrefix("#") { value.removeFirst() }
+    guard value.count == 6 || value.count == 8, let int = UInt64(value, radix: 16) else { return nil }
+    let hasAlpha = value.count == 8
+    let red = CGFloat((int >> (hasAlpha ? 24 : 16)) & 0xFF) / 255
+    let green = CGFloat((int >> (hasAlpha ? 16 : 8)) & 0xFF) / 255
+    let blue = CGFloat((int >> (hasAlpha ? 8 : 0)) & 0xFF) / 255
+    let alpha = hasAlpha ? CGFloat(int & 0xFF) / 255 : 1
+    self.init(red: red, green: green, blue: blue, alpha: alpha)
   }
 }

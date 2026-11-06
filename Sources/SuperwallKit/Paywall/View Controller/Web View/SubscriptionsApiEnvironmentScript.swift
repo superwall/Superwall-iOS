@@ -3,6 +3,7 @@
 //  SuperwallKit
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Tells paywall.js which subscriptions-api to call for web checkouts and teleports.
@@ -27,3 +28,4 @@ enum SubscriptionsApiEnvironmentScript {
     return "window.__SW_SUBSCRIPTIONS_API_ENV__ = \"\(value)\";"
   }
 }
+#endif

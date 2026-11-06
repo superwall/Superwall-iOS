@@ -25,3 +25,11 @@ See our [docs](https://docs.superwall.com/docs) for more information.
 - <doc:CustomerCenter>
 - `CustomerCenterConfiguration`
 - `CustomerCenterDelegate`
+
+## Native Mac apps
+
+- <doc:macOS>
+
+## watchOS and tvOS apps
+
+- <doc:WatchAndTV>

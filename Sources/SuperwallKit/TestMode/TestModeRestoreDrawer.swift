@@ -4,7 +4,12 @@
 //
 //  Created by Claude on 2026-02-09.
 //
+#if canImport(WebKit)
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// The result of a test mode restore interaction.
 enum TestModeRestoreResult {
@@ -14,6 +19,7 @@ enum TestModeRestoreResult {
   case cancelled
 }
 
+#if !os(macOS)
 /// Presents a bottom sheet for test mode restores with entitlement selection.
 enum TestModeRestoreDrawer {
   @MainActor
@@ -268,23 +274,7 @@ private final class TestModeRestoreViewController: UIViewController {
   // MARK: - Building Entitlements
 
   private func buildEntitlements() -> Set<Entitlement> {
-    var entitlements: Set<Entitlement> = []
-    for (entitlementId, selection) in selectedEntitlements {
-      guard let state = selection.state else { continue }
-      let isActive = state == .subscribed
-        || state == .inGracePeriod
-        || state == .inBillingRetryPeriod
-      let entitlement = Entitlement(
-        id: entitlementId,
-        type: .serviceLevel,
-        isActive: isActive,
-        store: .appStore,
-        state: state,
-        offerType: selection.offerType
-      )
-      entitlements.insert(entitlement)
-    }
-    return entitlements
+    return TestModeSettingsStore.entitlements(from: selectedEntitlements)
   }
 
   // MARK: - Actions
@@ -314,3 +304,5 @@ extension TestModeRestoreViewController: UIAdaptivePresentationControllerDelegat
     }
   }
 }
+#endif
+#endif

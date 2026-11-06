@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 // MARK: - Visibility-driven dismissal
@@ -94,3 +95,4 @@ extension CustomerCenterViewModel {
     Task { await dependencies.tracker.track(InternalSuperwallEvent.CustomerCenterClose()) }
   }
 }
+#endif

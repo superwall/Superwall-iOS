@@ -84,9 +84,11 @@ final class AttributionPoster {
           // Match applicationWillEnterForeground's priority: default-priority
           // tasks can be deferred under load, and attribution is bounded by
           // Apple's 24h install window.
+          #if os(iOS) || os(macOS) || os(visionOS)
           Task(priority: .utility) {
             await self?.getAdServicesTokenIfNeeded()
           }
+          #endif
         }
       )
       .store(in: &cancellables)
@@ -108,19 +110,14 @@ final class AttributionPoster {
     #endif
   }
 
-  /// Re-applies the cached ASA attribution dict to the current user's
-  /// attributes. Called from `reset(duringIdentify:)` after user files are
-  /// wiped so the new user identity inherits the install-scoped campaign
-  /// keys without us re-hitting Apple. No-op if nothing was ever fetched.
-  func reapplyCachedAttribution() {
+  /// The cached ASA attribution, as user attributes. It's install-scoped, so
+  /// a reset hands it to the new user without asking Apple again. Empty if
+  /// nothing was ever fetched.
+  func cachedAttribution() -> [String: Any] {
     guard let cached = storage.get(AdServicesAttributionDataStorage.self) else {
-      return
+      return [:]
     }
-    let attribution = convertJSONToDictionary(attribution: cached)
-    if attribution.isEmpty {
-      return
-    }
-    Superwall.shared.setUserAttributes(attribution)
+    return convertJSONToDictionary(attribution: cached)
   }
 
   /// Cancel any in-flight attempt. Used during reset so we don't race a
