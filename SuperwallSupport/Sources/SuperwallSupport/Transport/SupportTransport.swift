@@ -650,7 +650,8 @@ public actor SupportTransport {
   private func checkCaughtUp() {
     guard state == .catchingUp, let readyHead, log.cursor >= readyHead else { return }
     state = .live
-    consecutiveResyncs = 0
+    // consecutiveResyncs is not reset here: a server that answers ready then resync must
+    // keep backing off. Only an accepted entry resets it.
     liveSince = Date()
   }
 
@@ -661,7 +662,6 @@ public actor SupportTransport {
   ) async {
     closeSocket(reason: reason)
     let cursorBefore = log.cursor
-    let epochBefore = logEpoch
     httpBusy = true
     state = .catchingUp
     defer { httpBusy = false }
@@ -675,7 +675,7 @@ public actor SupportTransport {
     }
     httpBusy = false
     // An HTTP read that moved nothing (bad data) must not loop ready → read → connect.
-    let noProgress = readsHTTP && log.cursor == cursorBefore && logEpoch == epochBefore
+    let noProgress = readsHTTP && log.cursor == cursorBefore
     if useBackoff || noProgress { scheduleRetry() } else { connect() }
   }
 
@@ -686,6 +686,7 @@ public actor SupportTransport {
     socket?.close(code: SupportCloseCode.normal, reason: reason)
     socket = nil
     readyHead = nil
+    liveSince = nil
   }
 
   /// The socket closed or failed under us.
@@ -836,8 +837,11 @@ public actor SupportTransport {
 
   /// Retries a failed send by hand, with the same `clientMessageId`.
   public func retry(clientMessageId: String) {
-    // Stopped for good: it can't be sent from here.
-    guard !stopped else { return }
+    // Stopped for good, or from another conversation: it can't be sent from here.
+    guard !stopped,
+      queue.all.first(where: { $0.clientMessageId == clientMessageId })?.conversationId
+        == session?.conversationId
+    else { return }
     queue.update(clientMessageId: clientMessageId) {
       $0.state = .pending
       $0.failure = nil
