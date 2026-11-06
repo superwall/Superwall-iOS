@@ -41,10 +41,12 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     return .darkContent
   }
 
-  /// A paywall allows the orientations of whatever presents it, so it can't rotate the app
-  /// into one the app doesn't allow.
+  /// A paywall allows the orientations of the screen it covers, so it can't rotate the app
+  /// into one the app doesn't allow. When it's presented from a sheet, that's the screen
+  /// under the sheet.
   override public var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-    return presentingViewController?.supportedInterfaceOrientations ?? super.supportedInterfaceOrientations
+    return presentingViewController?.orientationDecidingAncestor.supportedInterfaceOrientations
+      ?? super.supportedInterfaceOrientations
   }
   #endif
 
