@@ -649,4 +649,27 @@ struct StateStoreTests {
     #expect(seenDuringRead.value == 0)
     #expect(context.store.state.value == 1)
   }
+
+  @Test("Work deferred inside a read runs once the store is unlocked")
+  func readDefersUntilUnlocked() {
+    let context = TestContext()
+    let otherThreadRead = DispatchSemaphore(value: 0)
+    let readerGotLock = Box(false)
+
+    context.store.read { _ in
+      context.store.update(Add(amount: 1))
+      context.store.deferUntilUnlocked {
+        // Another thread can only read the state if this thread no longer
+        // holds the lock.
+        onThread {
+          _ = context.store.state
+          otherThreadRead.signal()
+        }
+        readerGotLock.value = otherThreadRead.wait(timeout: .now() + 2) == .success
+      }
+    }
+
+    #expect(readerGotLock.value)
+    #expect(context.store.state.value == 1)
+  }
 }
