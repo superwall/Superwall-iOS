@@ -236,6 +236,46 @@ struct NetworkTests {
     #expect(urlRequest?.value(forHTTPHeaderField: "Authorization") == "Bearer sat_test")
   }
 
+  @Test func adServices_endpointBuildsRequest() async throws {
+    let dependencyContainer = DependencyContainer()
+    let endpoint = Endpoint<EndpointKinds.Superwall, AdServicesResponse>.adServices(
+      token: "attribution-token"
+    )
+
+    let urlRequest = await endpoint.makeRequest(
+      with: SuperwallRequestData(factory: dependencyContainer),
+      factory: dependencyContainer
+    )
+
+    #expect(urlRequest?.httpMethod == "POST")
+
+    let urlString = try #require(urlRequest?.url?.absoluteString)
+    // Host and path together, for the reason in the resolver's test: the path is
+    // the same one the legacy v1 API serves on `baseHost`.
+    #expect(urlString.contains("sdk-api.superwall.com/api/v1/apple-search-ads/token"))
+
+    let body = try #require(urlRequest?.httpBody)
+    let bodyJson = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+    #expect(bodyJson["token"] as? String == "attribution-token")
+  }
+
+  @Test func sdkApiHost_followsTheNetworkEnvironment() {
+    // A loop, not `arguments:`: `NetworkEnvironment` isn't `Sendable`.
+    let cases: [(SuperwallOptions.NetworkEnvironment, String)] = [
+      (.release, "sdk-api.superwall.com"),
+      (.releaseCandidate, "sdk-api.superwall.com"),
+      (.developer, "sdk-api.superwall.dev"),
+      // A local server and a custom proxy still serve the route on the v1 host.
+      (.local, "localhost:3000"),
+      (.custom("https://proxy.example.com"), "proxy.example.com"),
+    ]
+    for (environment, host) in cases {
+      let config = Api(networkEnvironment: environment).getConfig(host: .sdkApi)
+      #expect(config.host == host, "\(environment)")
+      #expect(config.path == "/api/v1/")
+    }
+  }
+
   @Test func paywallPreviewList_decodesIgnoringUndeclaredFields() throws {
     // `object`, `has_more` and `application_id` are returned by the endpoint but
     // deliberately not declared on the model. Decoding must ignore them rather
