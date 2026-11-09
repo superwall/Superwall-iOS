@@ -417,6 +417,8 @@ enum PaywallViewUpdate: Reducer {
   case checkoutClosed(UUID)
   /// The SDK closed whatever was open in app.
   case browserClosedBySDK
+  /// Whatever was open in app has gone without reporting it.
+  case browserWentUnreported
   case redeemSucceeded
   case stripeCheckoutAbandoned
   /// The page reported a Stripe checkout completed: it isn't an abandon, and
@@ -578,6 +580,8 @@ enum PaywallViewUpdate: Reducer {
         .closingCheckout:
         break
       }
+    case .browserWentUnreported:
+      state.browser = .none
     case .redeemSucceeded:
       state.settleCheckout(.redeemed)
     case .stripeCheckoutAbandoned:

@@ -164,6 +164,17 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     store.read { $0.isBrowserOpen }
   }
 
+  var isBrowserOnScreen: Bool {
+    #if os(macOS)
+      return presentedViewControllers?.contains { $0 is CheckoutWebViewController } == true
+    #elseif os(visionOS)
+      return presentedViewController is SFSafariViewController
+    #else
+      return presentedViewController is SFSafariViewController
+        || presentedViewController is CheckoutWebViewController
+    #endif
+  }
+
   /// Work item for tracking transaction abandon, can be cancelled if redeem succeeds.
   private var transactionAbandonWorkItem: DispatchWorkItem?
 

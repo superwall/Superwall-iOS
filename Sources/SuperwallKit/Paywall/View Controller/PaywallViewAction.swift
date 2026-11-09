@@ -23,6 +23,10 @@ protocol PaywallViewContext: AnyObject {
   var store: PaywallViewStore { get }
   /// The delegate that hears how the paywall finished, if any.
   var delegate: PaywallViewControllerDelegateAdapter? { get }
+  /// Whether Safari or a checkout sheet is on screen over the paywall. Safari
+  /// doesn't always report it closed, so the state alone can say one is open
+  /// after it has gone.
+  var isBrowserOnScreen: Bool { get }
 
   /// Publishes a loading state write. Called with the store locked, in the
   /// order the writes were made, and publishes them on the main thread once
@@ -307,14 +311,14 @@ enum PaywallViewAction: StoreAction {
       context.effect { context.notifyCustomStoreCheckoutEnded() }
       return .done
     case .openCheckout(let id):
-      if context.state.browser != .none {
+      if Self.isBrowserInTheWay(in: context) {
         return .browserOpened(false)
       }
       context.update(.checkoutOpened(id))
       context.effect { context.cancelCheckoutAbandonTracking() }
       return .browserOpened(true)
     case .openSafari:
-      if context.state.browser != .none {
+      if Self.isBrowserInTheWay(in: context) {
         return .browserOpened(false)
       }
       context.update(.safariOpened)
@@ -366,6 +370,20 @@ enum PaywallViewAction: StoreAction {
   /// this one's dismissal was finishing, only this one's subscribers,
   /// completion and delegate hear about it: the paywall on screen is left as
   /// it is.
+  /// Whether a browser is open, so another can't be. A browser the state has
+  /// open that isn't on screen went without reporting it, as Safari does when
+  /// the app dismisses it, and is forgotten.
+  private static func isBrowserInTheWay(in context: PaywallViewContext) -> Bool {
+    if context.state.browser == .none {
+      return false
+    }
+    if context.isBrowserOnScreen {
+      return true
+    }
+    context.update(.browserWentUnreported)
+    return false
+  }
+
   private static func finishDismissal(_ id: UUID, in context: PaywallViewContext) {
     let state = context.state
     guard let presentation = state.finishingDismissal(id) else {

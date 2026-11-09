@@ -233,7 +233,9 @@ controllers can outlive a removal on main and become a controller's last owner o
 presentation `Phase` (idle, requested, appearing, presented, dismissing), the `Browser` (with the
 `CheckoutSheet` and what settled it) and the loading state. Request and occurrence are read from the
 claim; `isPresented`, `isBrowserOpen`, macOS `isClosing` and friends are computed from the phase.
-Publishers, dismiss completions, views, timers and tasks stay on the view controller.
+Publishers, dismiss completions, views, timers and tasks stay on the view controller. Safari doesn't
+always report it closed (never on visionOS), so a link or checkout is only refused while a browser
+is really on screen (`isBrowserOnScreen`); a browser the state has open that isn't is forgotten.
 
 - Change the state only by dispatching a `PaywallViewAction`: `.event(update)` for a plain
   `PaywallViewUpdate`, or a named action for anything with side effects. A store observer

@@ -400,6 +400,21 @@ struct PaywallViewBrowserTests {
     #expect(state.browser == .none)
   }
 
+  @Test("A browser that went without reporting it is forgotten, and the loading state is left alone")
+  func browserWentUnreported() {
+    let start = PaywallViewState(paywall: .stub())
+    #expect(reduce(start, .safariOpened, .browserWentUnreported).browser == .none)
+
+    var checkout = PaywallViewUpdate.checkoutOpened(UUID()).reduce(start)
+    checkout.loadingState = .loadingPurchase
+    for state in [checkout, PaywallViewUpdate.browserClosedBySDK.reduce(checkout)] {
+      let gone = PaywallViewUpdate.browserWentUnreported.reduce(state)
+      #expect(gone.browser == .none)
+      #expect(gone.loadingState == .loadingPurchase)
+      #expect(gone.loadingStateWrites == state.loadingStateWrites)
+    }
+  }
+
   @Test("Nothing opens while a browser is open or closing, so the one showing keeps its state")
   func openWhileOpen() {
     let id = UUID()
@@ -544,6 +559,8 @@ private final class FakePaywallViewContext: PaywallViewContext {
     swiftDelegate: nil,
     objcDelegate: nil
   )
+  /// Whether an open browser is still on screen.
+  var isBrowserOnScreen = true
   var calls: [Call] = []
   /// The info each `.dismissed` state and dismiss notification was sent with.
   var dismissedInfos: [PaywallInfo] = []
@@ -958,6 +975,37 @@ struct PaywallViewActionTests {
     #expect(context.state.browser == .none)
     #expect(context.state.loadingState == .ready)
     #expect(context.dispatch(.openSafari) == .browserOpened(true))
+  }
+
+  @Test("Safari that went without reporting it doesn't stop the next link or checkout opening")
+  func safariGoneUnreportedDoesNotBlockTheNextOpen() {
+    let context = FakePaywallViewContext()
+    #expect(context.dispatch(.openSafari) == .browserOpened(true))
+
+    // The app dismissed Safari, which reports nothing.
+    context.isBrowserOnScreen = false
+    #expect(context.dispatch(.openSafari) == .browserOpened(true))
+    #expect(context.state.browser == .safari)
+
+    let id = UUID()
+    #expect(context.dispatch(.openCheckout(id)) == .browserOpened(true))
+    #expect(context.state.checkoutSheet(id) != nil)
+  }
+
+  @Test("A checkout sheet that never showed doesn't stop the next one, and its late close does nothing")
+  func checkoutGoneUnreportedDoesNotBlockTheNextOpen() {
+    let context = FakePaywallViewContext()
+    let first = UUID()
+    #expect(context.dispatch(.openCheckout(first)) == .browserOpened(true))
+
+    context.isBrowserOnScreen = false
+    let second = UUID()
+    #expect(context.dispatch(.openCheckout(second)) == .browserOpened(true))
+    #expect(context.state.checkoutSheet(second) != nil)
+
+    context.isBrowserOnScreen = true
+    #expect(context.dispatch(.closeCheckout(first)) == .checkoutClosed(wasAbandon: false))
+    #expect(context.state.checkoutSheet(second) != nil)
   }
 
   @Test("A dismissal finishing after the paywall was shown again tells the delegate it began with")
