@@ -543,6 +543,7 @@ private final class FakePaywallViewContext: PaywallViewContext {
 
   init(state: PaywallViewState = PaywallViewState(paywall: .stub())) {
     store = PaywallViewStore(initial: state)
+    publishLoadingStateWrites()
   }
 
   func publishLoadingState(_ loadingState: PaywallLoadingState, from oldValue: PaywallLoadingState) {
@@ -863,6 +864,52 @@ struct PaywallViewActionTests {
     context.dispatch(.finishDismissal(second))
     #expect(context.calls.contains(.sendState(.dismissed(.declined), claim: claim.id)))
     #expect(context.calls.contains(.finishStatePublisher(claim: claim.id)))
+  }
+
+  @Test("A dismissal finishing after the paywall was shown again undoes its survey's swipe block")
+  func finishSupersededDismissalRestoresSwipe() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.present(claim)
+    context.dispatch(.event(.surveySwipeBlocked))
+    let first = try! #require(context.state.activePresentation?.id)
+    context.dispatch(.reportFinished(.init(result: .declined, closeReason: .manualClose)))
+    context.dispatch(.didDisappear)
+
+    // Shown again before the first dismissal finished.
+    context.dispatch(.beginPresentation)
+    context.dispatch(.finishAppearing)
+    context.calls = []
+
+    context.dispatch(.finishDismissal(first))
+    #expect(context.calls.contains(.restoreSwipeAfterSurvey))
+    #expect(!context.calls.contains(.destroyPresentingWindow))
+  }
+
+  @Test("A superseded dismissal leaves the swipe blocked if the new presentation blocked it for its own survey")
+  func finishSupersededDismissalKeepsNewSwipeBlock() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.present(claim)
+    context.dispatch(.event(.surveySwipeBlocked))
+    let first = try! #require(context.state.activePresentation?.id)
+    context.dispatch(.reportFinished(.init(result: .declined, closeReason: .manualClose)))
+    context.dispatch(.didDisappear)
+
+    context.dispatch(.beginPresentation)
+    context.dispatch(.finishAppearing)
+    context.dispatch(.event(.surveySwipeBlocked))
+    context.calls = []
+
+    context.dispatch(.finishDismissal(first))
+    #expect(!context.calls.contains(.restoreSwipeAfterSurvey))
+  }
+
+  @Test("A loading state written by a direct store update is published too")
+  func directUpdatePublishesLoadingState() {
+    let context = FakePaywallViewContext()
+    context.store.update(PaywallViewUpdate.loading(.finished))
+    #expect(context.calls == [.publishLoadingState(.ready, from: .unknown)])
   }
 
   @Test("Closing the checkout sheet tracks an abandon only when nothing settled it")

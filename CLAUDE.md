@@ -236,10 +236,10 @@ claim; `isPresented`, `isSafariVCPresented`, macOS `isClosing` and friends are c
 Publishers, dismiss completions, views, timers and tasks stay on the view controller.
 
 - Change the state only by dispatching a `PaywallViewAction`: `.event(update)` for a plain
-  `PaywallViewUpdate`, or a named action for anything with side effects. Never call `store.update`
-  directly from the view controller: actions publish every loading state write (even an unchanged
-  one, as `@Published` always did) through `publishLoadingState`, which delivers on the main thread
-  through `OrderedDelivery` once the store is unlocked.
+  `PaywallViewUpdate`, or a named action for anything with side effects. A store observer
+  publishes every loading state write (even an unchanged one, as `@Published` always did) through
+  `publishLoadingState`, which delivers on the main thread through `OrderedDelivery` once the
+  store is unlocked.
 - Side effects are `PaywallViewContext` methods, run through `effect` once the store is unlocked.
   Add a method there (and to the test fake) rather than calling UIKit, the delegate, storage or
   tracking from an action.

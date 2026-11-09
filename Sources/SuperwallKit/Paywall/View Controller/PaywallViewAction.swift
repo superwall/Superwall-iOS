@@ -78,13 +78,18 @@ extension PaywallViewContext {
     store.state
   }
 
-  /// Applies `update`, publishing the loading state if it wrote it.
   func update(_ update: PaywallViewUpdate) {
-    let before = store.state
     store.update(update)
-    let after = store.state
-    if after.loadingStateWrites != before.loadingStateWrites {
-      publishLoadingState(after.loadingState, from: before.loadingState)
+  }
+
+  /// Publishes every loading state write, whatever made it. Call it once,
+  /// right after creating the store.
+  func publishLoadingStateWrites() {
+    store.observe { [weak self] before, after in
+      if after.loadingStateWrites == before.loadingStateWrites {
+        return
+      }
+      self?.publishLoadingState(after.loadingState, from: before.loadingState)
     }
   }
 
@@ -353,16 +358,23 @@ enum PaywallViewAction: StoreAction {
     let claimId = presentation.claimId
 
     context.update(.dismissalFinished(id))
+    // The survey's swipe block stays on the view controller after it's
+    // dismissed, so it's undone even when the paywall is already showing
+    // again, unless that presentation blocked the swipe for its own survey.
+    let restoresSwipe = presentation.isSwipeDisabledForSurvey
+      && context.state.activePresentation?.isSwipeDisabledForSurvey != true
     if isLatest {
       context.effect {
         context.destroyPresentingWindow()
         context.listenToGameController(false)
-        if presentation.isSwipeDisabledForSurvey {
+        if restoresSwipe {
           context.restoreSwipeAfterSurvey()
         }
       }
       context.dispatch(.endCustomStoreCheckout)
       context.effect { context.markActive(false) }
+    } else if restoresSwipe {
+      context.effect { context.restoreSwipeAfterSurvey() }
     }
 
     // Another presentation of the same claim, on screen or still finishing

@@ -374,6 +374,7 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     loadingStateDelivery = OrderedDelivery { [weak self] change in
       self?.loadingStateWasWritten(change.new, from: change.old)
     }
+    publishLoadingStateWrites()
     syncCustomCallbackRegistration()
   }
 
