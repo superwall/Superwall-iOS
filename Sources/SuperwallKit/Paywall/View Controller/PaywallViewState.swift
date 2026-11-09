@@ -64,9 +64,10 @@ struct PaywallViewState {
     let isPresentedBySDK: Bool
     /// The claim the presentation reports to.
     let claimId: UUID?
-    /// The delegate when it began. A dismissal that finishes after the
-    /// paywall was shown again tells this one, as the view controller's
-    /// delegate may belong to the new presentation.
+    /// The request and delegate when it began. A dismissal that finishes
+    /// after the paywall was shown again reports with these, as the view
+    /// controller's may belong to the new presentation.
+    let request: PresentationRequest?
     let delegate: PaywallViewControllerDelegateAdapter?
     /// Whether the delegate has been told the presentation finished.
     var didCallDelegate = false
@@ -86,11 +87,13 @@ struct PaywallViewState {
       id: UUID = UUID(),
       isPresentedBySDK: Bool,
       claimId: UUID?,
+      request: PresentationRequest? = nil,
       delegate: PaywallViewControllerDelegateAdapter? = nil
     ) {
       self.id = id
       self.isPresentedBySDK = isPresentedBySDK
       self.claimId = claimId
+      self.request = request
       self.delegate = delegate
     }
   }
@@ -200,6 +203,14 @@ struct PaywallViewState {
       .dismissing:
       return nil
     }
+  }
+
+  /// The info a presentation's dismissal reports: its own placement and
+  /// close reason, even if the paywall has been shown again since.
+  func dismissalInfo(for presentation: Presentation) -> PaywallInfo {
+    var paywall = paywall
+    paywall.closeReason = presentation.dismissal?.closeReason ?? paywall.closeReason
+    return paywall.getInfo(fromPlacement: presentation.request?.presentationInfo.placementData)
   }
 
   /// Whether the paywall has appeared and its dismissal hasn't finished.

@@ -39,7 +39,8 @@ protocol PaywallViewContext: AnyObject {
   func saveDismissCompletion(_ completion: @escaping () -> Void, forPresentation id: UUID)
 
   // MARK: Effects, run once the store is unlocked
-  func sendState(_ event: PaywallViewStateEvent, toClaim id: UUID)
+  /// Sends `event` with `info`, the info of the presentation it's about.
+  func sendState(_ event: PaywallViewStateEvent, toClaim id: UUID, info: PaywallInfo)
   func finishStatePublisher(forClaim id: UUID)
   func runDismissCompletion(forPresentation id: UUID)
   func storePresentationObjects(forClaim id: UUID?)
@@ -51,7 +52,7 @@ protocol PaywallViewContext: AnyObject {
   func notifyWillPresent()
   func notifyDidPresent()
   func notifyWillDismiss()
-  func notifyDidDismiss()
+  func notifyDidDismiss(info: PaywallInfo)
   func reloadWebView()
   func sendTemplateParams()
   func fetchIntroOfferTokens()
@@ -226,6 +227,7 @@ enum PaywallViewAction: StoreAction {
       let presentation = PaywallViewState.Presentation(
         isPresentedBySDK: state.isPresentedBySDK,
         claimId: state.currentClaim?.id,
+        request: state.currentClaim?.request,
         delegate: context.delegate
       )
       context.update(.presentationWillBegin(presentation))
@@ -278,9 +280,10 @@ enum PaywallViewAction: StoreAction {
         return .done
       }
       let result = presentation.dismissal?.result ?? .declined
+      let info = state.dismissalInfo(for: presentation)
       context.effect {
         if let claimId = presentation.claimId {
-          context.sendState(.willDismiss(result), toClaim: claimId)
+          context.sendState(.willDismiss(result), toClaim: claimId, info: info)
         }
         context.notifyWillDismiss()
       }
@@ -375,6 +378,7 @@ enum PaywallViewAction: StoreAction {
     let result = presentation.dismissal?.result ?? .declined
     let closeReason = presentation.dismissal?.closeReason ?? .none
     let claimId = presentation.claimId
+    let info = state.dismissalInfo(for: presentation)
 
     context.update(.dismissalFinished(id))
     // The survey's swipe block stays on the view controller after it's
@@ -402,7 +406,7 @@ enum PaywallViewAction: StoreAction {
     context.effect {
       context.runDismissCompletion(forPresentation: id)
       if let claimId = claimId {
-        context.sendState(.dismissed(result), toClaim: claimId)
+        context.sendState(.dismissed(result), toClaim: claimId, info: info)
       }
       if !presentation.didCallDelegate {
         if isLatest {
@@ -416,7 +420,7 @@ enum PaywallViewAction: StoreAction {
         !isPublisherInUse {
         context.finishStatePublisher(forClaim: claimId)
       }
-      context.notifyDidDismiss()
+      context.notifyDidDismiss(info: info)
       // After the sends above, which still need this presentation's publisher.
       context.pruneStatePublishers()
     }

@@ -14,9 +14,9 @@ import UIKit
 
 private let container = DependencyContainer()
 
-private func makeRequest() -> PresentationRequest {
+private func makeRequest(placement: String = "placement") -> PresentationRequest {
   container.makePresentationRequest(
-    .implicitTrigger(PlacementData(name: "placement", parameters: [:], createdAt: Date())),
+    .implicitTrigger(PlacementData(name: placement, parameters: [:], createdAt: Date())),
     isDebuggerLaunched: false,
     isPaywallPresented: false,
     type: .presentation
@@ -545,6 +545,10 @@ private final class FakePaywallViewContext: PaywallViewContext {
     objcDelegate: nil
   )
   var calls: [Call] = []
+  /// The info each `.dismissed` state and dismiss notification was sent with.
+  var dismissedInfos: [PaywallInfo] = []
+  /// The delegate each late dismissal was told through.
+  var lateFinishDelegates: [PaywallViewControllerDelegateAdapter?] = []
   var publishers: [UUID: PassthroughSubject<PaywallState, Never>] = [:]
   var completions: [UUID: () -> Void] = [:]
   var reopened: [UUID] = []
@@ -569,7 +573,12 @@ private final class FakePaywallViewContext: PaywallViewContext {
   func saveDismissCompletion(_ completion: @escaping () -> Void, forPresentation id: UUID) {
     completions[id] = completion
   }
-  func sendState(_ event: PaywallViewStateEvent, toClaim id: UUID) { calls.append(.sendState(event, claim: id)) }
+  func sendState(_ event: PaywallViewStateEvent, toClaim id: UUID, info: PaywallInfo) {
+    calls.append(.sendState(event, claim: id))
+    if case .dismissed = event {
+      dismissedInfos.append(info)
+    }
+  }
   func finishStatePublisher(forClaim id: UUID) { calls.append(.finishStatePublisher(claim: id)) }
   func runDismissCompletion(forPresentation id: UUID) { calls.append(.runDismissCompletion(id)) }
   func storePresentationObjects(forClaim id: UUID?) { calls.append(.storePresentationObjects(claim: id)) }
@@ -579,11 +588,15 @@ private final class FakePaywallViewContext: PaywallViewContext {
   }
   func callDidFinish(_ result: PaywallResult, to delegate: PaywallViewControllerDelegateAdapter?) {
     calls.append(.callDidFinishToPresentationDelegate(result))
+    lateFinishDelegates.append(delegate)
   }
   func notifyWillPresent() { calls.append(.notifyWillPresent) }
   func notifyDidPresent() { calls.append(.notifyDidPresent) }
   func notifyWillDismiss() { calls.append(.notifyWillDismiss) }
-  func notifyDidDismiss() { calls.append(.notifyDidDismiss) }
+  func notifyDidDismiss(info: PaywallInfo) {
+    calls.append(.notifyDidDismiss)
+    dismissedInfos.append(info)
+  }
   func reloadWebView() { calls.append(.reloadWebView) }
   func sendTemplateParams() { calls.append(.sendTemplateParams) }
   func fetchIntroOfferTokens() { calls.append(.fetchIntroOfferTokens) }
@@ -960,7 +973,8 @@ struct PaywallViewActionTests {
     context.dispatch(.didDisappear)
 
     // Shown again, by the app, with its own delegate.
-    context.delegate = PaywallViewControllerDelegateAdapter(swiftDelegate: nil, objcDelegate: nil)
+    let appDelegate = PaywallViewControllerDelegateAdapter(swiftDelegate: nil, objcDelegate: nil)
+    context.delegate = appDelegate
     context.dispatch(.beginPresentation)
     context.dispatch(.finishAppearing)
     let second = try! #require(context.state.activePresentation?.id)
@@ -969,6 +983,9 @@ struct PaywallViewActionTests {
     context.dispatch(.finishDismissal(first))
     #expect(context.calls.contains(.callDidFinishToPresentationDelegate(.declined)))
     #expect(!context.calls.contains(.callDidFinish(.declined, shouldDismiss: false)))
+    // Told through the delegate it began with, which was none, not the app's.
+    #expect(context.lateFinishDelegates.count == 1)
+    #expect(context.lateFinishDelegates.first! == nil)
 
     // The latest presentation's end goes to the current delegate, as before.
     context.dispatch(.requestDismissal(result: .declined, closeReason: .manualClose, completion: nil))
@@ -976,6 +993,30 @@ struct PaywallViewActionTests {
     context.calls = []
     context.dispatch(.finishDismissal(second))
     #expect(context.calls.contains(.callDidFinish(.declined, shouldDismiss: false)))
+  }
+
+  @Test("A dismissal finishing after another claim was shown reports its own placement and close reason")
+  func finishSupersededDismissalReportsItsOwnInfo() {
+    let context = FakePaywallViewContext()
+    let first = PaywallViewState.Claim(request: makeRequest(placement: "first"), paywall: .stub(), unsavedOccurrence: nil)
+    context.present(first)
+    let firstId = try! #require(context.state.activePresentation?.id)
+    context.dispatch(.requestDismissal(result: .declined, closeReason: .forNextPaywall, completion: nil))
+    context.dispatch(.didDisappear)
+
+    // Another claim is shown before the first dismissal finishes.
+    let second = PaywallViewState.Claim(request: makeRequest(placement: "second"), paywall: .stub(), unsavedOccurrence: nil)
+    context.dispatch(.claim(second, publisher: PassthroughSubject(), isHandedOut: false, isActive: false))
+    context.dispatch(.beginPresentation)
+    context.dispatch(.finishAppearing)
+    context.dismissedInfos = []
+
+    context.dispatch(.finishDismissal(firstId))
+    #expect(context.dismissedInfos.count == 2)
+    for info in context.dismissedInfos {
+      #expect(info.presentedByPlacementWithName == "first")
+      #expect(info.closeReason == .forNextPaywall)
+    }
   }
 
   @Test("Closing the checkout sheet tracks an abandon only when nothing settled it")

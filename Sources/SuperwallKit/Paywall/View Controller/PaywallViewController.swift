@@ -1918,7 +1918,7 @@ extension PaywallViewController: PaywallViewContext {
     dismissCompletions[id] = completion
   }
 
-  func sendState(_ event: PaywallViewStateEvent, toClaim id: UUID) {
+  func sendState(_ event: PaywallViewStateEvent, toClaim id: UUID, info: PaywallInfo) {
     guard let publisher = statePublishers[id] else {
       return
     }
@@ -1987,7 +1987,7 @@ extension PaywallViewController: PaywallViewContext {
     Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall(withInfo: info)
   }
 
-  func notifyDidDismiss() {
+  func notifyDidDismiss(info: PaywallInfo) {
     Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall(withInfo: info)
   }
 
