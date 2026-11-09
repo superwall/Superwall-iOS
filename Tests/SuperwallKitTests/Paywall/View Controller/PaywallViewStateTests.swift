@@ -837,6 +837,34 @@ struct PaywallViewActionTests {
     #expect(context.publishers[claim.id] != nil)
   }
 
+  @Test("A dismissal finishing while the next presentation is dismissing leaves their publisher open")
+  func finishSupersededDismissalWhileNextIsDismissing() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.present(claim)
+    let first = try! #require(context.state.activePresentation?.id)
+    context.dispatch(.reportFinished(.init(result: .declined, closeReason: .manualClose)))
+    context.dispatch(.didDisappear)
+
+    // Shown again and closed before the first dismissal finished.
+    context.dispatch(.beginPresentation)
+    context.dispatch(.finishAppearing)
+    let second = try! #require(context.state.activePresentation?.id)
+    context.dispatch(.reportFinished(.init(result: .declined, closeReason: .manualClose)))
+    context.dispatch(.didDisappear)
+    context.calls = []
+
+    context.dispatch(.finishDismissal(first))
+    #expect(!context.calls.contains(.finishStatePublisher(claim: claim.id)))
+    #expect(context.publishers[claim.id] != nil)
+
+    // The second one still reports its end, then finishes the publisher.
+    context.calls = []
+    context.dispatch(.finishDismissal(second))
+    #expect(context.calls.contains(.sendState(.dismissed(.declined), claim: claim.id)))
+    #expect(context.calls.contains(.finishStatePublisher(claim: claim.id)))
+  }
+
   @Test("Closing the checkout sheet tracks an abandon only when nothing settled it")
   func closeCheckout() {
     let context = FakePaywallViewContext()

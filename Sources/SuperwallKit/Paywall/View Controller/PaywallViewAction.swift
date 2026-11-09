@@ -365,9 +365,9 @@ enum PaywallViewAction: StoreAction {
       context.effect { context.markActive(false) }
     }
 
-    // A presentation that started meanwhile for the same claim still sends
-    // on its publisher.
-    let isPublisherInUse = claimId != nil && context.state.activePresentation?.claimId == claimId
+    // Another presentation of the same claim, on screen or still finishing
+    // its own dismissal, still sends on its publisher.
+    let isPublisherInUse = claimId.map(context.state.unfinishedPresentationClaimIds.contains) ?? false
     context.effect {
       context.runDismissCompletion(forPresentation: id)
       if let claimId = claimId {
@@ -397,16 +397,10 @@ extension PaywallViewState {
     return activePresentation
   }
 
-  /// The claims whose publishers are still needed: the current one, one
-  /// waiting to be restored, and those of presentations still reporting.
-  var claimIdsInUse: Set<UUID> {
+  /// The claims of presentations that haven't finished: the one on screen,
+  /// starting or dismissing, and those whose dismissal is still finishing.
+  var unfinishedPresentationClaimIds: Set<UUID> {
     var ids = Set<UUID>()
-    if let id = currentClaim?.id {
-      ids.insert(id)
-    }
-    if case .awaitingRestore(let claim) = handedOut {
-      ids.insert(claim.id)
-    }
     if let id = latestPresentation?.claimId {
       ids.insert(id)
     }
@@ -414,6 +408,19 @@ extension PaywallViewState {
       if let id = presentation.claimId {
         ids.insert(id)
       }
+    }
+    return ids
+  }
+
+  /// The claims whose publishers are still needed: the current one, one
+  /// waiting to be restored, and those of presentations still reporting.
+  var claimIdsInUse: Set<UUID> {
+    var ids = unfinishedPresentationClaimIds
+    if let id = currentClaim?.id {
+      ids.insert(id)
+    }
+    if case .awaitingRestore(let claim) = handedOut {
+      ids.insert(claim.id)
     }
     return ids
   }
