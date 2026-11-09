@@ -17,7 +17,7 @@ struct SubscriptionStatusResolutionTests {
   func subscriptionStatus_testModeOverride_appliesOverride() {
     let dependencyContainer = DependencyContainer()
     let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let testModeManager = dependencyContainer.testModeManager!
+    let testModeManager = dependencyContainer.silentTestModeManager()
 
     // Activate test mode
     let aliasId = dependencyContainer.identityManager.aliasId
@@ -44,7 +44,7 @@ struct SubscriptionStatusResolutionTests {
   func subscriptionStatus_testModeOverride_allowsSameValue() {
     let dependencyContainer = DependencyContainer()
     let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let testModeManager = dependencyContainer.testModeManager!
+    let testModeManager = dependencyContainer.silentTestModeManager()
 
     // Activate test mode
     let aliasId = dependencyContainer.identityManager.aliasId
@@ -92,7 +92,7 @@ struct SubscriptionStatusResolutionTests {
   func subscriptionStatus_testModeNotActive_noOverrideApplied() {
     let dependencyContainer = DependencyContainer()
     let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let testModeManager = dependencyContainer.testModeManager!
+    let testModeManager = dependencyContainer.silentTestModeManager()
 
     // Test mode exists but is NOT active
     #expect(testModeManager.isTestMode == false)
@@ -110,7 +110,7 @@ struct SubscriptionStatusResolutionTests {
   func subscriptionStatus_testModeOverrideIsNil_passesThrough() {
     let dependencyContainer = DependencyContainer()
     let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let testModeManager = dependencyContainer.testModeManager!
+    let testModeManager = dependencyContainer.silentTestModeManager()
 
     // Activate test mode but don't set an override
     let aliasId = dependencyContainer.identityManager.aliasId
@@ -135,7 +135,7 @@ struct SubscriptionStatusResolutionTests {
   func customerInfo_testModeOverride_appliesOverride() {
     let dependencyContainer = DependencyContainer()
     let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let testModeManager = dependencyContainer.testModeManager!
+    let testModeManager = dependencyContainer.silentTestModeManager()
 
     // Activate test mode
     let aliasId = dependencyContainer.identityManager.aliasId
@@ -185,7 +185,7 @@ struct SubscriptionStatusResolutionTests {
   func customerInfo_testModeNotActive_noOverrideApplied() {
     let dependencyContainer = DependencyContainer()
     let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let testModeManager = dependencyContainer.testModeManager!
+    let testModeManager = dependencyContainer.silentTestModeManager()
 
     #expect(testModeManager.isTestMode == false)
 

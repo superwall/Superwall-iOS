@@ -1269,6 +1269,7 @@
 		F75F5E1D503B9391ADD812EC /* PKCS7.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30C2B369C690AAB9C085E2E9 /* PKCS7.swift */; };
 		F770AA1E2A11910525EDEFAC /* ExpressionEvaluatorMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AA7CDE50EF14C3B7E906763 /* ExpressionEvaluatorMock.swift */; };
 		F79C378E19116B9312AE5873 /* ASN1Decoder+Unboxing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70FC86C1189200C486627EAD /* ASN1Decoder+Unboxing.swift */; };
+		F7B094A87310216B3F898899 /* SilentTestModeStatusSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD176FD75D213A29AADF7D66 /* SilentTestModeStatusSink.swift */; };
 		F7CAE957D50A2E1BDFE8119E /* CustomerCenterDelegateAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 632BA7AFDDD93F08252C9043 /* CustomerCenterDelegateAdapter.swift */; };
 		F7CDAF5068A17C1BFC254041 /* UIApplication+Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52E4503C39D6B4BFEB0FE624 /* UIApplication+Shared.swift */; };
 		F7FFAF4F1BF2420BF9A2EABE /* TestModeMacComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A0BEB5B3B0D49AEC17BE12 /* TestModeMacComponents.swift */; };
@@ -2068,6 +2069,7 @@
 		DAF94D451CB6346AE3C5863B /* ASN1Decoder+KeyedDecodingContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ASN1Decoder+KeyedDecodingContainer.swift"; sourceTree = "<group>"; };
 		DB518DC9EFF0FE0C3A022982 /* String+RFC339.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+RFC339.swift"; sourceTree = "<group>"; };
 		DCDD8734361DFE9E738937E3 /* SWDebugManagerLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWDebugManagerLogicTests.swift; sourceTree = "<group>"; };
+		DD176FD75D213A29AADF7D66 /* SilentTestModeStatusSink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SilentTestModeStatusSink.swift; sourceTree = "<group>"; };
 		DD20518E533BF9E047E172E9 /* MacDeviceInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacDeviceInfo.swift; sourceTree = "<group>"; };
 		DD64A76F1FEDD8F43E5570EF /* CustomerCenterViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterViewModelTests.swift; sourceTree = "<group>"; };
 		DD7F90791145963999DDA319 /* TaskCoalescer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskCoalescer.swift; sourceTree = "<group>"; };
@@ -2953,6 +2955,7 @@
 			isa = PBXGroup;
 			children = (
 				17D90C095314C7D5EB6F3641 /* IsolatedDefaults.swift */,
+				DD176FD75D213A29AADF7D66 /* SilentTestModeStatusSink.swift */,
 				4E5A993EFD5DF30560FDE6AB /* SubscriptionStatusResolutionTests.swift */,
 				75BE3E4AE2C7C2D879010B05 /* TestModeManagerTests.swift */,
 				701D6015B3D9E179D4E79282 /* TestModeModalTests.swift */,
@@ -4853,6 +4856,7 @@
 				97879F627E5C226333E691F9 /* SWWebViewLoadingHandlerTests.swift in Sources */,
 				56A5E5D081BAB396DCA5F927 /* SWWebViewLogicTests.swift in Sources */,
 				42DC2D582F485DC4FCB2DB85 /* SerialTaskCoordinatorTests.swift in Sources */,
+				F7B094A87310216B3F898899 /* SilentTestModeStatusSink.swift in Sources */,
 				27BE7D61E072E9E2DDCA5A3C /* StandardEventPlacementTests.swift in Sources */,
 				C1B812067FBC2595634B3B50 /* StateStoreTests.swift in Sources */,
 				6112EC99DE7341E8A3D12C8F /* StorageMock.swift in Sources */,
