@@ -410,6 +410,20 @@ struct PaywallViewBrowserTests {
     #expect(state.browser == .none)
   }
 
+  @Test("Nothing opens while a browser is open or closing, so the one showing keeps its state")
+  func openWhileOpen() {
+    let id = UUID()
+    let open = PaywallViewUpdate.checkoutOpened(id).reduce(PaywallViewState(paywall: .stub()))
+    #expect(reduce(open, .checkoutOpened(UUID())).browser == open.browser)
+    #expect(reduce(open, .safariOpened).browser == open.browser)
+
+    let closing = PaywallViewUpdate.browserClosedBySDK.reduce(open)
+    #expect(reduce(closing, .checkoutOpened(UUID())).browser == closing.browser)
+
+    let safari = PaywallViewUpdate.safariOpened.reduce(PaywallViewState(paywall: .stub()))
+    #expect(reduce(safari, .checkoutOpened(UUID())).browser == .safari)
+  }
+
   @Test("Closing the checkout sheet with nothing settled is an abandon, and makes the paywall ready")
   func checkoutClosedByBuyer() {
     let id = UUID()
@@ -515,6 +529,7 @@ private final class FakePaywallViewContext: PaywallViewContext {
     case storePresentationObjects(claim: UUID?)
     case installDelegate
     case callDidFinish(PaywallResult, shouldDismiss: Bool)
+    case callDidFinishToDelegateOfRequest(PaywallResult)
     case notifyWillPresent
     case notifyDidPresent
     case notifyWillDismiss
@@ -568,6 +583,9 @@ private final class FakePaywallViewContext: PaywallViewContext {
   func installDelegate(for request: PresentationRequest) { calls.append(.installDelegate) }
   func callDidFinish(_ result: PaywallResult, shouldDismiss: Bool) {
     calls.append(.callDidFinish(result, shouldDismiss: shouldDismiss))
+  }
+  func callDidFinish(_ result: PaywallResult, toDelegateOf request: PresentationRequest?) {
+    calls.append(.callDidFinishToDelegateOfRequest(result))
   }
   func notifyWillPresent() { calls.append(.notifyWillPresent) }
   func notifyDidPresent() { calls.append(.notifyDidPresent) }
@@ -910,6 +928,56 @@ struct PaywallViewActionTests {
     let context = FakePaywallViewContext()
     context.store.update(PaywallViewUpdate.loading(.finished))
     #expect(context.calls == [.publishLoadingState(.ready, from: .unknown)])
+  }
+
+  @Test("A second checkout sheet doesn't open over the first, whose close still makes the paywall ready")
+  func secondCheckoutDoesNotOpen() {
+    let context = FakePaywallViewContext()
+    let first = UUID()
+    #expect(context.dispatch(.openCheckout(first)) == .browserOpened(true))
+    context.dispatch(.event(.loading(.purchaseStarted)))
+    context.calls = []
+
+    // A double tap asks for a second sheet.
+    #expect(context.dispatch(.openCheckout(UUID())) == .browserOpened(false))
+    #expect(context.dispatch(.openSafari) == .browserOpened(false))
+    #expect(context.calls.isEmpty)
+
+    #expect(context.dispatch(.closeCheckout(first)) == .checkoutClosed(wasAbandon: true))
+    #expect(context.state.browser == .none)
+    #expect(context.state.loadingState == .ready)
+    #expect(context.dispatch(.openSafari) == .browserOpened(true))
+  }
+
+  @Test("A dismissal finishing after the paywall was shown again tells its own request's delegate")
+  func finishSupersededDismissalTellsItsOwnDelegate() {
+    let context = FakePaywallViewContext()
+    // The SDK's presentation has no delegate, so it isn't told on close.
+    context.hasDelegate = false
+    let claim = makeClaim()
+    context.present(claim)
+    let first = try! #require(context.state.activePresentation?.id)
+    context.dispatch(.requestDismissal(result: .declined, closeReason: .manualClose, completion: nil))
+    #expect(context.dispatch(.reportFinished(.init(result: .declined, closeReason: .manualClose))) == .finishReported(toDelegate: false))
+    context.dispatch(.didDisappear)
+
+    // Shown again, by the app, with its own delegate.
+    context.hasDelegate = true
+    context.dispatch(.beginPresentation)
+    context.dispatch(.finishAppearing)
+    let second = try! #require(context.state.activePresentation?.id)
+    context.calls = []
+
+    context.dispatch(.finishDismissal(first))
+    #expect(context.calls.contains(.callDidFinishToDelegateOfRequest(.declined)))
+    #expect(!context.calls.contains(.callDidFinish(.declined, shouldDismiss: false)))
+
+    // The latest presentation's end goes to the current delegate, as before.
+    context.dispatch(.requestDismissal(result: .declined, closeReason: .manualClose, completion: nil))
+    context.dispatch(.didDisappear)
+    context.calls = []
+    context.dispatch(.finishDismissal(second))
+    #expect(context.calls.contains(.callDidFinish(.declined, shouldDismiss: false)))
   }
 
   @Test("Closing the checkout sheet tracks an abandon only when nothing settled it")

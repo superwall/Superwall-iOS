@@ -63,6 +63,10 @@ struct PaywallViewState {
     let isPresentedBySDK: Bool
     /// The claim the presentation reports to.
     let claimId: UUID?
+    /// The request of that claim. A dismissal that finishes after the
+    /// paywall was shown again tells this request's delegate, which may not
+    /// be the view controller's delegate anymore.
+    let request: PresentationRequest?
     /// Whether the delegate has been told the presentation finished.
     var didCallDelegate = false
     /// Whether swiping the paywall away is blocked so a survey can show.
@@ -80,11 +84,13 @@ struct PaywallViewState {
     init(
       id: UUID = UUID(),
       isPresentedBySDK: Bool,
-      claimId: UUID?
+      claimId: UUID?,
+      request: PresentationRequest? = nil
     ) {
       self.id = id
       self.isPresentedBySDK = isPresentedBySDK
       self.claimId = claimId
+      self.request = request
     }
   }
 
@@ -530,13 +536,17 @@ enum PaywallViewUpdate: Reducer {
     case .popupBackgroundAnimationEnded:
       state.isPopupBackgroundDismissing = false
     case .safariOpened:
-      state.browser = .safari
+      if state.browser == .none {
+        state.browser = .safari
+      }
     case .safariClosed:
       if state.browser == .safari {
         state.browser = .none
       }
     case .checkoutOpened(let id):
-      state.browser = .checkout(PaywallViewState.CheckoutSheet(id: id))
+      if state.browser == .none {
+        state.browser = .checkout(PaywallViewState.CheckoutSheet(id: id))
+      }
     case .checkoutClosed(let id):
       switch state.browser {
       case .checkout(let sheet),

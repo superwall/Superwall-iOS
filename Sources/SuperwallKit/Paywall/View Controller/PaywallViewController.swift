@@ -1408,7 +1408,11 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   func openPaymentSheet(_ url: URL) {
     #if !os(visionOS)
       let checkoutId = UUID()
-      dispatch(.openCheckout(checkoutId))
+      // A second sheet can't show while one is open or closing, as on a
+      // double tap, and the sheet that's showing keeps its state.
+      if dispatch(.openCheckout(checkoutId)) == .browserOpened(false) {
+        return
+      }
 
       let checkoutVC = CheckoutWebViewController(url: url)
       // Store reference to communicate redemption state
@@ -1545,7 +1549,9 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     #if !os(visionOS)
       safariVC.delegate = self
     #endif
-    dispatch(.event(.safariOpened))
+    if dispatch(.openSafari) == .browserOpened(false) {
+      return
+    }
     present(safariVC, animated: true)
     #endif
   }
@@ -2003,6 +2009,14 @@ extension PaywallViewController: PaywallViewContext {
       paywall: self,
       result: result,
       shouldDismiss: shouldDismiss
+    )
+  }
+
+  func callDidFinish(_ result: PaywallResult, toDelegateOf request: PresentationRequest?) {
+    request?.flags.type.getPaywallVcDelegateAdapter()?.didFinish(
+      paywall: self,
+      result: result,
+      shouldDismiss: false
     )
   }
 

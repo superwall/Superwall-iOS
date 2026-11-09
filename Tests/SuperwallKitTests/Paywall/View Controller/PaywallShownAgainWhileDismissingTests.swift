@@ -127,4 +127,57 @@ struct PaywallShownAgainWhileDismissingTests {
     #expect(delegate.results.count == 2)
     #expect(!viewController.isPresented)
   }
+
+  @Test("The SDK's dismissal finishing after the app showed its paywall doesn't tell the app's delegate")
+  func sdkDismissalDoesNotTellTheAppsDelegate() async {
+    let delegate = FinishCountingDelegate()
+    let appPublisher = PassthroughSubject<PaywallState, Never>()
+    let viewController = makeViewController(delegate: delegate, publisher: appPublisher)
+
+    // The SDK claims the view controller the app got from `getPaywall`, and
+    // presents it.
+    let container = DependencyContainer()
+    Self.retained.append(container)
+    let sdkPublisher = PassthroughSubject<PaywallState, Never>()
+    var sdkDismissedCount = 0
+    let cancellable = sdkPublisher.sink { state in
+      if case .dismissed = state {
+        sdkDismissedCount += 1
+      }
+    }
+    defer { cancellable.cancel() }
+    let sdkRequest = container.makePresentationRequest(
+      .implicitTrigger(PlacementData(name: "sdk_placement", parameters: [:], createdAt: Date())),
+      isDebuggerLaunched: false,
+      isPaywallPresented: false,
+      type: .presentation
+    )
+    viewController.set(
+      request: sdkRequest,
+      paywall: .stub(),
+      paywallStatePublisher: sdkPublisher,
+      unsavedOccurrence: nil
+    )
+    viewController.dispatch(.event(.sdkPresentationRequested))
+    viewController.viewWillAppear(false)
+    viewController.viewDidAppear(false)
+
+    // The user closes it, and the app shows its own paywall straight away,
+    // before the SDK's dismissal has finished.
+    viewController.viewWillDisappear(false)
+    viewController.viewDidDisappear(false)
+    viewController.viewWillAppear(false)
+    viewController.viewDidAppear(false)
+
+    await waitUntil { sdkDismissedCount == 1 }
+    #expect(sdkDismissedCount == 1)
+    // The app's paywall is on screen, and its delegate heard nothing.
+    #expect(viewController.isPresented)
+    #expect(delegate.results.isEmpty)
+
+    viewController.viewWillDisappear(false)
+    viewController.viewDidDisappear(false)
+    await waitUntil { delegate.results.count == 1 }
+    #expect(delegate.results.count == 1)
+  }
 }

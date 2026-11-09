@@ -44,6 +44,10 @@ protocol PaywallViewContext: AnyObject {
   func storePresentationObjects(forClaim id: UUID?)
   func installDelegate(for request: PresentationRequest)
   func callDidFinish(_ result: PaywallResult, shouldDismiss: Bool)
+  /// Tells the delegate of `request`, not the view controller's current one,
+  /// that a presentation finished, for a dismissal that finished after the
+  /// paywall was shown again.
+  func callDidFinish(_ result: PaywallResult, toDelegateOf request: PresentationRequest?)
   func notifyWillPresent()
   func notifyDidPresent()
   func notifyWillDismiss()
@@ -110,6 +114,7 @@ extension PaywallViewContext {
 }
 
 /// What the paywall view does. The only place its side effects start.
+// swiftlint:disable:next type_body_length
 enum PaywallViewAction: StoreAction {
   typealias Context = PaywallViewContext
 
@@ -130,6 +135,9 @@ enum PaywallViewAction: StoreAction {
     case dismissalStarted(UUID?)
     /// Whether closing the checkout sheet abandoned a Stripe checkout.
     case checkoutClosed(wasAbandon: Bool)
+    /// Whether the browser opened. It doesn't while another browser is open
+    /// or closing, so the view controller doesn't present it.
+    case browserOpened(Bool)
 
     var didStartLoad: Bool {
       if case .loadStarted(let didStart) = self {
@@ -176,6 +184,7 @@ enum PaywallViewAction: StoreAction {
   case finishDismissal(UUID)
   case endCustomStoreCheckout
   case openCheckout(UUID)
+  case openSafari
   case closeCheckout(UUID)
   case redeemSucceeded
   case stripeCheckoutAbandoned
@@ -216,7 +225,8 @@ enum PaywallViewAction: StoreAction {
       }
       let presentation = PaywallViewState.Presentation(
         isPresentedBySDK: state.isPresentedBySDK,
-        claimId: state.currentClaim?.id
+        claimId: state.currentClaim?.id,
+        request: state.currentClaim?.request
       )
       context.update(.presentationWillBegin(presentation))
       context.effect { context.fetchIntroOfferTokens() }
@@ -294,9 +304,18 @@ enum PaywallViewAction: StoreAction {
       context.effect { context.notifyCustomStoreCheckoutEnded() }
       return .done
     case .openCheckout(let id):
+      if context.state.browser != .none {
+        return .browserOpened(false)
+      }
       context.update(.checkoutOpened(id))
       context.effect { context.cancelCheckoutAbandonTracking() }
-      return .done
+      return .browserOpened(true)
+    case .openSafari:
+      if context.state.browser != .none {
+        return .browserOpened(false)
+      }
+      context.update(.safariOpened)
+      return .browserOpened(true)
     case .closeCheckout(let id):
       let state = context.state
       guard let sheet = state.checkoutSheet(id) else {
@@ -386,7 +405,11 @@ enum PaywallViewAction: StoreAction {
         context.sendState(.dismissed(result), toClaim: claimId)
       }
       if !presentation.didCallDelegate {
-        context.callDidFinish(result, shouldDismiss: false)
+        if isLatest {
+          context.callDidFinish(result, shouldDismiss: false)
+        } else {
+          context.callDidFinish(result, toDelegateOf: presentation.request)
+        }
       }
       if closeReason.stateShouldComplete,
         let claimId = claimId,
