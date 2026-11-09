@@ -425,8 +425,14 @@ final class TransactionManager {
       )
       return
     }
+    await observeSK1Purchase(of: storeProduct)
+  }
+
+  /// Begins observing the purchase of a loaded product. The result is handled
+  /// for this purchase, even if a later one has begun when it arrives.
+  func observeSK1Purchase(of storeProduct: StoreProduct) async {
     let coordinator = factory.makePurchasingCoordinator()
-    await prepareToPurchase(
+    let purchase = await prepareToPurchase(
       product: storeProduct,
       purchaseSource: .observeFunc(storeProduct)
     )
@@ -434,7 +440,8 @@ final class TransactionManager {
       Task {
         await self?.handle(
           result: result,
-          state: .observing
+          state: .observing,
+          purchase: purchase
         )
       }
     }
