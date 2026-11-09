@@ -207,6 +207,9 @@ private final class FakeTestModeContext: TestModeContext {
 
   let store = TestModeStore(initial: TestModeState())
   private(set) var calls: [Call] = []
+  /// Whether another thread could read the store each time the saved settings
+  /// were cleared.
+  private(set) var wasUnlockedOnClear: [Bool] = []
 
   init(active: Bool = false) {
     if active {
@@ -219,7 +222,15 @@ private final class FakeTestModeContext: TestModeContext {
     store.dispatch(action, in: self)
   }
 
-  func clearSavedSettings() { calls.append(.clearSavedSettings) }
+  func clearSavedSettings() {
+    calls.append(.clearSavedSettings)
+    let didRead = DispatchSemaphore(value: 0)
+    DispatchQueue.global().async { [store] in
+      _ = store.read { $0.isActive }
+      didRead.signal()
+    }
+    wasUnlockedOnClear.append(didRead.wait(timeout: .now() + 1) == .success)
+  }
   func saveHasActiveSubscription(_ hasActiveSubscription: Bool) {
     calls.append(.saveHasActiveSubscription(hasActiveSubscription))
   }
@@ -253,7 +264,16 @@ struct TestModeActionTests {
     let change = context.dispatch(.evaluated(nil))
     #expect(change.justDeactivated)
     #expect(change.after.session == nil)
-    #expect(context.calls == [.clearSavedSettings, .publishTestModeEnded])
+    #expect(context.calls == [.publishTestModeEnded, .clearSavedSettings])
+  }
+
+  @Test("The saved settings are cleared with the store unlocked, before the dispatch returns")
+  func clearsSavedSettingsUnlocked() {
+    let context = FakeTestModeContext(active: true)
+    context.dispatch(.evaluated(nil))
+    context.dispatch(.evaluated(nil))
+    context.dispatch(.modalClosed(entitlements: [], freeTrialOverride: .useDefault))
+    #expect(context.wasUnlockedOnClear == [true, true, true])
   }
 
   @Test("evaluated without a reason while off only clears the saved settings")

@@ -15,7 +15,9 @@ protocol TestModeContext: AnyObject {
   var store: TestModeStore { get }
 
   /// Forgets the tester's saved choices and the saved record of an active
-  /// test subscription.
+  /// test subscription. Runs once the store is unlocked: clearing
+  /// `UserDefaults` tells the app's observers there and then, and they may
+  /// wait on a thread that's reading test mode.
   func clearSavedSettings()
 
   /// Saves whether the tester's choice includes an active entitlement, so the
@@ -74,7 +76,7 @@ enum TestModeAction: StoreAction {
         store.update(TestModeUpdate.activated(reason))
       } else {
         store.update(TestModeUpdate.deactivated)
-        context.clearSavedSettings()
+        store.deferUntilUnlocked { context.clearSavedSettings() }
         if before.isActive {
           context.publishTestModeEnded()
         }
@@ -91,7 +93,7 @@ enum TestModeAction: StoreAction {
       if !before.isActive {
         // The modal saves the tester's choices as it closes, so forget them
         // again: test mode turned off while it was open.
-        context.clearSavedSettings()
+        store.deferUntilUnlocked { context.clearSavedSettings() }
         break
       }
       store.update(

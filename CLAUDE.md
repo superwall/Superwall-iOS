@@ -241,7 +241,8 @@ Changes go through `TestModeAction`s (`testModeManager.dispatch`), which return 
 after in one locked step: use `justActivated`/`justDeactivated` rather than reading `isTestMode`
 again. Purchases, restores and the modal's result are dropped while test mode is off, and a modal
 that closes after test mode turned off clears the settings it saved. Side effects are the
-`TestModeContext` methods. The status and customer info reach the rest of the SDK through
+`TestModeContext` methods. `clearSavedSettings` runs through `deferUntilUnlocked`, because removing a
+`UserDefaults` key calls the app's observers on the spot. The status and customer info reach the rest of the SDK through
 `publishOverrides`/`publishTestModeEnded`, which queue sends on the manager's `SerialTaskCoordinator`.
 Each send reads the session when it runs, so a send queued before test mode turned off sends nothing.
 Callers that need the send to have landed `await finishPublishing()`, as `processConfig` does
