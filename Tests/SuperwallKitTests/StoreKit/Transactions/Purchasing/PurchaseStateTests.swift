@@ -383,6 +383,25 @@ struct PurchasingCoordinatorTests {
     #expect(isIdle(coordinator.store.state))
   }
 
+  @Test("a transaction that arrives with nothing in progress isn't stored")
+  func transactionWithNothingInProgress() async {
+    let (coordinator, context) = make()
+
+    // A renewal, or an Ask to Buy approval, arrives on its own.
+    await coordinator.completePurchase(of: FakeSK1Transaction(productId: "product"), result: .purchased)
+
+    #expect(coordinator.lastInternalTransaction == nil)
+    #expect(coordinator.transactions.isEmpty)
+    #expect(context.deliveredResults.isEmpty)
+
+    // And once a purchase has finished.
+    let purchase = coordinator.beginPurchase(of: makeProduct(), source: .purchaseFunc(makeProduct()), isFreeTrialAvailable: false)
+    coordinator.finish(purchase)
+    await coordinator.completePurchase(of: FakeSK1Transaction(productId: "product"), result: .purchased)
+    #expect(coordinator.lastInternalTransaction == nil)
+    #expect(coordinator.transactions.isEmpty)
+  }
+
   @Test("200 concurrent results hand over the result once")
   func concurrentResults() async {
     let (coordinator, context) = make()

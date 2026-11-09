@@ -192,14 +192,20 @@ final class PurchasingCoordinator: @unchecked Sendable {
 
   /// Stores the transaction and, if the purchase in progress is of its
   /// product, hands `result` to the StoreKit 1 purchase waiting for it, once.
+  /// A transaction that arrives with nothing in progress, such as a renewal,
+  /// is left alone.
   func completePurchase(
     of transaction: SK1Transaction,
     result: PurchaseResult
   ) async {
     let productId = transaction.payment.productIdentifier
+    let phase = store.read { $0.phase }
+    if case .idle = phase {
+      return
+    }
     // Only complete if the product ID of the transaction is the same as
     // the purchasing transaction.
-    if let purchase = purchase,
+    if let purchase = phase.purchase,
       purchase.product.productIdentifier != productId {
       return
     }
