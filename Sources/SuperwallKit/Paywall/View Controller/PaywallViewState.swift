@@ -6,6 +6,7 @@
 //
 // swiftlint:disable file_length strict_fileprivate
 
+#if canImport(WebKit)
 import Foundation
 
 /// What ``PaywallViewController`` knows about its paywall and presentation.
@@ -669,3 +670,4 @@ extension PaywallViewState {
     browser = .checkout(sheet)
   }
 }
+#endif

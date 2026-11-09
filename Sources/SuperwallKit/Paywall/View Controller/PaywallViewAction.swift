@@ -6,6 +6,7 @@
 //
 // swiftlint:disable file_length strict_fileprivate
 
+#if canImport(WebKit)
 import Combine
 import Foundation
 
@@ -471,3 +472,4 @@ extension PaywallViewState {
     }
   }
 }
+#endif
