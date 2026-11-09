@@ -18,6 +18,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes `reset()`, and `identify(userId:)` switching user, sending several `user_attributes` events for one change. The new user's Apple Search Ads, MMP and install-scoped integration attributes are now in place when the call returns.
 - Fixes config refreshes being able to run at the same time and apply their configs out of order. A refresh called while the launch config fetch is still finishing now waits for it.
 - Fixes `Superwall.shared.configurationStatus` staying `.pending` when the config couldn't be fetched. It's now `.failed`.
+- Fixes cached paywalls sometimes being torn down off the main thread when they're cleared, such as on `reset()`.
+- Fixes `presentedViewController` sometimes returning a paywall that isn't on screen, which `reset()` then kept instead of clearing.
 - Fixes `Superwall.shared.entitlements.active` briefly lagging behind a new subscription status, and `entitlements.all` being empty for a moment after launch.
 - Fixes `customerInfo` sometimes keeping an older value than the subscription status when the status changed while customer info was being updated.
 - Fixes the subscription status change event sometimes listing the wrong granted entitlements.
