@@ -63,10 +63,10 @@ struct PaywallViewState {
     let isPresentedBySDK: Bool
     /// The claim the presentation reports to.
     let claimId: UUID?
-    /// The request of that claim. A dismissal that finishes after the
-    /// paywall was shown again tells this request's delegate, which may not
-    /// be the view controller's delegate anymore.
-    let request: PresentationRequest?
+    /// The delegate when it began. A dismissal that finishes after the
+    /// paywall was shown again tells this one, as the view controller's
+    /// delegate may belong to the new presentation.
+    let delegate: PaywallViewControllerDelegateAdapter?
     /// Whether the delegate has been told the presentation finished.
     var didCallDelegate = false
     /// Whether swiping the paywall away is blocked so a survey can show.
@@ -85,12 +85,12 @@ struct PaywallViewState {
       id: UUID = UUID(),
       isPresentedBySDK: Bool,
       claimId: UUID?,
-      request: PresentationRequest? = nil
+      delegate: PaywallViewControllerDelegateAdapter? = nil
     ) {
       self.id = id
       self.isPresentedBySDK = isPresentedBySDK
       self.claimId = claimId
-      self.request = request
+      self.delegate = delegate
     }
   }
 
@@ -269,7 +269,7 @@ struct PaywallViewState {
 
   /// From when the SDK starts presenting until the paywall appears: the span
   /// UIKit reports through `isBeingPresented`, which AppKit doesn't have.
-  var isMacPresentationInFlight: Bool {
+  var isBeingPresented: Bool {
     switch phase {
     case .requested,
       .appearing:
@@ -380,8 +380,6 @@ enum PaywallViewUpdate: Reducer {
 
   // MARK: Presentation
   case sdkPresentationRequested
-  /// The SDK's presentation stopped before it began.
-  case presentationAbandoned
   case presentationWillBegin(PaywallViewState.Presentation)
   case presentationDidFinish
   case dismissRequested(PaywallViewState.Dismissal)
@@ -487,10 +485,6 @@ enum PaywallViewUpdate: Reducer {
       if state.startsPresentationOnAppear {
         state.supersedeFinishingDismissal()
         state.phase = .requested
-      }
-    case .presentationAbandoned:
-      if case .requested = state.phase {
-        state.phase = .idle
       }
     case .presentationWillBegin(let presentation):
       state.supersedeFinishingDismissal()

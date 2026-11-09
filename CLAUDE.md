@@ -232,7 +232,7 @@ controllers can outlive a removal on main and become a controller's last owner o
 (`PaywallViewState`) holds the paywall, the claims (`currentClaim` and `HandedOut`), the
 presentation `Phase` (idle, requested, appearing, presented, dismissing), the `Browser` (with the
 `CheckoutSheet` and what settled it) and the loading state. Request and occurrence are read from the
-claim; `isPresented`, `isSafariVCPresented`, macOS `isClosing` and friends are computed from the phase.
+claim; `isPresented`, `isBrowserOpen`, macOS `isClosing` and friends are computed from the phase.
 Publishers, dismiss completions, views, timers and tasks stay on the view controller.
 
 - Change the state only by dispatching a `PaywallViewAction`: `.event(update)` for a plain

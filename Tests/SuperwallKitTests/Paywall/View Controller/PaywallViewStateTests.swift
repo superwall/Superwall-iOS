@@ -285,16 +285,6 @@ struct PaywallViewPresentationTests {
     }
   }
 
-  @Test("Abandoning a requested presentation goes back to idle, and leaves one on screen alone")
-  func presentationAbandoned() {
-    let requested = PaywallViewUpdate.sdkPresentationRequested.reduce(PaywallViewState(paywall: .stub()))
-    guard case .idle = PaywallViewUpdate.presentationAbandoned.reduce(requested).phase else {
-      Issue.record("Expected idle")
-      return
-    }
-    #expect(PaywallViewUpdate.presentationAbandoned.reduce(presentedState()).isPresented)
-  }
-
   @Test("Finishing appearing only moves an appearing presentation on, and disappearing only a presented one")
   func outOfOrderEvents() {
     let idle = PaywallViewState(paywall: .stub())
@@ -529,7 +519,7 @@ private final class FakePaywallViewContext: PaywallViewContext {
     case storePresentationObjects(claim: UUID?)
     case installDelegate
     case callDidFinish(PaywallResult, shouldDismiss: Bool)
-    case callDidFinishToDelegateOfRequest(PaywallResult)
+    case callDidFinishToPresentationDelegate(PaywallResult)
     case notifyWillPresent
     case notifyDidPresent
     case notifyWillDismiss
@@ -550,7 +540,10 @@ private final class FakePaywallViewContext: PaywallViewContext {
   }
 
   let store: PaywallViewStore
-  var hasDelegate = true
+  var delegate: PaywallViewControllerDelegateAdapter? = PaywallViewControllerDelegateAdapter(
+    swiftDelegate: nil,
+    objcDelegate: nil
+  )
   var calls: [Call] = []
   var publishers: [UUID: PassthroughSubject<PaywallState, Never>] = [:]
   var completions: [UUID: () -> Void] = [:]
@@ -584,8 +577,8 @@ private final class FakePaywallViewContext: PaywallViewContext {
   func callDidFinish(_ result: PaywallResult, shouldDismiss: Bool) {
     calls.append(.callDidFinish(result, shouldDismiss: shouldDismiss))
   }
-  func callDidFinish(_ result: PaywallResult, toDelegateOf request: PresentationRequest?) {
-    calls.append(.callDidFinishToDelegateOfRequest(result))
+  func callDidFinish(_ result: PaywallResult, to delegate: PaywallViewControllerDelegateAdapter?) {
+    calls.append(.callDidFinishToPresentationDelegate(result))
   }
   func notifyWillPresent() { calls.append(.notifyWillPresent) }
   func notifyDidPresent() { calls.append(.notifyDidPresent) }
@@ -671,16 +664,21 @@ struct PaywallViewActionTests {
 
   @Test("The app showing a handed out view controller restores its claim, once, if the SDK isn't showing it")
   func restoreHandedOutClaim() {
-    let context = FakePaywallViewContext()
     let handedOut = makeClaim()
-    context.dispatch(.claim(handedOut, publisher: .init(), isHandedOut: true, isActive: false))
-    context.dispatch(.claim(makeClaim(), publisher: .init(), isHandedOut: false, isActive: false))
+    func makeContext() -> FakePaywallViewContext {
+      let context = FakePaywallViewContext()
+      context.dispatch(.claim(handedOut, publisher: .init(), isHandedOut: true, isActive: false))
+      context.dispatch(.claim(makeClaim(), publisher: .init(), isHandedOut: false, isActive: false))
+      return context
+    }
 
     // The SDK showing it keeps its own claim.
-    context.dispatch(.event(.sdkPresentationRequested))
-    #expect(context.dispatch(.restoreHandedOutClaim) == .loadStarted(false))
+    let shownBySDK = makeContext()
+    shownBySDK.dispatch(.event(.sdkPresentationRequested))
+    #expect(shownBySDK.dispatch(.restoreHandedOutClaim) == .loadStarted(false))
+    #expect(shownBySDK.state.currentClaim?.id != handedOut.id)
 
-    context.dispatch(.event(.presentationAbandoned))
+    let context = makeContext()
     context.calls = []
     #expect(context.dispatch(.restoreHandedOutClaim) == .loadStarted(false))
     #expect(context.state.currentClaim?.id == handedOut.id)
@@ -750,11 +748,11 @@ struct PaywallViewActionTests {
     let context = FakePaywallViewContext()
     context.present()
     let dismissal = PaywallViewState.Dismissal(result: .declined, closeReason: .manualClose)
-    context.hasDelegate = false
+    context.delegate = nil
     #expect(context.dispatch(.reportFinished(dismissal)) == .finishReported(toDelegate: false))
     #expect(context.calls.isEmpty)
 
-    context.hasDelegate = true
+    context.delegate = PaywallViewControllerDelegateAdapter(swiftDelegate: nil, objcDelegate: nil)
     #expect(context.dispatch(.reportFinished(dismissal)) == .finishReported(toDelegate: true))
     #expect(context.calls == [.callDidFinish(.declined, shouldDismiss: true)])
     #expect(context.state.activePresentation?.didCallDelegate == true)
@@ -949,11 +947,11 @@ struct PaywallViewActionTests {
     #expect(context.dispatch(.openSafari) == .browserOpened(true))
   }
 
-  @Test("A dismissal finishing after the paywall was shown again tells its own request's delegate")
+  @Test("A dismissal finishing after the paywall was shown again tells the delegate it began with")
   func finishSupersededDismissalTellsItsOwnDelegate() {
     let context = FakePaywallViewContext()
     // The SDK's presentation has no delegate, so it isn't told on close.
-    context.hasDelegate = false
+    context.delegate = nil
     let claim = makeClaim()
     context.present(claim)
     let first = try! #require(context.state.activePresentation?.id)
@@ -962,14 +960,14 @@ struct PaywallViewActionTests {
     context.dispatch(.didDisappear)
 
     // Shown again, by the app, with its own delegate.
-    context.hasDelegate = true
+    context.delegate = PaywallViewControllerDelegateAdapter(swiftDelegate: nil, objcDelegate: nil)
     context.dispatch(.beginPresentation)
     context.dispatch(.finishAppearing)
     let second = try! #require(context.state.activePresentation?.id)
     context.calls = []
 
     context.dispatch(.finishDismissal(first))
-    #expect(context.calls.contains(.callDidFinishToDelegateOfRequest(.declined)))
+    #expect(context.calls.contains(.callDidFinishToPresentationDelegate(.declined)))
     #expect(!context.calls.contains(.callDidFinish(.declined, shouldDismiss: false)))
 
     // The latest presentation's end goes to the current delegate, as before.

@@ -20,8 +20,8 @@ typealias PaywallViewStore = StateStore<PaywallViewContext, PaywallViewState>
 /// methods documented as called with the store locked only record a value.
 protocol PaywallViewContext: AnyObject {
   var store: PaywallViewStore { get }
-  /// Whether a delegate hears how the paywall finished.
-  var hasDelegate: Bool { get }
+  /// The delegate that hears how the paywall finished, if any.
+  var delegate: PaywallViewControllerDelegateAdapter? { get }
 
   /// Publishes a loading state write. Called with the store locked, in the
   /// order the writes were made, and publishes them on the main thread once
@@ -44,10 +44,9 @@ protocol PaywallViewContext: AnyObject {
   func storePresentationObjects(forClaim id: UUID?)
   func installDelegate(for request: PresentationRequest)
   func callDidFinish(_ result: PaywallResult, shouldDismiss: Bool)
-  /// Tells the delegate of `request`, not the view controller's current one,
-  /// that a presentation finished, for a dismissal that finished after the
-  /// paywall was shown again.
-  func callDidFinish(_ result: PaywallResult, toDelegateOf request: PresentationRequest?)
+  /// Tells `delegate`, the one a presentation began with, that it finished,
+  /// for a dismissal that finished after the paywall was shown again.
+  func callDidFinish(_ result: PaywallResult, to delegate: PaywallViewControllerDelegateAdapter?)
   func notifyWillPresent()
   func notifyDidPresent()
   func notifyWillDismiss()
@@ -226,7 +225,7 @@ enum PaywallViewAction: StoreAction {
       let presentation = PaywallViewState.Presentation(
         isPresentedBySDK: state.isPresentedBySDK,
         claimId: state.currentClaim?.id,
-        request: state.currentClaim?.request
+        delegate: context.delegate
       )
       context.update(.presentationWillBegin(presentation))
       context.effect { context.fetchIntroOfferTokens() }
@@ -263,7 +262,7 @@ enum PaywallViewAction: StoreAction {
       }
       return .dismissal(dismissal)
     case .reportFinished(let dismissal):
-      if !context.hasDelegate {
+      if context.delegate == nil {
         return .finishReported(toDelegate: false)
       }
       context.update(.delegateCalled)
@@ -408,7 +407,7 @@ enum PaywallViewAction: StoreAction {
         if isLatest {
           context.callDidFinish(result, shouldDismiss: false)
         } else {
-          context.callDidFinish(result, toDelegateOf: presentation.request)
+          context.callDidFinish(result, to: presentation.delegate)
         }
       }
       if closeReason.stateShouldComplete,
