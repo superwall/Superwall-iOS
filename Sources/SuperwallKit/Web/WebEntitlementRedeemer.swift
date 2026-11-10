@@ -280,7 +280,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         let isShowingAlert = paywallViewController?.presentedViewController is UIAlertController
         #endif
         if !isShowingAlert {
-          paywallViewController?.loadingState = .ready
+          paywallViewController?.updateLoading(.finished)
         }
       }
       return
@@ -340,7 +340,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     if outcome != .redeemed {
       let superwall = self.superwall ?? Superwall.shared
       await MainActor.run {
-        superwall.paywallViewController?.loadingState = .ready
+        superwall.paywallViewController?.updateLoading(.finished)
       }
     }
   }
@@ -544,7 +544,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     guard case .code = type else { return }
     #if canImport(WebKit)
     await MainActor.run {
-      superwall.paywallViewController?.loadingState = .manualLoading
+      superwall.paywallViewController?.updateLoading(.manualLoadingStarted)
       superwall.paywallViewController?.closeSafari()
     }
     #endif
@@ -791,7 +791,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
       #if canImport(WebKit)
       await MainActor.run {
-        superwall.paywallViewController?.loadingState = .ready
+        superwall.paywallViewController?.updateLoading(.finished)
       }
 
       #endif
@@ -958,7 +958,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
       #if canImport(WebKit)
       await MainActor.run {
-        superwall.paywallViewController?.loadingState = .ready
+        superwall.paywallViewController?.updateLoading(.finished)
       }
       #endif
       await delegate.didRedeemLink(result: errorResult)
@@ -1144,7 +1144,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
     if shouldShowLoading {
       await MainActor.run {
-        superwall.paywallViewController?.loadingState = .manualLoading
+        superwall.paywallViewController?.updateLoading(.manualLoadingStarted)
       }
     }
 
@@ -1152,9 +1152,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
     if shouldShowLoading {
       await MainActor.run {
-        if superwall.paywallViewController?.loadingState == .manualLoading {
-          superwall.paywallViewController?.loadingState = .ready
-        }
+        superwall.paywallViewController?.updateLoading(.manualLoadingEnded)
       }
     }
 

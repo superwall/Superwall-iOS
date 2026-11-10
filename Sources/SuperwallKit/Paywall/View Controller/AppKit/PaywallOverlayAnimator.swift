@@ -203,7 +203,7 @@ final class PaywallOverlayAnimator: NSObject, NSViewControllerPresentationAnimat
     of viewController: NSViewController,
     from fromViewController: NSViewController
   ) {
-    (viewController as? PaywallViewController)?.isClosing = true
+    (viewController as? PaywallViewController)?.overlayCloseDidStart()
     let overlayView = viewController.view
     guard transition != .none else {
       overlayView.removeFromSuperview()
