@@ -226,6 +226,33 @@ Never let a controller's last reference go with the store locked or off the main
 tears down its views. Read the cache through `store.read`, never `store.state`: a copy of the
 controllers can outlive a removal on main and become a controller's last owner on another thread.
 
+### Paywall view store
+
+`PaywallViewController` is the `PaywallViewContext` of a `PaywallViewStore`. Its state
+(`PaywallViewState`) holds the paywall, the claims (`currentClaim` and `HandedOut`), the
+presentation `Phase` (idle, requested, appearing, presented, dismissing), the `Browser` (with the
+`CheckoutSheet` and what settled it) and the loading state. Request and occurrence are read from the
+claim; `isPresented`, `isBrowserOpen`, macOS `isClosing` and friends are computed from the phase.
+Publishers, dismiss completions, views, timers and tasks stay on the view controller. Safari doesn't
+always report it closed (never on visionOS), so a link or checkout is only refused while a browser
+is really on screen (`isBrowserOnScreen`); a browser the state has open that isn't is forgotten.
+
+- Change the state only by dispatching a `PaywallViewAction`: `.event(update)` for a plain
+  `PaywallViewUpdate`, or a named action for anything with side effects. A store observer
+  publishes every loading state write (even an unchanged one, as `@Published` always did) through
+  `publishLoadingState`, which delivers on the main thread through `OrderedDelivery` once the
+  store is unlocked.
+- Side effects are `PaywallViewContext` methods, run through `effect` once the store is unlocked.
+  Add a method there (and to the test fake) rather than calling UIKit, the delegate, storage or
+  tracking from an action.
+- Use what `dispatch` returns (`Outcome`) instead of reading the state again after an action.
+  Read with `store.read` rather than copying the whole state when you need one field.
+- Each presentation has an id. A dismissal finishes on the `dismissalCoordinator` and reports to its
+  own presentation only: if the paywall is shown again before it finishes, the old presentation
+  moves to `supersededDismissals` and the new one is left alone.
+- The public `loadingState` mirrors the store and can briefly lag it; SDK code changes it with
+  `updateLoading(_:)` and a named `PaywallLoadingChange`, and reads the store to decide things.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.
