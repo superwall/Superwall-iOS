@@ -16,10 +16,10 @@ import WebKit
 
 protocol PaywallMessageHandlerDelegate: AnyObject {
   var request: PresentationRequest? { get }
-  var paywall: Paywall { get set }
+  var paywall: Paywall { get }
   var info: PaywallInfo { get }
   var webView: SWWebView { get }
-  var loadingState: PaywallLoadingState { get set }
+  var loadingState: PaywallLoadingState { get }
   var isActive: Bool { get }
 
   func eventDidOccur(_ paywallWebEvent: PaywallWebEvent)
@@ -38,7 +38,12 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   )
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String)
   func handleCustomStoreCheckout(_ checkout: CustomStoreCheckout)
-  func revealWebViewBehindSpinner()
+  /// The page has loaded. Shows it, behind the spinner if one is up for
+  /// something else, such as a Stripe recovery.
+  func webContentDidLoad()
+  func paywallJSVersionReceived(_ version: String?)
+  func webViewLoadEnded(at date: Date)
+  func webViewLoadFailed(at date: Date)
 }
 
 @MainActor
@@ -104,7 +109,7 @@ final class PaywallMessageHandler: WebEventDelegate {
         await self.passTemplatesToWebView(from: paywall)
       }
     case .onReady(let paywalljsVersion):
-      delegate?.paywall.paywalljsVersion = paywalljsVersion
+      delegate?.paywallJSVersionReceived(paywalljsVersion)
       // Not ready until its templates are in, even if a page that reloaded
       // itself left this set.
       isDocumentReady = false
@@ -480,7 +485,7 @@ final class PaywallMessageHandler: WebEventDelegate {
         return
       }
 
-      delegate.paywall.webviewLoadingInfo.endAt = loadedAt
+      delegate.webViewLoadEnded(at: loadedAt)
 
       let paywallInfo = delegate.info
       let webViewLoad = InternalSuperwallEvent.PaywallWebviewLoad(
@@ -528,15 +533,7 @@ final class PaywallMessageHandler: WebEventDelegate {
 
         let delay = self?.delegate?.paywall.presentation.delay ?? 0
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(delay)) {
-          guard let delegate = self?.delegate else { return }
-          if delegate.loadingState == .manualLoading {
-            // Web content loaded while spinner is showing (e.g. Stripe
-            // recovery poll). Reveal the web view behind the spinner
-            // but keep the spinner visible until the poll finishes.
-            delegate.revealWebViewBehindSpinner()
-          } else {
-            delegate.loadingState = .ready
-          }
+          self?.delegate?.webContentDidLoad()
         }
       }
 
