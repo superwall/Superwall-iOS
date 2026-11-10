@@ -138,7 +138,7 @@ class PaywallManager {
         case .loadWebView:
           viewController.loadWebView()
         case .replacePaywall:
-          viewController.paywall = paywall
+          viewController.replacePaywall(with: paywall)
         }
       }
 

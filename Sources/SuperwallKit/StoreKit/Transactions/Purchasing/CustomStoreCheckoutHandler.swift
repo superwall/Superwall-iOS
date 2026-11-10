@@ -125,11 +125,12 @@ final class CustomStoreCheckoutHandler {
     }
 
     await MainActor.run {
-      paywallViewController.customStoreCheckoutProductId = checkoutProductId
-      if !checkout.closesBrowser, paywallViewController.isSafariVCPresented {
-        // The checkout already ended, so the buyer closing its sheet later abandons nothing.
-        paywallViewController.isCustomStoreCheckoutSheetLeftOpen = true
-      }
+      // A step that leaves the checkout sheet open ended the checkout, so the
+      // buyer closing the sheet later abandons nothing.
+      paywallViewController.customStoreCheckoutAdvanced(
+        productId: checkoutProductId,
+        closesBrowser: checkout.closesBrowser
+      )
     }
 
     // A checkout's last steps can arrive after its paywall began to close.
@@ -213,7 +214,7 @@ final class CustomStoreCheckoutHandler {
   /// without a start.
   func endCheckout(of paywallViewController: PaywallViewController) async {
     await MainActor.run {
-      paywallViewController.customStoreCheckoutProductId = nil
+      paywallViewController.customStoreCheckoutFinished()
     }
     guard let purchase = customStoreCheckout(of: paywallViewController) else {
       return
@@ -256,7 +257,7 @@ final class CustomStoreCheckoutHandler {
   ) async {
     if case let .customStoreCheckout(checkoutPaywall, _, _) = purchase.method {
       await MainActor.run {
-        checkoutPaywall.customStoreCheckoutProductId = nil
+        checkoutPaywall.customStoreCheckoutFinished()
       }
     }
     await transactionManager.trackCancelled(
@@ -312,7 +313,7 @@ final class CustomStoreCheckoutHandler {
     }
     if customStoreCheckout(of: paywallViewController) == nil {
       await MainActor.run {
-        paywallViewController.customStoreCheckoutProductId = nil
+        paywallViewController.customStoreCheckoutFinished()
       }
     }
     return nil

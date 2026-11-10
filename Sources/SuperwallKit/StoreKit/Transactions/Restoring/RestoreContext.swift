@@ -165,7 +165,7 @@ final class AppRestoreContext: RestoreContext {
   #if canImport(WebKit)
   @MainActor
   func showLoading(on paywall: PaywallViewController) {
-    paywall.loadingState = .loadingPurchase
+    paywall.updateLoading(.purchaseStarted)
   }
 
   @MainActor
