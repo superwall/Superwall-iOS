@@ -327,6 +327,41 @@ struct PaywallViewPresentationTests {
     #expect(idle.paywall.closeReason == .manualClose)
   }
 
+  @Test("A dismissal asked for before the paywall appears waits for the next presentation, which clears it")
+  func earlyDismissRequested() {
+    let early = PaywallViewState.EarlyDismissal(
+      presentationId: UUID(),
+      dismissal: .init(result: .purchased(.blank()), closeReason: .systemLogic)
+    )
+    let waiting = PaywallViewUpdate.earlyDismissRequested(early).reduce(PaywallViewState(paywall: .stub()))
+    #expect(waiting.earlyDismissal == early)
+    #expect(waiting.paywall.closeReason == .systemLogic)
+    #expect(waiting.latestPresentation == nil)
+
+    let began = PaywallViewUpdate.presentationWillBegin(.init(isPresentedBySDK: false, claimId: nil))
+      .reduce(waiting)
+    #expect(began.earlyDismissal == nil)
+
+    let appeared = PaywallViewUpdate.appearedWithoutBeginning(.init(isPresentedBySDK: false, claimId: nil))
+      .reduce(waiting)
+    #expect(appeared.earlyDismissal == nil)
+  }
+
+  @Test("Appearing without beginning goes straight to presented, and leaves a finishing dismissal to finish by itself")
+  func appearedWithoutBeginning() {
+    let presentation = PaywallViewState.Presentation(isPresentedBySDK: false, claimId: nil)
+    let state = PaywallViewUpdate.appearedWithoutBeginning(presentation)
+      .reduce(PaywallViewState(paywall: .stub()))
+    #expect(state.isPresented)
+    #expect(state.activePresentation?.id == presentation.id)
+
+    let dismissing = reduce(presentedState(), .disappeared)
+    let finishing = try! #require(dismissing.latestPresentation)
+    let shownAgain = PaywallViewUpdate.appearedWithoutBeginning(presentation).reduce(dismissing)
+    #expect(shownAgain.activePresentation?.id == presentation.id)
+    #expect(shownAgain.supersededDismissals.map(\.id) == [finishing.id])
+  }
+
   @Test("A decline after a purchase resolves to the purchase, unless it's for the next paywall")
   func resolvedDismissal() {
     let state = PaywallViewUpdate.purchaseCompleted(.blank(productIdentifier: "product"))
@@ -773,6 +808,63 @@ struct PaywallViewActionTests {
     #expect(context.completions[id] != nil)
   }
 
+  @Test("A dismissal asked for before the paywall appears finishes the next presentation with its result and completion")
+  func requestDismissalBeforeAppearing() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.dispatch(.claim(claim, publisher: PassthroughSubject(), isHandedOut: false, isActive: false))
+    context.dispatch(.event(.sdkPresentationRequested))
+    let outcome = context.dispatch(
+      .requestDismissal(result: .purchased(.blank()), closeReason: .systemLogic, completion: {})
+    )
+    #expect(outcome == .dismissal(.init(result: .purchased(.blank()), closeReason: .systemLogic)))
+    let early = try! #require(context.state.earlyDismissal)
+    #expect(context.completions[early.presentationId] != nil)
+
+    // Asked again before appearing, it keeps the same presentation id.
+    context.dispatch(.requestDismissal(result: .purchased(.blank()), closeReason: .systemLogic, completion: nil))
+    #expect(context.state.earlyDismissal?.presentationId == early.presentationId)
+
+    context.dispatch(.beginPresentation)
+    context.dispatch(.finishAppearing)
+    let presentation = try! #require(context.state.activePresentation)
+    #expect(presentation.id == early.presentationId)
+    // A presentation's close reason starts over, while the result is kept.
+    #expect(presentation.dismissal == .init(result: .purchased(.blank()), closeReason: .none))
+    #expect(context.state.paywall.closeReason == .none)
+    #expect(context.state.earlyDismissal == nil)
+
+    context.calls = []
+    context.dispatch(.willDisappear)
+    context.dispatch(.didDisappear)
+    context.dispatch(.finishDismissal(presentation.id))
+    #expect(context.calls.contains(.sendState(.dismissed(.purchased(.blank())), claim: claim.id)))
+    #expect(context.calls.contains(.runDismissCompletion(presentation.id)))
+  }
+
+  @Test("Appearing without having begun still presents, without what beginning does")
+  func finishAppearingWithoutBeginning() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim(occurrence: .stub())
+    context.dispatch(.claim(claim, publisher: .init(), isHandedOut: false, isActive: false))
+    context.calls = []
+    context.dispatch(.finishAppearing)
+    #expect(context.calls == [
+      .storePresentationObjects(claim: claim.id),
+      .saveOccurrence,
+      .notifyDidPresent,
+      .trackOpen,
+      .listenToGameController(true)
+    ])
+    #expect(context.state.isPresented)
+    #expect(context.state.activePresentation?.claimId == claim.id)
+
+    // It then dismisses like any other presentation.
+    context.calls = []
+    context.dispatch(.willDisappear)
+    #expect(context.calls.contains(.notifyWillDismiss))
+  }
+
   @Test("Reporting the finish tells the delegate if there is one")
   func reportFinished() {
     let context = FakePaywallViewContext()
@@ -1110,6 +1202,27 @@ struct PaywallViewActionTests {
 
 // MARK: - View controller
 
+@MainActor
+private final class SpinnerTogglingDelegate: PaywallViewControllerDelegate {
+  var onChange: ((PaywallViewController, PaywallLoadingState) -> Void)?
+  var reported: [PaywallLoadingState] = []
+  var readAfterShowingSpinner: PaywallLoadingState?
+
+  func paywall(
+    _ paywall: PaywallViewController,
+    didFinishWith result: PaywallResult,
+    shouldDismiss: Bool
+  ) {}
+
+  func paywall(
+    _ paywall: PaywallViewController,
+    loadingStateDidChange loadingState: PaywallLoadingState
+  ) {
+    reported.append(loadingState)
+    onChange?(paywall, loadingState)
+  }
+}
+
 @Suite("PaywallViewController store")
 struct PaywallViewControllerStoreTests {
   /// The view controller holds its dependencies unowned and starts tasks that
@@ -1170,6 +1283,28 @@ struct PaywallViewControllerStoreTests {
 
     // The repeated hide doesn't write, while finishing again is still published.
     #expect(published == [.ready, .manualLoading, .ready, .ready])
+  }
+
+  @Test("An app changing the loading state from its delegate reads the new value once its call returns")
+  @MainActor
+  func loadingStateChangedFromTheDelegate() {
+    let viewController = Self.makeViewController()
+    let delegate = SpinnerTogglingDelegate()
+    let adapter = PaywallViewControllerDelegateAdapter(swiftDelegate: delegate, objcDelegate: nil)
+    viewController.delegate = adapter
+    delegate.onChange = { paywall, state in
+      if state == .ready {
+        paywall.togglePaywallSpinner(isHidden: false)
+        delegate.readAfterShowingSpinner = paywall.loadingState
+      }
+    }
+
+    viewController.updateLoading(.finished)
+
+    #expect(delegate.readAfterShowingSpinner == .manualLoading)
+    #expect(delegate.reported == [.ready, .manualLoading])
+    #expect(viewController.loadingState == .manualLoading)
+    viewController.delegate = nil
   }
 
   @Test("The page loading while a spinner shows for something else keeps the spinner")

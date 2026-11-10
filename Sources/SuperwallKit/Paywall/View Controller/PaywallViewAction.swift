@@ -228,12 +228,7 @@ enum PaywallViewAction: StoreAction {
       if !state.startsPresentationOnAppear {
         return .presentationBegan(false)
       }
-      let presentation = PaywallViewState.Presentation(
-        isPresentedBySDK: state.isPresentedBySDK,
-        claimId: state.currentClaim?.id,
-        request: state.currentClaim?.request,
-        delegate: context.delegate
-      )
+      let presentation = Self.newPresentation(from: state, in: context)
       context.update(.presentationWillBegin(presentation))
       context.effect { context.fetchIntroOfferTokens() }
       context.dispatch(.endCustomStoreCheckout)
@@ -244,7 +239,14 @@ enum PaywallViewAction: StoreAction {
       return .presentationBegan(true)
     case .finishAppearing:
       let state = context.state
-      guard case .appearing(let presentation) = state.phase else {
+      let presentation: PaywallViewState.Presentation
+      if case .appearing(let appearing) = state.phase {
+        presentation = appearing
+        context.update(.presentationDidFinish)
+      } else if state.startsPresentationOnAppear {
+        presentation = Self.newPresentation(from: state, in: context)
+        context.update(.appearedWithoutBeginning(presentation))
+      } else {
         return .done
       }
       context.effect { context.storePresentationObjects(forClaim: presentation.claimId) }
@@ -252,7 +254,6 @@ enum PaywallViewAction: StoreAction {
         context.effect { context.saveOccurrence(occurrence) }
         context.update(.occurrenceSaved)
       }
-      context.update(.presentationDidFinish)
       context.effect {
         context.notifyDidPresent()
         context.trackOpen()
@@ -262,10 +263,20 @@ enum PaywallViewAction: StoreAction {
     case let .requestDismissal(result, closeReason, completion):
       let state = context.state
       let dismissal = state.resolvedDismissal(result: result, closeReason: closeReason)
-      context.update(.dismissRequested(dismissal))
-      if let completion = completion,
-        let presentation = state.latestPresentation {
-        context.saveDismissCompletion(completion, forPresentation: presentation.id)
+      let presentationId: UUID
+      if let presentation = state.latestPresentation {
+        presentationId = presentation.id
+        context.update(.dismissRequested(dismissal))
+      } else {
+        presentationId = state.earlyDismissal?.presentationId ?? UUID()
+        context.update(
+          .earlyDismissRequested(
+            PaywallViewState.EarlyDismissal(presentationId: presentationId, dismissal: dismissal)
+          )
+        )
+      }
+      if let completion = completion {
+        context.saveDismissCompletion(completion, forPresentation: presentationId)
       }
       return .dismissal(dismissal)
     case .reportFinished(let dismissal):
@@ -373,6 +384,29 @@ enum PaywallViewAction: StoreAction {
   /// Whether a browser is open, so another can't be. A browser the state has
   /// open that isn't on screen went without reporting it, as Safari does when
   /// the app dismisses it, and is forgotten.
+  /// A presentation starting now. It takes the id of a dismissal asked for
+  /// before it, and finishes with that dismissal's result. Its close reason
+  /// starts over, as a presentation's does.
+  private static func newPresentation(
+    from state: PaywallViewState,
+    in context: PaywallViewContext
+  ) -> PaywallViewState.Presentation {
+    var presentation = PaywallViewState.Presentation(
+      id: state.earlyDismissal?.presentationId ?? UUID(),
+      isPresentedBySDK: state.isPresentedBySDK,
+      claimId: state.currentClaim?.id,
+      request: state.currentClaim?.request,
+      delegate: context.delegate
+    )
+    if let early = state.earlyDismissal {
+      presentation.dismissal = PaywallViewState.Dismissal(
+        result: early.dismissal.result,
+        closeReason: .none
+      )
+    }
+    return presentation
+  }
+
   private static func isBrowserInTheWay(in context: PaywallViewContext) -> Bool {
     if context.state.browser == .none {
       return false

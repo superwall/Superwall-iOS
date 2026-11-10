@@ -104,6 +104,14 @@ struct PaywallViewState {
     let closeReason: PaywallCloseReason
   }
 
+  /// A dismissal asked for before the paywall started appearing. The next
+  /// presentation takes its id, so a completion saved for it runs when that
+  /// presentation is dismissed, and finishes with its result.
+  struct EarlyDismissal: Equatable {
+    let presentationId: UUID
+    let dismissal: Dismissal
+  }
+
   enum Phase {
     /// Not on screen. Its next appearance starts a presentation.
     case idle
@@ -157,6 +165,9 @@ struct PaywallViewState {
   var currentClaim: Claim?
   var handedOut: HandedOut = .none
   var phase: Phase = .idle
+  /// A dismissal asked for while nothing was on screen or starting, which
+  /// the next presentation takes.
+  var earlyDismissal: EarlyDismissal?
   /// Presentations whose dismissal is still finishing after a new
   /// presentation started. Each finishes for itself only, without touching
   /// the one on screen.
@@ -395,6 +406,12 @@ enum PaywallViewUpdate: Reducer {
   case presentationWillBegin(PaywallViewState.Presentation)
   case presentationDidFinish
   case dismissRequested(PaywallViewState.Dismissal)
+  /// Something asked for the paywall to be dismissed before it started
+  /// appearing.
+  case earlyDismissRequested(PaywallViewState.EarlyDismissal)
+  /// The paywall appeared without having started appearing, as when UIKit
+  /// calls `viewDidAppear` without `viewWillAppear`.
+  case appearedWithoutBeginning(PaywallViewState.Presentation)
   case surveyFinished(SurveyPresentationResult)
   case delegateCalled
   /// The paywall went off screen and its dismissal started finishing.
@@ -503,6 +520,7 @@ enum PaywallViewUpdate: Reducer {
     case .presentationWillBegin(let presentation):
       state.supersedeFinishingDismissal()
       state.phase = .appearing(presentation)
+      state.earlyDismissal = nil
       state.paywall.closeReason = .none
       // A purchase belongs to the presentation it was made in. It's cleared
       // here rather than when the view disappears: a sheet swiped away
@@ -512,6 +530,13 @@ enum PaywallViewUpdate: Reducer {
       if case .appearing(let presentation) = state.phase {
         state.phase = .presented(presentation)
       }
+    case .earlyDismissRequested(let earlyDismissal):
+      state.paywall.closeReason = earlyDismissal.dismissal.closeReason
+      state.earlyDismissal = earlyDismissal
+    case .appearedWithoutBeginning(let presentation):
+      state.supersedeFinishingDismissal()
+      state.phase = .presented(presentation)
+      state.earlyDismissal = nil
     case .dismissRequested(let dismissal):
       // A sheet swiped away asks to be dismissed after it has gone, so this
       // also reaches a presentation whose dismissal is finishing.

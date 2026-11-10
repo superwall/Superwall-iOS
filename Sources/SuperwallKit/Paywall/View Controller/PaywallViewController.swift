@@ -354,7 +354,9 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     self.customCallbackRegistry = customCallbackRegistry
 
     super.init(nibName: nil, bundle: nil)
-    loadingStateDelivery = OrderedDelivery { [weak self] change in
+    // Nested, so an app that changes the loading state from its
+    // `loadingStateDidChange` reads the new value once its call returns.
+    loadingStateDelivery = OrderedDelivery(deliversNestedValues: true) { [weak self] change in
       self?.loadingStateWasWritten(change.new, from: change.old)
     }
     publishLoadingStateWrites()
@@ -375,9 +377,10 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
       return
     }
     loadingStateDidChange(to: loadingState, from: oldValue)
+    // The value now, which a write nested in the call above has changed.
     delegate?.loadingStateDidChange(
       paywall: self,
-      loadingState: loadingState
+      loadingState: self.loadingState
     )
   }
 
