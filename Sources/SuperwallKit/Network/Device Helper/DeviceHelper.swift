@@ -1296,16 +1296,11 @@ class DeviceHelper {
     }
     enrichment = response
 
-    $enrichment.withSnapshot { enrichment in
-      if let enrichment = enrichment {
-        storage.save(enrichment, forType: LatestEnrichment.self)
-      }
-    }
-
-    $enrichment.withSnapshot { enrichment in
-      if let attributes = enrichment?.user.dictionaryObject {
-        Superwall.shared.setUserAttributes(attributes)
-      }
+    // This call's own response, not the shared one: another request can finish
+    // in between and replace it, and its response may not carry the page.
+    storage.save(response, forType: LatestEnrichment.self)
+    if let attributes = response.user.dictionaryObject {
+      Superwall.shared.setUserAttributes(attributes)
     }
   }
 
