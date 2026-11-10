@@ -13,7 +13,7 @@ extension DeepLinkRouter {
   static let firstDeepLinkUrlAttributeKey = "firstDeepLinkUrl"
 
   /// The user attribute key holding the ID of the App Store custom product
-  /// page whose deep link was the first deep link.
+  /// page that the first deep link belongs to.
   static let customProductPageIdAttributeKey = "customProductPageId"
 
   /// The user attribute key holding the name of that custom product page.
@@ -25,47 +25,46 @@ extension DeepLinkRouter {
   /// App Store custom product pages can each specify a deep link, which is
   /// delivered on the first app open after install. Storing it as a user
   /// attribute means campaign results can be broken down by custom product
-  /// page. When the config lists the app's custom product pages, the page
-  /// the deep link belongs to is saved too.
+  /// page. The deep link is also sent with enrichment, so the server can
+  /// answer which page it belongs to.
   ///
-  /// - Parameter url: The deep link, mapped from a Superwall app-link if it
-  ///   was one.
-  func captureFirstSessionDeepLink(_ url: URL) {
-    if !storage.recordFirstSessionDeepLink(url) {
-      return
-    }
-    if matchFirstDeepLinkToCustomProductPage() {
+  /// - Parameters:
+  ///   - original: The deep link as the app received it.
+  ///   - resolved: The deep link mapped from a Superwall app-link, if it was
+  ///     one.
+  func captureFirstSessionDeepLink(
+    original: URL,
+    resolved: URL
+  ) {
+    if !storage.recordFirstSessionDeepLink(original: original, resolved: resolved) {
       return
     }
     identityManager.mergeUserAttributes(
-      Self.firstDeepLinkAttributes(url: url.absoluteString, page: nil)
+      Self.firstDeepLinkAttributes(url: resolved.absoluteString, page: nil)
     )
+    let fetchEnrichment = self.fetchEnrichment
+    Task {
+      await fetchEnrichment()
+    }
   }
 
-  /// Saves the custom product page whose deep link is the first deep link,
-  /// and sets it as user attributes.
+  /// Captures a deep link that arrived before config did, which is routed
+  /// once config arrives.
   ///
-  /// Runs when the first deep link arrives and again whenever config arrives,
-  /// because the deep link can come before the config that lists the pages.
-  ///
-  /// - Returns: `true` if a page was found and saved.
-  @discardableResult
-  func matchFirstDeepLinkToCustomProductPage() -> Bool {
-    guard
-      let pages = configManager.config?.customProductPages,
-      !pages.isEmpty,
-      storage.get(FirstSessionCustomProductPage.self) == nil,
-      let urlString = storage.get(FirstSessionDeepLinkURL.self),
-      let url = URL(string: urlString),
-      let page = CustomProductPage.matching(url, in: pages)
-    else {
-      return false
+  /// Capturing it now lets it go out with the enrichment request that the
+  /// first config fetch waits for, so the custom product page can be known
+  /// before the first paywall's audience is chosen.
+  func captureFirstSessionDeepLink(beforeRouting url: URL) {
+    if url.isSuperwallReturnLink {
+      return
     }
-    storage.save(page, forType: FirstSessionCustomProductPage.self)
-    identityManager.mergeUserAttributes(
-      Self.firstDeepLinkAttributes(url: urlString, page: page)
+    if url.redeemableCode != nil {
+      return
+    }
+    captureFirstSessionDeepLink(
+      original: url,
+      resolved: url.isSuperwallDeepLink ? url.superwallDeepLinkMappedURL : url
     )
-    return true
   }
 
   /// The first deep link's user attributes, which a new user keeps across a

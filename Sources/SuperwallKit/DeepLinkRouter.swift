@@ -29,6 +29,12 @@ final class DeepLinkRouter {
     _ = await Superwall.shared.track(event)
   }
 
+  /// Fetches enrichment, which looks up the custom product page of the first
+  /// deep link. Replaced in tests.
+  var fetchEnrichment: () async -> Void = {
+    try? await Superwall.shared.dependencyContainer.deviceHelper?.getEnrichment()
+  }
+
   /// The ``PaywallInfo`` of the presented paywall, if one is presented. Replaced in tests.
   var presentedPaywallInfo: () async -> PaywallInfo? = {
     #if canImport(WebKit)
@@ -105,7 +111,7 @@ final class DeepLinkRouter {
       deepLinkUrl = url
     }
 
-    captureFirstSessionDeepLink(deepLinkUrl)
+    captureFirstSessionDeepLink(original: url, resolved: deepLinkUrl)
 
     let trackEvent = self.trackEvent
     Task {
@@ -180,7 +186,6 @@ final class DeepLinkRouter {
                 self?.route(url: deepLink)
                 Self.pendingDeepLink = nil
               }
-              self?.matchFirstDeepLinkToCustomProductPage()
             default:
               break
             }

@@ -27,7 +27,7 @@ struct FirstSessionDeepLinkStorageTests {
     let storage = makeStorage()
     let url = try #require(URL(string: "myapp://home?promo=summer"))
 
-    let didRecord = storage.recordFirstSessionDeepLink(url)
+    let didRecord = storage.recordFirstSessionDeepLink(original: url, resolved: url)
 
     #expect(didRecord == true)
     #expect(storage.get(FirstSessionDeepLinkURL.self) == url.absoluteString)
@@ -39,8 +39,8 @@ struct FirstSessionDeepLinkStorageTests {
     let firstUrl = try #require(URL(string: "myapp://home?promo=first"))
     let secondUrl = try #require(URL(string: "myapp://home?promo=second"))
 
-    #expect(storage.recordFirstSessionDeepLink(firstUrl) == true)
-    #expect(storage.recordFirstSessionDeepLink(secondUrl) == false)
+    #expect(storage.recordFirstSessionDeepLink(original: firstUrl, resolved: firstUrl) == true)
+    #expect(storage.recordFirstSessionDeepLink(original: secondUrl, resolved: secondUrl) == false)
 
     #expect(storage.get(FirstSessionDeepLinkURL.self) == firstUrl.absoluteString)
   }
@@ -52,7 +52,7 @@ struct FirstSessionDeepLinkStorageTests {
     let storage = makeStorage(cache: cache)
     let url = try #require(URL(string: "myapp://home?promo=summer"))
 
-    let didRecord = storage.recordFirstSessionDeepLink(url)
+    let didRecord = storage.recordFirstSessionDeepLink(original: url, resolved: url)
 
     #expect(didRecord == false)
     #expect(storage.get(FirstSessionDeepLinkURL.self) == nil)
@@ -64,7 +64,7 @@ struct FirstSessionDeepLinkStorageTests {
     storage.recordFirstSessionTracked()
     let url = try #require(URL(string: "myapp://home?promo=summer"))
 
-    let didRecord = storage.recordFirstSessionDeepLink(url)
+    let didRecord = storage.recordFirstSessionDeepLink(original: url, resolved: url)
 
     #expect(didRecord == false)
     #expect(storage.get(FirstSessionDeepLinkURL.self) == nil)
@@ -78,6 +78,7 @@ struct FirstSessionDeepLinkRouterTests {
   let dependencyContainer: DependencyContainer
   let storage: Storage
   let router: DeepLinkRouter
+  let enrichmentFetches = FetchCounter()
 
   init() {
     dependencyContainer = DependencyContainer()
@@ -92,6 +93,11 @@ struct FirstSessionDeepLinkRouterTests {
       storage: storage,
       identityManager: dependencyContainer.identityManager
     )
+
+    let enrichmentFetches = enrichmentFetches
+    router.fetchEnrichment = {
+      enrichmentFetches.increment()
+    }
 
     // Remove any attribute persisted to disk by previous test runs.
     let removal: [String: Any?] = [DeepLinkRouter.firstDeepLinkUrlAttributeKey: nil]
@@ -178,81 +184,67 @@ struct FirstSessionDeepLinkRouterTests {
     try await Task.sleep(nanoseconds: 500_000_000)
   }
 
-  private func storedAttribute(_ key: String) -> String? {
-    dependencyContainer.identityManager.userAttributes[key] as? String
-  }
-
-  private func clearPageAttributes() {
-    let removal: [String: Any?] = [
-      DeepLinkRouter.customProductPageIdAttributeKey: nil,
-      DeepLinkRouter.customProductPageNameAttributeKey: nil
-    ]
-    dependencyContainer.identityManager.mergeUserAttributes(removal)
-  }
-
-  @Test("Sets the custom product page whose deep link is the first deep link")
-  func route_matchingPage_setsPageAttributes() throws {
-    clearPageAttributes()
-    let deepLink = "myapp://home?promo=\(UUID().uuidString)"
-    let page = CustomProductPage(id: "ppid-1", name: "Fitness", deepLink: deepLink)
-    var config = Config.stub()
-    config.customProductPages = [page]
-    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(config))
-
-    router.route(url: try #require(URL(string: deepLink)))
-
-    #expect(storage.get(FirstSessionCustomProductPage.self) == page)
-    #expect(storedAttribute(DeepLinkRouter.customProductPageIdAttributeKey) == "ppid-1")
-    #expect(storedAttribute(DeepLinkRouter.customProductPageNameAttributeKey) == "Fitness")
-  }
-
-  @Test("Matches a page whose deep link is a Superwall app-link before it's mapped")
-  func route_appLinkPage_matchesOriginalUrl() throws {
-    clearPageAttributes()
-    let deepLink = "https://myapp.superwall.app/app-link/home?promo=\(UUID().uuidString)"
-    let page = CustomProductPage(id: "ppid-2", name: nil, deepLink: deepLink)
-    var config = Config.stub()
-    config.customProductPages = [page]
-    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(config))
-
-    router.route(url: try #require(URL(string: deepLink)))
-
-    #expect(storage.get(FirstSessionCustomProductPage.self) == page)
-    #expect(storedAttribute(DeepLinkRouter.customProductPageIdAttributeKey) == "ppid-2")
-  }
-
-  @Test("Sets the custom product page when config arrives after the first deep link")
-  func route_beforeConfig_matchesWhenConfigArrives() throws {
-    clearPageAttributes()
-    let deepLink = "myapp://home?promo=\(UUID().uuidString)"
-    router.route(url: try #require(URL(string: deepLink)))
-    #expect(storedAttribute(DeepLinkRouter.customProductPageIdAttributeKey) == nil)
-
-    let page = CustomProductPage(id: "ppid-3", name: "Sleep", deepLink: deepLink)
-    var config = Config.stub()
-    config.customProductPages = [page]
-    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(config))
-
-    #expect(storage.get(FirstSessionCustomProductPage.self) == page)
-    #expect(storedAttribute(DeepLinkRouter.customProductPageIdAttributeKey) == "ppid-3")
-    #expect(storedAttribute(DeepLinkRouter.customProductPageNameAttributeKey) == "Sleep")
-  }
-
-  @Test("Sets only the deep link when no custom product page matches it")
-  func route_noMatchingPage_setsOnlyUrl() throws {
-    clearPageAttributes()
-    var config = Config.stub()
-    config.customProductPages = [
-      CustomProductPage(id: "ppid-1", name: "Fitness", deepLink: "myapp://other")
-    ]
-    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(config))
-    let url = try #require(URL(string: "myapp://home?promo=\(UUID().uuidString)"))
+  @Test("The first deep link is kept for enrichment as received and as routed")
+  func route_firstSession_keepsLookupForEnrichment() async throws {
+    let promo = UUID().uuidString
+    let url = try #require(
+      URL(string: "https://myapp.superwall.app/app-link/home?promo=\(promo)")
+    )
 
     router.route(url: url)
 
+    #expect(
+      storage.get(FirstSessionDeepLinkLookup.self) == EnrichmentDeepLink(
+        originalUrl: url.absoluteString,
+        resolvedUrl: "myapp://home?promo=\(promo)"
+      )
+    )
+    await enrichmentFetches.waitForCount(1)
+    #expect(enrichmentFetches.count == 1)
+  }
+
+  @Test("Only the first deep link fetches enrichment")
+  func route_secondLink_doesNotFetchEnrichmentAgain() async throws {
+    let firstUrl = try #require(URL(string: "myapp://home?promo=\(UUID().uuidString)"))
+    let secondUrl = try #require(URL(string: "myapp://home?promo=\(UUID().uuidString)"))
+
+    router.route(url: firstUrl)
+    await enrichmentFetches.waitForCount(1)
+    router.route(url: secondUrl)
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(enrichmentFetches.count == 1)
+    #expect(storage.get(FirstSessionDeepLinkLookup.self)?.originalUrl == firstUrl.absoluteString)
+  }
+
+  @Test("A deep link that arrives before config is captured straight away")
+  func captureBeforeRouting_capturesAndFetchesEnrichment() async throws {
+    let url = try #require(URL(string: "myapp://home?promo=\(UUID().uuidString)"))
+
+    router.captureFirstSessionDeepLink(beforeRouting: url)
+
+    #expect(storage.get(FirstSessionDeepLinkURL.self) == url.absoluteString)
     #expect(storedAttribute == url.absoluteString)
-    #expect(storage.get(FirstSessionCustomProductPage.self) == nil)
-    #expect(storedAttribute(DeepLinkRouter.customProductPageIdAttributeKey) == nil)
+    await enrichmentFetches.waitForCount(1)
+
+    // Routing it once config arrives doesn't capture it a second time.
+    router.route(url: url)
+    try await Task.sleep(nanoseconds: 100_000_000)
+    #expect(enrichmentFetches.count == 1)
+  }
+
+  @Test(
+    "Return and redemption links that arrive before config aren't captured",
+    arguments: ["myapp://superwall/return", "myapp://superwall/redeem?code=TESTCODE"]
+  )
+  func captureBeforeRouting_superwallLink_doesNotCapture(urlString: String) throws {
+    let url = try #require(URL(string: urlString))
+
+    router.captureFirstSessionDeepLink(beforeRouting: url)
+
+    #expect(storage.get(FirstSessionDeepLinkURL.self) == nil)
+    #expect(storage.get(FirstSessionDeepLinkLookup.self) == nil)
+    #expect(enrichmentFetches.count == 0)
   }
 
   @Test("A new user keeps the first deep link and its custom product page")
@@ -260,7 +252,7 @@ struct FirstSessionDeepLinkRouterTests {
     let urlString = "myapp://home?promo=\(UUID().uuidString)"
     storage.save(urlString, forType: FirstSessionDeepLinkURL.self)
     storage.save(
-      CustomProductPage(id: "ppid-1", name: "Fitness", deepLink: urlString),
+      CustomProductPage(id: "ppid-1", name: "Fitness"),
       forType: FirstSessionCustomProductPage.self
     )
 
@@ -271,117 +263,231 @@ struct FirstSessionDeepLinkRouterTests {
     #expect(kept[DeepLinkRouter.customProductPageNameAttributeKey] as? String == "Fitness")
   }
 
+  @Test("A new user keeps only the deep link when it has no custom product page")
+  func keptAcrossReset_noPage_includesOnlyUrl() {
+    let urlString = "myapp://home?promo=\(UUID().uuidString)"
+    storage.save(urlString, forType: FirstSessionDeepLinkURL.self)
+
+    let kept = router.firstDeepLinkAttributesKeptAcrossReset()
+
+    #expect(kept.count == 1)
+    #expect(kept[DeepLinkRouter.firstDeepLinkUrlAttributeKey] as? String == urlString)
+  }
+
   @Test("A new user keeps nothing when no deep link was stored")
   func keptAcrossReset_noStoredLink_isEmpty() {
     #expect(router.firstDeepLinkAttributesKeptAcrossReset().isEmpty)
   }
 }
 
-// MARK: - Custom product page matching
+/// Counts calls made from the router's unstructured tasks.
+final class FetchCounter: @unchecked Sendable {
+  private let lock = NSLock()
+  private var value = 0
 
-@Suite
-struct CustomProductPageMatchingTests {
-  private let url = URL(string: "myapp://home")!
-
-  @Test("Finds the page whose deep link is the URL")
-  func matching_findsPage() {
-    let page = CustomProductPage(id: "a", name: "A", deepLink: "myapp://home")
-    let other = CustomProductPage(id: "b", name: "B", deepLink: "myapp://other")
-
-    #expect(CustomProductPage.matching(url, in: [other, page]) == page)
+  var count: Int {
+    lock.lock()
+    defer { lock.unlock() }
+    return value
   }
 
-  @Test("Finds nothing when no page has the URL as its deep link")
-  func matching_noMatch_isNil() {
-    let page = CustomProductPage(id: "a", name: "A", deepLink: "myapp://other")
-
-    #expect(CustomProductPage.matching(url, in: [page]) == nil)
-    #expect(CustomProductPage.matching(url, in: []) == nil)
+  func increment() {
+    lock.lock()
+    value += 1
+    lock.unlock()
   }
 
-  @Test("Finds nothing when different pages share the deep link")
-  func matching_sharedDeepLink_isNil() {
-    let first = CustomProductPage(id: "a", name: "A", deepLink: "myapp://home")
-    let second = CustomProductPage(id: "b", name: "B", deepLink: "myapp://home")
-
-    #expect(CustomProductPage.matching(url, in: [first, second]) == nil)
-  }
-
-  @Test("Finds the page when several of its versions have the deep link")
-  func matching_samePageTwice_findsPage() {
-    let page = CustomProductPage(id: "a", name: "A", deepLink: "myapp://home")
-
-    #expect(CustomProductPage.matching(url, in: [page, page]) == page)
-  }
-
-  @Test("Matches a page whose deep link is a Superwall app-link against its mapped form")
-  func matching_appLinkPage_matchesMappedUrl() {
-    let page = CustomProductPage(
-      id: "a",
-      name: "A",
-      deepLink: "https://myapp.superwall.app/app-link/home?promo=1"
-    )
-    let mapped = URL(string: "myapp://home?promo=1")!
-
-    #expect(CustomProductPage.matching(mapped, in: [page]) == page)
+  func waitForCount(_ expected: Int) async {
+    for _ in 0..<200 {
+      if count >= expected {
+        return
+      }
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
   }
 }
 
-// MARK: - Config decoding
+// MARK: - Enrichment lookup
 
 @Suite
-struct CustomProductPagesConfigTests {
-  private func configJson(_ extra: String) -> Data {
-    """
-    {
-      "buildId": "abc",
-      "triggerOptions": [],
-      "paywallResponses": [],
-      "logLevel": 0,
-      "localization": { "locales": [] },
-      "appSessionTimeoutMs": 3600000,
-      "toggles": [{ "key": "enable_expression_params", "enabled": true }],
-      "disablePreload": { "all": false, "triggers": [] }\(extra)
-    }
-    """.data(using: .utf8)!
+struct FirstDeepLinkEnrichmentTests {
+  private let lookup = EnrichmentDeepLink(
+    originalUrl: "https://myapp.superwall.app/app-link/fitness",
+    resolvedUrl: "myapp://fitness"
+  )
+
+  private func makeDeviceHelper() -> (DeviceHelper, NetworkMock, Storage, DependencyContainer) {
+    let dependencyContainer = DependencyContainer()
+    dependencyContainer.configManager.options.eventTrackingBehavior = .all
+    let network = NetworkMock(
+      options: dependencyContainer.makeSuperwallOptions(),
+      factory: dependencyContainer
+    )
+    let storage = Storage(
+      factory: StorageMock.DeviceInfoFactoryMock(),
+      cache: CacheMock()
+    )
+    let deviceHelper = DeviceHelper(
+      api: dependencyContainer.api,
+      storage: storage,
+      network: network,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer
+    )
+    return (deviceHelper, network, storage, dependencyContainer)
   }
 
-  @Test("Decodes the custom product pages, skipping any that are malformed")
-  func decodes_skipsMalformed() throws {
-    let json = configJson("""
-    ,
-      "custom_product_pages": [
-        { "id": "a", "name": "Fitness", "deep_link": "myapp://fitness" },
-        { "id": "b", "deep_link": "myapp://sleep" },
-        { "name": "No ID", "deep_link": "myapp://broken" }
-      ]
-    """)
+  @Test("The first deep link goes out with the enrichment request")
+  func getEnrichment_pendingLookup_sendsDeepLink() async throws {
+    let (deviceHelper, network, storage, dependencyContainer) = makeDeviceHelper()
+    storage.save(lookup, forType: FirstSessionDeepLinkLookup.self)
 
-    let config = try JSONDecoder.fromSnakeCase.decode(Config.self, from: json)
+    try await deviceHelper.getEnrichment()
 
-    #expect(config.customProductPages == [
-      CustomProductPage(id: "a", name: "Fitness", deepLink: "myapp://fitness"),
-      CustomProductPage(id: "b", name: nil, deepLink: "myapp://sleep")
-    ])
+    #expect(network.enrichmentRequests.last?.deepLink == lookup)
+    withExtendedLifetime(storage) {}
+    withExtendedLifetime(dependencyContainer) {}
   }
 
-  @Test("Leaves the custom product pages empty when the config has none")
-  func decodes_missing_isNil() throws {
-    let config = try JSONDecoder.fromSnakeCase.decode(Config.self, from: configJson(""))
+  @Test("An enrichment request has no deep link when none is waiting")
+  func getEnrichment_noLookup_sendsNoDeepLink() async throws {
+    let (deviceHelper, network, storage, dependencyContainer) = makeDeviceHelper()
 
-    #expect(config.customProductPages == nil)
+    try await deviceHelper.getEnrichment()
+
+    #expect(network.enrichmentRequests.count == 1)
+    #expect(network.enrichmentRequests.last?.deepLink == nil)
+    // The device helper doesn't keep its storage alive.
+    withExtendedLifetime(storage) {}
+    withExtendedLifetime(dependencyContainer) {}
   }
 
-  @Test("Keeps the custom product pages when the config is cached")
-  func encodes_roundTrips() throws {
-    var config = Config.stub()
-    config.customProductPages = [
-      CustomProductPage(id: "a", name: "Fitness", deepLink: "myapp://fitness")
-    ]
+  @Test("Saves the custom product page the server answers with")
+  func getEnrichment_matched_savesPage() async throws {
+    let (deviceHelper, network, storage, dependencyContainer) = makeDeviceHelper()
+    storage.save(lookup, forType: FirstSessionDeepLinkLookup.self)
+    network.enrichmentResponse = Enrichment(
+      user: JSON([
+        DeepLinkRouter.customProductPageIdAttributeKey: "ppid-1",
+        DeepLinkRouter.customProductPageNameAttributeKey: "Fitness"
+      ]),
+      device: JSON([:]),
+      deepLink: EnrichmentDeepLinkAnswer(matched: true)
+    )
 
-    let data = try JSONEncoder().encode(config)
-    let decoded = try JSONDecoder().decode(Config.self, from: data)
+    try await deviceHelper.getEnrichment()
 
-    #expect(decoded.customProductPages == config.customProductPages)
+    #expect(
+      storage.get(FirstSessionCustomProductPage.self) == CustomProductPage(id: "ppid-1", name: "Fitness")
+    )
+    #expect(storage.get(FirstSessionDeepLinkLookup.self) == nil)
+    withExtendedLifetime(dependencyContainer) {}
+  }
+
+  @Test("Stops sending the deep link once the server answers that no page has it")
+  func getEnrichment_notMatched_stopsSending() async throws {
+    let (deviceHelper, network, storage, dependencyContainer) = makeDeviceHelper()
+    storage.save(lookup, forType: FirstSessionDeepLinkLookup.self)
+    network.enrichmentResponse = Enrichment(
+      user: JSON([:]),
+      device: JSON([:]),
+      deepLink: EnrichmentDeepLinkAnswer(matched: false)
+    )
+
+    try await deviceHelper.getEnrichment()
+    try await deviceHelper.getEnrichment()
+
+    #expect(storage.get(FirstSessionCustomProductPage.self) == nil)
+    #expect(storage.get(FirstSessionDeepLinkLookup.self) == nil)
+    #expect(network.enrichmentRequests.map(\.deepLink) == [lookup, nil])
+    withExtendedLifetime(dependencyContainer) {}
+  }
+
+  @Test("Keeps sending the deep link while the server hasn't answered it")
+  func getEnrichment_unanswered_sendsAgain() async throws {
+    let (deviceHelper, network, storage, dependencyContainer) = makeDeviceHelper()
+    storage.save(lookup, forType: FirstSessionDeepLinkLookup.self)
+
+    try await deviceHelper.getEnrichment()
+    try await deviceHelper.getEnrichment()
+
+    #expect(storage.get(FirstSessionDeepLinkLookup.self) == lookup)
+    #expect(network.enrichmentRequests.map(\.deepLink) == [lookup, lookup])
+    withExtendedLifetime(dependencyContainer) {}
+  }
+
+  @Test("Keeps the deep link for the next request when enrichment fails")
+  func getEnrichment_failure_keepsLookup() async throws {
+    let (deviceHelper, network, storage, dependencyContainer) = makeDeviceHelper()
+    storage.save(lookup, forType: FirstSessionDeepLinkLookup.self)
+    network.enrichmentError = NetworkError.unknown
+
+    try? await deviceHelper.getEnrichment()
+
+    #expect(storage.get(FirstSessionDeepLinkLookup.self) == lookup)
+    withExtendedLifetime(dependencyContainer) {}
+  }
+}
+
+// MARK: - Wire format
+
+@Suite
+struct FirstDeepLinkEnrichmentCodingTests {
+  @Test("The request names the deep link's URLs in snake case")
+  func request_withDeepLink_encodesBothUrls() throws {
+    let request = EnrichmentRequest(
+      user: JSON(["plan": "pro"]),
+      device: JSON(["deviceModel": "iPhone17,1"]),
+      deepLink: EnrichmentDeepLink(
+        originalUrl: "https://myapp.superwall.app/app-link/fitness",
+        resolvedUrl: "myapp://fitness"
+      )
+    )
+
+    let data = try JSONEncoder.toSnakeCase.encode(request)
+    let json = try JSON(data: data)
+
+    #expect(json["deep_link"]["original_url"].string == "https://myapp.superwall.app/app-link/fitness")
+    #expect(json["deep_link"]["resolved_url"].string == "myapp://fitness")
+    #expect(json["device"]["deviceModel"].string == "iPhone17,1")
+    #expect(json["user"]["plan"].string == "pro")
+  }
+
+  @Test("The request leaves the deep link out when there is none")
+  func request_withoutDeepLink_omitsIt() throws {
+    let request = EnrichmentRequest(user: JSON([:]), device: JSON([:]))
+
+    let data = try JSONEncoder.toSnakeCase.encode(request)
+    let json = try JSON(data: data)
+
+    #expect(json["deep_link"].exists() == false)
+  }
+
+  @Test("The response's deep link answer is read when the server sends one")
+  func response_decodesDeepLinkAnswer() throws {
+    let answered = Data(
+      #"{"user":{"customProductPageId":"ppid-1"},"device":{},"deep_link":{"matched":true}}"#.utf8
+    )
+    let unanswered = Data(#"{"user":{},"device":{}}"#.utf8)
+
+    let enrichment = try JSONDecoder.fromSnakeCase.decode(Enrichment.self, from: answered)
+
+    #expect(enrichment.deepLink == EnrichmentDeepLinkAnswer(matched: true))
+    #expect(enrichment.user["customProductPageId"].string == "ppid-1")
+    #expect(try JSONDecoder.fromSnakeCase.decode(Enrichment.self, from: unanswered).deepLink == nil)
+  }
+
+  @Test("A custom product page is read from the response's user attributes")
+  func page_fromUserAttributes() {
+    let named = CustomProductPage(
+      userAttributes: JSON(["customProductPageId": "ppid-1", "customProductPageName": "Fitness"])
+    )
+    let unnamed = CustomProductPage(userAttributes: JSON(["customProductPageId": "ppid-2"]))
+
+    #expect(named == CustomProductPage(id: "ppid-1", name: "Fitness"))
+    #expect(unnamed == CustomProductPage(id: "ppid-2", name: nil))
+    #expect(CustomProductPage(userAttributes: JSON([:])) == nil)
+    #expect(CustomProductPage(userAttributes: JSON(["customProductPageId": ""])) == nil)
   }
 }

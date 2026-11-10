@@ -365,14 +365,19 @@ extension Storage {
   /// Records the first deep link received during the first app session.
   ///
   /// App Store custom product pages can each specify a deep link that's
-  /// delivered on the first app open after install. Storing it allows
-  /// results to be broken down by product page. Only the first deep link
-  /// received during the first app session is recorded. The stored value
-  /// is install-scoped, surviving identity resets.
+  /// delivered on the first app open after install. Only the first deep link
+  /// of the first app session is recorded, and it's kept across identity
+  /// resets because it describes the install.
   ///
+  /// - Parameters:
+  ///   - original: The deep link as the app received it.
+  ///   - resolved: The deep link mapped from a Superwall app-link, if it was one.
   /// - Returns: `true` if this call recorded the URL, `false` if the first
   ///   app session has already ended or a deep link was already recorded.
-  func recordFirstSessionDeepLink(_ url: URL) -> Bool {
+  func recordFirstSessionDeepLink(
+    original: URL,
+    resolved: URL
+  ) -> Bool {
     queue.sync {
       if _didTrackFirstSession {
         return false
@@ -380,7 +385,14 @@ extension Storage {
       if _didRecordFirstSessionDeepLink {
         return false
       }
-      save(url.absoluteString, forType: FirstSessionDeepLinkURL.self)
+      save(resolved.absoluteString, forType: FirstSessionDeepLinkURL.self)
+      save(
+        EnrichmentDeepLink(
+          originalUrl: original.absoluteString,
+          resolvedUrl: resolved.absoluteString
+        ),
+        forType: FirstSessionDeepLinkLookup.self
+      )
       _didRecordFirstSessionDeepLink = true
       return true
     }

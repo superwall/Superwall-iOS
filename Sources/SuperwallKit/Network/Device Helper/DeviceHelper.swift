@@ -1266,9 +1266,12 @@ class DeviceHelper {
     if isEnrichmentBlockedByTracking() {
       return
     }
+    // Sent with every request until the server has answered it.
+    let deepLink = storage.get(FirstSessionDeepLinkLookup.self)
     let request = EnrichmentRequest(
       user: JSON(identityManager.userAttributes),
-      device: JSON(deviceAttributes)
+      device: JSON(deviceAttributes),
+      deepLink: deepLink
     )
     let response: Enrichment
     do {
@@ -1283,6 +1286,13 @@ class DeviceHelper {
     // A reply that arrives after the app opts out isn't used.
     if isEnrichmentBlockedByTracking() {
       return
+    }
+    if deepLink != nil,
+      response.deepLink != nil {
+      // The page's attributes are set with the response's other user attributes below.
+      storage.finishFirstSessionDeepLinkLookup(
+        page: CustomProductPage(userAttributes: response.user)
+      )
     }
     enrichment = response
 

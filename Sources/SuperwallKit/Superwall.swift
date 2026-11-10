@@ -1252,9 +1252,12 @@ public final class Superwall: NSObject, ObservableObject {
   ///   config contains a `deepLink_open` trigger.
   @discardableResult
   public static func handleDeepLink(_ url: URL) -> Bool {
-    if Superwall.isInitialized,
-      Superwall.shared.configurationStatus == .configured {
-      return Superwall.shared.dependencyContainer.deepLinkRouter.route(url: url)
+    if Superwall.isInitialized {
+      let dependencyContainer = Superwall.shared.dependencyContainer
+      if Superwall.shared.configurationStatus == .configured {
+        return dependencyContainer.deepLinkRouter.route(url: url)
+      }
+      dependencyContainer.deepLinkRouter.captureFirstSessionDeepLink(beforeRouting: url)
     }
     return DeepLinkRouter.storeDeepLink(url)
   }

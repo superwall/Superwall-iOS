@@ -123,15 +123,6 @@ enum FirstSessionDeepLinkURL: Storable {
   typealias Value = String
 }
 
-/// The custom product page whose deep link is ``FirstSessionDeepLinkURL``.
-enum FirstSessionCustomProductPage: Storable {
-  static var key: String {
-    "store.firstSessionCustomProductPage"
-  }
-  static var directory: SearchPathDirectory = .appSpecificDocuments
-  typealias Value = CustomProductPage
-}
-
 enum DidCleanUserAttributes: Storable {
   static var key: String {
     "store.didCleanUserAttributes"
