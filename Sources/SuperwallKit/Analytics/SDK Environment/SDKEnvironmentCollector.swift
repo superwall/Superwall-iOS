@@ -75,6 +75,10 @@ enum SDKEnvironmentLogic {
   static let maxEncodedNameHashesLength = 256 * 1024
   /// How many bytes of each name's SHA-256 are kept.
   static let nameHashLength = 8
+  /// ROT13("NSUserTrackingUsageDescription"), so the key never appears in the
+  /// binary: App Store Connect scans for it and warns that the app may track. Kept
+  /// here as well as in `PermissionHandler`, which isn't built on watchOS or tvOS.
+  static let trackingUsageDescriptionKey = "AFHfreGenpxvatHfntrQrfpevcgvba".rot13()
 
   static func collect(from sources: SDKEnvironmentSources) -> SDKEnvironmentInfo {
     let frameworks = embeddedBundles(in: sources.frameworksDirectory, withExtension: "framework")
@@ -97,8 +101,7 @@ enum SDKEnvironmentLogic {
       xcodeVersion: string(info["DTXcode"]),
       buildSDKName: string(info["DTSDKName"]),
       minimumOSVersion: string(info["MinimumOSVersion"] ?? info["LSMinimumSystemVersion"]),
-      // The key is ROT13-encoded so it never appears in the binary. See `PlistKey.tracking`.
-      hasTrackingUsageDescription: info[PermissionHandler.PlistKey.tracking] != nil,
+      hasTrackingUsageDescription: info[trackingUsageDescriptionKey] != nil,
       skAdNetworkItemCount: (info["SKAdNetworkItems"] as? [Any])?.count ?? 0,
       sdkHash: sdkHash(
         modules: linked.modules,

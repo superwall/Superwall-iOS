@@ -307,7 +307,7 @@ struct SDKEnvironmentTests {
           "DTXcode": "2601",
           "DTSDKName": "iphonesimulator26.1",
           "MinimumOSVersion": "17.0",
-          PermissionHandler.PlistKey.tracking: "Ads",
+          SDKEnvironmentLogic.trackingUsageDescriptionKey: "Ads",
           "SKAdNetworkItems": [["SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"]]
         ],
         classNames: classNames
@@ -349,7 +349,7 @@ struct SDKEnvironmentTests {
           "DTXcode": "2601",
           "DTSDKName": "iphoneos26.0",
           "MinimumOSVersion": "17.2",
-          PermissionHandler.PlistKey.tracking: "We use this to measure ads.",
+          SDKEnvironmentLogic.trackingUsageDescriptionKey: "We use this to measure ads.",
           "SKAdNetworkItems": [
             ["SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"],
             ["SKAdNetworkIdentifier": "4fzdc2evr5.skadnetwork"]
@@ -363,6 +363,11 @@ struct SDKEnvironmentTests {
     #expect(info.minimumOSVersion == "17.2")
     #expect(info.hasTrackingUsageDescription)
     #expect(info.skAdNetworkItemCount == 2)
+  }
+
+  @Test func trackingUsageDescriptionKey_isTheTrackingKey() {
+    #expect(SDKEnvironmentLogic.trackingUsageDescriptionKey == "NSUser" + "TrackingUsageDescription")
+    #expect(SDKEnvironmentLogic.trackingUsageDescriptionKey == PermissionHandler.PlistKey.tracking)
   }
 
   @Test func infoPlistFields_whenMissing() {
