@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 03/03/2022.
 //
 
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 #else
@@ -62,4 +63,5 @@ enum ButtonFactory {
     return button
   }
 }
+#endif
 #endif

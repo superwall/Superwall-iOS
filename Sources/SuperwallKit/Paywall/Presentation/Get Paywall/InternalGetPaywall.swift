@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 02/05/2023.
 //
 
+#if canImport(WebKit)
 import Foundation
 import Combine
 #if os(macOS)
@@ -51,3 +52,4 @@ extension Superwall {
     }
   }
 }
+#endif

@@ -23,8 +23,8 @@
 #    depends on SuperwallKit through CocoaPods, so it can't take the new
 #    version before then. Prereleases (-alpha, -beta, -rc) aren't sent to them.
 #
-# 6. Once everything has succeeded, announce the release in Slack (sdk-ops)
-#    with its notes.
+# 6. Once it's on CocoaPods and the wrappers are told, announce the release in
+#    Slack (sdk-ops) with its notes. Docs and Emerge don't hold this up.
 #
 # Any failure posts to Slack. Re-running failed jobs is safe: tagging,
 # releasing and publishing each skip what's already done.
@@ -323,14 +323,13 @@ jobs:
     secrets: inherit
 
   announce:
-    needs: [version, ui-tests, release, cocoapods, docs, emerge, wrappers]
-    # Everything succeeded; the wrappers are skipped for prereleases.
+    needs: [version, ui-tests, release, cocoapods, wrappers]
+    # Out on SPM and CocoaPods, and the wrappers told (skipped for prereleases).
+    # Docs and Emerge don't hold it up; their failures still post to Slack.
     if: >-
       !cancelled()
       && needs.release.result == 'success'
       && needs.cocoapods.result == 'success'
-      && needs.docs.result == 'success'
-      && needs.emerge.result == 'success'
       && (needs.wrappers.result == 'success' || needs.wrappers.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
@@ -393,7 +392,28 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
           VERSION: ${{ needs.version.outputs.version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          NEEDS: ${{ toJSON(needs) }}
         run: |
-          text="iOS release ${VERSION:-(unknown version)} failed: $RUN_URL"
-          payload=$(python3 -c 'import json, sys; print(json.dumps({"text": sys.argv[1]}))' "$text")
+          # `release` pushes the tag first, so a later step of it can fail with the
+          # version already out. Check the tag rather than the job's result.
+          export TAGGED=false
+          if [ -n "$VERSION" ] && git ls-remote --exit-code --tags \
+              "https://github.com/$GITHUB_REPOSITORY.git" "refs/tags/$VERSION" > /dev/null; then
+            TAGGED=true
+          fi
+          payload=$(python3 - <<'PY'
+          import json, os
+          needs = json.loads(os.environ["NEEDS"])
+          version = os.environ["VERSION"] or "(unknown version)"
+          failed = [name for name, job in needs.items() if job["result"] == "failure"]
+          jobs = ", ".join(failed) or "a job"
+          url = os.environ["RUN_URL"]
+          # Once it's tagged, the version is out on SPM whatever failed after.
+          if os.environ["TAGGED"] == "true":
+              text = f"iOS {version} is released (tagged, on SPM), but {jobs} failed. Re-run the failed jobs once fixed: {url}"
+          else:
+              text = f"iOS release {version} failed at {jobs}; nothing was tagged: {url}"
+          print(json.dumps({"text": text}))
+          PY
+          )
           curl -fsS -X POST -H 'Content-Type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL"

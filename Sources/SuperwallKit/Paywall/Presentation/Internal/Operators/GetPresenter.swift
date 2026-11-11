@@ -6,6 +6,7 @@
 //
 // swiftlint:disable strict_fileprivate
 
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 #else
@@ -103,35 +104,6 @@ extension Superwall {
     return presenter
   }
 
-  func attemptTriggerFire(
-    for request: PresentationRequest,
-    triggerResult: InternalTriggerResult
-  ) async {
-    guard let placementName = request.presentationInfo.placementName else {
-      // The paywall is being presented by identifier, which is what the debugger uses and that's not supported.
-      return
-    }
-    switch request.presentationInfo {
-    case .implicitTrigger,
-      .explicitTrigger:
-      switch triggerResult {
-      case .error,
-        .placementNotFound:
-        return
-      default:
-        break
-      }
-    case .fromIdentifier:
-      break
-    }
-
-    let triggerFire = InternalSuperwallEvent.TriggerFire(
-      triggerResult: triggerResult,
-      triggerName: placementName
-    )
-    await Superwall.shared.track(triggerFire)
-  }
-
   #if os(macOS)
   /// What the app is showing on top, or a window of the SDK's own when the app
   /// has none, as a menu bar app might not.
@@ -181,14 +153,17 @@ extension Superwall {
       presentingWindow = UIWindow(windowScene: windowScene)
     }
 
-    presentingWindow?.rootViewController = UIViewController()
+    presentingWindow?.rootViewController = PresentingWindowRootViewController(hostWindow: activeWindow)
     presentationItems.window = presentingWindow
   }
 
   @MainActor
   func destroyPresentingWindow() {
+    let rootViewController = presentationItems.window?.rootViewController
     presentationItems.window?.windowScene = nil
     presentationItems.window = nil
+    (rootViewController as? PresentingWindowRootViewController)?.updateHostOrientations()
   }
   #endif
 }
+#endif

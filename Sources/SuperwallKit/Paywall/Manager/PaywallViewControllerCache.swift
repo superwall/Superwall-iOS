@@ -5,34 +5,40 @@
 //  Created by Yusuf Tör on 04/03/2022.
 //
 
+#if canImport(WebKit)
 import Foundation
 
-final class PaywallViewControllerCache: @unchecked Sendable {
+/// Keeps paywall view controllers for reuse, and tracks which one is on
+/// screen. Its state lives in a ``PaywallViewControllerCacheStore``.
+///
+/// View controllers the cache drops are let go of on the main thread, after
+/// the store is unlocked, so their views are never torn down on another
+/// thread or with the store locked. Reads go through
+/// ``StateStore/read(_:)``, so a copy of the controllers never outlives the
+/// lock and becomes the last owner of one that's removed meanwhile.
+final class PaywallViewControllerCache: PaywallViewControllerCacheContext, @unchecked Sendable {
+  let store = PaywallViewControllerCacheStore(initial: PaywallViewControllerCacheState())
+
+  /// The key of the cached paywall on screen. Setting a key marks the
+  /// controller cached under it as on screen, or nothing if none is cached
+  /// there. Setting `nil` marks it dismissed.
   var activePaywallVcKey: String? {
     get {
-      queue.sync {
-        _activePaywallVcKey
-      }
+      store.read { $0.presentedKey }
     }
     set {
-      queue.async { [weak self] in
-        self?._activePaywallVcKey = newValue
+      if let newValue {
+        store.dispatch(PaywallViewControllerCacheAction.presented(key: newValue), in: self)
+        return
       }
+      store.dispatch(PaywallViewControllerCacheAction.dismissed, in: self)
     }
   }
-  private var _activePaywallVcKey: String?
 
   var activePaywallViewController: PaywallViewController? {
-    queue.sync {
-      guard let activePaywallVcKey = _activePaywallVcKey else {
-        return nil
-      }
-      return cache[activePaywallVcKey]
-    }
+    store.read { $0.presentedController }
   }
 
-  private let queue = DispatchQueue(label: "com.superwall.paywallcache")
-  private var cache: [String: PaywallViewController] = [:]
   private let deviceLocaleString: String
 
   init(deviceLocaleString: String) {
@@ -40,36 +46,33 @@ final class PaywallViewControllerCache: @unchecked Sendable {
   }
 
   func save(_ paywallViewController: PaywallViewController, forKey key: String) {
-    queue.async { [weak self] in
-      self?.cache[key] = paywallViewController
-    }
+    store.dispatch(
+      PaywallViewControllerCacheAction.save(paywallViewController, key: key),
+      in: self
+    )
   }
 
   func getPaywallViewController(forKey key: String) -> PaywallViewController? {
-    var result: PaywallViewController?
-    queue.sync { [weak self] in
-      result = self?.cache[key]
-    }
-    return result
+    store.read { $0.controllers[key] }
   }
 
   func removePaywallViewController(forKey key: String) {
-    queue.async { [weak self] in
-      self?.cache.removeValue(forKey: key)
-    }
+    store.dispatch(PaywallViewControllerCacheAction.remove(key: key), in: self)
   }
 
+  /// Removes every view controller except the one on screen.
   func removeAll() {
-    queue.async { [weak self] in
-      guard let self = self else {
-        return
-      }
-      for key in self.cache.keys {
-        if key == self._activePaywallVcKey {
-          continue
-        }
-        self.cache.removeValue(forKey: key)
-      }
+    store.dispatch(PaywallViewControllerCacheAction.removeAllExceptPresented, in: self)
+  }
+
+  func release(_ released: ReleasedControllers) {
+    if Thread.isMainThread {
+      released.empty()
+      return
+    }
+    DispatchQueue.main.async {
+      released.empty()
     }
   }
 }
+#endif

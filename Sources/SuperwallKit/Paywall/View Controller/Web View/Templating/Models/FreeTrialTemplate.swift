@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 28/02/2022.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 struct FreeTrialTemplate: Codable {
@@ -17,3 +18,4 @@ struct FreeTrialTemplate: Codable {
     case prefix
   }
 }
+#endif

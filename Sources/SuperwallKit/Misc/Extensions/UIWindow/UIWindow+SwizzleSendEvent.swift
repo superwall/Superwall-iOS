@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 01/09/2023.
 //
 
+#if canImport(WebKit)
 #if !os(macOS)
 import UIKit
 
@@ -55,4 +56,5 @@ extension UIWindow {
     }
   }
 }
+#endif
 #endif

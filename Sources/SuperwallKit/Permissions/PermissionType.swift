@@ -5,6 +5,7 @@
 //  Created by Superwall on 2025.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Permission types that can be requested from the host app.
@@ -19,3 +20,4 @@ enum PermissionType: String, Decodable {
   case tracking
   case microphone
 }
+#endif

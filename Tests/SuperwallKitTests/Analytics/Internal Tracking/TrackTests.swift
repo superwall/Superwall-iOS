@@ -541,8 +541,8 @@ struct TrackingTests {
 
   @Test func presentationRequest_expressionParams() async {
     let dependencyContainer = DependencyContainer()
-    dependencyContainer.configManager.configState.send(
-      .retrieved(.stub().setting(\.featureFlags.enableExpressionParameters, to: true)))
+    dependencyContainer.configManager.store.update(
+      ConfigUpdate.retrieved(.stub().setting(\.featureFlags.enableExpressionParameters, to: true)))
     let placementData: PlacementData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
       placementData: placementData,

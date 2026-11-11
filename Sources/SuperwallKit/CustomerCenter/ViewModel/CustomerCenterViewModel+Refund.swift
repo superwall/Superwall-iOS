@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 23/09/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 // MARK: - Refund sheet
@@ -19,3 +20,4 @@ extension CustomerCenterViewModel {
     await refundSheetDidFinish(productId: productId, status: status)
   }
 }
+#endif

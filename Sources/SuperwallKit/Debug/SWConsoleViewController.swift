@@ -5,6 +5,7 @@
 //  Created by Jake Mor on 9/13/21.
 //
 
+#if canImport(WebKit)
 #if !os(macOS)
 import UIKit
 import Foundation
@@ -168,4 +169,5 @@ extension SWConsoleViewController: UITableViewDelegate, UITableViewDataSource {
     return cell
   }
 }
+#endif
 #endif

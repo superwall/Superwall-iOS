@@ -5,6 +5,7 @@
 //  Created by Jake Mor on 10/9/21.
 //
 
+#if canImport(WebKit)
 import Foundation
 import Combine
 #if os(macOS)
@@ -178,6 +179,8 @@ extension Superwall {
     paywallOverrides: PaywallOverrides?,
     delegate: PaywallViewControllerDelegateAdapter
   ) async throws -> PaywallViewController {
+    try TrackingLogic.checkNotSuperwallEvent(placement)
+
     let userInitiatedPlacement = UserInitiatedPlacement.Track(
       rawName: placement,
       canImplicitlyTriggerPaywall: false,
@@ -195,3 +198,4 @@ extension Superwall {
     return try await getPaywall(presentationRequest)
   }
 }
+#endif

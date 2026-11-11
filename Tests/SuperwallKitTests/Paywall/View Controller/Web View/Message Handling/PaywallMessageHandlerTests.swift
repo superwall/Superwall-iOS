@@ -186,6 +186,59 @@ struct PaywallMessageHandlerTests {
   }
 
   @Test
+  func transactionComplete_withProduct_namesTheSlot() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.handle(
+      .transactionComplete(
+        trialEndDate: nil,
+        productIdentifier: "product1",
+        didStartFreeTrial: false,
+        product: "productLeft"
+      )
+    )
+
+    let complete = await waitForEvent(named: "transaction_complete", in: webView)
+    #expect(complete?["product_identifier"] as? String == "product1")
+    #expect(complete?["product"] as? String == "productLeft")
+
+    withExtendedLifetime(delegate) {}
+  }
+
+  @Test
+  func purchase_resolvesTheSlotNamedByTheMessage() {
+    let (messageHandler, _, delegate) = makeHandler()
+    delegate.paywall.products = [
+      Product(
+        name: "productLeft",
+        type: .appStore(AppStoreProduct(id: "annual", billingPlanType: .upFront)),
+        id: "annual",
+        entitlements: []
+      ),
+      Product(
+        name: "productLeftInstalments",
+        type: .appStore(AppStoreProduct(id: "annual", billingPlanType: .monthly)),
+        id: "annual",
+        entitlements: []
+      )
+    ]
+
+    messageHandler.handle(
+      .purchase(productId: "annual", shouldDismiss: true, product: "productLeftInstalments")
+    )
+    #expect(delegate.eventDidOccur == .initiatePurchase(
+      productId: "annual:MONTHLY",
+      shouldDismiss: true
+    ))
+
+    messageHandler.handle(.purchase(productId: "annual", shouldDismiss: true, product: "productLeft"))
+    #expect(delegate.eventDidOccur == .initiatePurchase(
+      productId: "annual:UP_FRONT",
+      shouldDismiss: true
+    ))
+  }
+
+  @Test
   func handleTemplateParams() async {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(

@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 25/08/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 // MARK: - Support email
@@ -40,3 +41,4 @@ extension CustomerCenterViewModel {
   /// a sheet showing the address instead.
   var supportEmailAvailable: Bool { supportMailtoURL != nil }
 }
+#endif

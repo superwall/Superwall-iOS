@@ -6,6 +6,7 @@
 //
 // swiftlint:disable file_length
 
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 #else
@@ -480,4 +481,5 @@ extension TestModePurchaseViewController: UIAdaptivePresentationControllerDelega
     }
   }
 }
+#endif
 #endif

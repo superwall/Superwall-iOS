@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 27/06/2024.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 enum SWWebViewLogic {
@@ -43,3 +44,4 @@ enum SWWebViewLogic {
     return nil
   }
 }
+#endif

@@ -22,41 +22,44 @@ class ConfigManager {
       .eraseToAnyPublisher()
   }
 
-  /// The configuration of the Superwall dashboard
-  var configState = CurrentValueSubject<ConfigState, Error>(.retrieving)
+  /// Holds the config state.
+  let store = ConfigStore(initial: ConfigManagerState())
+
+  /// Runs fetches and refreshes one at a time, in the order they were called,
+  /// since each applies a new config.
+  let configTaskCoordinator = SerialTaskCoordinator()
+
+  /// The configuration of the Superwall dashboard.
+  ///
+  /// Mirrors the store, so change it through `store.update(_:)` with a
+  /// ``ConfigUpdate`` rather than by sending to it. Sent changes with the
+  /// store unlocked, so it can lag the store while another thread is
+  /// sending: read ``config`` for the current config.
+  let configState = CurrentValueSubject<ConfigState, Error>(.retrieving)
 
   /// Convenience variable to access config.
   var config: Config? {
-    return configState.value.getConfig()
+    store.state.config
   }
 
   /// Options for configuring the SDK.
   var options: SuperwallOptions
 
   /// A dictionary of triggers by their placement name.
-  @DispatchQueueBacked
-  var triggersByPlacementName: [String: Trigger] = [:]
+  var triggersByPlacementName: [String: Trigger] {
+    store.state.triggersByPlacementName
+  }
 
-  var configRetryCount = 0
+  var configRetryCount: Int {
+    store.state.retryCount
+  }
 
   /// The purchases load that `fetchConfiguration` published `configState` ahead
   /// of, when the saved customer info proved the user was still entitled. Trial
   /// eligibility waits on it so an upgrade during the load still sees the active
   /// subscription groups.
-  ///
-  /// Protected by a queue: it's written on the config fetch and read from the
-  /// purchase path, which doesn't wait for config.
-  private var _initialPurchasesLoad: Task<Void, Never>?
-  private let initialPurchasesLoadQueue = DispatchQueue(
-    label: "com.superwall.initialPurchasesLoad"
-  )
-
   var initialPurchasesLoad: Task<Void, Never>? {
-    initialPurchasesLoadQueue.sync { _initialPurchasesLoad }
-  }
-
-  private func setInitialPurchasesLoad(_ task: Task<Void, Never>) {
-    initialPurchasesLoadQueue.sync { _initialPurchasesLoad = task }
+    store.state.initialPurchasesLoad
   }
 
   private unowned let storeKitManager: StoreKitManager
@@ -107,6 +110,27 @@ class ConfigManager {
       storage: self.storage,
       factory: self.factory
     )
+
+    // Subscribers can take other locks, so they're sent changes once the
+    // store is unlocked, in the order the changes were applied.
+    let publications = OrderedDelivery<ConfigState> { [weak self] state in
+      self?.configState.send(state)
+      // A failure is sent as a value too, so `configurationStatus` sees it,
+      // then completes `configState`. Once completed it sends nothing more,
+      // though the store can still change.
+      if let error = state.failure {
+        self?.configState.send(completion: .failure(error))
+      }
+    }
+    store.observe { [weak store] before, after in
+      guard after.publications != before.publications else {
+        return
+      }
+      publications.add(after.configState)
+      store?.deferUntilUnlocked {
+        publications.deliver()
+      }
+    }
   }
 
   /// This refreshes config, requiring paywalls to reload and removing unused paywall view controllers.
@@ -118,6 +142,26 @@ class ConfigManager {
   func refreshConfiguration(
     oldConfig: Config? = nil,
     isUserInitiated: Bool = false
+  ) async {
+    // Without a config there's nothing to refresh. Checked before queueing
+    // too, so a refresh called while the first fetch is running stays a no-op
+    // rather than fetching again once that's done.
+    guard oldConfig != nil || config != nil else {
+      return
+    }
+    await configTaskCoordinator.run { [weak self] in
+      await self?.performRefreshConfiguration(
+        oldConfig: oldConfig,
+        isUserInitiated: isUserInitiated
+      )
+    }
+  }
+
+  /// Runs on `configTaskCoordinator`. See
+  /// ``refreshConfiguration(oldConfig:isUserInitiated:)``.
+  private func performRefreshConfiguration(
+    oldConfig: Config?,
+    isUserInitiated: Bool
   ) async {
     let wasConfigProvided = oldConfig != nil
 
@@ -138,7 +182,7 @@ class ConfigManager {
       }
       let startAt = Date()
       let newConfig = try await network.getConfig { [weak self] attempt in
-        self?.configRetryCount = attempt
+        self?.store.update(ConfigUpdate.retryCount(attempt))
       }
       let fetchDuration = Date().timeIntervalSince(startAt)
 
@@ -170,7 +214,16 @@ class ConfigManager {
     }
   }
 
+  /// Fetches the config and applies it. Waits for any fetch or refresh
+  /// already running to finish first.
   func fetchConfiguration() async {
+    await configTaskCoordinator.run { [weak self] in
+      await self?.performFetchConfiguration()
+    }
+  }
+
+  /// Runs on `configTaskCoordinator`. See ``fetchConfiguration()``.
+  private func performFetchConfiguration() async {
     do {
       let startAt = Date()
 
@@ -338,8 +391,7 @@ class ConfigManager {
         }
       } else {
         let config = try await network.getConfig { [weak self] attempt in
-          self?.configRetryCount = attempt
-          self?.configState.send(.retrying)
+          self?.store.update(ConfigUpdate.retrying(attempt: attempt))
         }
         return ConfigFetchResult(
           config: config,
@@ -416,11 +468,11 @@ class ConfigManager {
       await preloadPaywalls()
     }
 
+    // Refreshes are queued to run once this fetch has finished. Waiting on
+    // them here would deadlock, since this runs inside the fetch.
     if shouldFetchAsync {
       // Async path: refresh config in background (also fetches enrichment)
-      Task {
-        await refreshConfiguration(oldConfig: config)
-      }
+      enqueueRefresh(oldConfig: config)
     } else {
       // Sync path: fetch enrichment if needed, refresh config if using cached
       if usingCachedEnrichment {
@@ -429,16 +481,22 @@ class ConfigManager {
         }
       }
       if isUsingCachedConfig {
-        let oldConfig = bundledPaywalls.config == nil ? nil : config
-        Task {
-          await refreshConfiguration(oldConfig: oldConfig)
-        }
+        enqueueRefresh(oldConfig: bundledPaywalls.config == nil ? nil : config)
       }
     }
   }
 
+  private func enqueueRefresh(oldConfig: Config?) {
+    configTaskCoordinator.enqueue { [weak self] in
+      await self?.performRefreshConfiguration(
+        oldConfig: oldConfig,
+        isUserInitiated: false
+      )
+    }
+  }
+
   private func handleConfigFetchError(_ error: Error) {
-    configState.send(completion: .failure(error))
+    store.update(ConfigUpdate.failed(error))
 
     Task {
       let configFallback = InternalSuperwallEvent.ConfigFail(
@@ -491,7 +549,7 @@ class ConfigManager {
       // the refresh turned test mode back on.
       storage.delete(LatestConfig.self)
     }
-    triggersByPlacementName = ConfigLogic.getTriggersByPlacementName(from: config.triggers)
+    store.update(ConfigUpdate.triggers(ConfigLogic.getTriggersByPlacementName(from: config.triggers)))
     choosePaywallVariants(from: config.triggers)
     deviceHelper.startIPCollectionIfEnabled(for: config)
   }
@@ -551,8 +609,8 @@ class ConfigManager {
         let purchasesLoad = Task { [factory] in
           await factory.loadPurchasedProducts(config: config)
         }
-        setInitialPurchasesLoad(purchasesLoad)
-        configState.send(.retrieved(config))
+        store.update(ConfigUpdate.initialPurchasesLoad(purchasesLoad))
+        store.update(ConfigUpdate.retrieved(config))
         hasPublishedConfig = true
         await purchasesLoad.value
       } else {
@@ -583,7 +641,7 @@ class ConfigManager {
     // Last on purpose: the test mode modal above waits for the tester to pick
     // entitlements, and anything waiting on config must see that choice.
     if !hasPublishedConfig {
-      configState.send(.retrieved(config))
+      store.update(ConfigUpdate.retrieved(config))
     }
   }
 
@@ -614,7 +672,7 @@ class ConfigManager {
     if triggers.contains(where: { $0.placementName == SuperwallEvent.touchesBegan.description }) {
       #if os(macOS)
       await FirstClickMonitor.start()
-      #else
+      #elseif canImport(WebKit)
       await UIWindow.swizzleSendEvent()
       #endif
     }
@@ -682,7 +740,7 @@ class ConfigManager {
 
   // MARK: - Preloading Paywalls
   private func getTreatmentPaywallIds(from triggers: Set<Trigger>) async -> Set<String> {
-    guard let config = configState.value.getConfig() else {
+    guard let config = config else {
       return []
     }
     let preloadableTriggers = ConfigLogic.filterTriggers(
@@ -714,7 +772,10 @@ class ConfigManager {
   }
 
   /// Preloads paywalls referenced by triggers.
+  ///
+  /// watchOS and tvOS can't show paywalls, so they preload nothing.
   func preloadAllPaywalls() async {
+    #if canImport(WebKit)
     // Queue the preload behind any that's already in flight and return. It's
     // kicked off from several places (config refresh, retry, reset, public
     // API), so the queue has to be safe to add to from any thread.
@@ -757,10 +818,14 @@ class ConfigManager {
       }
       await self.preloadPaywalls(withIdentifiers: paywallIds)
     }
+    #endif
   }
 
   /// Preloads paywalls referenced by the provided triggers.
+  ///
+  /// watchOS and tvOS can't show paywalls, so they preload nothing.
   func preloadPaywalls(for placementNames: Set<String>) async {
+    #if canImport(WebKit)
     guard
       let config =
         try? await configState
@@ -776,8 +841,10 @@ class ConfigManager {
       paywallIds.remove(presentedPaywallId)
     }
     await preloadPaywalls(withIdentifiers: paywallIds)
+    #endif
   }
 
+  #if canImport(WebKit)
   /// Preloads paywalls referenced by triggers.
   private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) async {
     let paywallCount = paywallIdentifiers.count
@@ -822,6 +889,7 @@ class ConfigManager {
     )
     await Superwall.shared.track(preloadComplete)
   }
+  #endif
 
   // MARK: - Test Mode
 
@@ -870,8 +938,11 @@ class ConfigManager {
     storage.save(false, forType: IsTestModeActiveSubscription.self)
   }
 
+  /// Test mode never turns on where the SDK has no screens to show, so this
+  /// is never reached on watchOS or tvOS.
   @MainActor
   private func presentTestModeModal(reason: TestModeReason, config: Config) async {
+    #if canImport(WebKit)
     #if os(macOS)
     // Without a window to attach to, as in a menu bar app, the modal opens a window of its own.
     let rootVC = PlatformApplication.sharedApplication?.activeWindow?.rootViewController
@@ -938,5 +1009,6 @@ class ConfigManager {
       Superwall.shared.setSubscriptionStatus(assigned: .inactive)
       storage.save(false, forType: IsTestModeActiveSubscription.self)
     }
+    #endif
   }
 }

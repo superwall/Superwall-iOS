@@ -22,7 +22,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Package Management
 - Swift Package Manager: Primary dependency management via `Package.swift`
 - CocoaPods: Also supported via `SuperwallKit.podspec`
-- Dependencies: `superscript-ios-next` at exact version 1.0.17 (slim binary-target distribution; replaces the legacy `Superscript-iOS` repo whose committed xcframework bloated clones)
+- Dependencies: `superscript-ios-next` at exact version 1.0.18 (slim binary-target distribution; replaces the legacy `Superscript-iOS` repo whose committed xcframework bloated clones). The podspec stays on the `Superscript` pod 1.0.17, since CocoaPods Trunk didn't accept 1.0.18; 1.0.18 only adds watchOS and tvOS slices, which CocoaPods doesn't install anyway
 
 ## Architecture Overview
 
@@ -58,11 +58,17 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 
 ### Minimum Toolchain and Platforms
 
-- Xcode 26 / Swift 6.2 (`swift-tools-version:6.2`), iOS 15, macOS 12, watchOS 8. tvOS isn't supported (WebKit, SafariServices and Superscript have no tvOS build). CI builds iOS (tests), native macOS (tests), Mac Catalyst and visionOS (`build-platforms.yml`). Apple requires the iOS 26 SDK for App Store Connect uploads, so there's no reason to support older Xcodes.
+- Xcode 26 / Swift 6.2 (`swift-tools-version:6.2`), iOS 15, macOS 12, watchOS 8, tvOS 15. CI builds iOS (tests), native macOS (tests), Mac Catalyst, visionOS, watchOS and tvOS (`build-platforms.yml`). Apple requires the iOS 26 SDK for App Store Connect uploads, so there's no reason to support older Xcodes.
 - Don't add `#if compiler(...)` checks for anything below 6.2; only gate APIs newer than that (e.g. `compiler(>=6.3.2)` for iOS 26.4 StoreKit APIs).
 - Don't add `@available`/`#available` checks or fallback branches for iOS 15 or older (StoreKit 2, sheet detents, `UIMenu` buttons and friends are always there).
 - The package pins `swiftLanguageModes: [.v5]`. Moving to Swift 6 language mode is a separate change.
-- Keep `Package.swift`, `SuperwallKit.podspec` and `project.yml` deployment targets in sync.
+- Keep the iOS and macOS deployment targets in `Package.swift`, `SuperwallKit.podspec` and `project.yml` in sync. watchOS and tvOS are Swift Package Manager only.
+
+### watchOS and tvOS
+
+- Neither has WebKit, so `#if canImport(WebKit)` marks everything that needs a paywall on screen: the paywall view controller and presentation, debugger, Test Mode, Customer Center, permissions and the SDK's alerts. Build both after any change (`build-platforms.yml` shows the commands); the iOS build won't catch a paywall type leaking into shared code.
+- `register` evaluates audience filters, then `finishWithoutPaywallUI` unlocks the feature as iOS does when a paywall fails to load: skipped, or the paywall is fetched and a non-gated feature runs while a gated one gets error 106. No present or dismiss state is sent, so `register` passes the feature block down. Implicit triggers and paywall preloading do nothing.
+- When a shared `@available`/`#available` names iOS, also name the matching watchOS and tvOS versions, or the `*` lets them through.
 
 ### Code Conventions
 
@@ -155,6 +161,97 @@ ATT revocation. ATT is serialized as a numeric string in integration attributes.
 `idfv`, `idfa` and `attStatus` are SDK-owned user-attribute keys — document any
 change to that set in the changelog and the online docs. Don't gate the IDFA on
 the ATT status: `identifierForAdvertisers` already filters the all-zero id.
+
+### State stores
+
+Stateful parts of the SDK follow the same shape as Android's `misc/primitives` (compare with the
+matching Android `*State.kt` when changing one):
+
+- **State** is a struct, apart from the class that owns it. Use enums with associated values so
+  impossible combinations can't be built (a completion can't exist without a purchase, a
+  dismissal result can't exist outside a dismissal). Compute derived values instead of storing
+  them twice.
+- **Updates** are the only way the state changes: a `Reducer` enum whose cases are named events
+  (`checkoutClosed`, not `setCheckoutOpen(false)`), pure, each one tested, plus the combinations
+  that matter.
+- **Actions** are a closed `StoreAction` enum. They're the only place side effects start. An action
+  that needs to report back returns a value from `dispatch`, read in the same locked step, so
+  callers never update and then read the state in a second call.
+- **Side effects** are methods on the action's Context protocol: storage, tracking, publishing,
+  delegate calls, main-thread hops. The protocol is the full list, and tests use a fake that
+  records the calls. Anything that may wait runs through `deferUntilUnlocked`.
+- **Ordering:** synchronous work goes through the store's lock. Async work that must not overlap or
+  must keep its order (StoreKit, the network, the paywall page) runs on a `SerialTaskCoordinator`
+  owned by the same object, so one async action finishes before the next starts, like Android's
+  `SequentialActor`. Don't use a Swift `actor` for this: it lets other calls in at every `await`.
+- Read part of the state with `store.read { }` when a copy of the whole state could outlive a
+  removal and become the last owner of something that must be released in a certain place.
+
+### Identity store
+
+`IdentityManager` keeps its state in a `StateStore`, guarded by one recursive lock. Identity
+actions, reducers and store observers run with that lock held, so they must never wait on another
+thread: no `queue.sync`, semaphores, `DispatchQueue.main.sync`, or calls into objects that do. A
+thread reading the identity may hold what they'd wait for, and the two deadlock. Storage writes are
+fine (they hand off to a background queue). Anything that can wait, such as resetting the rest of
+the SDK, goes in `deferUntilUnlocked`; async work starts in a `Task` through `sideEffect`.
+`IdentityResetHandling.attributesKeptAcrossReset()` runs before the lock is taken and
+`identityDidReset()` after it's released; neither may change the identity.
+
+`identify` and `reset` also hold `userChangeLock`, taken before the store lock, until their
+deferred cleanup (wiping storage and caches) has finished, so user changes on different threads run
+one after another. That cleanup waits on other objects' queues, so nothing those queues run, and no
+action or observer, may call `identify` or `reset`: that would wait on the lock it's already behind.
+
+### Config store
+
+`ConfigManager` keeps the config in a `StateStore` too, changed only by `ConfigUpdate` reducers.
+`configState` is a copy sent to subscribers after the lock is released, so it can briefly lag:
+subscribe to it to hear about changes, but read `configManager.config` (or the factory's
+`currentConfig()`) for the current value. Fetches and refreshes run one at a time on a
+`SerialTaskCoordinator`. An operation on it must never `await` the coordinator's `run` or `flush`,
+directly or through `fetchConfiguration()`/`refreshConfiguration()`: it would wait on work queued
+behind itself. Use `enqueue` for follow-up work, as the fetch does for its refreshes.
+
+### Paywall view controller cache store
+
+`PaywallViewControllerCache` keeps its controllers and the key of the one on screen in a `StateStore`,
+changed only by `PaywallViewControllerCacheUpdate` reducers, applied by
+`PaywallViewControllerCacheAction`s (save, remove, `removeAll`, presented, dismissed). The reducers
+keep the on-screen key pointing at a cached controller: removing or replacing that controller clears
+it, and marking an uncached key as presented sets nothing. Otherwise a controller saved later under
+the key would be taken for the one on screen and survive `removeAll`. An action that drops a
+controller hands it to `release` with `deferUntilUnlocked`, which lets go of it on the main thread.
+Never let a controller's last reference go with the store locked or off the main thread, since that
+tears down its views. Read the cache through `store.read`, never `store.state`: a copy of the
+controllers can outlive a removal on main and become a controller's last owner on another thread.
+
+### Paywall view store
+
+`PaywallViewController` is the `PaywallViewContext` of a `PaywallViewStore`. Its state
+(`PaywallViewState`) holds the paywall, the claims (`currentClaim` and `HandedOut`), the
+presentation `Phase` (idle, requested, appearing, presented, dismissing), the `Browser` (with the
+`CheckoutSheet` and what settled it) and the loading state. Request and occurrence are read from the
+claim; `isPresented`, `isBrowserOpen`, macOS `isClosing` and friends are computed from the phase.
+Publishers, dismiss completions, views, timers and tasks stay on the view controller. Safari doesn't
+always report it closed (never on visionOS), so a link or checkout is only refused while a browser
+is really on screen (`isBrowserOnScreen`); a browser the state has open that isn't is forgotten.
+
+- Change the state only by dispatching a `PaywallViewAction`: `.event(update)` for a plain
+  `PaywallViewUpdate`, or a named action for anything with side effects. A store observer
+  publishes every loading state write (even an unchanged one, as `@Published` always did) through
+  `publishLoadingState`, which delivers on the main thread through `OrderedDelivery` once the
+  store is unlocked.
+- Side effects are `PaywallViewContext` methods, run through `effect` once the store is unlocked.
+  Add a method there (and to the test fake) rather than calling UIKit, the delegate, storage or
+  tracking from an action.
+- Use what `dispatch` returns (`Outcome`) instead of reading the state again after an action.
+  Read with `store.read` rather than copying the whole state when you need one field.
+- Each presentation has an id. A dismissal finishes on the `dismissalCoordinator` and reports to its
+  own presentation only: if the paywall is shown again before it finishes, the old presentation
+  moves to `supersededDismissals` and the new one is left alone.
+- The public `loadingState` mirrors the store and can briefly lag it; SDK code changes it with
+  `updateLoading(_:)` and a named `PaywallLoadingChange`, and reads the store to decide things.
 
 ### Native macOS
 

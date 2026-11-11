@@ -5,6 +5,7 @@
 //  Created by Claude on 2026-02-05.
 //
 
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 #else
@@ -331,4 +332,5 @@ final class EntitlementRowView: UIView {
     onSelectionChanged?(entitlementId, selection)
   }
 }
+#endif
 #endif

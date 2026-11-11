@@ -89,6 +89,34 @@ struct Paywall: Codable {
     return PaywallLogic.getCustomProducts(from: products)
   }
 
+  /// The cache key of the slot a purchase message from the paywall refers to.
+  ///
+  /// The message's `id` can't tell two slots selling the same product on
+  /// different billing plans apart, so `referenceName` picks the slot. Paywalls
+  /// that don't send one get the first slot with that `id`.
+  func cacheKey(forProductId id: String, referenceName: String?) -> String {
+    let slot = products.first { $0.id == id && $0.name == referenceName }
+      ?? products.first { $0.id == id }
+    return slot?.cacheKey ?? id
+  }
+
+  /// The slot name to report back to the paywall for a purchase, for when the
+  /// product identifier alone can't identify the slot.
+  ///
+  /// `nil` unless several slots share the product and this key identifies just
+  /// one of them, so every other paywall gets the same messages as before.
+  func referenceName(forCacheKey cacheKey: String) -> String? {
+    let slots = products.filter { $0.cacheKey == cacheKey }
+    guard
+      slots.count == 1,
+      let slot = slots.first,
+      products.filter({ $0.id == slot.id }).count > 1
+    else {
+      return nil
+    }
+    return slot.name
+  }
+
   /// Indicates whether scrolling is enabled on the webview.
   var isScrollEnabled: Bool
 

@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 #if !os(macOS)
 import SafariServices
 #endif
@@ -368,4 +369,5 @@ struct SafariView: UIViewControllerRepresentable {
   func makeUIViewController(context: Context) -> SFSafariViewController { SFSafariViewController(url: url) }
   func updateUIViewController(_ controller: SFSafariViewController, context: Context) {}
 }
+#endif
 #endif

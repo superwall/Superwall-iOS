@@ -36,9 +36,12 @@ extension Superwall {
   }
 
   /// Dismisses the presented paywall, if one exists.
+  ///
+  /// Does nothing on watchOS and tvOS, which can't show paywalls.
   @MainActor
   @nonobjc
   public func dismiss() async {
+    #if canImport(WebKit)
     guard let paywallViewController = paywallViewController else {
       return
     }
@@ -50,8 +53,10 @@ extension Superwall {
         continuation.resume()
       }
     }
+    #endif
   }
 
+  #if canImport(WebKit)
   /// Dismisses the presented paywall, if it exists, in order to present a different one.
   @MainActor
   func dismissForNextPaywall() async {
@@ -69,6 +74,7 @@ extension Superwall {
       }
     }
   }
+  #endif
 
   // MARK: - Register
 
@@ -209,7 +215,8 @@ extension Superwall {
         params: params,
         paywallOverrides: nil,
         isFeatureGatable: completion != nil,
-        publisher: publisher
+        publisher: publisher,
+        feature: completion
       )
     }
   }
@@ -253,11 +260,14 @@ extension Superwall {
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     isFeatureGatable: Bool,
-    publisher: PassthroughSubject<PaywallState, Never>
+    publisher: PassthroughSubject<PaywallState, Never>,
+    feature: (() -> Void)? = nil
   ) async {
     do {
       try TrackingLogic.checkNotSuperwallEvent(placement)
     } catch {
+      publisher.send(.presentationError(error))
+      publisher.send(completion: .finished)
       return
     }
 
@@ -275,6 +285,10 @@ extension Superwall {
       isPaywallPresented: isPaywallPresented,
       type: .presentation
     )
+    #if canImport(WebKit)
     await internallyPresent(presentationRequest, publisher)
+    #else
+    await internallyPresent(presentationRequest, publisher, feature: feature)
+    #endif
   }
 }
