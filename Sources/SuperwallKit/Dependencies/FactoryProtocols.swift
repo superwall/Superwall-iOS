@@ -7,13 +7,13 @@
 
 import Combine
 import StoreKit
-import SystemConfiguration
 #if os(macOS)
 import AppKit
 #else
 import UIKit
 #endif
 
+#if canImport(WebKit)
 protocol ViewControllerFactory: AnyObject {
   @MainActor
   func makePaywallViewController(
@@ -33,10 +33,12 @@ protocol CacheFactory: AnyObject {
   func makeCache() -> PaywallViewControllerCache
 }
 
+#endif
 protocol PaywallArchiveManagerFactory: AnyObject {
   func makePaywallArchiveManager() -> PaywallArchiveManager
 }
 
+#if canImport(WebKit)
 protocol VariablesFactory: AnyObject {
   func makeJsonVariables(
     products: [ProductVariable]?,
@@ -45,6 +47,7 @@ protocol VariablesFactory: AnyObject {
   ) async -> JSON
 }
 
+#endif
 protocol RequestFactory: AnyObject {
   func makePaywallRequest(
     placementData: PlacementData?,
@@ -204,7 +207,13 @@ protocol RestoreAccessFactory: AnyObject {
 }
 
 protocol ConfigStateFactory: AnyObject {
+  /// Publishes config changes. Its `value` can briefly lag the config, so
+  /// subscribe to it to hear about changes and use ``currentConfig()`` to
+  /// read the config.
   func makeConfigState() -> CurrentValueSubject<ConfigState, any Error>
+
+  /// The config right now, or `nil` if it hasn't arrived.
+  func currentConfig() -> Config?
 }
 
 protocol AppIdFactory: AnyObject {

@@ -9,6 +9,13 @@
 import Foundation
 import StoreKit
 
+#if canImport(WebKit)
+typealias TransactionPaywall = PaywallViewController
+#else
+/// watchOS and tvOS have no paywall to tell about the transaction.
+typealias TransactionPaywall = Never
+#endif
+
 final class ProductPurchaserSK1: NSObject, Purchasing {
   // MARK: Purchasing
   let coordinator: PurchasingCoordinator
@@ -136,7 +143,11 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   ) {
     restoration.dispatchGroup.enter()
     Task {
+      #if canImport(WebKit)
       let paywallViewController = Superwall.shared.paywallViewController
+      #else
+      let paywallViewController: TransactionPaywall? = nil
+      #endif
 
       for transaction in transactions {
         await updatePurchaseCompletionBlock(
@@ -169,7 +180,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   /// Sends a `PurchaseResult` to the completion block and stores the latest purchased transaction.
   func updatePurchaseCompletionBlock(
     for skTransaction: SKPaymentTransaction,
-    paywallViewController: PaywallViewController? = nil
+    paywallViewController: TransactionPaywall? = nil
   ) async {
     // Only continue if using internal purchase controller, in a purchasing
     // state, or observing. The transaction may be readded to the queue if
@@ -178,10 +189,12 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     let source = await coordinator.source
     if let source = source {
       switch source {
+      #if canImport(WebKit)
       case .internal:
         if factory.makeHasExternalPurchaseController() {
           return
         }
+      #endif
       case .purchaseFunc,
         .observeFunc:
         break
@@ -278,7 +291,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     SKPaymentQueue.default().finishTransaction(skTransaction)
   }
 
-  private func trackTimeout(paywallViewController: PaywallViewController? = nil) async {
+  private func trackTimeout(paywallViewController: TransactionPaywall? = nil) async {
     var source: InternalSuperwallEvent.Transaction.Source = .internal
 
     var isObserved = false
@@ -292,9 +305,14 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       break
     }
 
-    let trackedEvent = await InternalSuperwallEvent.Transaction(
+    #if canImport(WebKit)
+    let paywallInfo = await paywallViewController?.info ?? .empty()
+    #else
+    let paywallInfo = PaywallInfo.empty()
+    #endif
+    let trackedEvent = InternalSuperwallEvent.Transaction(
       state: .timeout,
-      paywallInfo: paywallViewController?.info ?? .empty(),
+      paywallInfo: paywallInfo,
       product: nil,
       transaction: nil,
       source: source,
@@ -302,7 +320,9 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       storeKitVersion: .storeKit1
     )
     await Superwall.shared.track(trackedEvent)
+    #if canImport(WebKit)
     await paywallViewController?.webView.messageHandler.handle(.transactionTimeout)
+    #endif
   }
 
   /// Loads purchased products in the StoreKitManager if a purchase or restore has occurred.

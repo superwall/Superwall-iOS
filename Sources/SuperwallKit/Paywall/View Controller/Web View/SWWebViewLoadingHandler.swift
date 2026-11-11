@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 27/06/2024.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 protocol SWWebViewLoadingDelegate: AnyObject {
@@ -102,7 +103,7 @@ final class SWWebViewLoadingHandler {
     urls: [URL],
     at failAt: Date = Date()
   ) async {
-    webViewDelegate?.paywall.webviewLoadingInfo.failAt = failAt
+    webViewDelegate?.webViewLoadFailed(at: failAt)
 
     guard let paywallInfo = webViewDelegate?.info else {
       return
@@ -129,3 +130,4 @@ final class SWWebViewLoadingHandler {
     await Superwall.shared.track(webviewLoad)
   }
 }
+#endif

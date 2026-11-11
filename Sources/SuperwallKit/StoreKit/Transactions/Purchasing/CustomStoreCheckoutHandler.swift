@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 29/10/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Runs the custom store checkouts that a paywall handles itself, without a
@@ -124,11 +125,12 @@ final class CustomStoreCheckoutHandler {
     }
 
     await MainActor.run {
-      paywallViewController.customStoreCheckoutProductId = checkoutProductId
-      if !checkout.closesBrowser, paywallViewController.isSafariVCPresented {
-        // The checkout already ended, so the buyer closing its sheet later abandons nothing.
-        paywallViewController.isCustomStoreCheckoutSheetLeftOpen = true
-      }
+      // A step that leaves the checkout sheet open ended the checkout, so the
+      // buyer closing the sheet later abandons nothing.
+      paywallViewController.customStoreCheckoutAdvanced(
+        productId: checkoutProductId,
+        closesBrowser: checkout.closesBrowser
+      )
     }
 
     // A checkout's last steps can arrive after its paywall began to close.
@@ -204,7 +206,7 @@ final class CustomStoreCheckoutHandler {
   /// without a start.
   func endCheckout(of paywallViewController: PaywallViewController) async {
     await MainActor.run {
-      paywallViewController.customStoreCheckoutProductId = nil
+      paywallViewController.customStoreCheckoutFinished()
     }
     guard let source = await customStoreCheckoutSource(of: paywallViewController) else {
       return
@@ -249,7 +251,7 @@ final class CustomStoreCheckoutHandler {
   ) async {
     if case let .internal(_, checkoutPaywall, _) = source {
       await MainActor.run {
-        checkoutPaywall.customStoreCheckoutProductId = nil
+        checkoutPaywall.customStoreCheckoutFinished()
       }
     }
     await transactionManager.trackCancelled(canTriggerPaywall: false, notifiesPage: notifiesPage)
@@ -303,7 +305,7 @@ final class CustomStoreCheckoutHandler {
     }
     if await customStoreCheckoutSource(of: paywallViewController) == nil {
       await MainActor.run {
-        paywallViewController.customStoreCheckoutProductId = nil
+        paywallViewController.customStoreCheckoutFinished()
       }
     }
     return nil
@@ -385,3 +387,4 @@ private enum CustomStoreCheckoutOwnership {
     }
   }
 }
+#endif

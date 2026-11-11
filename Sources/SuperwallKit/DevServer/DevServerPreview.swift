@@ -8,6 +8,7 @@
 //  dev mode override then points at the local bytes).
 //
 
+#if canImport(WebKit)
 import Combine
 import Foundation
 #if os(macOS)
@@ -172,3 +173,4 @@ enum DevServerPreview {
     )
   }
 }
+#endif

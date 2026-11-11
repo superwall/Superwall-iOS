@@ -6,6 +6,7 @@
 //  `superwall dev` server serves, then the paywalls the app has published.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 enum DebugPickerLogic {
@@ -61,3 +62,4 @@ enum DebugPickerLogic {
     ].filter { !$0.rows.isEmpty }
   }
 }
+#endif

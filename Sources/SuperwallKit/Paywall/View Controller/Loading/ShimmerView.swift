@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 05/10/2022.
 //
 
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 #else
@@ -212,4 +213,5 @@ final class ShimmerView: UIImageView {
     shimmerImageView.image = placeholderImage
   }
 }
+#endif
 #endif

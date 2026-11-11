@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 struct CustomerCenterTheme {
@@ -16,21 +17,6 @@ struct CustomerCenterTheme {
       return PlatformColor(hex: colorScheme == .dark ? pair.dark : pair.light).map(Color.init)
     }
     accent = color(appearance.accent)
-  }
-}
-
-extension PlatformColor {
-  /// Parses `#RRGGBB` / `#RRGGBBAA` / `RRGGBB`.
-  convenience init?(hex: String) {
-    var value = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-    if value.hasPrefix("#") { value.removeFirst() }
-    guard value.count == 6 || value.count == 8, let int = UInt64(value, radix: 16) else { return nil }
-    let hasAlpha = value.count == 8
-    let red = CGFloat((int >> (hasAlpha ? 24 : 16)) & 0xFF) / 255
-    let green = CGFloat((int >> (hasAlpha ? 16 : 8)) & 0xFF) / 255
-    let blue = CGFloat((int >> (hasAlpha ? 8 : 0)) & 0xFF) / 255
-    let alpha = hasAlpha ? CGFloat(int & 0xFF) / 255 : 1
-    self.init(red: red, green: green, blue: blue, alpha: alpha)
   }
 }
 
@@ -50,3 +36,4 @@ extension EnvironmentValues {
     set { self[CustomerCenterThemeKey.self] = newValue }
   }
 }
+#endif

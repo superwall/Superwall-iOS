@@ -79,6 +79,7 @@ extension PaywallRequestManager {
     guard paywallId.hasPrefix("dev:") else {
       return nil
     }
+    #if canImport(WebKit)
     let options = factory.makeSuperwallOptions()
     guard DevMode.isActive(options) else {
       return nil
@@ -109,6 +110,11 @@ extension PaywallRequestManager {
       return nil
     }
     return Paywall.devServer(surface: resolved.surface, url: resolved.url)
+    #else
+    // `dev:` identifiers only come from the debugger, which watchOS and tvOS
+    // don't have.
+    return nil
+    #endif
   }
 
   private func getPaywallResponse(

@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 private struct CustomerCenterCallbacksKey: EnvironmentKey {
@@ -92,3 +93,4 @@ private struct CustomerCenterCallbackModifier: ViewModifier {
     return content.environment(\.customerCenterCallbacks, newBox)
   }
 }
+#endif

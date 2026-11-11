@@ -5,6 +5,7 @@
 //  Created by Superwall on 2024.
 //
 
+#if canImport(WebKit)
 import AVFoundation
 import Photos
 import UserNotifications
@@ -138,3 +139,4 @@ extension Int {
     }
   }
 }
+#endif

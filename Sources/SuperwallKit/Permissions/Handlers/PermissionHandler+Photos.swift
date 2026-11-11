@@ -5,6 +5,7 @@
 //  Created by Superwall on 2024.
 //
 
+#if canImport(WebKit)
 import Photos
 
 extension PermissionHandler {
@@ -30,3 +31,4 @@ extension PermissionHandler {
     return status.toPermissionStatus
   }
 }
+#endif

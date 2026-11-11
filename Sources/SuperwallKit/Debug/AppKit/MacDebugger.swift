@@ -1,3 +1,4 @@
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 import Combine
@@ -42,39 +43,75 @@ final class MacDebugger: NSObject, ObservableObject, NSWindowDelegate {
     window.center()
     window.makeKeyAndOrderFront(nil)
     NSApp.activate(ignoringOtherApps: true)
-    await locateDevServer()
+    await locateDevServer(linkedSurfaceId: surfaceId)
     let surfaces = manager.devServer?.surfaces ?? []
-    choices = surfaces.map { Self.localChoice(surfaceId: $0.id, previewIdentifier: $0.previewIdentifier) }
+    choices = surfaces.map(Self.localChoice)
     let network: Network = Superwall.shared.dependencyContainer.network
+    var listMessage: String?
     do {
       let published = try await network.listPreviewPaywalls()
       choices += published.data.map { Choice(id: $0.id, name: $0.name, identifier: $0.identifier) }
-      message = choices.isEmpty ? "No paywalls available." : ""
     } catch {
       let configPaywalls = (Superwall.shared.dependencyContainer.configManager?.config?.paywalls ?? []).map {
         PaywallSummary(id: $0.databaseId, identifier: $0.identifier, name: $0.name)
       }
       choices = Self.fallbackChoices(local: choices, configPaywalls: configPaywalls)
-      // The linked paywall can still be looked up on its own.
-      if let paywallId = Self.linkedPaywallToLookUp(paywallId, in: choices),
-        let linked = try? await network.resolvePaywallIdentifier(forDatabaseId: paywallId) {
-        choices.append(Choice(id: linked.id, name: linked.name, identifier: linked.identifier))
-      }
-      message = choices.isEmpty
+      listMessage = choices.isEmpty
         ? error.localizedDescription
         : "Couldn't load the other published paywalls."
     }
+    // The published list can leave out the linked paywall (archived, or past
+    // the first page), so it's looked up on its own.
+    if let paywallId = Self.linkedPaywallToLookUp(paywallId, in: choices),
+      let linked = try? await network.resolvePaywallIdentifier(forDatabaseId: paywallId) {
+      choices.append(Choice(id: linked.id, name: linked.name, identifier: linked.identifier))
+    }
+    let linkedSurface = surfaces.first { $0.id == surfaceId }
     selection = Self.initialSelection(
       in: choices,
-      linkedSurface: surfaces.first { $0.id == surfaceId }?.previewIdentifier,
+      linkedSurface: linkedSurface?.previewIdentifier,
       linkedPaywallId: paywallId
     )
+    message = [
+      listMessage ?? (choices.isEmpty ? "No paywalls available." : nil),
+      Self.missingLinkMessage(
+        surfaceId: surfaceId,
+        in: surfaces,
+        paywallId: paywallId,
+        in: choices
+      )
+    ]
+      .compactMap { $0 }
+      .joined(separator: " ")
   }
 
   /// A local surface's choice. Its ID is the surface's preview identifier, so it
   /// can't clash with a published paywall's database ID.
-  nonisolated static func localChoice(surfaceId: String, previewIdentifier: String) -> Choice {
-    return Choice(id: previewIdentifier, name: "Local: \(surfaceId)", identifier: previewIdentifier)
+  nonisolated static func localChoice(_ surface: DevServerSurface) -> Choice {
+    return Choice(
+      id: surface.previewIdentifier,
+      name: "Local: \(surface.id)",
+      identifier: surface.previewIdentifier
+    )
+  }
+
+  /// Says which linked surface or paywall can't be offered, so the debugger
+  /// doesn't quietly preview a different one instead.
+  nonisolated static func missingLinkMessage(
+    surfaceId: String?,
+    in surfaces: [DevServerSurface],
+    paywallId: String?,
+    in choices: [Choice]
+  ) -> String? {
+    if let surfaceId = surfaceId,
+      !surfaces.contains(where: { $0.id == surfaceId }) {
+      return "The local surface \"\(surfaceId)\" isn't on the running dev server."
+    }
+    if let paywallId = paywallId,
+      !choices.contains(where: { $0.id == paywallId }) {
+      return "Couldn't find the linked paywall (\(paywallId))."
+    }
+    return nil
   }
 
   /// The choice to select first: the linked local surface (by its preview
@@ -107,8 +144,13 @@ final class MacDebugger: NSObject, ObservableObject, NSWindowDelegate {
   }
 
   /// Finds a running dev server in dev mode, as the UIKit debugger does, so a dashboard link
-  /// lists local surfaces too. Only local deep links set the debug manager's copy otherwise.
-  private func locateDevServer() async {
+  /// lists local surfaces too. A local deep link has already set the debug manager's copy
+  /// to the server it came from, which is kept: the located one could be a different server.
+  private func locateDevServer(linkedSurfaceId: String?) async {
+    if linkedSurfaceId != nil,
+      manager.devServer != nil {
+      return
+    }
     let options = Superwall.shared.options
     guard
       DevMode.isActive(options),
@@ -188,4 +230,5 @@ struct MacDebuggerView: View {
     .frame(width: 480)
   }
 }
+#endif
 #endif

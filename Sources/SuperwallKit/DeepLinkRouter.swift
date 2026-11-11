@@ -9,9 +9,16 @@
 import Foundation
 import Combine
 
+extension Notification.Name {
+  /// A Superwall return link (`scheme://superwall/return`) opened the app.
+  static let superwallReturnLinkOpened = Notification.Name("SuperwallReturnLinkOpened")
+}
+
 final class DeepLinkRouter {
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
+  #if canImport(WebKit)
   private unowned let debugManager: DebugManager
+  #endif
   private unowned let configManager: ConfigManager
   private static var pendingDeepLink: URL?
 
@@ -22,9 +29,14 @@ final class DeepLinkRouter {
 
   /// The ``PaywallInfo`` of the presented paywall, if one is presented. Replaced in tests.
   var presentedPaywallInfo: () async -> PaywallInfo? = {
-    await Superwall.shared.paywallViewController?.info
+    #if canImport(WebKit)
+    return await Superwall.shared.paywallViewController?.info
+    #else
+    return nil
+    #endif
   }
 
+  #if canImport(WebKit)
   init(
     webEntitlementRedeemer: WebEntitlementRedeemer,
     debugManager: DebugManager,
@@ -36,6 +48,17 @@ final class DeepLinkRouter {
 
     listenToConfig()
   }
+  #else
+  init(
+    webEntitlementRedeemer: WebEntitlementRedeemer,
+    configManager: ConfigManager
+  ) {
+    self.webEntitlementRedeemer = webEntitlementRedeemer
+    self.configManager = configManager
+
+    listenToConfig()
+  }
+  #endif
 
   @discardableResult
   func route(url: URL) -> Bool {
@@ -77,6 +100,7 @@ final class DeepLinkRouter {
       await trackEvent(InternalSuperwallEvent.DeepLink(url: deepLinkUrl))
     }
 
+    #if canImport(WebKit)
     // Check if this is a debug URL
     if debugManager.handle(deepLinkUrl: deepLinkUrl) {
       return true
@@ -85,6 +109,7 @@ final class DeepLinkRouter {
     if DevServerPreview.handle(url: deepLinkUrl) {
       return true
     }
+    #endif
 
     // Return true for Superwall deep links (we handled it above)
     if isSuperwallDeepLink {
@@ -190,6 +215,7 @@ final class DeepLinkRouter {
       return true
     }
 
+    #if canImport(WebKit)
     // Debug/preview URLs
     if DebugManager.outcomeForDeepLink(url: url) != nil {
       return true
@@ -203,6 +229,7 @@ final class DeepLinkRouter {
       DevServerPreview.canHandle(url: url, options: Superwall.shared.options) {
       return true
     }
+    #endif
 
     // Check cached config for deepLink_open trigger
     let cache = Cache()

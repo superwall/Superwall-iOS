@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 05/05/2023.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// An object that represents the result of calling
@@ -31,3 +32,4 @@ public final class GetPaywallResultObjc: NSObject {
     self.error = error
   }
 }
+#endif

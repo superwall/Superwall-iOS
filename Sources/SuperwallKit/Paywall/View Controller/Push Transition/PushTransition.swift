@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 06/06/2022.
 //
 
+#if canImport(WebKit)
 #if !os(macOS)
 import UIKit
 
@@ -48,4 +49,5 @@ final class PushTransition: NSObject, UIViewControllerAnimatedTransitioning {
     animator = nil
   }
 }
+#endif
 #endif

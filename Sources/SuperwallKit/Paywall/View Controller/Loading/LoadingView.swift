@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 11/10/2022.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 struct LoadingView: View {
@@ -49,3 +50,4 @@ struct LoadingView_Previews: PreviewProvider {
       .previewLayout(.sizeThatFits)
   }
 }
+#endif

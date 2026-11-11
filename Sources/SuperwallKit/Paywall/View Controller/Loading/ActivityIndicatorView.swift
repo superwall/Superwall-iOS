@@ -6,6 +6,7 @@
 //
 // swiftlint:disable void_function_in_ternary
 
+#if canImport(WebKit)
 import SwiftUI
 
 #if os(macOS)
@@ -45,4 +46,5 @@ struct ActivityIndicatorView: UIViewRepresentable {
     isAnimating ? uiView.startAnimating() : uiView.stopAnimating()
   }
 }
+#endif
 #endif
