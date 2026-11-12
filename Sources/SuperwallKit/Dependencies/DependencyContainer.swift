@@ -237,12 +237,16 @@ final class DependencyContainer {
     deepLinkRouter = DeepLinkRouter(
       webEntitlementRedeemer: webEntitlementRedeemer,
       debugManager: debugManager,
-      configManager: configManager
+      configManager: configManager,
+      storage: storage,
+      identityManager: identityManager
     )
     #else
     deepLinkRouter = DeepLinkRouter(
       webEntitlementRedeemer: webEntitlementRedeemer,
-      configManager: configManager
+      configManager: configManager,
+      storage: storage,
+      identityManager: identityManager
     )
     #endif
     purchaseManager = PurchaseManager(
