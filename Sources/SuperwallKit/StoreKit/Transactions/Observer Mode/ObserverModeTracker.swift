@@ -143,15 +143,20 @@ final class ObserverModeTracker: ObserverModeContext, @unchecked Sendable {
       return
     }
     let transactionManager = factory.makeTransactionManager()
-    await transactionManager.prepareToPurchase(
+    let purchase = await transactionManager.prepareToPurchase(
       product: storeProduct,
       purchaseSource: .observeFunc(storeProduct)
     )
-    await factory.makePurchasingCoordinator().setCompletion { [weak transactionManager] result in
+    // The result is handled for this purchase, even if a later one has begun
+    // when it arrives.
+    factory.makePurchasingCoordinator().awaitResult(
+      forProductId: storeProduct.productIdentifier
+    ) { [weak transactionManager] result in
       Task {
         await transactionManager?.handle(
           result: result,
-          state: .observing
+          state: .observing,
+          purchase: purchase
         )
       }
     }
@@ -162,11 +167,17 @@ final class ObserverModeTracker: ObserverModeContext, @unchecked Sendable {
       return
     }
     let transactionManager = factory.makeTransactionManager()
-    await transactionManager.prepareToPurchase(
+    let coordinator = factory.makePurchasingCoordinator()
+    let purchase = await transactionManager.prepareToPurchase(
       product: product,
       purchaseSource: .observeFunc(product)
     )
-    await factory.makePurchasingCoordinator().setIsFreeTrialAvailable(to: transaction.startedOffer)
+    coordinator.observeOffer(transaction.startedOffer)
     await transactionManager.didPurchase()
+    // Ends the observed purchase, so the next one isn't taken for a purchase
+    // still in progress.
+    if let purchase {
+      coordinator.finish(purchase)
+    }
   }
 }

@@ -40,6 +40,9 @@ final class NetworkMock: Network {
   var onPollRedemptionResult: (() -> Void)?
   var getEnrichmentCallCount = 0
   var onGetEnrichment: (() -> Void)?
+  var enrichmentRequests: [EnrichmentRequest] = []
+  var enrichmentResponse = Enrichment(user: JSON([:]), device: JSON(["demandScore": 42]))
+  var enrichmentError: Error?
 
   override func sendEvents(events: EventsRequest) async {
     sentEvents.append(events)
@@ -153,8 +156,12 @@ final class NetworkMock: Network {
     timeout: Seconds?
   ) async throws -> Enrichment {
     getEnrichmentCallCount += 1
+    enrichmentRequests.append(request)
     onGetEnrichment?()
-    return Enrichment(user: JSON([:]), device: JSON(["demandScore": 42]))
+    if let enrichmentError {
+      throw enrichmentError
+    }
+    return enrichmentResponse
   }
 
   override func getIntroOfferToken(

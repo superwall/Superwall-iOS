@@ -247,6 +247,24 @@ that lane may `await` its `run` or `flush`, including `detectUnobservedTransacti
   StoreKit is being read. It reads `PurchasingCoordinator.hasPurchaseInProgress`, which doesn't
   wait.
 
+### Purchase and restore stores
+
+`PurchasingCoordinator` keeps the purchase flow in a `StateStore<PurchaseContext, PurchaseState>`.
+`PurchasePhase` is `idle`, `awaitingResult(completion)` (a StoreKit 1 purchase with no purchase begun)
+or `inFlight(purchase, completion?)`, and `PurchaseMethod` says whether it's a StoreKit/purchase
+controller purchase or a custom store checkout. Each `InFlightPurchase` has an id: whoever handles a
+purchase ends it with `finish(purchase)`, which does nothing once another purchase has begun. Read
+`coordinator.purchase` once and pass it on, never `source` then `product`. A `PurchaseAction` that
+drops a waiting StoreKit 1 completion resumes it as cancelled, so a purchase can't wait forever.
+Results and StoreKit lookups go through the `PurchaseContext` protocol. `TransactionManager.purchase`
+and `RestoreFlow.restore` each run on their own `SerialTaskCoordinator`. A call made from inside one
+(the app's purchase controller calling `Superwall.purchase` or `restorePurchases` from its own
+purchase or restore) runs straight away, through a task-local flag and the "purchase function with a
+purchase controller" check. Don't make that inner call wait on the queue, or it deadlocks.
+`RestoreFlow` has no state; everything it causes goes through `RestoreContext`. Observer-mode
+tracking is in `ObserverModeTracker`: it begins an observed purchase through `prepareToPurchase`, and
+ends the one it tracks for StoreKit 2 with `finish`, or later purchases the app makes are skipped.
+
 ### Paywall view store
 
 `PaywallViewController` is the `PaywallViewContext` of a `PaywallViewStore`. Its state

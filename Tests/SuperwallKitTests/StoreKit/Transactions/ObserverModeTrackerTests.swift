@@ -528,10 +528,10 @@ struct ObserverModeTrackerTests {
     #expect(!tracker.isPurchaseInProgress)
 
     let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "monthly"))
-    await coordinator.beginPurchase(of: product, source: .purchaseFunc(product), isFreeTrialAvailable: false)
+    coordinator.beginPurchase(of: product, source: .purchaseFunc(product), isFreeTrialAvailable: false)
     #expect(tracker.isPurchaseInProgress)
 
-    await coordinator.reset()
+    coordinator.reset()
     #expect(!tracker.isPurchaseInProgress)
   }
 
@@ -669,8 +669,8 @@ struct ObserverModeSK1PurchaseTests {
 
     #expect(fetcher.lookups == 1)
     let coordinator = container.makePurchasingCoordinator()
-    #expect(await coordinator.product?.productIdentifier == "monthly")
-    if case .observeFunc(let observed) = await coordinator.source {
+    #expect(coordinator.purchase?.product.productIdentifier == "monthly")
+    if case .observeFunc(let observed) = coordinator.purchase?.source {
       #expect(observed.productIdentifier == "monthly")
     } else {
       Issue.record("Expected an observed purchase")
@@ -684,6 +684,35 @@ struct ObserverModeSK1PurchaseTests {
     #expect(tracker.state.purchasingProductIds == ["monthly"])
   }
 
+  @Test("observing a second StoreKit 1 purchase abandons the first one, not the second")
+  func observingSecondPurchaseAbandonsTheFirst() async throws {
+    let first = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "first"))
+    let second = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "second"))
+    let (tracker, container, _, tracked) = makeSK1Tracker(products: [first, second])
+    let coordinator = container.makePurchasingCoordinator()
+    coordinator.reset()
+
+    await tracker.observeSK1Purchase(ofProductId: "first")
+    await tracker.observeSK1Purchase(ofProductId: "second")
+
+    func abandoned() -> [String] {
+      return tracked.transactions.compactMap {
+        if case .abandon(let product) = $0.state {
+          return product?.productIdentifier
+        }
+        return nil
+      }
+    }
+    // The first purchase's completion is dropped, and handled in a task.
+    for _ in 0..<200 where abandoned().isEmpty {
+      try await Task.sleep(nanoseconds: 10_000_000)
+    }
+    #expect(abandoned() == ["first"])
+    #expect(coordinator.purchase?.product.productIdentifier == "second")
+    #expect(coordinator.hasPurchaseInProgress)
+    coordinator.reset()
+  }
+
   @Test("a product that can't be found is still remembered, and nothing starts")
   func missingProduct() async {
     let (tracker, container, fetcher, tracked) = makeSK1Tracker(products: [])
@@ -691,9 +720,49 @@ struct ObserverModeSK1PurchaseTests {
     await tracker.observeSK1Purchase(ofProductId: "missing")
 
     #expect(fetcher.lookups == 1)
-    #expect(await container.makePurchasingCoordinator().source == nil)
+    #expect(container.makePurchasingCoordinator().purchase == nil)
     #expect(tracked.transactions.isEmpty)
     #expect(tracker.state.purchasingProductIds == ["missing"])
+  }
+}
+
+@Suite("ObserverModeTracker StoreKit 2 purchases")
+struct ObserverModeSK2PurchaseTests {
+  @Test("tracking a purchase the app made ends it, so the next one is tracked too")
+  func trackedPurchaseEnds() async {
+    let options = SuperwallOptions()
+    options.shouldObservePurchases = true
+    let container = DependencyContainer(options: options, cache: CacheMock())
+    let tracked = TrackedEvents()
+    container.transactionManager.trackEvent = { tracked.add($0) }
+    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "monthly"))
+    // So tracking doesn't ask StoreKit for the transaction, which never
+    // answers in a unit test.
+    product.isCustomProduct = true
+    let tracker = ObserverModeTracker(
+      storage: ObserverModeStorage(),
+      productsManager: ProductsManager(
+        entitlementsInfo: container.entitlementsInfo,
+        storeKitVersion: .storeKit2,
+        productsFetcher: FakeProductsFetcher(products: [product])
+      ),
+      factory: container
+    )
+    let coordinator = container.makePurchasingCoordinator()
+    coordinator.reset()
+
+    tracker.trackObservedPurchase(
+      ObservedTransaction(id: 1, productId: "monthly", isPurchase: true, startedOffer: false)
+    )
+    await tracker.operations.flush()
+
+    #expect(!coordinator.hasPurchaseInProgress)
+    #expect(!tracker.isPurchaseInProgress)
+    let completions = tracked.transactions.filter {
+      if case .complete = $0.state { return true }
+      return false
+    }
+    #expect(completions.count == 1)
   }
 }
 

@@ -12,18 +12,21 @@ import Testing
 
 @Suite("Superwall as the identity's reset handler")
 struct IdentityResetHandlingTests {
-  @Test("The new user keeps ASA, MMP and install-scoped integration attributes")
+  @Test("The new user keeps ASA, MMP, install-scoped integration and first deep link attributes")
   func keepsEveryInstallScopedSource() {
     let kept = Superwall.attributesKeptAcrossReset(
       adServicesAttribution: ["campaignId": 1234],
       acquisitionAttributes: ["acquisition_source": "network"],
-      integrationAttributes: ["appsflyerId": "af-1", "idfv": "vendor-1", "idfa": NSNull()]
+      integrationAttributes: ["appsflyerId": "af-1", "idfv": "vendor-1", "idfa": NSNull()],
+      firstDeepLinkAttributes: ["firstDeepLinkUrl": "myapp://home", "customProductPageId": "ppid-1"]
     )
 
     #expect(kept["campaignId"] as? Int == 1234)
     #expect(kept["acquisition_source"] as? String == "network")
     #expect(kept["appsflyerId"] as? String == "af-1")
     #expect(kept["idfv"] as? String == "vendor-1")
+    #expect(kept["firstDeepLinkUrl"] as? String == "myapp://home")
+    #expect(kept["customProductPageId"] as? String == "ppid-1")
     // An explicit null clears an IDFA kept from before consent was revoked.
     #expect(kept["idfa"] as? NSNull != nil)
   }
@@ -33,14 +36,16 @@ struct IdentityResetHandlingTests {
     let kept = Superwall.attributesKeptAcrossReset(
       adServicesAttribution: ["shared": "ads"],
       acquisitionAttributes: ["shared": "mmp"],
-      integrationAttributes: ["shared": "integration"]
+      integrationAttributes: ["shared": "integration"],
+      firstDeepLinkAttributes: [:]
     )
     #expect(kept["shared"] as? String == "integration")
 
     let withoutIntegration = Superwall.attributesKeptAcrossReset(
       adServicesAttribution: ["shared": "ads"],
       acquisitionAttributes: ["shared": "mmp"],
-      integrationAttributes: [:]
+      integrationAttributes: [:],
+      firstDeepLinkAttributes: [:]
     )
     #expect(withoutIntegration["shared"] as? String == "mmp")
   }
@@ -50,7 +55,8 @@ struct IdentityResetHandlingTests {
     let kept = Superwall.attributesKeptAcrossReset(
       adServicesAttribution: ["$reserved": "x", "date": Date()],
       acquisitionAttributes: ["email": "not-an-email"],
-      integrationAttributes: ["valid": "y"]
+      integrationAttributes: ["valid": "y"],
+      firstDeepLinkAttributes: [:]
     )
 
     #expect(kept.keys.contains("$reserved") == false)
@@ -66,7 +72,8 @@ struct IdentityResetHandlingTests {
     let kept = Superwall.attributesKeptAcrossReset(
       adServicesAttribution: [:],
       acquisitionAttributes: [:],
-      integrationAttributes: [:]
+      integrationAttributes: [:],
+      firstDeepLinkAttributes: [:]
     )
     #expect(kept.isEmpty)
   }

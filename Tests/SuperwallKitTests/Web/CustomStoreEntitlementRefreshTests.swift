@@ -160,7 +160,7 @@ struct CustomStoreEntitlementRefreshTests {
       attempts += 1
     }
     #expect(await redeemer.redeemCount == 1)
-    await dependencyContainer.makePurchasingCoordinator().reset()
+    dependencyContainer.makePurchasingCoordinator().reset()
   }
 
   @Test("The post-purchase redeem applies the custom store's entitlements")
@@ -299,10 +299,10 @@ struct CustomStoreEntitlementRefreshTests {
     let redeemer = makeRedeemer(network: network, superwall: superwall)
     // The user is paying in the custom store's checkout and comes back to the app.
     let product = makeCustomStoreProduct()
-    await coordinator.beginPurchase(of: product, source: .purchaseFunc(product), isFreeTrialAvailable: false)
+    coordinator.beginPurchase(of: product, source: .purchaseFunc(product), isFreeTrialAvailable: false)
 
     await redeemer.pollWebEntitlements()
-    await coordinator.reset()
+    coordinator.reset()
 
     let events = delegate.eventsReceived.map { $0.backingData.objcEvent }
     #expect(!events.contains(SuperwallEventObjc.restoreComplete))
