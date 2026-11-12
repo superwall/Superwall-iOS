@@ -70,39 +70,6 @@ struct TransactionManagerPurchaseTests {
     coordinator.reset()
   }
 
-  @Test("observing a second StoreKit 1 purchase abandons the first one, not the second")
-  func observingSecondPurchaseAbandonsTheFirst() async throws {
-    let dependencyContainer = DependencyContainer()
-    let transactionManager = makeTransactionManager(in: dependencyContainer)
-    let coordinator = dependencyContainer.makePurchasingCoordinator()
-    coordinator.reset()
-
-    let first = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "first"))
-    let second = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "second"))
-    let abandonedProducts = AbandonedProducts()
-    transactionManager.trackEvent = { event in
-      guard
-        let transaction = event as? InternalSuperwallEvent.Transaction,
-        case .abandon(let product) = transaction.state
-      else {
-        return
-      }
-      abandonedProducts.append(product?.productIdentifier ?? "")
-    }
-
-    await transactionManager.observeSK1Purchase(of: first)
-    await transactionManager.observeSK1Purchase(of: second)
-
-    // The first purchase's completion is dropped, and handled in a task.
-    for _ in 0..<200 where abandonedProducts.ids.isEmpty {
-      try await Task.sleep(nanoseconds: 10_000_000)
-    }
-    #expect(abandonedProducts.ids == ["first"])
-    #expect(coordinator.purchase?.product.productIdentifier == "second")
-    #expect(coordinator.hasPurchaseInProgress)
-    coordinator.reset()
-  }
-
   @Test("the purchase function called by the app's purchase controller doesn't start a purchase")
   func purchaseFunctionWithControllerStartsNothing() async {
     let dependencyContainer = DependencyContainer(purchaseController: CancellingPurchaseController())

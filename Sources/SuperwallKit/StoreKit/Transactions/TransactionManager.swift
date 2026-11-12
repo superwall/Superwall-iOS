@@ -245,27 +245,6 @@ final class TransactionManager {
     }
   }
 
-  @available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
-  func logSK2ObserverModeTransaction(_ transaction: SK2Transaction) async {
-    guard let product = try? await productsManager.products(
-      identifiers: [transaction.productID],
-      forPaywall: nil,
-      placement: nil
-    ).first else {
-      return
-    }
-    await prepareToPurchase(
-      product: product,
-      purchaseSource: .observeFunc(product)
-    )
-
-    let hasOffer = transaction.offer != nil
-    let coordinator = factory.makePurchasingCoordinator()
-    coordinator.observeOffer(hasOffer)
-
-    await didPurchase()
-  }
-
   /// Restores purchases. See ``RestoreFlow/restore(_:presentsFailureAlert:)``.
   @MainActor
   @discardableResult
@@ -405,44 +384,6 @@ final class TransactionManager {
           storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
         )
         await trackEvent(trackedEvent)
-      }
-    }
-  }
-
-  func observeSK1Transaction(for productId: String) async {
-    guard
-      let storeProduct = try? await productsManager.products(
-        identifiers: [productId],
-        forPaywall: nil,
-        placement: nil
-      ).first
-    else {
-      Logger.debug(
-        logLevel: .debug,
-        scope: .superwallCore,
-        message: "There's a purchase happening of a product with id \(productId), "
-          + "but we couldn't retrieve it to observe its purchase."
-      )
-      return
-    }
-    await observeSK1Purchase(of: storeProduct)
-  }
-
-  /// Begins observing the purchase of a loaded product. The result is handled
-  /// for this purchase, even if a later one has begun when it arrives.
-  func observeSK1Purchase(of storeProduct: StoreProduct) async {
-    let coordinator = factory.makePurchasingCoordinator()
-    let purchase = await prepareToPurchase(
-      product: storeProduct,
-      purchaseSource: .observeFunc(storeProduct)
-    )
-    coordinator.awaitResult(forProductId: storeProduct.productIdentifier) { [weak self] result in
-      Task {
-        await self?.handle(
-          result: result,
-          state: .observing,
-          purchase: purchase
-        )
       }
     }
   }
@@ -893,11 +834,9 @@ final class TransactionManager {
 
     // Insert the transaction ID into the cache if observing. This prevents racing with
     // the SK2 observer.
-    if #available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, *),
-      let purchaser = purchaseManager.purchaser as? ProductPurchaserSK2,
+    if purchaseManager.isUsingSK2,
       let id = transaction?.sk2Transaction?.id {
-      let observer = purchaser.sk2ObserverModePurchaseDetector
-      await observer.insertToCachedTransactionIds([id])
+      purchaseManager.observerModeTracker.markSynced(transactionIds: [id])
     }
 
     let didStartOffer: Bool

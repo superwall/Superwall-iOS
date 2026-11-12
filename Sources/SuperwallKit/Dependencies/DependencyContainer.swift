@@ -254,6 +254,7 @@ final class DependencyContainer {
       storeKitManager: storeKitManager,
       receiptManager: receiptManager,
       identityManager: identityManager,
+      productsManager: productsManager,
       storage: storage,
       factory: self
     )

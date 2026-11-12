@@ -580,7 +580,7 @@ struct ProductPurchaserSK1PurchaseTests {
       receiptManager: dependencyContainer.receiptManager,
       identityManager: dependencyContainer.identityManager,
       coordinator: coordinator,
-      storage: dependencyContainer.storage,
+      observerModeTracker: dependencyContainer.purchaseManager.observerModeTracker,
       factory: dependencyContainer,
       payments: queue
     )
