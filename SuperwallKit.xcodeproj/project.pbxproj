@@ -101,6 +101,7 @@
 		11719638C88CFCA506264531 /* PopupTransitionDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F13CC9902419E7D68B47C184 /* PopupTransitionDelegate.swift */; };
 		11798EDE58E5D225E5414F2E /* FakeLocationAuthorizationStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = D198C8645A213EEAD622C881 /* FakeLocationAuthorizationStatus.swift */; };
 		11FF1373BAAE0B019CE6AE21 /* DebugViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9098101E599AEB01521FE89 /* DebugViewController.swift */; };
+		1292A91CB042A6D3DD9E5497 /* DeepLinkRouter+FirstDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3494B9DC481A0A724FCE9181 /* DeepLinkRouter+FirstDeepLink.swift */; };
 		12A2722FD932939699923E60 /* V2ProductsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937CAD765EA00E4A0FC86037 /* V2ProductsResponse.swift */; };
 		12B50247E6E07A3C573DC794 /* DebugViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9098101E599AEB01521FE89 /* DebugViewController.swift */; };
 		12D1B2886651CF68436EB7BA /* AdServicesAttributionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1D6CD416D3AB45CE982E23E /* AdServicesAttributionTests.swift */; };
@@ -162,6 +163,7 @@
 		1EE2A1A81086FC41B34A38E7 /* DevServerSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E37562E243AE6632134D94A /* DevServerSurface.swift */; };
 		1F19354FCEB5B883C50D1097 /* SuperwallKit_Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = EC51351CA716C5C3B71E2FA1 /* SuperwallKit_Model.xcdatamodeld */; };
 		1F20D775BC035F8A75B79323 /* PaywallMessageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF61DCA9CF170E0AFC507BAE /* PaywallMessageHandler.swift */; };
+		1F982A82AAC4D109D842814C /* Storage+FirstDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = E46F598A47D6E3E84AECF1DF /* Storage+FirstDeepLink.swift */; };
 		1FA8E5456D32FC9993E6807A /* GetExperiment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE5DAD3AB51C8C6B5AB88D2 /* GetExperiment.swift */; };
 		1FB66F276E4FD5AEC37EC14A /* ContactStoreProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F35F68AF572F7CDF174320C /* ContactStoreProxy.swift */; };
 		1FFADB97F7E05549750E14E9 /* TaskExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A21ED2D8CB4DDA70E228E8BC /* TaskExecutor.swift */; };
@@ -272,6 +274,7 @@
 		33383DD19FBD9477605ACA7E /* StorePresentationObjects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0596DAAE31B2242A59060C5F /* StorePresentationObjects.swift */; };
 		334F0452E23CA8CC2CACFB7D /* MapSwiftErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81D80A7C5B8A17B83C218656 /* MapSwiftErrors.swift */; };
 		339F1D07DB57DBEC46940DB6 /* CheckoutWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0B401CD38DBD6D90E4EB3E /* CheckoutWebViewController.swift */; };
+		33FC33018BF23D94B30519C8 /* FirstSessionDeepLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABA9D93686CD239B6F549779 /* FirstSessionDeepLinkTests.swift */; };
 		33FD7B4319CE5E9FE8AE299E /* DevServerPaywall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE9BCE12E3F4300AD2379B4 /* DevServerPaywall.swift */; };
 		341A5FDFD1075802DE492605 /* PurchasePresentationBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97DCDCDFEB2442B007C38E7F /* PurchasePresentationBuilder.swift */; };
 		342593FCA24FBEA77FE472C7 /* SK2ReceiptManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 050BC76657949DBB5F3D551C /* SK2ReceiptManager.swift */; };
@@ -333,6 +336,7 @@
 		3F6A0D0CF0F9F9C17FA921B9 /* DeviceInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E1EFE389B54C304F2B01620 /* DeviceInfo.swift */; };
 		3F6DD6FB62BDF53536FC4EF7 /* V4Migrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D685A5912892EF9C2931B1 /* V4Migrator.swift */; };
 		3F7961E1B066CFAFA95D9C17 /* CustomerCenterViewModel+PushedSurfaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57D23F2D4271D374ECAAF4E3 /* CustomerCenterViewModel+PushedSurfaces.swift */; };
+		3F9CC306D144B4963B8872DA /* CacheKeys+FirstDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158868C0845B53AF62B434ED /* CacheKeys+FirstDeepLink.swift */; };
 		40917016620AC97ADC7BFC56 /* UserAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52A0EFBBFE9D2F949EA4C28 /* UserAttributes.swift */; };
 		40C30F3E91ABED8F5E0E9DBD /* SystemInfo+NotificationName.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD23BBF9EA198ED8798A8F62 /* SystemInfo+NotificationName.swift */; };
 		40C501C5168BBAA0838B0333 /* NetworkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B82C445909EE84183824ECEB /* NetworkTests.swift */; };
@@ -421,6 +425,7 @@
 		4DE4C3ECAF0746E209D9999E /* CustomerCenterLifecycleProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F45571132885930AFC67E2 /* CustomerCenterLifecycleProbe.swift */; };
 		4E04140F2CFFB082EB62C249 /* SWBounceButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 299F91895EE88281B5ED8320 /* SWBounceButton.swift */; };
 		4E078EFFD0C1992563021220 /* PurchaseController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D45DC0981EE9BBE3BF56C48 /* PurchaseController.swift */; };
+		4E09D3BCF48CC344BA607F56 /* CustomProductPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 426860B1258A4749AFB1D6E7 /* CustomProductPage.swift */; };
 		4E5F1AB421E91E102B6D4800 /* OnDeviceCaching.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5283BA49E380740C34D78856 /* OnDeviceCaching.swift */; };
 		4E7761949715C8BF8DEEF35C /* ReceiptLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A53CC571B7BC3F5AAD71BF /* ReceiptLogic.swift */; };
 		4EABC92FC06D31D8AB8B1C70 /* ReceiptManagerPurchasedProductFetchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5835332B3293CD8D95892EB /* ReceiptManagerPurchasedProductFetchTests.swift */; };
@@ -725,6 +730,7 @@
 		90EE0190126A3BBA4661122E /* AddPaywallProducts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A6A722D119902A42DC2737 /* AddPaywallProducts.swift */; };
 		913AE1031B58B18ADF922D64 /* PopupTransitionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CECC42E6E5C62B0A3E987C3 /* PopupTransitionTests.swift */; };
 		91BA5E01D0FB528954ABB937 /* StripeStoreProductDiscount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AD42859B8BFEC078665FA1E /* StripeStoreProductDiscount.swift */; };
+		9261DFE5324B5858A6877787 /* DeepLinkRouter+FirstDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3494B9DC481A0A724FCE9181 /* DeepLinkRouter+FirstDeepLink.swift */; };
 		9274292A323C7690F7C4C580 /* CustomerCenterConfiguration+Paths.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48B2AB6C4AFDD95BCDECD57 /* CustomerCenterConfiguration+Paths.swift */; };
 		92CDC78DB8DC781245CF106B /* PushTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1E7DA9C8816082FA05B84D /* PushTransition.swift */; };
 		92E2F973C68F5508456C7B73 /* AssetResource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23307BBFD80385233DDD4C43 /* AssetResource.swift */; };
@@ -1122,6 +1128,7 @@
 		D9891C19CF6E7ABB1EBBF760 /* SupportEmailComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AC35B7D7641BEB17798C199 /* SupportEmailComposer.swift */; };
 		D99C565B5803B6ECE29A3D8B /* CustomerCenterEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518841D661079BCD21DA7692 /* CustomerCenterEnvironment.swift */; };
 		D9A7960B069AC50F1D8CAF22 /* AdServicesAttributionAttempts.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D538EA68425ECB218BA3CA /* AdServicesAttributionAttempts.swift */; };
+		D9C63ABAA529C9F4AB7F7613 /* CustomProductPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 426860B1258A4749AFB1D6E7 /* CustomProductPage.swift */; };
 		D9F09F3831386B3F55B47381 /* ProductStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7106327DAD1C9044E4A57DD5 /* ProductStore.swift */; };
 		DAA0ADB0FF7971A2D3781F34 /* StoreKitTransactionLookupMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F87594A6B66C1188A0C738A /* StoreKitTransactionLookupMock.swift */; };
 		DAA4F3E3A4E104BD658E9F93 /* CustomerCenterViewModel+Refund.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12BC920C6393F67609CE54A0 /* CustomerCenterViewModel+Refund.swift */; };
@@ -1311,7 +1318,9 @@
 		FDE9C1CF42ED3DFA9A212B9F /* CustomerCenterManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57CA773735D822E6BB33060F /* CustomerCenterManagerTests.swift */; };
 		FE0075FCACCBC06FA0321E62 /* IdentifyUserSwitchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBE8256C3B89EFCD0CD3D996 /* IdentifyUserSwitchTests.swift */; };
 		FE119D06FC46E90625EA97B1 /* SubscriptionsApiEnvironmentScriptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6547F017B5C2D39A5731DED0 /* SubscriptionsApiEnvironmentScriptTests.swift */; };
+		FE92DD54947F4F9644B6B288 /* Storage+FirstDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = E46F598A47D6E3E84AECF1DF /* Storage+FirstDeepLink.swift */; };
 		FFC1A413FF8B96275C4C1649 /* Storage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C16CBCBF2093DD9C5F3E105 /* Storage.swift */; };
+		FFD5E86671525012BE5FDCF4 /* CacheKeys+FirstDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158868C0845B53AF62B434ED /* CacheKeys+FirstDeepLink.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1409,6 +1418,7 @@
 		14A48FC5FA72D81EA649A374 /* SuperwallKitMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SuperwallKitMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1528915438E6714B1F7F7BD4 /* PaywallRequestManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallRequestManager.swift; sourceTree = "<group>"; };
 		153C660FB51D0D1DFE56D462 /* PaywallPresentationStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPresentationStyle.swift; sourceTree = "<group>"; };
+		158868C0845B53AF62B434ED /* CacheKeys+FirstDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CacheKeys+FirstDeepLink.swift"; sourceTree = "<group>"; };
 		15CEF7FE1B62274854666E0F /* WebProductPricingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebProductPricingTests.swift; sourceTree = "<group>"; };
 		15E6FBB3D0826827A04F87AE /* EndpointKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndpointKind.swift; sourceTree = "<group>"; };
 		165B7C00C437146FB5C9DB92 /* CustomerCenterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterManager.swift; sourceTree = "<group>"; };
@@ -1511,6 +1521,7 @@
 		335888285131F832E1C91A8F /* Dictionary+Merging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Dictionary+Merging.swift"; sourceTree = "<group>"; };
 		337B611696DC32BD227CD020 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		33A9E0597972B90E3B9DFFE1 /* SuperwallDelegateObjc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallDelegateObjc.swift; sourceTree = "<group>"; };
+		3494B9DC481A0A724FCE9181 /* DeepLinkRouter+FirstDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeepLinkRouter+FirstDeepLink.swift"; sourceTree = "<group>"; };
 		3548435BDE49161E3BDFA358 /* TestModeInfoCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModeInfoCell.swift; sourceTree = "<group>"; };
 		35C534C42A8EAC1F183CC85A /* LocalizationLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationLogic.swift; sourceTree = "<group>"; };
 		35E10598AB90206AAD25F703 /* PaywallLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallLogicTests.swift; sourceTree = "<group>"; };
@@ -1537,6 +1548,7 @@
 		41BC64245E011EF07D9A195A /* ReceiptManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptManagerTests.swift; sourceTree = "<group>"; };
 		423DA7BED2F088AC6F8E7038 /* CustomStoreCheckout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomStoreCheckout.swift; sourceTree = "<group>"; };
 		426257A9DFC90B9591489C30 /* MockReceiptData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockReceiptData.swift; sourceTree = "<group>"; };
+		426860B1258A4749AFB1D6E7 /* CustomProductPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomProductPage.swift; sourceTree = "<group>"; };
 		42956918D4FFA5FBA79F3AA5 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		436702E57EB72DEA7B54F344 /* SubscriptionPeriodPriceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionPeriodPriceTests.swift; sourceTree = "<group>"; };
 		43C1AD8F664E65A944467AB8 /* DevServerManifestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerManifestTests.swift; sourceTree = "<group>"; };
@@ -1893,6 +1905,7 @@
 		AAEBD34CFE62DCFE0AFD80D6 /* RestoreType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreType.swift; sourceTree = "<group>"; };
 		AB3DC90549C10EDA52D96FF2 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		AB3F04AC933701EE33F5F325 /* IdentityLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityLogic.swift; sourceTree = "<group>"; };
+		ABA9D93686CD239B6F549779 /* FirstSessionDeepLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstSessionDeepLinkTests.swift; sourceTree = "<group>"; };
 		ABC1253C6D5DD8D967BE05D1 /* LocalizationGrouping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationGrouping.swift; sourceTree = "<group>"; };
 		AC11F0D5B6B8A0F5EC5D200B /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		AC5BD096D982EFB2F73D8028 /* TeleportReturnCover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeleportReturnCover.swift; sourceTree = "<group>"; };
@@ -2099,6 +2112,7 @@
 		E38D941C1AA6C92745A14E7A /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E3BFF03C1812D7239003448A /* Stubbable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stubbable.swift; sourceTree = "<group>"; };
 		E439B70BB6190AFF6DDB81F2 /* CustomCallback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCallback.swift; sourceTree = "<group>"; };
+		E46F598A47D6E3E84AECF1DF /* Storage+FirstDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Storage+FirstDeepLink.swift"; sourceTree = "<group>"; };
 		E4A115838AD9EF531851B4A6 /* PaywallViewStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewStateTests.swift; sourceTree = "<group>"; };
 		E51D0B38180377D9CD3E65DA /* Date+TimeIntervalMilliseconds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+TimeIntervalMilliseconds.swift"; sourceTree = "<group>"; };
 		E61F5A277720C2FFD3E90664 /* WebSubscriptionPathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSubscriptionPathTests.swift; sourceTree = "<group>"; };
@@ -2467,6 +2481,7 @@
 		16AD2FAE7B8474EE7B5B89EE /* Enrichment */ = {
 			isa = PBXGroup;
 			children = (
+				426860B1258A4749AFB1D6E7 /* CustomProductPage.swift */,
 				68363EE16B2DE5C1C5361657 /* Enrichment.swift */,
 			);
 			path = Enrichment;
@@ -2501,6 +2516,7 @@
 			isa = PBXGroup;
 			children = (
 				9E383D2D542C7084A577BA62 /* DeepLinkRouterTests.swift */,
+				ABA9D93686CD239B6F549779 /* FirstSessionDeepLinkTests.swift */,
 			);
 			path = DeepLink;
 			sourceTree = "<group>";
@@ -2601,6 +2617,7 @@
 			children = (
 				BF3CE3353B30F2484EFE283E /* PlacementsQueue.swift */,
 				1C16CBCBF2093DD9C5F3E105 /* Storage.swift */,
+				E46F598A47D6E3E84AECF1DF /* Storage+FirstDeepLink.swift */,
 				5A97AB5D43D21F410D91982E /* Cache */,
 				CD5624E84B39A2D8EC0A4E96 /* Core Data */,
 				0775D01B06F3E52BCBC454A7 /* Migration */,
@@ -3024,6 +3041,7 @@
 			children = (
 				03E47DA89C9F4FBD7FA038F5 /* Cache.swift */,
 				865262BC55BAEA135E51698D /* CacheKeys.swift */,
+				158868C0845B53AF62B434ED /* CacheKeys+FirstDeepLink.swift */,
 			);
 			path = Cache;
 			sourceTree = "<group>";
@@ -3457,6 +3475,7 @@
 			isa = PBXGroup;
 			children = (
 				0EA0BD57CE7F03A50ACA9D25 /* DeepLinkRouter.swift */,
+				3494B9DC481A0A724FCE9181 /* DeepLinkRouter+FirstDeepLink.swift */,
 				C22CA9431D5F791BE7A9BE27 /* Documentation.docc */,
 				2F7EDB6D68D0AEDD332E40BB /* Superwall.swift */,
 				618F0D37FD3B2213A296DEF4 /* Superwall+CustomerCenter.swift */,
@@ -4779,6 +4798,7 @@
 				E03F6547FD7EEA7429995EE1 /* FakeTrackingAuthorizationStatusTests.swift in Sources */,
 				88B249DBEE1EB8D5FAB02C80 /* FileManagerMigratorTests.swift in Sources */,
 				A56CE6BF30FE7A27BDD3903E /* FinishWithoutPaywallUITests.swift in Sources */,
+				33FC33018BF23D94B30519C8 /* FirstSessionDeepLinkTests.swift in Sources */,
 				9CD99EB4D90BC5C21F16F754 /* GetPaywallVcOperatorTests.swift in Sources */,
 				605ADA9ABA10D107D617EA21 /* GetPresenterOperatorTests.swift in Sources */,
 				7A23452F93A7ADCADBED6CD0 /* GrantedEntitlementsTests.swift in Sources */,
@@ -4962,6 +4982,7 @@
 				BADAD7DDF7A8F0460CBFF362 /* ButtonFactory.swift in Sources */,
 				E08089FE5979B4524874BEE2 /* CELEvaluator.swift in Sources */,
 				B2B5684F46FB49AB9E3C1BE0 /* Cache.swift in Sources */,
+				3F9CC306D144B4963B8872DA /* CacheKeys+FirstDeepLink.swift in Sources */,
 				53113582D4E7F54236FD493C /* CacheKeys.swift in Sources */,
 				3EA92DE86764CBAC557F8522 /* Capabilities.swift in Sources */,
 				C9F6A490E3E09401494E7DCB /* CheckDebuggerPresentation.swift in Sources */,
@@ -4984,6 +5005,7 @@
 				DC1BFE7632D94CF962B33067 /* CountryCode.swift in Sources */,
 				44E2AE9B0AED16C48027CD21 /* CustomCallback.swift in Sources */,
 				42B707D898A49DCB2B33837C /* CustomCallbackRegistry.swift in Sources */,
+				D9C63ABAA529C9F4AB7F7613 /* CustomProductPage.swift in Sources */,
 				97E87A1449FFC7E043A52C30 /* CustomStoreCheckout.swift in Sources */,
 				AB1F63AB42517FD8D39383E2 /* CustomStoreCheckoutHandler.swift in Sources */,
 				8537CA38FFD40CF7C8A6A691 /* CustomStoreProduct.swift in Sources */,
@@ -5031,6 +5053,7 @@
 				6CAB392FECDE6E5F0CA2B476 /* DebugPickerLogic.swift in Sources */,
 				11FF1373BAAE0B019CE6AE21 /* DebugViewController.swift in Sources */,
 				B5AE7BCDCB6D49FC8493D55B /* DecodingError+Extensions.swift in Sources */,
+				1292A91CB042A6D3DD9E5497 /* DeepLinkRouter+FirstDeepLink.swift in Sources */,
 				CB2F2B4DA3709F171E54CBB8 /* DeepLinkRouter.swift in Sources */,
 				3F4BE7ECC80EEA757454F9B6 /* DependencyContainer.swift in Sources */,
 				50E0E5F4B476F2F5B8DF299E /* DevMode.swift in Sources */,
@@ -5318,6 +5341,7 @@
 				18B147198F2E19C69013BA4B /* Sk1StoreProduct.swift in Sources */,
 				7E355FE2557391CE4593B9B0 /* SpringAnimation.swift in Sources */,
 				83356DCD01C5AC278BB2305D /* StateStore.swift in Sources */,
+				1F982A82AAC4D109D842814C /* Storage+FirstDeepLink.swift in Sources */,
 				FFC1A413FF8B96275C4C1649 /* Storage.swift in Sources */,
 				C17E525BC1CB976711F83BD5 /* StoreAction.swift in Sources */,
 				C053DEA1266E78107F828B19 /* StoreKitManager.swift in Sources */,
@@ -5524,6 +5548,7 @@
 				2C58C247F6B908BE1E224F84 /* ButtonFactory.swift in Sources */,
 				2D15E7FD446F103DA8221035 /* CELEvaluator.swift in Sources */,
 				511FE908B5F8BBEB90BC43DB /* Cache.swift in Sources */,
+				FFD5E86671525012BE5FDCF4 /* CacheKeys+FirstDeepLink.swift in Sources */,
 				59B80F098EAF0B98F317B45A /* CacheKeys.swift in Sources */,
 				5F12D2890C4641C7069EFBFA /* Capabilities.swift in Sources */,
 				B4D27D98DC79AA3EFA35D80E /* CheckDebuggerPresentation.swift in Sources */,
@@ -5546,6 +5571,7 @@
 				415EF48E0487CB79A408C2F8 /* CountryCode.swift in Sources */,
 				35108DD885273E46D324276A /* CustomCallback.swift in Sources */,
 				C933DA5FA7D85949064146AE /* CustomCallbackRegistry.swift in Sources */,
+				4E09D3BCF48CC344BA607F56 /* CustomProductPage.swift in Sources */,
 				B9964D534AC18F336FF95282 /* CustomStoreCheckout.swift in Sources */,
 				D818E588D50E505CAE57251D /* CustomStoreCheckoutHandler.swift in Sources */,
 				B2F2AEAE9407EC06E9738812 /* CustomStoreProduct.swift in Sources */,
@@ -5593,6 +5619,7 @@
 				4793D7E85CBCF4E0594F7247 /* DebugPickerLogic.swift in Sources */,
 				12B50247E6E07A3C573DC794 /* DebugViewController.swift in Sources */,
 				648C85D1CD926A0A82109D9A /* DecodingError+Extensions.swift in Sources */,
+				9261DFE5324B5858A6877787 /* DeepLinkRouter+FirstDeepLink.swift in Sources */,
 				F265A2E36BD0CCCF9C3E2076 /* DeepLinkRouter.swift in Sources */,
 				938EA9F73264AA03DCF23D39 /* DependencyContainer.swift in Sources */,
 				A4871CCBBB4691319C938DDA /* DevMode.swift in Sources */,
@@ -5880,6 +5907,7 @@
 				B78E47F80C52264F48248DB4 /* Sk1StoreProduct.swift in Sources */,
 				9B6DCBBB6A513F9C09B9B35C /* SpringAnimation.swift in Sources */,
 				08F40881F40811F2CCAC3BD6 /* StateStore.swift in Sources */,
+				FE92DD54947F4F9644B6B288 /* Storage+FirstDeepLink.swift in Sources */,
 				58F4A05159B5992FC31F03FF /* Storage.swift in Sources */,
 				9C7DF7983433997593412B30 /* StoreAction.swift in Sources */,
 				6834357A4953F0E46175E564 /* StoreKitManager.swift in Sources */,

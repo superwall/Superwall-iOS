@@ -1266,9 +1266,12 @@ class DeviceHelper {
     if isEnrichmentBlockedByTracking() {
       return
     }
+    // Sent with every request until the server has answered it.
+    let deepLink = storage.get(FirstSessionDeepLinkLookup.self)
     let request = EnrichmentRequest(
       user: JSON(identityManager.userAttributes),
-      device: JSON(deviceAttributes)
+      device: JSON(deviceAttributes),
+      deepLink: deepLink
     )
     let response: Enrichment
     do {
@@ -1284,18 +1287,20 @@ class DeviceHelper {
     if isEnrichmentBlockedByTracking() {
       return
     }
+    if deepLink != nil,
+      response.deepLink != nil {
+      // The page's attributes are set with the response's other user attributes below.
+      storage.finishFirstSessionDeepLinkLookup(
+        page: CustomProductPage(userAttributes: response.user)
+      )
+    }
     enrichment = response
 
-    $enrichment.withSnapshot { enrichment in
-      if let enrichment = enrichment {
-        storage.save(enrichment, forType: LatestEnrichment.self)
-      }
-    }
-
-    $enrichment.withSnapshot { enrichment in
-      if let attributes = enrichment?.user.dictionaryObject {
-        Superwall.shared.setUserAttributes(attributes)
-      }
+    // This call's own response, not the shared one: another request can finish
+    // in between and replace it, and its response may not carry the page.
+    storage.save(response, forType: LatestEnrichment.self)
+    if let attributes = response.user.dictionaryObject {
+      Superwall.shared.setUserAttributes(attributes)
     }
   }
 
