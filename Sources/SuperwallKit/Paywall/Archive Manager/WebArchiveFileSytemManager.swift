@@ -37,7 +37,7 @@ final class WebArchiveFileSytemManager {
         at: directory,
         withIntermediateDirectories: true
       )
-      try plistData.write(to: archiveURL)
+      try plistData.write(to: archiveURL, options: .atomic)
     } catch {
       throw ArchivingError.unknown
     }
