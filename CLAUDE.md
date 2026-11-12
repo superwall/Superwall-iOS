@@ -226,6 +226,26 @@ Never let a controller's last reference go with the store locked or off the main
 tears down its views. Read the cache through `store.read`, never `store.state`: a copy of the
 controllers can outlive a removal on main and become a controller's last owner on another thread.
 
+### Entitlements store
+
+`EntitlementsInfo` keeps the entitlements in a `StateStore` (`EntitlementsState`): the by-product
+map, granted entitlements, the assigned subscription status, the test-mode override as of the last
+change (`TestModeOverride`) and the grant warning (`GrantWarning`). The published status
+(`Superwall.subscriptionStatus`), `active`, `all` and `inactive` are computed from those on each
+read; don't store anything derived from the status or from `isActive`, or it can fall behind.
+`EntitlementsUpdate` cases are named events (`developerAssignedStatus`, `grantsChanged`, ...).
+Changes go through the closed `EntitlementsAction` enum, and its side effects are the methods of
+`EntitlementsContext`, which `EntitlementsInfo` implements: saving, the warning log (deferred until
+unlocked), and queuing each change as an `EntitlementsPublication` that's delivered in order once
+the store is unlocked. The test-mode override is read inside the action, with the store locked, so
+the writer that publishes last read it last; don't read it before dispatching. `Superwall` is the
+`EntitlementsPublishing` receiver: it emits `$subscriptionStatus` and `statusWithGrants`, and
+rebuilds `customerInfo` from the publication's `after` state, never by reading the store again.
+`web` still reads the saved redeem response, outside the store. The saved grants and product map are
+read on a background queue that starts in `init`, never on the thread that creates the object;
+`store` waits for that read, so nothing sees them empty. Go through `store`, not `loadedStore`.
+`TestModeManager.subscriptionStatusOverride` reads test mode and its status in one locked step.
+
 ### Purchase and restore stores
 
 `PurchasingCoordinator` keeps the purchase flow in a `StateStore<PurchaseContext, PurchaseState>`.

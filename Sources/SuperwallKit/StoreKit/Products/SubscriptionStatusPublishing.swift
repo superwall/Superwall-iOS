@@ -23,11 +23,12 @@ import Foundation
 /// The assigned value is kept because the published one can't be un-merged:
 /// clearing granted entitlements recomputes the published status from it.
 ///
-/// Every writer — the public setter included, via ``PublishedSubscriptionStatus``
-/// — ends up in `publishSubscriptionStatus`, the one critical section under
-/// `subscriptionStatusLock`. The merged value is stored under the lock and
-/// emitted to subscribers after it's released. Every read of either value
-/// takes the same lock, so readers never race a writer.
+/// Both values and the granted entitlements live in the entitlements store
+/// (``EntitlementsState``). Every writer — the public setter included, via
+/// ``PublishedSubscriptionStatus`` — ends up in `publishSubscriptionStatus`,
+/// which dispatches one ``EntitlementsAction``. Once the store is unlocked,
+/// `entitlementsDidPublish` gets each change in the order it was applied,
+/// emits the status and rebuilds customer info from that change's state.
 extension Superwall {
   // MARK: - Granted entitlements
 
@@ -53,7 +54,6 @@ extension Superwall {
       return entitlements.granted
     }
     set {
-      entitlements.setGranted(newValue)
       Logger.debug(
         logLevel: .debug,
         scope: .grantedEntitlements,
@@ -61,8 +61,7 @@ extension Superwall {
           ? "Granted entitlements cleared."
           : "Granted entitlements set: \(newValue.map(\.id).sorted().joined(separator: ", "))"
       )
-      publishSubscriptionStatus(.grantChange)
-      refreshAutomaticCustomerInfoAfterGrantChange()
+      publishSubscriptionStatus(.grantChange(newValue))
     }
   }
 
@@ -72,7 +71,7 @@ extension Superwall {
   ///
   /// SDK writers use this rather than assigning ``subscriptionStatus``, which
   /// is the developer's entry point and gets the developer-assignment
-  /// treatment described on `publishSubscriptionStatus`.
+  /// treatment of ``EntitlementsUpdate/developerAssignedStatus(_:testMode:)``.
   func setSubscriptionStatus(assigned status: SubscriptionStatus) {
     publishSubscriptionStatus(.sdkAssignment(status))
   }
@@ -101,7 +100,7 @@ extension Superwall {
       deviceAndWebStatus = activeWebEntitlements.isEmpty ? .inactive : .active(activeWebEntitlements)
     case .unknown:
       // Neither web nor granted entitlements turn .unknown into a decision
-      // (see mergedSubscriptionStatus). This branch only runs without an
+      // (see EntitlementsState.status). This branch only runs without an
       // external purchase controller, where the AutomaticPurchaseController
       // replaces .unknown after loading purchased products, so it's always
       // transient here anyway.
@@ -112,228 +111,47 @@ extension Superwall {
 
   // MARK: - Publishing
 
-  /// Records the assigned status, stores the merged status and persists the
-  /// assigned value under the lock, then emits the merged status and runs the
-  /// remaining side effects outside it.
-  ///
-  /// A developer assignment gets two extra treatments: records identical to a
-  /// current grant are stripped, because a developer who reads the published
-  /// status and writes it back would otherwise hand the grants back as their
-  /// own and clearing them could never revoke; and an `.inactive` assignment
-  /// while active grants exist logs a one-time warning, since the status
-  /// publishes as active and otherwise looks ignored.
+  /// Records the change and works out the merged status in one locked step
+  /// of the entitlements store, which reads the test-mode override in that
+  /// same step so a stale override can't be published last. What each kind of
+  /// change does to the state is in ``EntitlementsUpdate``.
   func publishSubscriptionStatus(_ change: SubscriptionStatusChange) {
-    subscriptionStatusLock.lock()
-
-    // Snapshot once, under the lock, so a concurrent grant write can't slip
-    // between the read and the store. Active grants are merged here so two
-    // grants sharing an ID collapse to one record on every path.
-    let granted = entitlements.granted
-    let activeGrants = Entitlement.mergePrioritized(Array(granted.filter(\.isActive)))
-
-    var assigned: SubscriptionStatus
-    let isDeveloperAssignment: Bool
-    switch change {
-    case .developerAssignment(let status):
-      assigned = status
-      isDeveloperAssignment = true
-    case .sdkAssignment(let status):
-      assigned = status
-      isDeveloperAssignment = false
-    case .grantChange:
-      // The assigned status is unchanged; only the grants merged into it are.
-      assigned = assignedSubscriptionStatus
-      isDeveloperAssignment = false
-    }
-
-    if isDeveloperAssignment {
-      if case .active(let assignedEntitlements) = assigned {
-        // Compared ignoring product IDs: the merge unions those across a
-        // shared ID, so a grant that won a collision comes back carrying the
-        // loser's product IDs.
-        assigned = .active(
-          assignedEntitlements.filter { record in
-            !granted.contains { $0.isEqualIgnoringProductIds(to: record) }
-          }
-        )
-      }
-      if case .inactive = assigned,
-        !activeGrants.isEmpty,
-        !hasLoggedGrantedEntitlementsWarning {
-        hasLoggedGrantedEntitlementsWarning = true
-        Logger.debug(
-          logLevel: .warn,
-          scope: .grantedEntitlements,
-          message: "subscriptionStatus was set to .inactive but grantedEntitlements "
-            + "is not empty, so the status remains active. Assigning subscriptionStatus "
-            + "doesn't clear granted entitlements — set grantedEntitlements to an empty set to revoke them."
-        )
-      }
-    }
-
-    let previouslyAssigned = assignedSubscriptionStatus
-    assignedSubscriptionStatus = assigned
-
-    let merged = mergedSubscriptionStatus(assigned: assigned, activeGrants: activeGrants)
-    let statusChanged = merged != subscriptionStatus
-    if statusChanged {
-      storeMergedSubscriptionStatus(merged)
-    }
-
-    // Persist the assigned value, not the merged one: restoring a merged
-    // value would bake granted entitlements into the assigned status for
-    // good, making them impossible to clear after a relaunch.
-    //
-    // Saved here rather than in the status listener so that metadata-only
-    // updates, which the listener dedupes, still refresh the cache. Identical
-    // writes are skipped so they don't re-encode and rewrite the file.
-    if previouslyAssigned != assigned {
-      dependencyContainer.storage.save(assigned, forType: SubscriptionStatusKey.self)
-    }
-    // Hands the merged value to the entitlements queue while the lock is
-    // still held, so two publishes reach it in the order they were stored.
-    // It only enqueues, so nothing waits on it.
-    entitlements.subscriptionStatusDidSet(merged)
-    subscriptionStatusLock.unlock()
-
-    // Subscribers and customer info observers run outside the lock, so a
-    // subscriber that blocks on another thread can't deadlock a writer.
-    if statusChanged {
-      emitSubscriptionStatus()
-    }
-
-    // When using an external purchase controller, update CustomerInfo.entitlements
-    // to reflect the entitlements from the purchase controller.
-    // Skip this in test mode — test mode manages its own CustomerInfo.
-    if dependencyContainer.makeHasExternalPurchaseController(),
-      dependencyContainer.testModeManager?.isTestMode != true {
-      refreshExternalControllerCustomerInfo()
-    }
-  }
-
-  /// A consistent pair of the published status and the granted set, read
-  /// under the lock.
-  private struct PublishedSnapshot: Equatable {
-    let status: SubscriptionStatus
-    let granted: Set<Entitlement>
-  }
-
-  private func publishedSnapshot() -> PublishedSnapshot {
-    subscriptionStatusLock.lock()
-    defer {
-      subscriptionStatusLock.unlock()
-    }
-    return PublishedSnapshot(status: subscriptionStatus, granted: entitlements.granted)
-  }
-
-  /// Recomputes `customerInfo` for the external purchase controller path
-  /// outside the lock, so `$customerInfo` subscribers don't run inside the
-  /// SDK's critical section.
-  ///
-  /// It's built from a consistent snapshot and dropped if a concurrent
-  /// publish moved either input while it ran: that publish runs its own
-  /// refresh with the newer values, so assigning ours would put the older
-  /// customer info last. Uncontended — the normal case, and the only one a
-  /// synchronous read after a status write depends on — the snapshot is
-  /// unchanged and the value is assigned before this returns.
-  private func refreshExternalControllerCustomerInfo() {
-    let snapshot = publishedSnapshot()
-    let info = CustomerInfo.forExternalPurchaseController(
-      storage: dependencyContainer.storage,
-      subscriptionStatus: snapshot.status,
-      granted: snapshot.granted
-    )
-    if publishedSnapshot() == snapshot {
-      customerInfo = info
-    }
-  }
-
-  /// The status the SDK reports for `assigned`: active granted entitlements
-  /// merged in, any test-mode override applied, and an empty `.active`
-  /// collapsed to `.inactive`.
-  private func mergedSubscriptionStatus(
-    assigned: SubscriptionStatus,
-    activeGrants: Set<Entitlement>
-  ) -> SubscriptionStatus {
-    if let testModeManager = dependencyContainer.testModeManager,
-      testModeManager.isTestMode,
-      let override = testModeManager.overriddenSubscriptionStatus {
-      return override
-    }
-    var status = assigned
-    // Only active grants merge into the status, mirroring how web
-    // entitlements merge (EntitlementsInfo.web filters to active).
-    // Inactive grants still reach customerInfo for round-trip visibility.
-    if !activeGrants.isEmpty {
-      switch status {
-      case .active(let entitlements):
-        // Set<Entitlement>.union merges by priority, keeping one record per ID.
-        status = .active(entitlements.union(activeGrants))
-      case .inactive:
-        status = .active(activeGrants)
-      case .unknown:
-        // Left alone, exactly like web entitlements: .unknown means the
-        // status hasn't been determined yet, and grants don't determine it
-        // — they merge as soon as it is. Reporting active here would open
-        // the paywall presentation gate, which waits for a status other
-        // than .unknown, before a purchase controller has answered.
-        break
-      }
-    }
-    // This must run after the granted merge, or a developer-assigned
-    // .active([]) would collapse to .inactive before granted is applied.
-    if case .active(let entitlements) = status,
-      entitlements.isEmpty {
-      return .inactive
-    }
-    return status
-  }
-
-  /// Recomputes `customerInfo` on the automatic path after a grant change,
-  /// rebuilding from the stored device and web sources so cleared grants
-  /// actually disappear. The external purchase controller path is recomputed
-  /// inside `publishSubscriptionStatus`; test mode manages its own customer
-  /// info.
-  private func refreshAutomaticCustomerInfoAfterGrantChange() {
-    if dependencyContainer.makeHasExternalPurchaseController() {
-      return
-    }
-    if dependencyContainer.testModeManager?.isTestMode == true {
-      return
-    }
-    let storage: Storage = dependencyContainer.storage
-    let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
-    let webCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo ?? .blank()
-    customerInfo = deviceCustomerInfo.merging(with: webCustomerInfo, granting: entitlements.granted)
+    entitlements.publish(change)
   }
 
   // MARK: - Listening
 
   func listenToSubscriptionStatus() {
-    $subscriptionStatus
-      .removeDuplicates { $0.isLogicallyEqual(to: $1) }
-      .dropFirst()
-      .scan((previous: subscriptionStatus, current: subscriptionStatus)) { previousPair, newStatus in
-        // Shift the current value to previous, and set the new status as the current value
-        (previous: previousPair.current, current: newStatus)
+    statusWithGrants
+      .removeDuplicates { $0.status.isLogicallyEqual(to: $1.status) }
+      .scan((previous: StatusWithGrants?.none, current: StatusWithGrants?.none)) { pair, next in
+        // Shift the current value to previous, and set the new one as current.
+        (previous: pair.current, current: next)
+      }
+      .compactMap { pair -> (previous: SubscriptionStatus, current: StatusWithGrants)? in
+        guard let previous = pair.previous,
+          let current = pair.current else {
+          return nil
+        }
+        return (previous.status, current)
       }
       .receive(on: DispatchQueue.main)
       .subscribe(
         Subscribers.Sink(
           receiveCompletion: { _ in },
-          receiveValue: { [weak self] statusPair in
+          receiveValue: { [weak self] change in
             guard let self = self else {
               return
             }
-            let oldStatus = statusPair.previous
-            let newStatus = statusPair.current
+            let oldStatus = change.previous
+            let newStatus = change.current.status
 
             Task {
               await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(
                 from: oldStatus, to: newStatus)
               let event = InternalSuperwallEvent.SubscriptionStatusDidChange(
                 status: newStatus,
-                grantedEntitlements: self.grantedEntitlements
+                grantedEntitlements: change.current.granted
               )
               await self.track(event)
             }
@@ -346,5 +164,55 @@ extension Superwall {
           }
         )
       )
+  }
+}
+
+/// A published status with the granted entitlements it was published with.
+struct StatusWithGrants: Equatable {
+  let status: SubscriptionStatus
+  let granted: Set<Entitlement>
+}
+
+// MARK: - EntitlementsPublishing
+
+extension Superwall: EntitlementsPublishing {
+  func currentTestModeOverride() -> SubscriptionStatus? {
+    return dependencyContainer.testModeManager?.subscriptionStatusOverride
+  }
+
+  /// Emits the status and rebuilds customer info from the state this change
+  /// left. Changes arrive one at a time, in order, so the last customer info
+  /// assigned is always built from the latest change.
+  func entitlementsDidPublish(_ publication: EntitlementsPublication) {
+    let after = publication.after
+    if publication.before.status != after.status {
+      emitSubscriptionStatus(after.status, granted: after.granted)
+    }
+
+    // Test mode manages its own customer info. The change is checked as well
+    // as test mode right now: a change made in test mode can be handed over
+    // after test mode has turned off, and its status is test mode's, not the
+    // user's.
+    if after.testMode != .off || dependencyContainer.testModeManager?.isTestMode == true {
+      return
+    }
+    let storage: Storage = dependencyContainer.storage
+    if dependencyContainer.makeHasExternalPurchaseController() {
+      // The purchase controller's status is the source of the active
+      // entitlements, so customer info follows every change.
+      customerInfo = CustomerInfo.forExternalPurchaseController(
+        storage: storage,
+        subscriptionStatus: after.status,
+        granted: after.granted
+      )
+      return
+    }
+    if case .grantChange = publication.change {
+      // Rebuilt from the saved device and web sources, so cleared grants
+      // actually disappear.
+      let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+      let webCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo ?? .blank()
+      customerInfo = deviceCustomerInfo.merging(with: webCustomerInfo, granting: after.granted)
+    }
   }
 }

@@ -17,6 +17,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes a StoreKit 1 purchase that ended straight away, such as one the device refused, sometimes never returning its result.
 - Fixes a purchase never finishing, with its loading spinner left up, when another purchase started before it returned.
 - Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.
+- Fixes `Superwall.shared.entitlements.active` briefly lagging behind a new subscription status, and `entitlements.all` being empty for a moment after launch.
+- Fixes `customerInfo` sometimes keeping an older value than the subscription status when the status changed while customer info was being updated.
+- Fixes the subscription status change event sometimes listing the wrong granted entitlements.
 
 ## 4.19.1
 
