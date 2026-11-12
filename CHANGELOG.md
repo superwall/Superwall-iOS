@@ -14,6 +14,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes cached paywalls sometimes being torn down off the main thread when they're cleared, such as on `reset()`.
 - Fixes `presentedViewController` sometimes returning a paywall that isn't on screen, which `reset()` then kept instead of clearing.
 - Fixes a paywall shown again while it was still closing being marked as closed, so its next close wasn't reported.
+- Fixes a test mode purchase sometimes leaving its test entitlements as the real subscription status after test mode turned off.
+- Fixes the test mode modal keeping a tester's choices when test mode turned off while it was open.
+- Fixes a test mode purchase turning back on entitlements the tester had set to expired.
 - Fixes a StoreKit 1 purchase that ended straight away, such as one the device refused, sometimes never returning its result.
 - Fixes a purchase never finishing, with its loading spinner left up, when another purchase started before it returned.
 - Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.

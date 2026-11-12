@@ -226,6 +226,28 @@ Never let a controller's last reference go with the store locked or off the main
 tears down its views. Read the cache through `store.read`, never `store.state`: a copy of the
 controllers can outlive a removal on main and become a controller's last owner on another thread.
 
+### Test mode store
+
+`TestModeManager` keeps test mode in a `StateStore` (compare with Android's `TestModeState.kt`).
+`TestModeState.mode` is `.inactive`, or `.active` with the reason and a session: products, free
+trial override, and one `entitlements` value, `.untouched` until the tester chooses or buys
+something, then `.kept(Set<Entitlement>)`. The entitlement IDs, the subscription status and the
+customer info test mode keeps are all worked out from it, never stored. `TestModeUpdate` reducers are
+the only way it changes; everything but `activated` leaves an inactive state alone, and
+`deactivated` drops the whole session. A purchase adds the bought entitlements as subscribed and
+keeps the others as the tester set them.
+
+Changes go through `TestModeAction`s (`testModeManager.dispatch`), which return the state before and
+after in one locked step: use `justActivated`/`justDeactivated` rather than reading `isTestMode`
+again. Purchases, restores and the modal's result are dropped while test mode is off, and a modal
+that closes after test mode turned off clears the settings it saved. Side effects are the
+`TestModeContext` methods. `clearSavedSettings` runs through `deferUntilUnlocked`, because removing a
+`UserDefaults` key calls the app's observers on the spot. The status and customer info reach the rest of the SDK through
+`publishOverrides`/`publishTestModeEnded`, which queue sends on the manager's `SerialTaskCoordinator`.
+Each send reads the session when it runs, so a send queued before test mode turned off sends nothing.
+Callers that need the send to have landed `await finishPublishing()`, as `processConfig` does
+before loading real purchases.
+
 ### Purchase and restore stores
 
 `PurchasingCoordinator` keeps the purchase flow in a `StateStore<PurchaseContext, PurchaseState>`.
