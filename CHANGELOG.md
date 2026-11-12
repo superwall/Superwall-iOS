@@ -6,6 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
+- Sends Superwall the list of third-party SDKs your app includes, on app open when that list has changed since it was last sent, so the dashboard can suggest integrations for SDKs you already use and support can spot conflicts with other SDKs. It covers the Swift modules and Objective-C classes linked into your app and its embedded frameworks and resource bundles, without Apple's frameworks or your app's main module, and sends their names only as hashes. It describes your app's build, not your users, isn't passed to `SuperwallDelegate`, and isn't sent when `eventTrackingBehavior` is `.none`.
 - Saves the first deep link received during the first app session as the `firstDeepLinkUrl` user attribute. If you assign deep links to your App Store custom product pages, you can use this attribute to break down results and filter audiences by the product page that drove the install. If you've connected App Store Connect, the page's ID and name are saved too, as `customProductPageId` and `customProductPageName`. Requires `Superwall.handleDeepLink(_:)` to be set up.
 
 ### Fixes
