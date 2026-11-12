@@ -241,7 +241,10 @@ the store is unlocked. The test-mode override is read inside the action, with th
 the writer that publishes last read it last; don't read it before dispatching. `Superwall` is the
 `EntitlementsPublishing` receiver: it emits `$subscriptionStatus` and `statusWithGrants`, and
 rebuilds `customerInfo` from the publication's `after` state, never by reading the store again.
-`web` still reads the saved redeem response, outside the store.
+`web` still reads the saved redeem response, outside the store. The saved grants and product map are
+read on a background queue that starts in `init`, never on the thread that creates the object;
+`store` waits for that read, so nothing sees them empty. Go through `store`, not `loadedStore`.
+`TestModeManager.subscriptionStatusOverride` reads test mode and its status in one locked step.
 
 ### Purchase and restore stores
 

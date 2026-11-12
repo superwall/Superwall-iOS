@@ -129,6 +129,8 @@ enum GrantWarning: Equatable {
 
 /// The ways ``EntitlementsState`` can change.
 enum EntitlementsUpdate: Reducer {
+  /// The entitlements saved by an earlier launch were read from storage.
+  case savedEntitlementsLoaded(granted: Set<Entitlement>, byProductId: [String: Set<Entitlement>])
   /// The config's product entitlements arrived, replacing the old ones.
   case productEntitlementsReceived([String: Set<Entitlement>])
   /// The developer assigned ``Superwall/subscriptionStatus``.
@@ -141,6 +143,9 @@ enum EntitlementsUpdate: Reducer {
   func reduce(_ state: EntitlementsState) -> EntitlementsState {
     var state = state
     switch self {
+    case let .savedEntitlementsLoaded(granted, byProductId):
+      state.granted = granted
+      state.entitlementsByProductId = byProductId
     case .productEntitlementsReceived(let entitlementsByProductId):
       state.entitlementsByProductId = entitlementsByProductId
     case let .developerAssignedStatus(status, testMode):

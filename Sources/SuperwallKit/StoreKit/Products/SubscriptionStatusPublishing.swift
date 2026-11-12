@@ -71,7 +71,7 @@ extension Superwall {
   ///
   /// SDK writers use this rather than assigning ``subscriptionStatus``, which
   /// is the developer's entry point and gets the developer-assignment
-  /// treatment described on `publishSubscriptionStatus`.
+  /// treatment of ``EntitlementsUpdate/developerAssignedStatus(_:testMode:)``.
   func setSubscriptionStatus(assigned status: SubscriptionStatus) {
     publishSubscriptionStatus(.sdkAssignment(status))
   }
@@ -100,7 +100,7 @@ extension Superwall {
       deviceAndWebStatus = activeWebEntitlements.isEmpty ? .inactive : .active(activeWebEntitlements)
     case .unknown:
       // Neither web nor granted entitlements turn .unknown into a decision
-      // (see EntitlementsUpdate.mergedStatus). This branch only runs without an
+      // (see EntitlementsState.status). This branch only runs without an
       // external purchase controller, where the AutomaticPurchaseController
       // replaces .unknown after loading purchased products, so it's always
       // transient here anyway.
@@ -113,14 +113,8 @@ extension Superwall {
 
   /// Records the change and works out the merged status in one locked step
   /// of the entitlements store, which reads the test-mode override in that
-  /// same step so a stale override can't be published last.
-  ///
-  /// A developer assignment gets two extra treatments: records identical to a
-  /// current grant are stripped, because a developer who reads the published
-  /// status and writes it back would otherwise hand the grants back as their
-  /// own and clearing them could never revoke; and an `.inactive` assignment
-  /// while active grants exist logs a one-time warning, since the status
-  /// publishes as active and otherwise looks ignored.
+  /// same step so a stale override can't be published last. What each kind of
+  /// change does to the state is in ``EntitlementsUpdate``.
   func publishSubscriptionStatus(_ change: SubscriptionStatusChange) {
     entitlements.publish(change)
   }
@@ -183,11 +177,7 @@ struct StatusWithGrants: Equatable {
 
 extension Superwall: EntitlementsPublishing {
   func currentTestModeOverride() -> SubscriptionStatus? {
-    if let testModeManager = dependencyContainer.testModeManager,
-      testModeManager.isTestMode {
-      return testModeManager.overriddenSubscriptionStatus
-    }
-    return nil
+    return dependencyContainer.testModeManager?.subscriptionStatusOverride
   }
 
   /// Emits the status and rebuilds customer info from the state this change
@@ -199,8 +189,11 @@ extension Superwall: EntitlementsPublishing {
       emitSubscriptionStatus(after.status, granted: after.granted)
     }
 
-    // Test mode manages its own customer info.
-    if dependencyContainer.testModeManager?.isTestMode == true {
+    // Test mode manages its own customer info. The change is checked as well
+    // as test mode right now: a change made in test mode can be handed over
+    // after test mode has turned off, and its status is test mode's, not the
+    // user's.
+    if after.testMode != .off || dependencyContainer.testModeManager?.isTestMode == true {
       return
     }
     let storage: Storage = dependencyContainer.storage

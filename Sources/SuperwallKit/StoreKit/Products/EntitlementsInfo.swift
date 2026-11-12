@@ -65,8 +65,13 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     }
   }
 
-  /// Every change to the entitlements state goes through this store.
-  let store: EntitlementsStore
+  /// Every change to the entitlements state goes through this store. The
+  /// first use waits for the saved entitlements, which load in the background
+  /// from when this object is created.
+  var store: EntitlementsStore {
+    savedEntitlements.wait()
+    return loadedStore
+  }
 
   /// Told about each status change once the store is unlocked, and asked for
   /// the test-mode override with it locked. Held weakly, and set once by
@@ -85,6 +90,10 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   private unowned let delegateAdapter: SuperwallDelegateAdapter
   private let publisherSlot: PublisherSlot
   private let publications: OrderedDelivery<EntitlementsPublication>
+  /// The store itself. Only ``store`` and the load of the saved entitlements
+  /// use it directly.
+  private let loadedStore: EntitlementsStore
+  private let savedEntitlements = BackgroundLoad(label: "com.superwall.entitlementsinfo.load")
 
   init(
     storage: Storage,
@@ -94,19 +103,30 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     self.storage = storage
     self.delegateAdapter = delegateAdapter
 
-    // Loaded once here and kept in memory, so reads never hit disk. Most apps
-    // never grant entitlements, and a storage miss isn't cached.
-    var initial = EntitlementsState(granted: storage.get(GrantedEntitlements.self) ?? [])
-    if !isTesting {
-      initial.entitlementsByProductId = storage.get(EntitlementsByProductId.self) ?? [:]
-    }
-    store = EntitlementsStore(initial: initial)
+    let loadedStore = EntitlementsStore(initial: EntitlementsState())
+    self.loadedStore = loadedStore
     let publisherSlot = PublisherSlot()
     self.publisherSlot = publisherSlot
     publications = OrderedDelivery { publication in
       publisherSlot.value?.entitlementsDidPublish(publication)
     }
     super.init()
+
+    // Loaded once and kept in memory, so later reads never hit disk. Most apps
+    // never grant entitlements, and a storage miss isn't cached. Read off this
+    // thread, which is usually the main thread at launch.
+    savedEntitlements.start { [weak storage] in
+      var byProductId: [String: Set<Entitlement>] = [:]
+      if !isTesting {
+        byProductId = storage?.get(EntitlementsByProductId.self) ?? [:]
+      }
+      loadedStore.update(
+        EntitlementsUpdate.savedEntitlementsLoaded(
+          granted: storage?.get(GrantedEntitlements.self) ?? [],
+          byProductId: byProductId
+        )
+      )
+    }
   }
 
   // MARK: - Public API
@@ -194,6 +214,40 @@ protocol EntitlementsPublishing: AnyObject {
   /// Called once the store is unlocked, one change at a time, in the order the
   /// changes were applied.
   func entitlementsDidPublish(_ publication: EntitlementsPublication)
+}
+
+/// Work that starts on a background queue straight away, and that callers
+/// can wait for.
+private final class BackgroundLoad: @unchecked Sendable {
+  private let queue: DispatchQueue
+  private let lock = NSLock()
+  private var isDone = false
+
+  init(label: String) {
+    queue = DispatchQueue(label: label, qos: .userInitiated)
+  }
+
+  func start(_ work: @escaping () -> Void) {
+    queue.async { [self] in
+      work()
+      lock.lock()
+      isDone = true
+      lock.unlock()
+    }
+  }
+
+  /// Returns once the work has finished. `work` must never call this.
+  func wait() {
+    lock.lock()
+    let isDone = self.isDone
+    lock.unlock()
+    if isDone {
+      return
+    }
+    // Waiting on the queue, rather than a semaphore, lends it this thread's
+    // priority, so the main thread isn't held up by lower-priority work.
+    queue.sync {}
+  }
 }
 
 /// Holds the publisher weakly, behind a lock, so the delivery closure can

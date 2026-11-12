@@ -22,6 +22,18 @@ private func status(_ id: String) -> SubscriptionStatus {
 // MARK: - Reducers
 
 struct EntitlementsStateReducerTests {
+  @Test func savedEntitlementsLoaded_setsTheGrantsAndTheProductMap() {
+    let state = EntitlementsUpdate.savedEntitlementsLoaded(
+      granted: [entitlement("promo")],
+      byProductId: ["monthly": [entitlement("pro")]]
+    ).reduce(EntitlementsState())
+
+    #expect(state.granted.map(\.id) == ["promo"])
+    #expect(state.all.map(\.id) == ["pro"])
+    #expect(state.status == .unknown)
+    #expect(state.assignedStatus == .unknown)
+  }
+
   private func reduce(
     _ updates: [EntitlementsUpdate],
     from state: EntitlementsState = EntitlementsState()
@@ -515,6 +527,136 @@ final class EntitlementsInfoStoreTests {
     #expect(superwall.subscriptionStatus == .inactive)
     #expect(superwall.entitlements.active.isEmpty)
     cancellable.cancel()
+  }
+}
+
+// MARK: - Loading saved entitlements
+
+/// A cache whose reads wait while they're held, like a slow disk.
+private final class HeldCache: CacheMock, @unchecked Sendable {
+  private let condition = NSCondition()
+  private var isHolding = false
+
+  func holdReads() {
+    condition.lock()
+    isHolding = true
+    condition.unlock()
+    // So a test that waits on a held read fails rather than hangs.
+    DispatchQueue.global().asyncAfter(deadline: .now() + 5) { [weak self] in
+      self?.releaseReads()
+    }
+  }
+
+  func releaseReads() {
+    condition.lock()
+    isHolding = false
+    condition.broadcast()
+    condition.unlock()
+  }
+
+  private func waitWhileHeld() {
+    condition.lock()
+    while isHolding {
+      condition.wait()
+    }
+    condition.unlock()
+  }
+
+  override func read<Key>(
+    _ keyType: Key.Type,
+    fromDirectory directory: SearchPathDirectory? = nil
+  ) -> Key.Value? where Key: Storable, Key.Value: Decodable {
+    waitWhileHeld()
+    return super.read(keyType, fromDirectory: directory)
+  }
+}
+
+@Suite(.serialized)
+final class EntitlementsInfoLoadingTests {
+  private let dependencyContainer = DependencyContainer(cache: CacheMock())
+  private let cache = HeldCache()
+  private lazy var storage = Storage(factory: dependencyContainer, cache: cache)
+
+  private func saveEntitlements() {
+    storage.save([entitlement("promo")], forType: GrantedEntitlements.self)
+    storage.save(["monthly": [entitlement("pro")]], forType: EntitlementsByProductId.self)
+  }
+
+  private func makeInfoOffThisThread() async -> EntitlementsInfo {
+    let storage = self.storage
+    let delegateAdapter: SuperwallDelegateAdapter = dependencyContainer.delegateAdapter
+    return await Task.detached { () -> EntitlementsInfo in
+      EntitlementsInfo(storage: storage, delegateAdapter: delegateAdapter)
+    }.value
+  }
+
+  @Test func creatingIt_doesntWaitForStorage() async {
+    saveEntitlements()
+    cache.holdReads()
+    let wasCreated = Locked(false)
+    let storage = self.storage
+    let delegateAdapter: SuperwallDelegateAdapter = dependencyContainer.delegateAdapter
+    let creation = Task.detached { () -> EntitlementsInfo in
+      let info = EntitlementsInfo(storage: storage, delegateAdapter: delegateAdapter)
+      wasCreated.mutate { $0 = true }
+      return info
+    }
+
+    for _ in 0..<200 where !wasCreated.value {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    let wasCreatedWhileReadsWereHeld = wasCreated.value
+    cache.releaseReads()
+    let info = await creation.value
+
+    #expect(wasCreatedWhileReadsWereHeld)
+    #expect(info.granted.map(\.id) == ["promo"])
+    #expect(info.all.map(\.id) == ["pro"])
+  }
+
+  @Test func firstRead_waitsForTheSavedEntitlements() async {
+    saveEntitlements()
+    cache.holdReads()
+    let info = await makeInfoOffThisThread()
+    let hasRead = Locked(false)
+    let read = Task.detached {
+      let result = (granted: info.granted, all: info.all, monthly: info.byProductId("monthly"))
+      hasRead.mutate { $0 = true }
+      return result
+    }
+
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    #expect(!hasRead.value)
+    cache.releaseReads()
+    let result = await read.value
+
+    #expect(result.granted.map(\.id) == ["promo"])
+    #expect(result.all.map(\.id) == ["pro"])
+    #expect(result.monthly.map(\.id) == ["pro"])
+  }
+
+  @Test func changeMadeBeforeTheSavedEntitlementsLoad_isAppliedOnTopOfThem() async {
+    saveEntitlements()
+    cache.holdReads()
+    let info = await makeInfoOffThisThread()
+    let change = Task.detached {
+      info.publish(.grantChange([entitlement("vip")]))
+    }
+
+    try? await Task.sleep(nanoseconds: 50_000_000)
+    cache.releaseReads()
+    _ = await change.value
+
+    #expect(info.granted.map(\.id) == ["vip"])
+    #expect(info.all.map(\.id) == ["pro"])
+    #expect(storage.get(GrantedEntitlements.self)?.map(\.id) == ["vip"])
+  }
+
+  @Test func withNothingSaved_itStartsEmpty() {
+    let info = EntitlementsInfo(storage: storage, delegateAdapter: dependencyContainer.delegateAdapter)
+    #expect(info.granted.isEmpty)
+    #expect(info.all.isEmpty)
+    #expect(info.status == .unknown)
   }
 }
 

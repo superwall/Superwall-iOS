@@ -49,6 +49,63 @@ final class EntitlementsPublishingTests {
     cancellable.cancel()
   }
 
+  /// A change made in test mode can be handed over after test mode has turned
+  /// off. Its status is test mode's, so it mustn't become the customer info.
+  @Test func changeMadeInTestMode_handedOverAfterItEnds_leavesCustomerInfoAlone() {
+    let dependencyContainer = DependencyContainer(
+      purchaseController: MockPurchaseController(),
+      cache: CacheMock()
+    )
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    superwall.subscriptionStatus = .active([appStoreEntitlement("pro")])
+    #expect(activeIds(superwall.customerInfo) == ["pro"])
+
+    let before = superwall.entitlements.store.state
+    var after = before
+    after.testMode = .overriding(.active([appStoreEntitlement("test")]))
+    #expect(dependencyContainer.testModeManager.isTestMode == false)
+
+    superwall.entitlementsDidPublish(
+      EntitlementsPublication(
+        change: .sdkAssignment(.active([appStoreEntitlement("pro")])),
+        before: before,
+        after: after
+      )
+    )
+
+    #expect(activeIds(superwall.customerInfo) == ["pro"])
+  }
+
+  /// Test mode writes its override on one thread while a status change reads
+  /// it on another.
+  @Test func testModeOverride_isReadWhileItsWritten() async {
+    let options = SuperwallOptions()
+    options.testModeBehavior = .always
+    let dependencyContainer = DependencyContainer(options: options, cache: CacheMock())
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let testModeManager: TestModeManager = dependencyContainer.testModeManager
+    testModeManager.evaluateTestMode(config: .stub(), options: options)
+    let statuses: [SubscriptionStatus] = [
+      .inactive,
+      .active([appStoreEntitlement("pro")]),
+      .active([appStoreEntitlement("pro"), appStoreEntitlement("plus")])
+    ]
+
+    await withTaskGroup(of: Void.self) { group in
+      for index in 0..<500 {
+        group.addTask {
+          testModeManager.overriddenSubscriptionStatus = statuses[index % statuses.count]
+        }
+        group.addTask {
+          _ = superwall.currentTestModeOverride()
+        }
+      }
+    }
+
+    testModeManager.overriddenSubscriptionStatus = .inactive
+    #expect(superwall.currentTestModeOverride() == .inactive)
+  }
+
   /// The status-change event lists the grants that were in place when that
   /// status was published, not the ones in place when the event is sent.
   @MainActor
