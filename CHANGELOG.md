@@ -2,6 +2,25 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.19.2
+
+### Enhancements
+
+- Saves the first deep link received during the first app session as the `firstDeepLinkUrl` user attribute. If you assign deep links to your App Store custom product pages, you can use this attribute to break down results and filter audiences by the product page that drove the install. If you've connected App Store Connect, the page's ID and name are saved too, as `customProductPageId` and `customProductPageName`. Requires `Superwall.handleDeepLink(_:)` to be set up.
+
+### Fixes
+
+- Fixes a paywall appearing in the wrong window on iPad and Mac Catalyst when several of the app's windows are on screen.
+- Fixes cached paywalls sometimes being torn down off the main thread when they're cleared, such as on `reset()`.
+- Fixes `presentedViewController` sometimes returning a paywall that isn't on screen, which `reset()` then kept instead of clearing.
+- Fixes a paywall shown again while it was still closing being marked as closed, so its next close wasn't reported.
+- Fixes a StoreKit 1 purchase that ended straight away, such as one the device refused, sometimes never returning its result.
+- Fixes a purchase never finishing, with its loading spinner left up, when another purchase started before it returned.
+- Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.
+- Fixes `Superwall.shared.entitlements.active` briefly lagging behind a new subscription status, and `entitlements.all` being empty for a moment after launch.
+- Fixes `customerInfo` sometimes keeping an older value than the subscription status when the status changed while customer info was being updated.
+- Fixes the subscription status change event sometimes listing the wrong granted entitlements.
+
 ## 4.19.1
 
 ### Enhancements
@@ -18,16 +37,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes `reset()`, and `identify(userId:)` switching user, sending several `user_attributes` events for one change. The new user's Apple Search Ads, MMP and install-scoped integration attributes are now in place when the call returns.
 - Fixes config refreshes being able to run at the same time and apply their configs out of order. A refresh called while the launch config fetch is still finishing now waits for it.
 - Fixes `Superwall.shared.configurationStatus` staying `.pending` when the config couldn't be fetched. It's now `.failed`.
-- Fixes cached paywalls sometimes being torn down off the main thread when they're cleared, such as on `reset()`.
-- Fixes `presentedViewController` sometimes returning a paywall that isn't on screen, which `reset()` then kept instead of clearing.
-- Fixes `Superwall.shared.entitlements.active` briefly lagging behind a new subscription status, and `entitlements.all` being empty for a moment after launch.
-- Fixes `customerInfo` sometimes keeping an older value than the subscription status when the status changed while customer info was being updated.
-- Fixes the subscription status change event sometimes listing the wrong granted entitlements.
 - Fixes `getCustomerInfo()` never returning when the SDK can't load its configuration, such as on a first launch without a connection.
 - Fixes `refreshCustomerInfo()` returning empty customer info when the fetch fails, instead of the device's purchases.
 - Fixes the Mac preview window sometimes selecting a different paywall than the one linked, without saying why.
 - Stops sending user and device attributes for enrichment, such as the demand score, while `eventTrackingBehavior` is `.none`.
-- Fixes a paywall shown again while it was still closing being marked as closed, so its next close wasn't reported.
 - Fixes a paywall showing and charging the wrong billing plan when the same App Store product is sold on both the up-front and monthly plans, on one paywall or across paywalls. Each paywall slot now keeps its own plan. Product identifiers are unchanged.
 - Fixes paywalls letting the app rotate into orientations it doesn't allow. A paywall now allows the same orientations as the screen it covers, which matters for apps that lock orientation in a view controller rather than in their Info.plist, such as Unity games. Previously, a landscape-only game could be rotated to portrait while a paywall was showing and stayed in portrait after it closed.
 
