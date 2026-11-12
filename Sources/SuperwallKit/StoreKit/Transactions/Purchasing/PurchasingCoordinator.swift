@@ -103,10 +103,16 @@ final class PurchasingCoordinator: @unchecked Sendable {
     store.dispatch(PurchaseAction.observeOffer(hasOffer), in: context)
   }
 
-  /// Waits for the StoreKit 1 result of the purchase in progress. A purchase
-  /// already waiting is resumed as cancelled.
-  func awaitResult(_ completion: @escaping PurchaseCompletion) {
-    store.dispatch(PurchaseAction.awaitResult(completion), in: context)
+  /// Waits for the StoreKit 1 result of a purchase of the product with
+  /// `productId`. A purchase already waiting is resumed as cancelled.
+  func awaitResult(
+    forProductId productId: String,
+    _ completion: @escaping PurchaseCompletion
+  ) {
+    store.dispatch(
+      PurchaseAction.awaitResult(productId: productId, completion: completion),
+      in: context
+    )
   }
 
   /// Ends `purchase`, unless another purchase has begun since.
@@ -115,14 +121,15 @@ final class PurchasingCoordinator: @unchecked Sendable {
   }
 
   /// Takes the purchase in progress out of the coordinator, leaving it free.
-  func setAsidePurchase() -> PurchasePhase {
-    return store.dispatch(PurchaseAction.setAside, in: context).phase
+  /// It can still be finished while it's set aside.
+  func setAsidePurchase() {
+    store.dispatch(PurchaseAction.setAside, in: context)
   }
 
-  /// Puts back a purchase that was set aside, unless another purchase began
-  /// meanwhile.
-  func putBack(_ phase: PurchasePhase) {
-    store.dispatch(PurchaseAction.putBack(phase), in: context)
+  /// Puts back the purchase that was set aside, unless it finished or another
+  /// purchase began meanwhile.
+  func putBackPurchase() {
+    store.dispatch(PurchaseAction.putBack, in: context)
   }
 
   /// Ends everything in progress.
@@ -190,8 +197,9 @@ final class PurchasingCoordinator: @unchecked Sendable {
     )
   }
 
-  /// Stores the transaction and, if the purchase in progress is of its
-  /// product, hands `result` to the StoreKit 1 purchase waiting for it, once.
+  /// Stores the transaction and, if the purchase in progress or the StoreKit 1
+  /// result waiting is of its product, hands `result` to the StoreKit 1
+  /// purchase waiting for it, once.
   /// A transaction that arrives with nothing in progress, such as a renewal,
   /// is left alone.
   func completePurchase(
@@ -199,14 +207,9 @@ final class PurchasingCoordinator: @unchecked Sendable {
     result: PurchaseResult
   ) async {
     let productId = transaction.payment.productIdentifier
-    let phase = store.read { $0.phase }
-    if case .idle = phase {
-      return
-    }
     // Only complete if the product ID of the transaction is the same as
     // the purchasing transaction.
-    if let purchase = phase.purchase,
-      purchase.product.productIdentifier != productId {
+    if store.read({ $0.phase.productId }) != productId {
       return
     }
     let storeTransaction = await context.makeStoreTransaction(from: transaction)

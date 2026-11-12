@@ -102,6 +102,39 @@ struct TransactionManagerPurchaseTests {
     #expect(coordinator.hasPurchaseInProgress)
     coordinator.reset()
   }
+
+  @Test("the purchase function called by the app's purchase controller doesn't start a purchase")
+  func purchaseFunctionWithControllerStartsNothing() async {
+    let dependencyContainer = DependencyContainer(purchaseController: CancellingPurchaseController())
+    let transactionManager = makeTransactionManager(in: dependencyContainer)
+    let coordinator = dependencyContainer.makePurchasingCoordinator()
+    coordinator.reset()
+    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "product"))
+
+    let purchase = await transactionManager.prepareToPurchase(
+      product: product,
+      purchaseSource: .purchaseFunc(product)
+    )
+
+    #expect(purchase == nil)
+    #expect(!coordinator.hasPurchaseInProgress)
+  }
+
+  @Test("the purchase function doesn't reach the purchase flow while purchases are observed")
+  func purchaseFunctionRefusedWhileObserving() async {
+    let options = SuperwallOptions()
+    options.shouldObservePurchases = true
+    let dependencyContainer = DependencyContainer(options: options)
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let coordinator = dependencyContainer.makePurchasingCoordinator()
+    coordinator.reset()
+    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "product"))
+
+    let result = await superwall.purchase(product)
+
+    #expect(result == .cancelled)
+    #expect(!coordinator.hasPurchaseInProgress)
+  }
 }
 
 private final class AbandonedProducts: @unchecked Sendable {

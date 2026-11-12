@@ -112,7 +112,7 @@ private func inFlight(_ purchase: InFlightPurchase, completion: PurchaseCompleti
 
 private func awaiting(_ completion: @escaping PurchaseCompletion) -> PurchaseState {
   var state = PurchaseState()
-  state.phase = .awaitingResult(completion)
+  state.phase = .awaitingResult(productId: "product", completion: completion)
   return state
 }
 
@@ -178,9 +178,9 @@ struct PurchaseUpdateTests {
 
   @Test("resultAwaited waits without a purchase, or for the one in progress")
   func resultAwaited() {
-    #expect(isAwaiting(PurchaseUpdate.resultAwaited { _ in }.reduce(PurchaseState())))
+    #expect(isAwaiting(PurchaseUpdate.resultAwaited(productId: "product") { _ in }.reduce(PurchaseState())))
     let purchase = makePurchase()
-    let state = PurchaseUpdate.resultAwaited { _ in }.reduce(inFlight(purchase))
+    let state = PurchaseUpdate.resultAwaited(productId: "product") { _ in }.reduce(inFlight(purchase))
     #expect(state.purchase?.id == purchase.id)
     #expect(state.phase.completion != nil)
   }
@@ -210,14 +210,38 @@ struct PurchaseUpdateTests {
     #expect(isIdle(PurchaseUpdate.cleared.reduce(awaiting { _ in })))
   }
 
-  @Test("putBack restores a phase only if the flow is idle")
+  @Test("putBack restores the set-aside phase only if the flow is idle")
   func putBack() {
     let first = makePurchase("first")
-    let setAside = PurchasePhase.inFlight(first, completion: nil)
-    #expect(PurchaseUpdate.putBack(setAside).reduce(PurchaseState()).purchase?.id == first.id)
+    let setAside = PurchaseUpdate.setAside.reduce(inFlight(first))
+    #expect(setAside.setAsidePhase.purchase?.id == first.id)
+    let restored = PurchaseUpdate.putBack.reduce(setAside)
+    #expect(restored.purchase?.id == first.id)
+    #expect(restored.setAsidePhase.purchase == nil)
 
     let second = makePurchase("second")
-    #expect(PurchaseUpdate.putBack(setAside).reduce(inFlight(second)).purchase?.id == second.id)
+    let began = PurchaseUpdate.began(second).reduce(setAside)
+    let notRestored = PurchaseUpdate.putBack.reduce(began)
+    #expect(notRestored.purchase?.id == second.id)
+    #expect(notRestored.setAsidePhase.purchase == nil)
+  }
+
+  @Test("finishing a set-aside purchase means it isn't put back")
+  func finishSetAside() {
+    let first = makePurchase("first")
+    let setAside = PurchaseUpdate.setAside.reduce(inFlight(first))
+    let finished = PurchaseUpdate.finished(id: first.id).reduce(setAside)
+    #expect(finished.setAsidePhase.purchase == nil)
+    #expect(isIdle(PurchaseUpdate.putBack.reduce(finished)))
+  }
+
+  @Test("a result is awaited for a product")
+  func resultAwaitedForProduct() {
+    let state = PurchaseUpdate.resultAwaited(productId: "product", completion: { _ in }).reduce(PurchaseState())
+    #expect(state.phase.productId == "product")
+    let purchase = makePurchase("bought")
+    let inFlightState = PurchaseUpdate.resultAwaited(productId: "other", completion: { _ in }).reduce(inFlight(purchase))
+    #expect(inFlightState.phase.productId == "bought")
   }
 
   @Test("a purchased transaction is kept per product unless an older one arrives")
@@ -254,7 +278,7 @@ struct PurchasingCoordinatorTests {
     let (coordinator, _) = make()
     #expect(!coordinator.hasPurchaseInProgress)
 
-    coordinator.awaitResult { _ in }
+    coordinator.awaitResult(forProductId: "product") { _ in }
     #expect(coordinator.hasPurchaseInProgress)
     coordinator.reset()
     #expect(!coordinator.hasPurchaseInProgress)
@@ -268,7 +292,7 @@ struct PurchasingCoordinatorTests {
   @Test("beginning a purchase while a StoreKit 1 result waits keeps it waiting")
   func beginWhileResultWaits() {
     let (coordinator, context) = make()
-    coordinator.awaitResult { _ in }
+    coordinator.awaitResult(forProductId: "product") { _ in }
     let purchase = coordinator.beginPurchase(of: makeProduct(), source: .purchaseFunc(makeProduct()), isFreeTrialAvailable: false)
 
     #expect(coordinator.purchase?.id == purchase.id)
@@ -280,7 +304,7 @@ struct PurchasingCoordinatorTests {
   func beginOverWaitingPurchase() {
     let (coordinator, context) = make()
     coordinator.beginPurchase(of: makeProduct("first"), source: .purchaseFunc(makeProduct("first")), isFreeTrialAvailable: false)
-    coordinator.awaitResult { _ in }
+    coordinator.awaitResult(forProductId: "product") { _ in }
     coordinator.beginPurchase(of: makeProduct("second"), source: .purchaseFunc(makeProduct("second")), isFreeTrialAvailable: false)
 
     #expect(context.deliveredResults == [.cancelled])
@@ -291,8 +315,8 @@ struct PurchasingCoordinatorTests {
   func secondAwaitCancelsFirst() {
     let (coordinator, context) = make()
     var firstResult: PurchaseResult?
-    coordinator.awaitResult { firstResult = $0 }
-    coordinator.awaitResult { _ in }
+    coordinator.awaitResult(forProductId: "product") { firstResult = $0 }
+    coordinator.awaitResult(forProductId: "product") { _ in }
 
     #expect(firstResult == .cancelled)
     #expect(context.deliveredResults == [.cancelled])
@@ -303,7 +327,7 @@ struct PurchasingCoordinatorTests {
     let (coordinator, context) = make()
     let purchase = coordinator.beginPurchase(of: makeProduct(), source: .purchaseFunc(makeProduct()), isFreeTrialAvailable: false)
     var result: PurchaseResult?
-    coordinator.awaitResult { result = $0 }
+    coordinator.awaitResult(forProductId: "product") { result = $0 }
 
     coordinator.finish(purchase)
 
@@ -317,7 +341,7 @@ struct PurchasingCoordinatorTests {
     let (coordinator, context) = make()
     let first = coordinator.beginPurchase(of: makeProduct("first"), source: .purchaseFunc(makeProduct("first")), isFreeTrialAvailable: false)
     let second = coordinator.beginPurchase(of: makeProduct("second"), source: .purchaseFunc(makeProduct("second")), isFreeTrialAvailable: false)
-    coordinator.awaitResult { _ in }
+    coordinator.awaitResult(forProductId: "product") { _ in }
 
     coordinator.finish(first)
 
@@ -329,14 +353,14 @@ struct PurchasingCoordinatorTests {
   func setAsideAndPutBack() {
     let (coordinator, context) = make()
     let purchase = coordinator.beginPurchase(of: makeProduct(), source: .purchaseFunc(makeProduct()), isFreeTrialAvailable: true)
-    coordinator.awaitResult { _ in }
+    coordinator.awaitResult(forProductId: "product") { _ in }
 
-    let setAside = coordinator.setAsidePurchase()
+    coordinator.setAsidePurchase()
     #expect(coordinator.purchase == nil)
-    #expect(setAside.purchase?.id == purchase.id)
-    #expect(setAside.completion != nil)
+    #expect(coordinator.store.state.setAsidePhase.purchase?.id == purchase.id)
+    #expect(coordinator.store.state.setAsidePhase.completion != nil)
 
-    coordinator.putBack(setAside)
+    coordinator.putBackPurchase()
     #expect(coordinator.purchase?.id == purchase.id)
     #expect(coordinator.store.state.phase.completion != nil)
     #expect(context.deliveredResults.isEmpty)
@@ -347,11 +371,11 @@ struct PurchasingCoordinatorTests {
     let (coordinator, context) = make()
     coordinator.beginPurchase(of: makeProduct("first"), source: .purchaseFunc(makeProduct("first")), isFreeTrialAvailable: false)
     var result: PurchaseResult?
-    coordinator.awaitResult { result = $0 }
-    let setAside = coordinator.setAsidePurchase()
+    coordinator.awaitResult(forProductId: "product") { result = $0 }
+    coordinator.setAsidePurchase()
     let second = coordinator.beginPurchase(of: makeProduct("second"), source: .purchaseFunc(makeProduct("second")), isFreeTrialAvailable: false)
 
-    coordinator.putBack(setAside)
+    coordinator.putBackPurchase()
 
     #expect(coordinator.purchase?.id == second.id)
     #expect(result == .cancelled)
@@ -362,7 +386,7 @@ struct PurchasingCoordinatorTests {
   func resultMatchesProduct() async {
     let (coordinator, context) = make()
     coordinator.beginPurchase(of: makeProduct(), source: .purchaseFunc(makeProduct()), isFreeTrialAvailable: false)
-    coordinator.awaitResult { _ in }
+    coordinator.awaitResult(forProductId: "product") { _ in }
 
     await coordinator.completePurchase(of: FakeSK1Transaction(productId: "other"), result: .purchased)
     #expect(context.deliveredResults.isEmpty)
@@ -375,7 +399,7 @@ struct PurchasingCoordinatorTests {
   @Test("a result is handed over when no purchase began")
   func resultWithoutPurchase() async {
     let (coordinator, context) = make()
-    coordinator.awaitResult { _ in }
+    coordinator.awaitResult(forProductId: "product") { _ in }
 
     await coordinator.completePurchase(of: FakeSK1Transaction(productId: "product"), result: .pending)
 
@@ -406,7 +430,7 @@ struct PurchasingCoordinatorTests {
   func concurrentResults() async {
     let (coordinator, context) = make()
     coordinator.beginPurchase(of: makeProduct(), source: .purchaseFunc(makeProduct()), isFreeTrialAvailable: false)
-    coordinator.awaitResult { _ in }
+    coordinator.awaitResult(forProductId: "product") { _ in }
 
     await withTaskGroup(of: Void.self) { group in
       for _ in 0..<200 {
@@ -445,7 +469,7 @@ struct PurchasingCoordinatorTests {
   func resultDeliveredUnlocked() async {
     let (coordinator, context) = make()
     coordinator.beginPurchase(of: makeProduct(), source: .purchaseFunc(makeProduct()), isFreeTrialAvailable: false)
-    coordinator.awaitResult { _ in }
+    coordinator.awaitResult(forProductId: "product") { _ in }
     var readOnOtherThread = false
     context.onDeliver = {
       // Another thread reads the store while the result is handed over. If
@@ -476,6 +500,52 @@ struct PurchasingCoordinatorTests {
     #expect(first != nil)
     #expect(coordinator.lastInternalTransaction == nil)
     #expect(await coordinator.getLatestTransaction(for: purchase) == nil)
+  }
+
+  @Test("a purchase set aside that finishes meanwhile isn't put back")
+  func setAsidePurchaseFinishedMeanwhile() {
+    let (coordinator, context) = make()
+    let other = coordinator.beginPurchase(of: makeProduct("other"), source: .purchaseFunc(makeProduct("other")), isFreeTrialAvailable: false)
+    coordinator.setAsidePurchase()
+    let checkout = coordinator.beginPurchase(of: makeProduct("checkout"), source: .purchaseFunc(makeProduct("checkout")), isFreeTrialAvailable: false)
+
+    // The other purchase is handled while the checkout holds the coordinator.
+    coordinator.finish(other)
+    coordinator.finish(checkout)
+    coordinator.putBackPurchase()
+
+    #expect(coordinator.purchase == nil)
+    #expect(!coordinator.hasPurchaseInProgress)
+    #expect(context.deliveredResults.isEmpty)
+  }
+
+  @Test("putting back with nothing set aside changes nothing")
+  func putBackWithNothingSetAside() {
+    let (coordinator, context) = make()
+    coordinator.putBackPurchase()
+    #expect(!coordinator.hasPurchaseInProgress)
+
+    let purchase = coordinator.beginPurchase(of: makeProduct(), source: .purchaseFunc(makeProduct()), isFreeTrialAvailable: false)
+    coordinator.awaitResult(forProductId: "product") { _ in }
+    coordinator.putBackPurchase()
+    #expect(coordinator.purchase?.id == purchase.id)
+    #expect(coordinator.store.state.phase.completion != nil)
+    #expect(context.deliveredResults.isEmpty)
+  }
+
+  @Test("a StoreKit 1 result waiting without a purchase only takes a transaction of its own product")
+  func resultWithoutPurchaseMatchesProduct() async {
+    let (coordinator, context) = make()
+    var result: PurchaseResult?
+    coordinator.awaitResult(forProductId: "product") { result = $0 }
+
+    // A renewal of another product is replayed on the payment queue.
+    await coordinator.completePurchase(of: FakeSK1Transaction(productId: "other"), result: .purchased)
+    #expect(result == nil)
+    #expect(context.deliveredResults.isEmpty)
+
+    await coordinator.completePurchase(of: FakeSK1Transaction(productId: "product"), result: .purchased)
+    #expect(result == .purchased)
   }
 }
 

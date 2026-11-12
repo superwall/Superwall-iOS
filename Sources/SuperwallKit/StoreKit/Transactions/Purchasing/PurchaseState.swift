@@ -102,7 +102,7 @@ enum PurchasePhase {
   /// A StoreKit 1 purchase is waiting for its result, without a purchase
   /// having begun, such as when a purchase controller calls the SDK's
   /// purchaser itself.
-  case awaitingResult(PurchaseCompletion)
+  case awaitingResult(productId: String, completion: PurchaseCompletion)
   /// A purchase is in progress, and a StoreKit 1 purchase may be waiting for
   /// its result.
   case inFlight(InFlightPurchase, completion: PurchaseCompletion?)
@@ -114,11 +114,23 @@ enum PurchasePhase {
     return nil
   }
 
+  /// The product whose StoreKit 1 result is awaited or being bought.
+  var productId: String? {
+    switch self {
+    case .idle:
+      return nil
+    case .awaitingResult(let productId, _):
+      return productId
+    case .inFlight(let purchase, _):
+      return purchase.product.productIdentifier
+    }
+  }
+
   var completion: PurchaseCompletion? {
     switch self {
     case .idle:
       return nil
-    case .awaitingResult(let completion):
+    case .awaitingResult(_, let completion):
       return completion
     case .inFlight(_, let completion):
       return completion
@@ -130,6 +142,10 @@ enum PurchasePhase {
 /// only by ``PurchaseUpdate`` reducers.
 struct PurchaseState {
   var phase: PurchasePhase = .idle
+  /// A purchase taken out of the way while a custom store checkout from
+  /// another paywall completes. It comes back afterwards unless it finished
+  /// meanwhile.
+  var setAsidePhase: PurchasePhase = .idle
   /// The latest purchased transaction of each product, for when StoreKit 2
   /// can't find it.
   var transactionsByProductId: [String: StoreTransaction] = [:]
@@ -161,18 +177,19 @@ enum PurchaseUpdate: Reducer {
   /// Observer mode saw the purchase's transaction, which shows whether it
   /// started an offer.
   case offerObserved(Bool)
-  /// A StoreKit 1 purchase started waiting for its result, dropping any
-  /// other that was waiting.
-  case resultAwaited(PurchaseCompletion)
+  /// A StoreKit 1 purchase of the product with this id started waiting for
+  /// its result, dropping any other that was waiting.
+  case resultAwaited(productId: String, completion: PurchaseCompletion)
   /// The StoreKit 1 result was handed to whoever was waiting for it.
   case resultDelivered
-  /// The purchase with this id was handled. Does nothing to another one.
+  /// The purchase with this id was handled, whether it's in progress or set
+  /// aside. Does nothing to another one.
   case finished(id: UUID)
   /// The phase was set aside while another purchase is handled.
   case setAside
-  /// A phase that was set aside comes back, unless another purchase began
+  /// The phase that was set aside comes back, unless another purchase began
   /// meanwhile.
-  case putBack(PurchasePhase)
+  case putBack
   /// Ends everything in progress.
   case cleared
   /// A purchaser got a transaction back.
@@ -184,7 +201,7 @@ enum PurchaseUpdate: Reducer {
     var state = state
     switch self {
     case .began(let purchase):
-      if case .awaitingResult(let completion) = state.phase {
+      if case .awaitingResult(_, let completion) = state.phase {
         state.phase = .inFlight(purchase, completion: completion)
       } else {
         state.phase = .inFlight(purchase, completion: nil)
@@ -210,11 +227,11 @@ enum PurchaseUpdate: Reducer {
       }
       purchase.isFreeTrialAvailable = hasOffer
       state.phase = .inFlight(purchase, completion: completion)
-    case .resultAwaited(let completion):
+    case let .resultAwaited(productId, completion):
       if case .inFlight(let purchase, _) = state.phase {
         state.phase = .inFlight(purchase, completion: completion)
       } else {
-        state.phase = .awaitingResult(completion)
+        state.phase = .awaitingResult(productId: productId, completion: completion)
       }
     case .resultDelivered:
       switch state.phase {
@@ -229,13 +246,20 @@ enum PurchaseUpdate: Reducer {
       if state.purchase?.id == id {
         state.phase = .idle
       }
-    case .setAside,
-      .cleared:
-      state.phase = .idle
-    case .putBack(let phase):
-      if case .idle = state.phase {
-        state.phase = phase
+      if state.setAsidePhase.purchase?.id == id {
+        state.setAsidePhase = .idle
       }
+    case .setAside:
+      state.setAsidePhase = state.phase
+      state.phase = .idle
+    case .putBack:
+      if case .idle = state.phase {
+        state.phase = state.setAsidePhase
+      }
+      state.setAsidePhase = .idle
+    case .cleared:
+      state.phase = .idle
+      state.setAsidePhase = .idle
     case let .transactionReceived(transaction, result):
       if result == .purchased {
         state.transactionsByProductId = Self.keepingLatest(
@@ -282,13 +306,13 @@ enum PurchaseAction: StoreAction {
   case begin(InFlightPurchase)
   case endCheckout(productId: String, shouldDismiss: Bool)
   case observeOffer(Bool)
-  case awaitResult(PurchaseCompletion)
-  /// Hands `result` to the StoreKit 1 purchase waiting for it, if the
-  /// purchase in progress is of `productId`, or no purchase began.
+  case awaitResult(productId: String, completion: PurchaseCompletion)
+  /// Hands `result` to the StoreKit 1 purchase waiting for it, if it's of
+  /// `productId`.
   case deliverResult(PurchaseResult, productId: String)
   case finish(id: UUID)
   case setAside
-  case putBack(PurchasePhase)
+  case putBack
   case clear
   case receiveTransaction(StoreTransaction, result: PurchaseResult)
   case useLastInternalTransaction
@@ -296,26 +320,25 @@ enum PurchaseAction: StoreAction {
   func execute(in context: PurchaseContext) -> PurchaseState {
     let store = context.store
     let before = store.state
-    var dropped: PurchaseCompletion?
+    var dropped: [PurchaseCompletion] = []
     switch self {
     case .begin(let purchase):
-      if case .inFlight(_, let completion) = before.phase {
-        dropped = completion
+      if case .inFlight(_, let completion?) = before.phase {
+        dropped.append(completion)
       }
       store.update(PurchaseUpdate.began(purchase))
     case let .endCheckout(productId, shouldDismiss):
       store.update(PurchaseUpdate.checkoutEnded(productId: productId, shouldDismiss: shouldDismiss))
     case .observeOffer(let hasOffer):
       store.update(PurchaseUpdate.offerObserved(hasOffer))
-    case .awaitResult(let completion):
-      dropped = before.phase.completion
-      store.update(PurchaseUpdate.resultAwaited(completion))
+    case let .awaitResult(productId, completion):
+      dropped += [before.phase.completion].compactMap { $0 }
+      store.update(PurchaseUpdate.resultAwaited(productId: productId, completion: completion))
     case let .deliverResult(result, productId):
-      if let purchase = before.purchase,
-        purchase.product.productIdentifier != productId {
-        return before
-      }
-      guard let completion = before.phase.completion else {
+      guard
+        before.phase.productId == productId,
+        let completion = before.phase.completion
+      else {
         return before
       }
       store.update(PurchaseUpdate.resultDelivered)
@@ -324,29 +347,33 @@ enum PurchaseAction: StoreAction {
       }
     case .finish(let id):
       if before.purchase?.id == id {
-        dropped = before.phase.completion
+        dropped += [before.phase.completion].compactMap { $0 }
+      }
+      if before.setAsidePhase.purchase?.id == id {
+        dropped += [before.setAsidePhase.completion].compactMap { $0 }
       }
       store.update(PurchaseUpdate.finished(id: id))
     case .setAside:
+      // Only one purchase is set aside at a time, so an earlier one is over.
+      dropped += [before.setAsidePhase.completion].compactMap { $0 }
       store.update(PurchaseUpdate.setAside)
-    case .putBack(let phase):
-      if case .idle = before.phase {
-        store.update(PurchaseUpdate.putBack(phase))
-      } else {
+    case .putBack:
+      if before.hasPurchaseInProgress {
         // Another purchase began meanwhile, so the one set aside is over.
-        dropped = phase.completion
+        dropped += [before.setAsidePhase.completion].compactMap { $0 }
       }
+      store.update(PurchaseUpdate.putBack)
     case .clear:
-      dropped = before.phase.completion
+      dropped += [before.phase.completion, before.setAsidePhase.completion].compactMap { $0 }
       store.update(PurchaseUpdate.cleared)
     case let .receiveTransaction(transaction, result):
       store.update(PurchaseUpdate.transactionReceived(transaction, result: result))
     case .useLastInternalTransaction:
       store.update(PurchaseUpdate.lastInternalTransactionUsed)
     }
-    if let dropped = dropped {
+    for completion in dropped {
       store.deferUntilUnlocked {
-        context.deliver(.cancelled, to: dropped)
+        context.deliver(.cancelled, to: completion)
       }
     }
     return before

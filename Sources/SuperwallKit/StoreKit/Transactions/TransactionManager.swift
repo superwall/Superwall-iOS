@@ -436,7 +436,7 @@ final class TransactionManager {
       product: storeProduct,
       purchaseSource: .observeFunc(storeProduct)
     )
-    coordinator.awaitResult { [weak self] result in
+    coordinator.awaitResult(forProductId: storeProduct.productIdentifier) { [weak self] result in
       Task {
         await self?.handle(
           result: result,

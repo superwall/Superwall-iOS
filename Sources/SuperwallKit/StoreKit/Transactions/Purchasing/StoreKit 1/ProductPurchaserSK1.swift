@@ -93,7 +93,7 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
     }
     return await withCheckedContinuation { continuation in
       // Set before the payment is queued, so its result can't arrive first.
-      coordinator.awaitResult { result in
+      coordinator.awaitResult(forProductId: product.productIdentifier) { result in
         continuation.resume(returning: result)
       }
       let payment = SKMutablePayment(product: product)

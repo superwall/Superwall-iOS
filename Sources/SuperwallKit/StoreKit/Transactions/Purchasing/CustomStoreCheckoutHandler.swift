@@ -149,7 +149,9 @@ final class CustomStoreCheckoutHandler {
     case let .complete(_, customTransactionId, shouldDismiss):
       product.customTransactionId = customTransactionId
       let coordinator = factory.makePurchasingCoordinator()
-      let otherPurchase = ownership == .otherPurchase ? coordinator.setAsidePurchase() : nil
+      if ownership == .otherPurchase {
+        coordinator.setAsidePurchase()
+      }
       // The purchase still counts, but a closing paywall isn't dismissed again.
       let purchase = await resumeCustomStoreCheckout(
         of: product,
@@ -163,9 +165,8 @@ final class CustomStoreCheckoutHandler {
         state: .purchasing(purchase.source),
         purchase: purchase
       )
-      if let otherPurchase {
-        coordinator.putBack(otherPurchase)
-      }
+      // Does nothing if no purchase was set aside.
+      coordinator.putBackPurchase()
     case .abandon(_, let reason):
       let purchase = await resumeCustomStoreCheckout(
         of: product,
