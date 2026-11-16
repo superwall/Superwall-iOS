@@ -9,7 +9,7 @@
 enum PurchaseSource {
   #if canImport(WebKit)
   /// The purchase was initiated internally by the SDK, for the slot with this `Product.cacheKey`.
-  case `internal`(String, PaywallViewController, Bool)
+  case `internal`(String, PurchasingPaywall, Bool)
   #endif
 
   /// The purchase was initiated externally by the user calling ``Superwall/purchase(_:)-7gwwe``.
@@ -36,11 +36,24 @@ enum PurchaseSource {
 enum RestoreSource: Equatable {
   #if canImport(WebKit)
   /// Initiated internally by the SDK.
-  case `internal`(PaywallViewController)
+  case `internal`(PurchasingPaywall)
   #endif
 
   /// Initiated externally by the user.
   case external
+
+  static func == (lhs: RestoreSource, rhs: RestoreSource) -> Bool {
+    switch (lhs, rhs) {
+    case (.external, .external):
+      return true
+    #if canImport(WebKit)
+    case let (.internal(lhsPaywall), .internal(rhsPaywall)):
+      return lhsPaywall === rhsPaywall
+    default:
+      return false
+    #endif
+    }
+  }
 }
 
 typealias GenericSource = RestoreSource
