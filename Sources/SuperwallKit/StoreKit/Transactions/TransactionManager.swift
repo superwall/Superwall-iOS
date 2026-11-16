@@ -31,12 +31,6 @@ final class TransactionManager {
     case purchasing(PurchaseSource)
   }
 
-  /// Tracks an event. Replaced in tests to observe what's tracked. A context
-  /// passed to `init` tracks purchases itself, so this then covers restores only.
-  var trackEvent: (Trackable) async -> Void = { event in
-    _ = await Superwall.shared.track(event)
-  }
-
   /// Everything a purchase causes outside this class.
   let context: TransactionContext
 
@@ -54,6 +48,17 @@ final class TransactionManager {
   @TaskLocal private static var isRunningPurchase = false
 
   init(
+    context: TransactionContext,
+    restoreContext: RestoreContext,
+    factory: Factory
+  ) {
+    self.context = context
+    self.restoreFlow = RestoreFlow(context: restoreContext)
+    self.factory = factory
+  }
+
+  /// Creates a manager whose purchases and restores act on the SDK.
+  convenience init(
     storeKitManager: StoreKitManager,
     receiptManager: ReceiptManager,
     purchaseController: PurchaseController,
@@ -61,15 +66,10 @@ final class TransactionManager {
     purchaseManager: PurchaseManager,
     productsManager: ProductsManager,
     postPurchaseRedeemer: PostPurchaseRedeeming,
-    factory: Factory,
-    context: TransactionContext? = nil
+    factory: Factory
   ) {
-    self.factory = factory
-    var appContext: AppTransactionContext?
-    if let context = context {
-      self.context = context
-    } else {
-      let newContext = AppTransactionContext(
+    self.init(
+      context: AppTransactionContext(
         storeKitManager: storeKitManager,
         receiptManager: receiptManager,
         purchaseController: purchaseController,
@@ -78,24 +78,14 @@ final class TransactionManager {
         productsManager: productsManager,
         postPurchaseRedeemer: postPurchaseRedeemer,
         factory: factory
-      )
-      appContext = newContext
-      self.context = newContext
-    }
-    let restoreContext = AppRestoreContext(
-      purchaseController: purchaseController,
-      purchaseManager: purchaseManager,
+      ),
+      restoreContext: AppRestoreContext(
+        purchaseController: purchaseController,
+        purchaseManager: purchaseManager,
+        factory: factory
+      ),
       factory: factory
     )
-    restoreFlow = RestoreFlow(context: restoreContext)
-    // Both go through `trackEvent`, so replacing it in a test covers
-    // purchases and restores.
-    appContext?.trackEvent = { [weak self] event in
-      await self?.trackEvent(event)
-    }
-    restoreContext.trackEvent = { [weak self] event in
-      await self?.trackEvent(event)
-    }
   }
 
   /// Purchases the given product and handles the result appropriately.
@@ -295,8 +285,7 @@ final class TransactionManager {
     purchaseSource: PurchaseSource
   ) async -> PurchaseResult {
     // In test mode, show the test mode drawer instead of calling StoreKit
-    if context.isTestMode,
-      let result = await context.purchaseInTestMode(product, source: purchaseSource) {
+    if let result = await context.purchaseInTestMode(product, source: purchaseSource) {
       return result
     }
 

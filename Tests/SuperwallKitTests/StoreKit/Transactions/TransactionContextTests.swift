@@ -10,12 +10,13 @@ import Foundation
 import Testing
 @testable import SuperwallKit
 
-/// Records what a purchase causes, and buys with the results it's given.
+/// Records what a purchase causes, in order, and buys with the results it's
+/// given.
 private final class FakeTransactionContext: TransactionContext, @unchecked Sendable {
   private let lock = NSLock()
   private var _calls: [String] = []
   private var _events: [Trackable] = []
-  private var _alerts: [(title: String, source: GenericSource)] = []
+  private var _alertTitles: [String] = []
 
   var isUsingStoreKit2 = false
   var hasExternalPurchaseController = false
@@ -44,7 +45,7 @@ private final class FakeTransactionContext: TransactionContext, @unchecked Senda
   var alertTitles: [String] {
     lock.lock()
     defer { lock.unlock() }
-    return _alerts.map(\.title)
+    return _alertTitles
   }
 
   private func record(_ call: String) {
@@ -73,13 +74,20 @@ private final class FakeTransactionContext: TransactionContext, @unchecked Senda
     return CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [], isPlaceholder: true)
   }
 
+  var makeTransaction: ((CustomStoreTransaction) async -> StoreTransaction)?
+
   func makeStoreTransaction(from transaction: CustomStoreTransaction) async -> StoreTransaction {
-    fatalError("Not used by these tests")
+    record("makeStoreTransaction")
+    guard let makeTransaction = makeTransaction else {
+      fatalError("Set makeTransaction before a custom product purchase succeeds")
+    }
+    return await makeTransaction(transaction)
   }
 
   func track(_ event: Trackable) async {
     lock.lock()
     _events.append(event)
+    _calls.append("track:\(type(of: event))")
     lock.unlock()
   }
 
@@ -100,7 +108,8 @@ private final class FakeTransactionContext: TransactionContext, @unchecked Senda
 
   func presentAlert(title: String, message: String, source: GenericSource) async {
     lock.lock()
-    _alerts.append((title, source))
+    _alertTitles.append(title)
+    _calls.append("presentAlert")
     lock.unlock()
   }
 
@@ -118,6 +127,7 @@ private final class FakeTransactionContext: TransactionContext, @unchecked Senda
   }
 
   func sessionDeviceAttributes() async -> [String: Any] {
+    record("sessionDeviceAttributes")
     return [:]
   }
 
@@ -273,40 +283,37 @@ struct AppTransactionContextTests {
     #expect(await context.product(withId: "unknown") == nil)
   }
 
-  @Test("a transaction that isn't from StoreKit 2 is left out of the observer's cache without failing")
-  func rememberingNothingDoesNothing() async {
-    let context = makeContext(in: DependencyContainer())
-
-    await context.rememberHandledTransaction(nil)
-  }
-
-  @Test("a TransactionManager given a context doesn't send its purchases to trackEvent")
-  func injectedContextTracksPurchases() async {
+  @Test("the manager built from the SDK's managers tracks purchases through its real context")
+  func realManagerTracksThroughItsContext() async {
     let dependencyContainer = DependencyContainer()
-    let context = FakeTransactionContext()
     let transactionManager = TransactionManager(
       storeKitManager: dependencyContainer.storeKitManager,
       receiptManager: dependencyContainer.receiptManager,
-      purchaseController: dependencyContainer.purchaseController,
+      purchaseController: PendingPurchaseController(),
       placementsQueue: dependencyContainer.placementsQueue,
       purchaseManager: dependencyContainer.purchaseManager,
       productsManager: dependencyContainer.productsManager,
       postPurchaseRedeemer: NoRedeem(),
-      factory: dependencyContainer,
-      context: context
+      factory: dependencyContainer
     )
-    let viaTrackEvent = CountingRedeemer()
-    transactionManager.trackEvent = { _ in
-      await viaTrackEvent.redeemAfterPurchase()
+    let tracked = CountingRedeemer()
+    transactionManager.trackEvents { _ in
+      await tracked.redeemAfterPurchase()
     }
-    dependencyContainer.makePurchasingCoordinator().reset()
+    let coordinator = dependencyContainer.makePurchasingCoordinator()
+    coordinator.reset()
     let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "product"))
+    let purchase = coordinator.beginPurchase(
+      of: product,
+      source: .purchaseFunc(product),
+      isFreeTrialAvailable: false
+    )
 
-    await transactionManager.purchase(.purchaseFunc(product))
+    await transactionManager.trackCancelled(purchase: purchase)
 
-    #expect(!context.events.isEmpty)
-    #expect(viaTrackEvent.count == 0)
-    #expect(transactionManager.context === context)
+    #expect(transactionManager.context is AppTransactionContext)
+    #expect(tracked.count == 1)
+    coordinator.reset()
   }
 }
 
@@ -317,15 +324,30 @@ struct TransactionContextTests {
     context: FakeTransactionContext
   ) -> TransactionManager {
     return TransactionManager(
-      storeKitManager: dependencyContainer.storeKitManager,
-      receiptManager: dependencyContainer.receiptManager,
-      purchaseController: dependencyContainer.purchaseController,
-      placementsQueue: dependencyContainer.placementsQueue,
-      purchaseManager: dependencyContainer.purchaseManager,
-      productsManager: dependencyContainer.productsManager,
-      postPurchaseRedeemer: NoRedeem(),
-      factory: dependencyContainer,
-      context: context
+      context: context,
+      restoreContext: AppRestoreContext(
+        purchaseController: dependencyContainer.purchaseController,
+        purchaseManager: dependencyContainer.purchaseManager,
+        factory: dependencyContainer
+      ),
+      factory: dependencyContainer
+    )
+  }
+
+  private func makeCustomProduct() -> StoreProduct {
+    return StoreProduct(
+      customProduct: APIStoreProduct(
+        superwallProduct: SuperwallProduct(
+          object: "product",
+          identifier: "custom",
+          platform: .custom,
+          price: SuperwallProductPrice(amount: 999, currency: "USD"),
+          subscription: nil,
+          entitlements: [],
+          storefront: "USA"
+        ),
+        entitlements: []
+      )
     )
   }
 
@@ -352,7 +374,7 @@ struct TransactionContextTests {
     let result = await transactionManager.purchase(.purchaseFunc(product))
 
     #expect(result == .cancelled)
-    #expect(!context.calls.contains("purchaseInTestMode"))
+    #expect(context.calls.contains("purchaseInTestMode"))
     #expect(context.calls.contains("purchaseWithStoreKit"))
     #expect(!context.calls.contains("purchaseWithPurchaseController"))
     #expect(abandonedProductIds(in: context.events) == ["product"])
@@ -363,7 +385,6 @@ struct TransactionContextTests {
   func testModeResultSkipsBuying() async {
     let dependencyContainer = DependencyContainer()
     let context = FakeTransactionContext()
-    context.isTestMode = true
     context.testModeResult = .cancelled
     let transactionManager = makeTransactionManager(in: dependencyContainer, context: context)
     dependencyContainer.makePurchasingCoordinator().reset()
@@ -411,6 +432,49 @@ struct TransactionContextTests {
     #expect(!coordinator.hasPurchaseInProgress)
   }
 
+  @Test("a purchase that succeeds is redeemed, remembered, tracked and sent, in that order")
+  func successfulPurchaseRunsItsEffectsInOrder() async {
+    let dependencyContainer = DependencyContainer()
+    let context = FakeTransactionContext()
+    context.makeTransaction = { transaction in
+      await dependencyContainer.makeStoreTransaction(from: transaction)
+    }
+    let transactionManager = makeTransactionManager(in: dependencyContainer, context: context)
+    let coordinator = dependencyContainer.makePurchasingCoordinator()
+    coordinator.reset()
+    let product = makeCustomProduct()
+    product.customTransactionId = "transaction"
+    let purchase = coordinator.beginPurchase(
+      of: product,
+      source: .purchaseFunc(product),
+      isFreeTrialAvailable: false
+    )
+
+    await transactionManager.handle(
+      result: .purchased,
+      state: .purchasing(.purchaseFunc(product)),
+      purchase: purchase
+    )
+
+    #expect(context.calls == [
+      "makeStoreTransaction",
+      "redeemAfterPurchase",
+      "rememberHandledTransaction",
+      "sessionDeviceAttributes",
+      "track:Transaction",
+      "flushPlacements",
+      "track:NonRecurringProductPurchase"
+    ])
+    let completed = context.events.compactMap { $0 as? InternalSuperwallEvent.Transaction }
+    if case .complete(let completedProduct, let transaction, _) = completed.first?.state {
+      #expect(completedProduct.productIdentifier == "custom")
+      #expect(transaction != nil)
+    } else {
+      Issue.record("Expected a completed transaction to be tracked")
+    }
+    #expect(!coordinator.hasPurchaseInProgress)
+  }
+
   @Test("a pending purchase shows its alert through the context")
   func pendingPurchaseShowsAlert() async {
     let dependencyContainer = DependencyContainer()
@@ -443,20 +507,7 @@ struct TransactionContextTests {
     let context = FakeTransactionContext()
     let transactionManager = makeTransactionManager(in: dependencyContainer, context: context)
     dependencyContainer.makePurchasingCoordinator().reset()
-    let product = StoreProduct(
-      customProduct: APIStoreProduct(
-        superwallProduct: SuperwallProduct(
-          object: "product",
-          identifier: "custom",
-          platform: .custom,
-          price: SuperwallProductPrice(amount: 999, currency: "USD"),
-          subscription: nil,
-          entitlements: [],
-          storefront: "USA"
-        ),
-        entitlements: []
-      )
-    )
+    let product = makeCustomProduct()
 
     let result = await transactionManager.purchase(.purchaseFunc(product))
 

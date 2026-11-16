@@ -186,12 +186,14 @@ matching Android `*State.kt` when changing one):
   `SequentialActor`. Don't use a Swift `actor` for this: it lets other calls in at every `await`.
 - Read part of the state with `store.read { }` when a copy of the whole state could outlive a
   removal and become the last owner of something that must be released in a certain place.
-- **Other parts of the SDK** are reached through the Context too, reads included. The class that
-  owns the store or runs the flow holds no other manager. Only the real context (`App…Context`)
-  does. When the owner is its own context, as `IdentityManager` is, it reaches the rest of the
-  SDK through `SdkContext`, whose real implementation holds its managers weakly. Give each
-  method one meaning ("wait for the config", not "the config manager") and expose only what's
-  read (`paywallOptions`, not all the options).
+- **Other parts of the SDK** are reached through the Context too, reads included, so a test can
+  answer for them. A flow with a separate real context (`AppTransactionContext`,
+  `AppRestoreContext`) keeps its managers there. An owner that is its own context, as
+  `IdentityManager` is, asks other managers through `SdkContext`, whose real implementation holds
+  them weakly; add a method there as more parts need each other. Give each method one meaning
+  ("wait for the config", not "the config manager") and expose only what's read (`paywallOptions`,
+  not all the options). Not everything has moved yet: `IdentityManager` still holds storage and the
+  web entitlement redeemer, and `TransactionManager` the factory it gets the purchase store from.
 
 ### Moving a part of the SDK onto a store
 
@@ -267,7 +269,9 @@ purchase controller" check. Don't make that inner call wait on the queue, or it 
 buying, tracking, alerts, redeeming, the paywall's loading state and messages) goes through
 `TransactionContext`; add a method there rather than calling the paywall, `Superwall.shared` or a
 manager from `TransactionManager`. The one thing it reaches directly is the `PurchasingCoordinator`,
-which is the purchase store itself.
+which is the purchase store itself. `TransactionManager.init(context:restoreContext:factory:)` takes
+both contexts; the other init builds the real ones. Tests watch what the real ones track by
+replacing their `trackEvent`.
 
 ### Paywall view store
 

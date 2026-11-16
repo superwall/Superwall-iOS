@@ -41,8 +41,8 @@ protocol TransactionContext: AnyObject {
   func purchaseWithPurchaseController(_ product: StoreProduct) async -> PurchaseResult
   /// Buys through the SDK's own StoreKit purchaser.
   func purchaseWithStoreKit(_ product: StoreProduct) async -> PurchaseResult
-  /// Lets the tester pick what a purchase does. Only called in test mode.
-  /// Returns `nil` where there's no test mode UI, and the purchase goes ahead.
+  /// Lets the tester pick what a purchase does. Returns `nil` when not in
+  /// test mode, or where there's no test mode UI, and the purchase goes ahead.
   func purchaseInTestMode(
     _ product: StoreProduct,
     source: PurchaseSource
@@ -102,8 +102,7 @@ final class AppTransactionContext: TransactionContext {
   private let postPurchaseRedeemer: PostPurchaseRedeeming
   private let factory: TransactionManager.Factory
 
-  /// Tracks an event. ``TransactionManager`` points this at its own
-  /// `trackEvent`, so replacing that in a test covers purchases too.
+  /// Tracks an event. Replaced in tests to observe what's tracked.
   var trackEvent: (Trackable) async -> Void = { event in
     _ = await Superwall.shared.track(event)
   }
@@ -202,7 +201,11 @@ final class AppTransactionContext: TransactionContext {
     source: PurchaseSource
   ) async -> PurchaseResult? {
     #if canImport(WebKit)
-    let handler = TestModeTransactionHandler(testModeManager: factory.makeTestModeManager())
+    let testModeManager = factory.makeTestModeManager()
+    guard testModeManager.isTestMode else {
+      return nil
+    }
+    let handler = TestModeTransactionHandler(testModeManager: testModeManager)
     return await handler.handlePurchase(product: product, purchaseSource: source)
     #else
     return nil

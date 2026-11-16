@@ -685,6 +685,7 @@
 		8583971F8E9E51E9B7A4FCC6 /* PurchasingCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB8384E2DB0A3627BE1CCB7D /* PurchasingCoordinator.swift */; };
 		8590890CA83CC513E4CE6E26 /* RestoreType.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAEBD34CFE62DCFE0AFD80D6 /* RestoreType.swift */; };
 		85B2B66A57065ACAC21A9897 /* SubscriptionStatusEmissionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F64C1931DD6CC5BE078CCE /* SubscriptionStatusEmissionTests.swift */; };
+		865301DAE2343200B81E76D2 /* TransactionManager+TrackEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20B971EF557F1F844FF040D /* TransactionManager+TrackEvents.swift */; };
 		8663CCAB245684332E031D3B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 503BCB840BC6A056A3289DAE /* Localizable.strings */; };
 		86ABB852E871ACF72E915018 /* PublishedSubscriptionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 328C01066B84891ECF4B7F34 /* PublishedSubscriptionStatus.swift */; };
 		86B84522E7D75D4004545E9E /* ASN1Decoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F49804DCB74FEEFA0D3438A9 /* ASN1Decoder.swift */; };
@@ -2072,6 +2073,7 @@
 		D195B8E7B45C80D80BBBAF64 /* EntitlementPriorityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementPriorityTests.swift; sourceTree = "<group>"; };
 		D198C8645A213EEAD622C881 /* FakeLocationAuthorizationStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeLocationAuthorizationStatus.swift; sourceTree = "<group>"; };
 		D1AC41D440D40BE3310CC27F /* PaywallViewState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewState.swift; sourceTree = "<group>"; };
+		D20B971EF557F1F844FF040D /* TransactionManager+TrackEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TransactionManager+TrackEvents.swift"; sourceTree = "<group>"; };
 		D2E3B1F44CAFE4D7C94595BB /* PathTitleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathTitleTests.swift; sourceTree = "<group>"; };
 		D31BB6D0C57337C6E929D617 /* ASN1Decoder+UnkeyedDecodingContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ASN1Decoder+UnkeyedDecodingContainer.swift"; sourceTree = "<group>"; };
 		D3479E4B3365290BC0C0A123 /* StripeProduct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripeProduct.swift; sourceTree = "<group>"; };
@@ -3558,6 +3560,7 @@
 				56AD8BCA24F20A7A3B4EF4BE /* CustomStoreCheckoutTests.swift */,
 				B271E141F57B11A282447E09 /* NotificationSchedulerTests.swift */,
 				575405B4CEAA6017EC6C9D81 /* TransactionContextTests.swift */,
+				D20B971EF557F1F844FF040D /* TransactionManager+TrackEvents.swift */,
 				971FD01A8AF763B6565B7F96 /* TransactionManagerPurchaseTests.swift */,
 				77797D7A41CB692B8E45826B /* Purchasing */,
 				DA3B17AC046B9765C46ED016 /* Restoring */,
@@ -4960,6 +4963,7 @@
 				2544787D3BD77572F1B57866 /* TrackingLogicTests.swift in Sources */,
 				9F84BAB3F37DF4E31B8917F4 /* TrackingManagerProxyTests.swift in Sources */,
 				0539C6DE803A8350403F799A /* TransactionContextTests.swift in Sources */,
+				865301DAE2343200B81E76D2 /* TransactionManager+TrackEvents.swift in Sources */,
 				58560C94367CD66E339ADC9B /* TransactionManagerPurchaseTests.swift in Sources */,
 				FBB2854F84ABC22A64A4E733 /* UIApplication+ActiveWindowTests.swift in Sources */,
 				20F88188CF7E5CC77C4A01A9 /* UIDevice+ModelNameTests.swift in Sources */,
