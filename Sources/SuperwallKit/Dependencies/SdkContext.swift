@@ -10,8 +10,6 @@ import Foundation
 /// What one part of the SDK asks of another. A store's context reaches the
 /// rest of the SDK through this rather than holding the managers itself, so
 /// it doesn't depend on their concrete types and tests can fake them.
-///
-/// Matches Android's `SdkContext`.
 protocol SdkContext: AnyObject {
   /// Waits for the config. Returns `nil` if it never arrives.
   func awaitConfig() async -> Config?

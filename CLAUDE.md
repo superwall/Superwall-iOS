@@ -186,7 +186,7 @@ matching Android `*State.kt` when changing one):
   `SequentialActor`. Don't use a Swift `actor` for this: it lets other calls in at every `await`.
 - Read part of the state with `store.read { }` when a copy of the whole state could outlive a
   removal and become the last owner of something that must be released in a certain place.
-- **Other parts of the SDK** are reached through `SdkContext` (Android's `SdkContext`), not by
+- **Other parts of the SDK** are reached through `SdkContext`, not by
   holding another manager. Add a method there when a store's context needs another part of the
   SDK, and give it one meaning: "wait for the config", not "the config manager".
 
