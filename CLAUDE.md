@@ -186,6 +186,25 @@ matching Android `*State.kt` when changing one):
   `SequentialActor`. Don't use a Swift `actor` for this: it lets other calls in at every `await`.
 - Read part of the state with `store.read { }` when a copy of the whole state could outlive a
   removal and become the last owner of something that must be released in a certain place.
+- **Other parts of the SDK** are reached through `SdkContext` (Android's `SdkContext`), not by
+  holding another manager. Add a method there when a store's context needs another part of the
+  SDK, and give it one meaning: "wait for the config", not "the config manager".
+
+### Moving a part of the SDK onto a store
+
+Go one part at a time, and keep the public API the same so the change can be undone on its own.
+
+1. Before changing anything, write tests for that part's current behavior through its public
+   methods, and get them passing against the old code.
+2. Gather its state into one struct, its changes into `Reducer` cases, its side effects into a
+   Context protocol, and hook the old public methods up to the store.
+3. Run the tests from step 1 unchanged, then add tests for each reducer, each action and the
+   context fake.
+4. Don't fix bugs in the same pull request. A bug the move turns up goes in a pull request of its
+   own, before or after, so undoing the move doesn't bring the bug back. A test from step 1 that
+   only passes because of a bug is marked with `withKnownIssue` and fixed in that pull request.
+5. Leave the parts that drive UI (paywall views, alerts, presentation) until the parts they depend
+   on have moved.
 
 ### Identity store
 
@@ -240,8 +259,10 @@ and `RestoreFlow.restore` each run on their own `SerialTaskCoordinator`. A call 
 (the app's purchase controller calling `Superwall.purchase` or `restorePurchases` from its own
 purchase or restore) runs straight away, through a task-local flag and the "purchase function with a
 purchase controller" check. Don't make that inner call wait on the queue, or it deadlocks.
-`RestoreFlow` has no state; everything it causes goes through `RestoreContext`. Observer-mode
-tracking stays in `TransactionManager`.
+`RestoreFlow` has no state; everything it causes goes through `RestoreContext`. Everything a
+purchase causes outside `TransactionManager` (buying, tracking, alerts, redeeming, the paywall's
+loading state and messages) goes through `TransactionContext`; add a method there rather than
+calling the paywall, `Superwall.shared` or a manager from `TransactionManager`.
 
 ### Paywall view store
 
