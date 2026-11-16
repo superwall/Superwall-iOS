@@ -186,9 +186,12 @@ matching Android `*State.kt` when changing one):
   `SequentialActor`. Don't use a Swift `actor` for this: it lets other calls in at every `await`.
 - Read part of the state with `store.read { }` when a copy of the whole state could outlive a
   removal and become the last owner of something that must be released in a certain place.
-- **Other parts of the SDK** are reached through `SdkContext`, not by
-  holding another manager. Add a method there when a store's context needs another part of the
-  SDK, and give it one meaning: "wait for the config", not "the config manager".
+- **Other parts of the SDK** are reached through the Context too, reads included. The class that
+  owns the store or runs the flow holds no other manager. Only the real context (`App…Context`)
+  does. When the owner is its own context, as `IdentityManager` is, it reaches the rest of the
+  SDK through `SdkContext`, whose real implementation holds its managers weakly. Give each
+  method one meaning ("wait for the config", not "the config manager") and expose only what's
+  read (`paywallOptions`, not all the options).
 
 ### Moving a part of the SDK onto a store
 
@@ -259,10 +262,12 @@ and `RestoreFlow.restore` each run on their own `SerialTaskCoordinator`. A call 
 (the app's purchase controller calling `Superwall.purchase` or `restorePurchases` from its own
 purchase or restore) runs straight away, through a task-local flag and the "purchase function with a
 purchase controller" check. Don't make that inner call wait on the queue, or it deadlocks.
-`RestoreFlow` has no state; everything it causes goes through `RestoreContext`. Everything a
-purchase causes outside `TransactionManager` (buying, tracking, alerts, redeeming, the paywall's
-loading state and messages) goes through `TransactionContext`; add a method there rather than
-calling the paywall, `Superwall.shared` or a manager from `TransactionManager`.
+`RestoreFlow` has no state; everything it causes goes through `RestoreContext`. Everything
+`TransactionManager` reads from or causes in the rest of the SDK (product lookups, trial checks,
+buying, tracking, alerts, redeeming, the paywall's loading state and messages) goes through
+`TransactionContext`; add a method there rather than calling the paywall, `Superwall.shared` or a
+manager from `TransactionManager`. The one thing it reaches directly is the `PurchasingCoordinator`,
+which is the purchase store itself.
 
 ### Paywall view store
 

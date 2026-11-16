@@ -15,9 +15,6 @@ import UIKit
 #endif
 
 final class TransactionManager {
-  private let storeKitManager: StoreKitManager
-  private let receiptManager: ReceiptManager
-  private let productsManager: ProductsManager
   private let factory: Factory
   typealias Factory = OptionsFactory
     & TriggerFactory
@@ -34,7 +31,8 @@ final class TransactionManager {
     case purchasing(PurchaseSource)
   }
 
-  /// Tracks an event. Replaced in tests to observe what's tracked.
+  /// Tracks an event. Replaced in tests to observe what's tracked. A context
+  /// passed to `init` tracks purchases itself, so this then covers restores only.
   var trackEvent: (Trackable) async -> Void = { event in
     _ = await Superwall.shared.track(event)
   }
@@ -66,19 +64,24 @@ final class TransactionManager {
     factory: Factory,
     context: TransactionContext? = nil
   ) {
-    self.storeKitManager = storeKitManager
-    self.receiptManager = receiptManager
-    self.productsManager = productsManager
     self.factory = factory
-    let appContext = AppTransactionContext(
-      receiptManager: receiptManager,
-      purchaseController: purchaseController,
-      placementsQueue: placementsQueue,
-      purchaseManager: purchaseManager,
-      postPurchaseRedeemer: postPurchaseRedeemer,
-      factory: factory
-    )
-    self.context = context ?? appContext
+    var appContext: AppTransactionContext?
+    if let context = context {
+      self.context = context
+    } else {
+      let newContext = AppTransactionContext(
+        storeKitManager: storeKitManager,
+        receiptManager: receiptManager,
+        purchaseController: purchaseController,
+        placementsQueue: placementsQueue,
+        purchaseManager: purchaseManager,
+        productsManager: productsManager,
+        postPurchaseRedeemer: postPurchaseRedeemer,
+        factory: factory
+      )
+      appContext = newContext
+      self.context = newContext
+    }
     let restoreContext = AppRestoreContext(
       purchaseController: purchaseController,
       purchaseManager: purchaseManager,
@@ -87,7 +90,7 @@ final class TransactionManager {
     restoreFlow = RestoreFlow(context: restoreContext)
     // Both go through `trackEvent`, so replacing it in a test covers
     // purchases and restores.
-    appContext.trackEvent = { [weak self] event in
+    appContext?.trackEvent = { [weak self] event in
       await self?.trackEvent(event)
     }
     restoreContext.trackEvent = { [weak self] event in
@@ -139,7 +142,7 @@ final class TransactionManager {
       // when it has one. `product(withId:)` resolves against the composite-keyed
       // map first and falls back to the Apple-ID map for custom and externally
       // cached products that aren't part of a paywall.
-      let resolvedProduct = await storeKitManager.product(withId: productId)
+      let resolvedProduct = await context.product(withId: productId)
       guard let storeProduct = resolvedProduct else {
         Logger.debug(
           logLevel: .error,
@@ -205,12 +208,11 @@ final class TransactionManager {
     case .purchased:
       await didPurchase(purchase)
     case .failed(let error):
-      let superwallOptions = context.superwallOptions
       guard
         let outcome = TransactionErrorLogic.handle(
           error,
-          triggers: factory.makeTriggers(),
-          shouldShowPurchaseFailureAlert: superwallOptions.paywalls.shouldShowPurchaseFailureAlert
+          triggers: context.triggers,
+          shouldShowPurchaseFailureAlert: context.paywallOptions.shouldShowPurchaseFailureAlert
         )
       else {
         await trackFailure(error: error, purchase: purchase)
@@ -256,11 +258,7 @@ final class TransactionManager {
 
   @available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
   func logSK2ObserverModeTransaction(_ transaction: SK2Transaction) async {
-    guard let product = try? await productsManager.products(
-      identifiers: [transaction.productID],
-      forPaywall: nil,
-      placement: nil
-    ).first else {
+    guard let product = await context.loadProduct(withId: transaction.productID) else {
       return
     }
     await prepareToPurchase(
@@ -297,7 +295,8 @@ final class TransactionManager {
     purchaseSource: PurchaseSource
   ) async -> PurchaseResult {
     // In test mode, show the test mode drawer instead of calling StoreKit
-    if let result = await context.purchaseInTestMode(product, source: purchaseSource) {
+    if context.isTestMode,
+      let result = await context.purchaseInTestMode(product, source: purchaseSource) {
       return result
     }
 
@@ -413,13 +412,7 @@ final class TransactionManager {
   }
 
   func observeSK1Transaction(for productId: String) async {
-    guard
-      let storeProduct = try? await productsManager.products(
-        identifiers: [productId],
-        forPaywall: nil,
-        placement: nil
-      ).first
-    else {
+    guard let storeProduct = await context.loadProduct(withId: productId) else {
       Logger.debug(
         logLevel: .debug,
         scope: .superwallCore,
@@ -512,7 +505,7 @@ final class TransactionManager {
       .observeFunc:
       // If an external purchase controller is being used, skip because this will
       // get called by the purchase function of the purchase controller.
-      if !context.superwallOptions.shouldObservePurchases,
+      if !context.shouldObservePurchases,
         context.hasExternalPurchaseController {
         return nil
       }
@@ -562,10 +555,7 @@ final class TransactionManager {
 
     // Same wait as `DependencyContainer.isFreeTrialAvailable`: the buy button
     // can be tapped while the first purchases load is still running.
-    return await receiptManager.isFreeTrialAvailable(
-      for: product,
-      waitingFor: factory.initialPurchasesLoad
-    )
+    return await context.isAppStoreFreeTrialAvailable(for: product)
   }
 
   /// Custom products don't have StoreKit intro-offer state, so use entitlement history
@@ -588,13 +578,7 @@ final class TransactionManager {
     // Waiting on the same rule the paywall used, so the trial it advertised
     // and the transaction it produces are decided from the same state.
     let productEntitlementIds = Set(product.entitlements.map(\.id))
-    if factory.purchasesLoadCouldChange(entitlementIds: productEntitlementIds) {
-      await factory.initialPurchasesLoad?.value
-    }
-
-    let customerInfo = await MainActor.run {
-      Superwall.shared.customerInfo
-    }
+    let customerInfo = await context.customerInfo(afterLoadAffecting: productEntitlementIds)
 
     // If customer info hasn't loaded yet, assume the user has already had the
     // entitlement to avoid falsely counting a trial.
@@ -674,7 +658,7 @@ final class TransactionManager {
         productIdentifier: product.productIdentifier,
         purchaseDate: purchase.purchaseDate
       )
-      return await factory.makeStoreTransaction(from: customTransaction)
+      return await context.makeStoreTransaction(from: customTransaction)
     }
 
     return await factory.makePurchasingCoordinator().getLatestTransaction(for: purchase)
@@ -710,7 +694,7 @@ final class TransactionManager {
     paywallViewController: PaywallViewController,
     shouldDismiss: Bool
   ) async {
-    let shouldDismissPaywall = context.superwallOptions.paywalls.automaticallyDismiss && shouldDismiss
+    let shouldDismissPaywall = context.paywallOptions.automaticallyDismiss && shouldDismiss
 
     if shouldDismissPaywall {
       await context.dismiss(paywallViewController, result: .purchased(product))
