@@ -48,7 +48,7 @@ enum PurchaseMethod {
   /// A custom store checkout that the paywall runs itself, for the slot with
   /// this `Product.cacheKey`.
   case customStoreCheckout(
-    paywall: PaywallViewController,
+    paywall: PurchasingPaywall,
     productId: String,
     shouldDismiss: Bool
   )

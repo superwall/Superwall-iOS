@@ -212,7 +212,7 @@ final class TransactionManager {
         case .purchasing(let purchaseSource):
           #if canImport(WebKit)
           if case let .internal(_, paywallViewController, _) = purchaseSource {
-            await context.updateLoading(.spinnerDismissed, on: paywallViewController)
+            await paywallViewController.updateLoading(.spinnerDismissed)
           }
           #endif
         }
@@ -306,9 +306,8 @@ final class TransactionManager {
     // Attach intro offer token if available from the paywall
     #if canImport(WebKit)
     if case .internal(_, let paywallViewController, _) = purchaseSource {
-      product.introOfferToken = await context.introOfferToken(
-        forProductId: product.productIdentifier,
-        on: paywallViewController
+      product.introOfferToken = await paywallViewController.introOfferToken(
+        forProductId: product.productIdentifier
       )
     }
     #endif
@@ -358,7 +357,7 @@ final class TransactionManager {
         error: error
       )
 
-      let paywallInfo = await context.info(of: paywallViewController)
+      let paywallInfo = await paywallViewController.info
       Task { [isObserved] in
         let trackedEvent = InternalSuperwallEvent.Transaction(
           state: .fail(.failure(error.safeLocalizedDescription, product)),
@@ -370,7 +369,7 @@ final class TransactionManager {
           storeKitVersion: context.isUsingStoreKit2 ? .storeKit2 : .storeKit1
         )
         await context.track(trackedEvent)
-        await context.notify(paywallViewController, of: .transactionFail)
+        await paywallViewController.notify(of: .transactionFail)
       }
     #endif
     case .purchaseFunc,
@@ -472,7 +471,7 @@ final class TransactionManager {
         error: nil
       )
 
-      let paywallInfo = await context.info(of: paywallViewController)
+      let paywallInfo = await paywallViewController.info
 
       let transactionStart = InternalSuperwallEvent.Transaction(
         state: .start(product),
@@ -484,10 +483,10 @@ final class TransactionManager {
         storeKitVersion: context.isUsingStoreKit2 ? .storeKit2 : .storeKit1
       )
       await context.track(transactionStart)
-      await context.notify(paywallViewController, of: .transactionStart)
+      await paywallViewController.notify(of: .transactionStart)
 
       if customStoreCheckoutTransactionId == nil {
-        await context.updateLoading(.purchaseStarted, on: paywallViewController)
+        await paywallViewController.updateLoading(.purchaseStarted)
       }
     #endif
     case .purchaseFunc,
@@ -680,7 +679,7 @@ final class TransactionManager {
   #if canImport(WebKit)
   private func finalizeInternalPurchase(
     for product: StoreProduct,
-    paywallViewController: PaywallViewController,
+    paywallViewController: PurchasingPaywall,
     shouldDismiss: Bool
   ) async {
     let shouldDismissPaywall = context.paywallOptions.automaticallyDismiss && shouldDismiss
@@ -690,7 +689,7 @@ final class TransactionManager {
       return
     }
 
-    await context.updateLoading(.spinnerDismissed, on: paywallViewController)
+    await paywallViewController.updateLoading(.spinnerDismissed)
   }
 
   #endif
@@ -729,7 +728,7 @@ final class TransactionManager {
         error: nil
       )
 
-      let paywallInfo = await context.info(of: paywallViewController)
+      let paywallInfo = await paywallViewController.info
       let transactionAbandon = InternalSuperwallEvent.Transaction(
         state: .abandon(product),
         paywallInfo: paywallInfo,
@@ -742,10 +741,10 @@ final class TransactionManager {
       )
       await context.track(transactionAbandon)
       if notifiesPage {
-        await context.notify(paywallViewController, of: .transactionAbandon)
+        await paywallViewController.notify(of: .transactionAbandon)
       }
 
-      await context.updateLoading(.finished, on: paywallViewController)
+      await paywallViewController.updateLoading(.finished)
     #endif
     case .purchaseFunc,
       .observeFunc:
@@ -792,7 +791,7 @@ final class TransactionManager {
         error: nil
       )
 
-      let paywallInfo = await context.info(of: paywallViewController)
+      let paywallInfo = await paywallViewController.info
 
       let transactionFail = InternalSuperwallEvent.Transaction(
         state: .fail(.pending("Needs parental approval")),
@@ -804,7 +803,7 @@ final class TransactionManager {
         storeKitVersion: context.isUsingStoreKit2 ? .storeKit2 : .storeKit1
       )
       await context.track(transactionFail)
-      await context.notify(paywallViewController, of: .transactionFail)
+      await paywallViewController.notify(of: .transactionFail)
     #endif
     case .purchaseFunc,
       .observeFunc:
@@ -890,12 +889,11 @@ final class TransactionManager {
     switch source {
     #if canImport(WebKit)
     case let .internal(cacheKey, paywallViewController, _):
-      paywallInfo = await context.info(of: paywallViewController)
+      paywallInfo = await paywallViewController.info
       eventSource = .internal
-      await context.markPurchaseCompleted(product, on: paywallViewController)
-      let referenceName = await context.referenceName(forCacheKey: cacheKey, on: paywallViewController)
-      await context.notify(
-        paywallViewController,
+      await paywallViewController.markPurchaseCompleted(product)
+      let referenceName = await paywallViewController.referenceName(forCacheKey: cacheKey)
+      await paywallViewController.notify(
         of: .transactionComplete(
           trialEndDate: trialEndDate,
           productIdentifier: product.productIdentifier,

@@ -48,7 +48,7 @@ private final class FakeTransactionContext: TransactionContext, @unchecked Senda
     return _alertTitles
   }
 
-  private func record(_ call: String) {
+  func record(_ call: String) {
     lock.lock()
     _calls.append(call)
     lock.unlock()
@@ -140,37 +140,7 @@ private final class FakeTransactionContext: TransactionContext, @unchecked Senda
   }
 
   #if canImport(WebKit)
-  @MainActor
-  func info(of paywall: PaywallViewController) -> PaywallInfo {
-    return .empty()
-  }
-
-  @MainActor
-  func introOfferToken(forProductId productId: String, on paywall: PaywallViewController) -> IntroOfferToken? {
-    return nil
-  }
-
-  @MainActor
-  func referenceName(forCacheKey cacheKey: String, on paywall: PaywallViewController) -> String? {
-    return nil
-  }
-
-  @MainActor
-  func notify(_ paywall: PaywallViewController, of message: PaywallMessage) {
-    record("notify")
-  }
-
-  @MainActor
-  func updateLoading(_ change: PaywallLoadingChange, on paywall: PaywallViewController) {
-    record("updateLoading")
-  }
-
-  @MainActor
-  func markPurchaseCompleted(_ product: StoreProduct, on paywall: PaywallViewController) {
-    record("markPurchaseCompleted")
-  }
-
-  func dismiss(_ paywall: PaywallViewController, result: PaywallResult) async {
+  func dismiss(_ paywall: PurchasingPaywall, result: PaywallResult) async {
     record("dismiss")
   }
   #endif
@@ -517,6 +487,119 @@ struct TransactionContextTests {
     #expect(!context.calls.contains("purchaseWithStoreKit"))
     #expect(!context.calls.contains("purchaseWithPurchaseController"))
   }
+
+  #if canImport(WebKit)
+  @Test("a paywall purchase that's cancelled tells the paywall and tracks, in order")
+  @MainActor
+  func cancelledPaywallPurchase() async {
+    let dependencyContainer = DependencyContainer()
+    let context = FakeTransactionContext()
+    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "product"))
+    context.loadedProducts = ["slot": product]
+    context.purchaseControllerResult = .cancelled
+    let paywall = FakePurchasingPaywall { context.record($0) }
+    let transactionManager = makeTransactionManager(in: dependencyContainer, context: context)
+    let coordinator = dependencyContainer.makePurchasingCoordinator()
+    coordinator.reset()
+
+    let result = await transactionManager.purchase(.internal("slot", paywall, true))
+
+    #expect(result == .cancelled)
+    #expect(context.calls == [
+      "product(withId:)",
+      "isAppStoreFreeTrialAvailable",
+      "track:Transaction",
+      "paywall.notify:transactionStart",
+      "paywall.updateLoading:purchaseStarted",
+      "purchaseInTestMode",
+      "paywall.introOfferToken",
+      "purchaseWithPurchaseController",
+      "track:Transaction",
+      "paywall.notify:transactionAbandon",
+      "paywall.updateLoading:finished"
+    ])
+    #expect(!coordinator.hasPurchaseInProgress)
+  }
+
+  @Test("a paywall purchase that succeeds completes on the paywall, tracks, then dismisses it")
+  @MainActor
+  func successfulPaywallPurchase() async {
+    let dependencyContainer = DependencyContainer()
+    let context = FakeTransactionContext()
+    context.hasExternalPurchaseController = true
+    context.purchaseControllerResult = .purchased
+    context.loadedProducts = ["slot": makeCustomProduct()]
+    context.makeTransaction = { transaction in
+      await dependencyContainer.makeStoreTransaction(from: transaction)
+    }
+    let paywall = FakePurchasingPaywall { context.record($0) }
+    let transactionManager = makeTransactionManager(in: dependencyContainer, context: context)
+    let coordinator = dependencyContainer.makePurchasingCoordinator()
+    coordinator.reset()
+
+    let result = await transactionManager.purchase(.internal("slot", paywall, true))
+
+    #expect(result == .purchased)
+    #expect(context.calls == [
+      "product(withId:)",
+      "track:Transaction",
+      "paywall.notify:transactionStart",
+      "paywall.updateLoading:purchaseStarted",
+      "purchaseInTestMode",
+      "paywall.introOfferToken",
+      "purchaseWithPurchaseController",
+      "makeStoreTransaction",
+      "redeemAfterPurchase",
+      "rememberHandledTransaction",
+      "paywall.markPurchaseCompleted",
+      "paywall.referenceName",
+      "paywall.notify:transactionComplete",
+      "sessionDeviceAttributes",
+      "track:Transaction",
+      "flushPlacements",
+      "track:NonRecurringProductPurchase",
+      "dismiss"
+    ])
+    #expect(!coordinator.hasPurchaseInProgress)
+  }
+
+  @Test("a paywall purchase that shouldn't close the paywall hides its spinner instead")
+  @MainActor
+  func successfulPaywallPurchaseWithoutDismiss() async {
+    let dependencyContainer = DependencyContainer()
+    let context = FakeTransactionContext()
+    context.hasExternalPurchaseController = true
+    context.purchaseControllerResult = .purchased
+    context.loadedProducts = ["slot": makeCustomProduct()]
+    context.makeTransaction = { transaction in
+      await dependencyContainer.makeStoreTransaction(from: transaction)
+    }
+    let paywall = FakePurchasingPaywall { context.record($0) }
+    let transactionManager = makeTransactionManager(in: dependencyContainer, context: context)
+    dependencyContainer.makePurchasingCoordinator().reset()
+
+    await transactionManager.purchase(.internal("slot", paywall, false))
+
+    #expect(!context.calls.contains("dismiss"))
+    #expect(context.calls.last == "paywall.updateLoading:spinnerDismissed")
+  }
+
+  @Test("a paywall purchase of a product that hasn't loaded fails before anything starts")
+  @MainActor
+  func paywallPurchaseOfMissingProduct() async {
+    let dependencyContainer = DependencyContainer()
+    let context = FakeTransactionContext()
+    let paywall = FakePurchasingPaywall { context.record($0) }
+    let transactionManager = makeTransactionManager(in: dependencyContainer, context: context)
+
+    let result = await transactionManager.purchase(.internal("slot", paywall, true))
+
+    if case .failed = result {} else {
+      Issue.record("Expected a failure, got \(result)")
+    }
+    #expect(context.calls == ["product(withId:)"])
+  }
+  #endif
 
   @Test("a test mode purchase isn't redeemed")
   func testModeSkipsRedeem() async {
