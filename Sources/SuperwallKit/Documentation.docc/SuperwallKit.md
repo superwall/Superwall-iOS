@@ -8,12 +8,25 @@ Superwall makes it easy to show paywalls in your app using UIKit or SwiftUI. If 
 
 See our [docs](https://docs.superwall.com/docs) for more information.
 
+### Extending the paywall web view
+
+Set ``Superwall/paywallWebViewCreated`` before configuring the SDK to receive each paywall's `WKWebView` as soon as it's created, before it loads anything. Add-ons plug in this way without SuperwallKit depending on them. For example, NativeIslands draws native views in your paywalls:
+
+```swift
+NativeIslandsComponents.register()
+Superwall.paywallWebViewCreated = { NativeIslandsHost.attach(to: $0) }
+```
+
 ## Topics
 
 ### Essentials
 
 - `SuperwallKit/Superwall`
 - `SuperwallOptions`
+
+### Extending the Paywall Web View
+
+- ``Superwall/paywallWebViewCreated``
 
 ### The Delegate
 
