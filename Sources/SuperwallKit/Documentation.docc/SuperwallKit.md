@@ -10,12 +10,15 @@ See our [docs](https://docs.superwall.com/docs) for more information.
 
 ### Extending the paywall web view
 
-Set ``Superwall/paywallWebViewCreated`` before configuring the SDK to receive each paywall's `WKWebView` as soon as it's created, before it loads anything. Add-ons plug in this way without SuperwallKit depending on them. For example, NativeIslands draws native views in your paywalls:
+Set ``Superwall/paywallWebViewCreated`` before configuring the SDK to receive each paywall's `WKWebView` as soon as it's created, before it loads anything. Add-ons plug in this way without SuperwallKit depending on them:
 
 ```swift
-NativeIslandsComponents.register()
-Superwall.paywallWebViewCreated = { NativeIslandsHost.attach(to: $0) }
+Superwall.paywallWebViewCreated = { webView in
+  MyWebViewAddOn.attach(to: webView)
+}
 ```
+
+Don't load a page in the web view or replace its navigation, UI or script message handlers: the paywall relies on them.
 
 ## Topics
 

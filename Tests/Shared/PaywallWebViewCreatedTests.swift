@@ -44,6 +44,60 @@ struct PaywallWebViewCreatedTests {
   }
 
   @Test
+  func changesMadeInTheHookStayOnThePaywallWebView() {
+    let dependencyContainer = DependencyContainer()
+    Superwall.paywallWebViewCreated = { webView in
+      webView.customUserAgent = "AddOn/1.0"
+    }
+    defer { Superwall.paywallWebViewCreated = nil }
+
+    let paywallViewController = dependencyContainer.makePaywallViewController(
+      for: .stub(),
+      withCache: nil,
+      withPaywallArchiveManager: nil,
+      delegate: nil
+    )
+
+    let webView = paywallViewController.webView
+    #expect(webView.customUserAgent == "AddOn/1.0")
+    // The paywall's own wiring is untouched by the hook.
+    #expect(webView.navigationDelegate === webView)
+    #expect(webView.url == nil)
+  }
+
+  @Test
+  func onlyTheLatestHookIsCalled() {
+    let dependencyContainer = DependencyContainer()
+    var firstCalls = 0
+    var secondCalls = 0
+    Superwall.paywallWebViewCreated = { _ in firstCalls += 1 }
+    Superwall.paywallWebViewCreated = { _ in secondCalls += 1 }
+    defer { Superwall.paywallWebViewCreated = nil }
+
+    _ = dependencyContainer.makePaywallViewController(
+      for: .stub(),
+      withCache: nil,
+      withPaywallArchiveManager: nil,
+      delegate: nil
+    )
+
+    #expect(firstCalls == 0)
+    #expect(secondCalls == 1)
+  }
+
+  @Test
+  func checkoutWebViewsNeverReachTheHook() throws {
+    var calls = 0
+    Superwall.paywallWebViewCreated = { _ in calls += 1 }
+    defer { Superwall.paywallWebViewCreated = nil }
+
+    let url = try #require(URL(string: "https://example.com/checkout"))
+    _ = CheckoutWebViewController(url: url)
+
+    #expect(calls == 0)
+  }
+
+  @Test
   func unsetHookChangesNothing() {
     Superwall.paywallWebViewCreated = nil
     let dependencyContainer = DependencyContainer()

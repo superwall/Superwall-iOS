@@ -481,11 +481,12 @@ public final class Superwall: NSObject, ObservableObject {
   /// Called with each paywall's web view as soon as it is created, before it loads anything.
   ///
   /// Use it to customise or extend the paywall web view, for example to plug in
-  /// an add-on such as NativeIslands without SuperwallKit depending on it:
+  /// an add-on without SuperwallKit depending on it:
   ///
   /// ```swift
-  /// NativeIslandsComponents.register()
-  /// Superwall.paywallWebViewCreated = { NativeIslandsHost.attach(to: $0) }
+  /// Superwall.paywallWebViewCreated = { webView in
+  ///   MyWebViewAddOn.attach(to: webView)
+  /// }
   /// ```
   ///
   /// Set it before calling ``configure(apiKey:purchaseController:options:completion:)-52tke``

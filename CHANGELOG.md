@@ -7,7 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Saves the first deep link received during the first app session as the `firstDeepLinkUrl` user attribute. If you assign deep links to your App Store custom product pages, you can use this attribute to break down results and filter audiences by the product page that drove the install. If you've connected App Store Connect, the page's ID and name are saved too, as `customProductPageId` and `customProductPageName`. Requires `Superwall.handleDeepLink(_:)` to be set up.
-- Adds `Superwall.paywallWebViewCreated`, which hands you each paywall's `WKWebView` as soon as it's created and before it loads anything. Use it to customise or extend the paywall web view, such as plugging in an add-on like NativeIslands, without SuperwallKit depending on it. Set it before `configure` so preloaded paywalls get it too.
+- Adds `Superwall.paywallWebViewCreated`, which hands you each paywall's `WKWebView` as soon as it's created and before it loads anything. Use it to customise or extend the paywall web view, such as plugging in an add-on, without SuperwallKit depending on it. Set it before `configure` so preloaded paywalls get it too.
 
 ### Fixes
 
