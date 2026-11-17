@@ -3,6 +3,9 @@
 import Combine
 import Foundation
 import StoreKit
+#if canImport(WebKit)
+import WebKit
+#endif
 
 /// The primary class for integrating Superwall into your application. After configuring via
 /// ``configure(apiKey:purchaseController:options:completion:)-52tke``, it provides access to
@@ -473,6 +476,26 @@ public final class Superwall: NSObject, ObservableObject {
   /// called.
   @DispatchQueueBacked
   public private(set) static var isInitialized = false
+
+  #if canImport(WebKit)
+  /// Called with each paywall's web view as soon as it is created, before it loads anything.
+  ///
+  /// Use it to customise or extend the paywall web view, for example to plug in
+  /// an add-on such as NativeIslands without SuperwallKit depending on it:
+  ///
+  /// ```swift
+  /// NativeIslandsComponents.register()
+  /// Superwall.paywallWebViewCreated = { NativeIslandsHost.attach(to: $0) }
+  /// ```
+  ///
+  /// Set it before calling ``configure(apiKey:purchaseController:options:completion:)-52tke``
+  /// so preloaded paywalls get it too. It is called once per web view, on the main actor.
+  /// Don't load a page in it or replace its navigation, UI or script message handlers:
+  /// the paywall relies on them.
+  @nonobjc
+  @MainActor
+  public static var paywallWebViewCreated: (@MainActor (WKWebView) -> Void)?
+  #endif
 
   // MARK: - Non-public Properties
   private static var superwall: Superwall?
@@ -1157,7 +1180,8 @@ public final class Superwall: NSObject, ObservableObject {
     }
     enqueuedIntegrationAttributes = nil
 
-    let props = props.reduce(into: [String: String?]()) { result, pair in
+    let emptyProps: [String: String?] = [:]
+    let props = props.reduce(into: emptyProps) { result, pair in
       result[pair.key.description] = pair.value
     }
 
