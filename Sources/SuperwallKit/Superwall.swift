@@ -491,8 +491,9 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// Set it before calling ``configure(apiKey:purchaseController:options:completion:)-52tke``
   /// so preloaded paywalls get it too. It is called once per web view, on the main actor.
-  /// Don't load a page in it or replace its navigation, UI or script message handlers:
-  /// the paywall relies on them.
+  /// Don't load a page in it, and don't change its navigation delegate or remove the
+  /// paywall's script message handler: the paywall relies on them. Leave its UI delegate
+  /// unset too: it's reserved for the SDK.
   @nonobjc
   @MainActor
   public static var paywallWebViewCreated: (@MainActor (WKWebView) -> Void)?

@@ -18,7 +18,7 @@ Superwall.paywallWebViewCreated = { webView in
 }
 ```
 
-Don't load a page in the web view or replace its navigation, UI or script message handlers: the paywall relies on them.
+Don't load a page in the web view, and don't change its navigation delegate or remove the paywall's script message handler: the paywall relies on them. Leave its UI delegate unset too: it's reserved for the SDK.
 
 ## Topics
 
