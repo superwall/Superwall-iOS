@@ -10,15 +10,15 @@ See our [docs](https://docs.superwall.com/docs) for more information.
 
 ### Extending the paywall web view
 
-Set ``Superwall/paywallWebViewCreated`` before configuring the SDK to receive each paywall's `WKWebView` as soon as it's created, before it loads anything. Add-ons plug in this way without SuperwallKit depending on them:
+Call ``Superwall/addPaywallWebViewObserver(_:)`` before configuring the SDK to receive each paywall's `WKWebView` as soon as it's created, before it loads anything. Add-ons plug in this way without SuperwallKit depending on them:
 
 ```swift
-Superwall.paywallWebViewCreated = { webView in
+Superwall.addPaywallWebViewObserver { webView in
   MyWebViewAddOn.attach(to: webView)
 }
 ```
 
-Don't load a page in the web view, and don't change its navigation delegate or remove the paywall's script message handler: the paywall relies on them. Leave its UI delegate unset too: it's reserved for the SDK.
+You can add more than one observer. Don't load a page in the web view, and don't change its navigation delegate or remove the paywall's script message handler: the paywall relies on them. Leave its UI delegate unset too: it's reserved for the SDK.
 
 ## Topics
 
@@ -29,7 +29,8 @@ Don't load a page in the web view, and don't change its navigation delegate or r
 
 ### Extending the Paywall Web View
 
-- ``Superwall/paywallWebViewCreated``
+- ``Superwall/addPaywallWebViewObserver(_:)``
+- ``PaywallWebViewObservation``
 
 ### The Delegate
 

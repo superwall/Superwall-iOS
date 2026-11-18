@@ -380,7 +380,7 @@ extension DependencyContainer: ViewControllerFactory {
       isOnDeviceCacheEnabled: paywall.onDeviceCache == .enabled,
       factory: self
     )
-    Superwall.paywallWebViewCreated?(webView)
+    PaywallWebViewObservers.notify(webView)
     let paywallViewController = PaywallViewController(
       paywall: paywall,
       eventDelegate: Superwall.shared,

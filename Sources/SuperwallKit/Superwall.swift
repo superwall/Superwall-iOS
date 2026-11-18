@@ -477,28 +477,6 @@ public final class Superwall: NSObject, ObservableObject {
   @DispatchQueueBacked
   public private(set) static var isInitialized = false
 
-  #if canImport(WebKit)
-  /// Called with each paywall's web view as soon as it is created, before it loads anything.
-  ///
-  /// Use it to customise or extend the paywall web view, for example to plug in
-  /// an add-on without SuperwallKit depending on it:
-  ///
-  /// ```swift
-  /// Superwall.paywallWebViewCreated = { webView in
-  ///   MyWebViewAddOn.attach(to: webView)
-  /// }
-  /// ```
-  ///
-  /// Set it before calling ``configure(apiKey:purchaseController:options:completion:)-52tke``
-  /// so preloaded paywalls get it too. It is called once per web view, on the main actor.
-  /// Don't load a page in it, and don't change its navigation delegate or remove the
-  /// paywall's script message handler: the paywall relies on them. Leave its UI delegate
-  /// unset too: it's reserved for the SDK.
-  @nonobjc
-  @MainActor
-  public static var paywallWebViewCreated: (@MainActor (WKWebView) -> Void)?
-  #endif
-
   // MARK: - Non-public Properties
   private static var superwall: Superwall?
 
@@ -1026,6 +1004,41 @@ public final class Superwall: NSObject, ObservableObject {
       completion(products)
     }
   }
+
+  // MARK: - Paywall Web View
+
+  #if canImport(WebKit)
+  /// Adds an observer that's called with each paywall's web view as soon as it is created,
+  /// before it loads anything.
+  ///
+  /// Use it to customise or extend the paywall web view, for example to plug in
+  /// an add-on without SuperwallKit depending on it:
+  ///
+  /// ```swift
+  /// Superwall.addPaywallWebViewObserver { webView in
+  ///   MyWebViewAddOn.attach(to: webView)
+  /// }
+  /// ```
+  ///
+  /// Add it before calling ``configure(apiKey:purchaseController:options:completion:)-52tke``
+  /// so preloaded paywalls get it too. You can add more than one: each is called once per
+  /// web view, on the main actor, in the order they were added.
+  /// Don't load a page in it, and don't change its navigation delegate or remove the
+  /// paywall's script message handler: the paywall relies on them. Leave its UI delegate
+  /// unset too: it's reserved for the SDK.
+  ///
+  /// - Parameter observer: Called with each new paywall web view.
+  /// - Returns: An observation. Call ``PaywallWebViewObservation/cancel()`` on it to stop
+  /// observing.
+  @nonobjc
+  @MainActor
+  @discardableResult
+  public static func addPaywallWebViewObserver(
+    _ observer: @escaping @MainActor (WKWebView) -> Void
+  ) -> PaywallWebViewObservation {
+    return PaywallWebViewObservers.add(observer)
+  }
+  #endif
 
   // MARK: - Preloading
 
