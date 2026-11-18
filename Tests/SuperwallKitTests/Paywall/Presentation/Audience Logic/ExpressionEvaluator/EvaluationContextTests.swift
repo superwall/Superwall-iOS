@@ -7,84 +7,130 @@
 // swiftlint:disable all
 
 import Foundation
+import Superscript
 import Testing
 @testable import SuperwallKit
 
-@Suite(.serialized)
 struct EvaluationContextTests {
-  private static var utcCalendar: Calendar {
+  private static let hour: TimeInterval = 60 * 60
+  private static let day: TimeInterval = 24 * hour
+
+  private static func calendar(timeZone: String = "UTC") -> Calendar {
     var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = TimeZone(identifier: "UTC")!
+    calendar.timeZone = TimeZone(identifier: timeZone)!
     return calendar
   }
 
-  private static func date(_ year: Int, _ month: Int, _ day: Int) -> Date {
-    utcCalendar.date(from: DateComponents(year: year, month: month, day: day, hour: 12))!
-  }
-
-  private static func minutes(days: Int) -> Int {
-    days * 24 * 60
+  /// Midday on the given day.
+  private static func date(
+    _ year: Int,
+    _ month: Int,
+    _ day: Int,
+    timeZone: String = "UTC"
+  ) -> Date {
+    calendar(timeZone: timeZone).date(
+      from: DateComponents(year: year, month: month, day: day, hour: 12)
+    )!
   }
 
   @Test(arguments: [
-    // March 15 back to February 15: 28 days.
-    (date(2026, 3, 15), 28),
-    // August 15 back to July 15: 31 days.
-    (date(2026, 8, 15), 31),
-    // May 15 back to April 15: 30 days.
-    (date(2026, 5, 15), 30),
-    // March 31 back to February 28: February has no 31st, so 31 days.
-    (date(2026, 3, 31), 31)
+    // February has 28 days.
+    (date(2026, 3, 15), date(2026, 2, 15)),
+    // July has 31 days.
+    (date(2026, 8, 15), date(2026, 7, 15)),
+    // April has 30 days.
+    (date(2026, 5, 15), date(2026, 4, 15)),
+    // February has no 31st, so it's pinned to its last day.
+    (date(2026, 3, 31), date(2026, 2, 28)),
+    // In a leap year that last day is the 29th.
+    (date(2028, 3, 31), date(2028, 2, 29)),
+    // January goes back to December of the year before.
+    (date(2027, 1, 15), date(2026, 12, 15))
   ])
-  func placementsInMonth_coversOneCalendarMonth(now: Date, expectedDays: Int) {
-    let interval = EvaluationContext.placementCountInterval(
+  func placementsInMonth_startsOneCalendarMonthBack(now: Date, expectedStart: Date) {
+    let window = EvaluationContext.placementCountWindow(
       for: .placementsInMonth,
       now: now,
-      calendar: Self.utcCalendar
+      calendar: Self.calendar()
     )
 
-    #expect(interval == .minutes(Self.minutes(days: expectedDays)))
+    #expect(window == .since(expectedStart))
   }
 
-  @Test func placementsInMonth_isNotThirtyWeeks() {
-    let interval = EvaluationContext.placementCountInterval(for: .placementsInMonth)
+  @Test func placementsInMonth_keepsTheTimeOfDayAcrossDaylightSaving() {
+    // The clocks in New York went forward an hour on March 8.
+    let timeZone = "America/New_York"
+    let now = Self.date(2026, 3, 20, timeZone: timeZone)
+    let expectedStart = Self.date(2026, 2, 20, timeZone: timeZone)
 
-    guard case let .minutes(minutes) = interval else {
-      Issue.record("Expected a minutes interval, got \(interval)")
+    let window = EvaluationContext.placementCountWindow(
+      for: .placementsInMonth,
+      now: now,
+      calendar: Self.calendar(timeZone: timeZone)
+    )
+
+    #expect(window == .since(expectedStart))
+    #expect(now.timeIntervalSince(expectedStart) == 28 * Self.day - Self.hour)
+  }
+
+  @Test func placementsInMonth_isAMonthLongByDefault() {
+    let now = Date()
+    let window = EvaluationContext.placementCountWindow(for: .placementsInMonth, now: now)
+
+    guard case let .since(start) = window else {
+      Issue.record("Expected a start date, got \(String(describing: window))")
       return
     }
-    // A calendar month is 28 to 31 days, plus or minus an hour for daylight saving.
-    #expect(minutes >= Self.minutes(days: 28) - 60)
-    #expect(minutes <= Self.minutes(days: 31) + 60)
+    // A calendar month is 28 to 31 days, give or take an hour for daylight saving.
+    let length = now.timeIntervalSince(start)
+    #expect(length >= 28 * Self.day - Self.hour)
+    #expect(length <= 31 * Self.day + Self.hour)
   }
 
   @Test func otherPlacementCounts_keepTheirWindows() {
     let now = Self.date(2026, 3, 15)
-    let calendar = Self.utcCalendar
 
     #expect(
-      EvaluationContext.placementCountInterval(for: .placementsInHour, now: now, calendar: calendar)
-        == .minutes(60)
+      EvaluationContext.placementCountWindow(for: .placementsInHour, now: now)
+        == .since(now.addingTimeInterval(-Self.hour))
     )
     #expect(
-      EvaluationContext.placementCountInterval(for: .placementsInDay, now: now, calendar: calendar)
-        == .minutes(Self.minutes(days: 1))
+      EvaluationContext.placementCountWindow(for: .placementsInDay, now: now)
+        == .since(now.addingTimeInterval(-Self.day))
     )
     #expect(
-      EvaluationContext.placementCountInterval(for: .placementsInWeek, now: now, calendar: calendar)
-        == .minutes(Self.minutes(days: 7))
+      EvaluationContext.placementCountWindow(for: .placementsInWeek, now: now)
+        == .since(now.addingTimeInterval(-7 * Self.day))
     )
     #expect(
-      EvaluationContext.placementCountInterval(
-        for: .placementsSinceInstall,
-        now: now,
-        calendar: calendar
-      ) == .infinity
+      EvaluationContext.placementCountWindow(for: .placementsSinceInstall, now: now) == .allTime
     )
   }
 
-  @Test func placementsInMonth_countsOnlyTheLastMonth() async {
-    let coreDataManager = CoreDataManagerMock(coreDataStack: CoreDataStackMock())
+  @Test(arguments: [
+    ComputedPropertyRequestType.minutesSince,
+    .hoursSince,
+    .daysSince,
+    .monthsSince,
+    .yearsSince
+  ])
+  func timeSincePlacement_hasNoCountWindow(type: ComputedPropertyRequestType) {
+    #expect(EvaluationContext.placementCountWindow(for: type) == nil)
+  }
+
+  @Test(arguments: [
+    // The longest month is 31 days, so 32 days ago is always outside it and
+    // 27 days ago always inside.
+    ("placementsInMonth", 2),
+    ("placementsInWeek", 1),
+    ("placementsSinceInstall", 4)
+  ])
+  func computedProperty_countsThePlacementsInTheWindow(
+    property: String,
+    expectedCount: Int
+  ) async throws {
+    let storage = StorageMock()
+    let coreDataManager = storage.coreDataManager
     await withCheckedContinuation { continuation in
       coreDataManager.deleteAllEntities {
         continuation.resume()
@@ -92,11 +138,10 @@ struct EvaluationContextTests {
     }
 
     let placementName = "article_read"
-    let day: TimeInterval = 24 * 60 * 60
-    for daysAgo in [1.0, 20, 45, 100] {
+    for daysAgo in [1.0, 27, 32, 100] {
       let placementData = PlacementData.stub()
         .setting(\.name, to: placementName)
-        .setting(\.createdAt, to: Date().addingTimeInterval(-daysAgo * day))
+        .setting(\.createdAt, to: Date().addingTimeInterval(-daysAgo * Self.day))
       await withCheckedContinuation { continuation in
         coreDataManager.savePlacementData(placementData) { _ in
           continuation.resume()
@@ -104,12 +149,42 @@ struct EvaluationContextTests {
       }
     }
 
-    let count = await coreDataManager.countPlacement(
-      placementName,
-      interval: EvaluationContext.placementCountInterval(for: .placementsInMonth)
-    )
+    let argsData = try JSONEncoder().encode([PassableValue.string(placementName)])
+    let args = try #require(String(data: argsData, encoding: .utf8))
+    let context = EvaluationContext(storage: storage)
 
-    // Only the events from 1 and 20 days ago fall within the last month.
-    #expect(count == 2)
+    let result = await withCheckedContinuation { continuation in
+      context.computedProperty(
+        name: property,
+        args: args,
+        callback: ResultCallbackFake { result in
+          continuation.resume(returning: result)
+        }
+      )
+    }
+
+    let value = try JSONDecoder().decode(PassableValue.self, from: Data(result.utf8))
+    guard case let .int(count) = value else {
+      Issue.record("Expected an int, got \(result)")
+      return
+    }
+    #expect(count == expectedCount)
+  }
+}
+
+private final class ResultCallbackFake: ResultCallback, @unchecked Sendable {
+  private let handler: (String) -> Void
+
+  init(handler: @escaping (String) -> Void) {
+    self.handler = handler
+    super.init(noPointer: NoPointer())
+  }
+
+  required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+    fatalError("Only made by tests")
+  }
+
+  override func onResult(result: String) {
+    handler(result)
   }
 }

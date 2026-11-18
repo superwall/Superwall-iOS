@@ -58,12 +58,10 @@ final class EvaluationContext: HostContext {
       )
 
       let number: Int?
-      if type.isPlacementCount {
-        let interval = Self.placementCountInterval(for: type)
-
+      if let window = Self.placementCountWindow(for: type) {
         // We don't add one here because the placement data is saved before
         // we do the count.
-        number = await storage.coreDataManager.countPlacement(name, interval: interval)
+        number = await storage.coreDataManager.countPlacement(name, since: window.startDate)
       } else {
         number = await storage.coreDataManager.getComputedPropertySincePlacement(
           PlacementData(
@@ -92,35 +90,56 @@ final class EvaluationContext: HostContext {
     }
   }
 
-  /// The window a placement count covers, ending at `now`.
+  /// How far back a placement count goes.
+  enum PlacementCountWindow: Equatable {
+    /// Counts the placements from this date onwards.
+    case since(Date)
+
+    /// Counts every placement.
+    case allTime
+
+    var startDate: Date? {
+      switch self {
+      case .since(let date):
+        return date
+      case .allTime:
+        return nil
+      }
+    }
+  }
+
+  /// The window a placement count covers, ending at `now`, or `nil` if `type`
+  /// isn't a placement count.
   ///
-  /// A month is one calendar month back from `now`, as on Android, so it's
-  /// 28 to 31 days long.
-  static func placementCountInterval(
+  /// A month is one calendar month back from `now`, so it's 28 to 31 days long.
+  /// It's counted on the Gregorian calendar whichever calendar the device uses,
+  /// so that a month is the same length for everyone.
+  static func placementCountWindow(
     for type: ComputedPropertyRequestType,
     now: Date = Date(),
-    calendar: Calendar = .current
-  ) -> TriggerAudienceOccurrence.Interval {
+    calendar: Calendar = Calendar(identifier: .gregorian)
+  ) -> PlacementCountWindow? {
+    let hour: TimeInterval = 60 * 60
+    let day = 24 * hour
+
     switch type {
     case .placementsInHour:
-      return .minutes(60)
+      return .since(now.addingTimeInterval(-hour))
     case .placementsInDay:
-      return .minutes(60 * 24)
+      return .since(now.addingTimeInterval(-day))
     case .placementsInWeek:
-      return .minutes(60 * 24 * 7)
+      return .since(now.addingTimeInterval(-7 * day))
     case .placementsInMonth:
-      let thirtyDays = 60 * 24 * 30
-      guard
-        let monthAgo = calendar.date(byAdding: .month, value: -1, to: now),
-        let minutes = calendar.dateComponents([.minute], from: monthAgo, to: now).minute
-      else {
-        return .minutes(thirtyDays)
-      }
-      return .minutes(minutes)
+      let monthAgo = calendar.date(byAdding: .month, value: -1, to: now)
+      return .since(monthAgo ?? now.addingTimeInterval(-30 * day))
     case .placementsSinceInstall:
-      return .infinity
-    default:
-      return .minutes(0)
+      return .allTime
+    case .minutesSince,
+      .hoursSince,
+      .daysSince,
+      .monthsSince,
+      .yearsSince:
+      return nil
     }
   }
 }

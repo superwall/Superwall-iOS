@@ -17,7 +17,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes a StoreKit 1 purchase that ended straight away, such as one the device refused, sometimes never returning its result.
 - Fixes a purchase never finishing, with its loading spinner left up, when another purchase started before it returned.
 - Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.
-- Fixes the "Occurrences in the last month" audience filter (`device.placementsInMonth`) counting placements from the last 30 weeks instead of the last month. It now counts back one calendar month, as on Android.
+- Fixes the "Occurrences in the last month" audience filter counting the last 30 weeks instead of the last month.
 
 ## 4.19.1
 
