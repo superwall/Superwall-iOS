@@ -1195,8 +1195,7 @@ public final class Superwall: NSObject, ObservableObject {
     }
     enqueuedIntegrationAttributes = nil
 
-    let emptyProps: [String: String?] = [:]
-    let props = props.reduce(into: emptyProps) { result, pair in
+    let props = props.reduce(into: [String: String?]()) { result, pair in
       result[pair.key.description] = pair.value
     }
 

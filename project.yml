@@ -92,6 +92,7 @@ targets:
       - Tests/Shared
       - Tests/SuperwallKitTests/CustomerCenter/ViewModel/CustomerCenterDependenciesMocks.swift
       - Tests/SuperwallKitTests/CustomerCenter/Actions/StoreKitTransactionLookupMock.swift
+      - "Tests/SuperwallKitTests/Paywall/View Controller/Web View/PaywallWebViewObserverTests.swift"
     dependencies:
       - target: SuperwallKitMac
     settings:
