@@ -17,6 +17,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes a StoreKit 1 purchase that ended straight away, such as one the device refused, sometimes never returning its result.
 - Fixes a purchase never finishing, with its loading spinner left up, when another purchase started before it returned.
 - Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.
+- Fixes text in the Customer Center falling below WCAG contrast in light mode: the status badges, the grey secondary text and the section headers now reach 4.5:1, as do the red and grey badges in dark mode. The close button's icon is now a grey that reaches 3:1 on iOS 26's glass button, instead of the faded accent colour.
+- Fixes the Customer Center's purchase card breaking words and prices mid-word at accessibility text sizes. The badge now sits above the text, and the original download date row stacks too.
+- Makes the Customer Center's Copy button at least 44 by 44 points to tap.
 
 ## 4.19.1
 

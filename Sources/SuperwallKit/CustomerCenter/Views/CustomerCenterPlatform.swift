@@ -79,6 +79,30 @@ extension Color {
     return Color(uiColor: .systemGroupedBackground)
     #endif
   }
+
+  /// Secondary text. The system's secondary label is 3.3:1 on the grouped background in light
+  /// mode, under the 4.5:1 WCAG asks of text, so light mode uses a darker grey (4.7:1). Dark mode
+  /// keeps the system colour, which passes.
+  static var customerCenterSecondaryText: Color {
+    #if os(macOS)
+    return customerCenterDynamic(light: PlatformColor(hexString: "#6C6C70"), dark: .secondaryLabelColor)
+    #else
+    return customerCenterDynamic(light: PlatformColor(hexString: "#6C6C70"), dark: .secondaryLabel)
+    #endif
+  }
+
+  /// `light` in light mode and `dark` in dark mode.
+  static func customerCenterDynamic(light: PlatformColor, dark: PlatformColor) -> Color {
+    #if os(macOS)
+    return Color(nsColor: NSColor(name: nil) { appearance in
+      appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
+    })
+    #else
+    return Color(uiColor: UIColor { traits in
+      traits.userInterfaceStyle == .dark ? dark : light
+    })
+    #endif
+  }
 }
 
 /// The navigation the Customer Center supplies for itself: one column of
