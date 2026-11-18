@@ -59,21 +59,7 @@ final class EvaluationContext: HostContext {
 
       let number: Int?
       if type.isPlacementCount {
-        let interval: TriggerAudienceOccurrence.Interval
-        switch type {
-        case .placementsInHour:
-          interval = .minutes(60)
-        case .placementsInDay:
-          interval = .minutes(60 * 24)
-        case .placementsInWeek:
-          interval = .minutes(60 * 24 * 7)
-        case .placementsInMonth:
-          interval = .minutes(60 * 24 * 7 * 30)
-        case .placementsSinceInstall:
-          interval = .infinity
-        default:
-          interval = .minutes(0)
-        }
+        let interval = Self.placementCountInterval(for: type)
 
         // We don't add one here because the placement data is saved before
         // we do the count.
@@ -103,6 +89,38 @@ final class EvaluationContext: HostContext {
         return
       }
       callback.onResult(result: jsonString)
+    }
+  }
+
+  /// The window a placement count covers, ending at `now`.
+  ///
+  /// A month is one calendar month back from `now`, as on Android, so it's
+  /// 28 to 31 days long.
+  static func placementCountInterval(
+    for type: ComputedPropertyRequestType,
+    now: Date = Date(),
+    calendar: Calendar = .current
+  ) -> TriggerAudienceOccurrence.Interval {
+    switch type {
+    case .placementsInHour:
+      return .minutes(60)
+    case .placementsInDay:
+      return .minutes(60 * 24)
+    case .placementsInWeek:
+      return .minutes(60 * 24 * 7)
+    case .placementsInMonth:
+      let thirtyDays = 60 * 24 * 30
+      guard
+        let monthAgo = calendar.date(byAdding: .month, value: -1, to: now),
+        let minutes = calendar.dateComponents([.minute], from: monthAgo, to: now).minute
+      else {
+        return .minutes(thirtyDays)
+      }
+      return .minutes(minutes)
+    case .placementsSinceInstall:
+      return .infinity
+    default:
+      return .minutes(0)
     }
   }
 }
