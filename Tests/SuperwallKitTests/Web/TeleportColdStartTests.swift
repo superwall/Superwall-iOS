@@ -563,7 +563,9 @@ struct TeleportColdStartTests {
     network.pollRedemptionResultResponses = [redeemedResponse()]
     let fresh = makeRedeemer(storage: storage, network: network, superwall: superwall)
 
-    #expect(await fresh.recoverPendingTeleport() == true)
+    // The caller doesn't wait for the later look; it runs in the background.
+    #expect(await fresh.recoverPendingTeleport() == false)
+    #expect(await fresh.waitForClaimedTeleportRecheck() == true)
 
     #expect(network.teleportStatusRequests == ["tp_1", "tp_1"])
     #expect(mockDelegate.receivedResult?.code == "redemption_123")
@@ -585,6 +587,7 @@ struct TeleportColdStartTests {
     let fresh = makeRedeemer(storage: storage, network: network, superwall: superwall)
 
     #expect(await fresh.recoverPendingTeleport() == false)
+    #expect(await fresh.waitForClaimedTeleportRecheck() == false)
 
     // The first look and one for each recheck delay, then it waits for the next foreground.
     #expect(network.teleportStatusRequests.count == 3)
@@ -592,6 +595,62 @@ struct TeleportColdStartTests {
     #expect(storage.get(PendingTeleportStorage.self) == teleport)
     #expect(network.pollRedemptionResultCallCount == 0)
     #expect(await fresh.shouldShowStripeRecoveryLoadingOnPaywallOpen() == false)
+  }
+
+  @Test("A later foreground looks at an unpaid claimed teleport once, without rechecks")
+  func claimedTeleport_unpaid_laterForegroundReadsOnce() async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerTeleportOpen(teleport)
+    network.teleportStatusResponses = Array(repeating: status("claimed"), count: 4)
+    network.checkoutStatusResponses = Array(
+      repeating: .success(CheckoutStatusResponse(status: "pending")),
+      count: 4
+    )
+    let fresh = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    #expect(await fresh.recoverPendingTeleport() == false)
+    #expect(await fresh.waitForClaimedTeleportRecheck() == false)
+
+    // The next foreground of the same launch.
+    #expect(await fresh.recoverPendingTeleport() == false)
+
+    #expect(network.teleportStatusRequests.count == 4)
+    #expect(network.checkoutStatusRequests.count == 4)
+    #expect(storage.get(PendingTeleportStorage.self) == teleport)
+  }
+
+  @Test("A second look while the rechecks run makes no request")
+  func claimedTeleport_lookDuringRechecks_isSkipped() async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerTeleportOpen(teleport)
+    network.teleportStatusResponses = Array(repeating: status("claimed"), count: 3)
+    network.checkoutStatusResponses = Array(
+      repeating: .success(CheckoutStatusResponse(status: "pending")),
+      count: 3
+    )
+    let fresh = WebEntitlementRedeemer(
+      network: network,
+      storage: storage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      stripePendingPollIntervalNs: 1_000_000,
+      stripePendingPollTimeoutNs: 5_000_000_000,
+      claimedTeleportRecheckDelays: [0.2, 0.2],
+      superwall: superwall
+    )
+    #expect(await fresh.recoverPendingTeleport() == false)
+    #expect(await fresh.recoverPendingTeleport() == false)
+    #expect(network.teleportStatusRequests.count == 1)
+    #expect(await fresh.waitForClaimedTeleportRecheck() == false)
+    #expect(network.teleportStatusRequests.count == 3)
   }
 
   @Test("A claimed teleport whose checkout can't be read is kept for later")

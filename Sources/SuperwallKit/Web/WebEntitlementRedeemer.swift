@@ -60,6 +60,12 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// still there to finish them, so the background check leaves them to it.
   private var teleportsOpenedThisLaunch: Set<String> = []
   private var isCheckingPendingTeleport = false
+  /// Teleports whose unpaid checkout was already looked at again this launch. Each gets one
+  /// background round of rechecks per launch, so an abandoned checkout costs a later
+  /// foreground one status read, not another round.
+  private var teleportsRecheckedThisLaunch: Set<String> = []
+  /// The background round of rechecks for a teleport whose checkout isn't paid yet.
+  private var claimedTeleportRecheck: Task<Bool, Never>?
   /// How long to wait before each new look at a teleport whose checkout was started but isn't
   /// paid yet. The backend can mark the payment a second or two after the app is back.
   private let claimedTeleportRecheckDelays: [TimeInterval]
@@ -200,8 +206,9 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// spinner, the code is redeemed and the paywall closes. A teleport whose checkout was started
   /// (`claimed`) asks the checkout itself, as the page does, since the backend only marks the
   /// teleport paid once the checkout page reports back, seconds after the payment. Unpaid, it's
-  /// checked again a few times, then kept for the next launch or foreground until its time
-  /// limit. Any other status forgets the teleport; a failed request keeps it.
+  /// kept for the next launch or foreground until its time limit, and looked at again a few
+  /// times in the background, once per launch, without making the caller wait. Any other status
+  /// forgets the teleport; a failed request keeps it.
   ///
   /// - Returns: `true` if the teleport was paid and its checkout polled.
   @discardableResult
@@ -221,29 +228,59 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       return false
     }
     isCheckingPendingTeleport = true
-    defer { isCheckingPendingTeleport = false }
+    switch await readPendingTeleport(teleport) {
+    case .paid(let purchase):
+      isCheckingPendingTeleport = false
+      await handlePurchasedReturn(purchase)
+      return true
+    case .settled,
+      .unknown:
+      isCheckingPendingTeleport = false
+      return false
+    case .checkoutStarted:
+      guard
+        !claimedTeleportRecheckDelays.isEmpty,
+        teleportsRecheckedThisLaunch.insert(teleport.teleportId).inserted
+      else {
+        isCheckingPendingTeleport = false
+        return false
+      }
+      // The rechecks keep the check flag until they finish, so nothing reads it twice meanwhile.
+      claimedTeleportRecheck = Task { [weak self] in
+        guard let self else { return false }
+        return await self.recheckClaimedTeleport(teleport)
+      }
+      return false
+    }
+  }
 
-    var delays = claimedTeleportRecheckDelays[...]
-    while true {
+  /// Waits for the background round of rechecks started by ``recoverPendingTeleport()``, if one
+  /// runs. Returns `true` if it found the teleport paid and polled its checkout.
+  func waitForClaimedTeleportRecheck() async -> Bool {
+    await claimedTeleportRecheck?.value ?? false
+  }
+
+  private func recheckClaimedTeleport(_ teleport: PendingTeleportState) async -> Bool {
+    defer { isCheckingPendingTeleport = false }
+    for delay in claimedTeleportRecheckDelays {
+      try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+      // The page settled it, or a newer teleport replaced it, while this waited.
+      guard storage.get(PendingTeleportStorage.self)?.teleportId == teleport.teleportId else {
+        return false
+      }
       switch await readPendingTeleport(teleport) {
       case .paid(let purchase):
+        isCheckingPendingTeleport = false
         await handlePurchasedReturn(purchase)
         return true
-      case .settled:
-        return false
-      case .unknown:
+      case .settled,
+        .unknown:
         return false
       case .checkoutStarted:
-        guard let delay = delays.popFirst() else {
-          return false
-        }
-        try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-        // The page settled it, or a newer teleport replaced it, while this waited.
-        guard storage.get(PendingTeleportStorage.self)?.teleportId == teleport.teleportId else {
-          return false
-        }
+        continue
       }
     }
+    return false
   }
 
   private enum PendingTeleportReading {

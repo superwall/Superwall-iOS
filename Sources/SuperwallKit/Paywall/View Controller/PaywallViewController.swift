@@ -1564,8 +1564,6 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 
   func teleportDidOpen(_ teleport: PendingTeleportState) {
-    // In order with the page's checkout messages, so an abandon sent before this open can't
-    // forget the teleport it opens.
     enqueueStripeCheckoutTask { paywall in
       await paywall.webEntitlementRedeemer.registerTeleportOpen(teleport)
     }

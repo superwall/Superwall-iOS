@@ -27,7 +27,6 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func presentSafariInApp(_ url: URL)
   func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool)
   func startTeleportWatch(_ watch: TeleportReturnCover.Watch)
-  /// The page opened a teleport, which is kept in case iOS ends the app before it's settled.
   func teleportDidOpen(_ teleport: PendingTeleportState)
   func endTeleportWatch()
   func requestReview(type: ReviewType)
