@@ -498,6 +498,7 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
     await maybeRecoverPendingStripeCheckoutOnPaywallOpen()
+    await webEntitlementRedeemer.dismissPaywallCoveredWhileLoading(self)
 
     let demandScore = await deviceHelper.enrichment?.device["demandScore"].int
     let demandTier = await deviceHelper.enrichment?.device["demandTier"].string

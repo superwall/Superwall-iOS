@@ -60,6 +60,10 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// still there to finish them, so the background check leaves them to it.
   private var teleportsOpenedThisLaunch: Set<String> = []
   private var isCheckingPendingTeleport = false
+  /// When a poll last brought newly active web entitlements this session. A paywall
+  /// requested before then was let through without them, so it closes as restored once it
+  /// opens if they cover it.
+  private(set) var lastWebEntitlementsArrival: WebEntitlementsArrival?
   private var superwall: Superwall?
   typealias Factory = WebEntitlementFactory
     & OptionsFactory
@@ -1387,7 +1391,6 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   ///   its response was ignored. When a newer fetch's response was saved
   ///   first, that newer customer info.
   @discardableResult
-  // swiftlint:disable:next cyclomatic_complexity
   func refreshWebEntitlements(dismissesCoveredPaywall: Bool = false) async -> CustomerInfo? {
     let fetch = startEntitlementsFetch()
     let appUserId = factory.makeAppUserId()
@@ -1487,6 +1490,14 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         let activeEntitlements = deviceAndWebEntitlements.filter { $0.isActive }
         await updateSubscriptionStatus(with: deviceAndWebEntitlements, superwall: superwall)
 
+        if dismissesCoveredPaywall,
+          let arrival = WebEntitlementsArrival(
+            previousWebEntitlements: existingWebEntitlements,
+            webEntitlements: webEntitlements
+          ) {
+          lastWebEntitlementsArrival = arrival
+        }
+
         #if canImport(WebKit)
         // If there's a paywall, check if we should dismiss it
         // A purchase in progress, such as one in a custom store's checkout,
@@ -1494,30 +1505,11 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         if dismissesCoveredPaywall,
           factory.makePurchasingCoordinator().purchase == nil,
           let paywallVc = superwall.paywallViewController {
-          // Get entitlement IDs of products from paywall
-          var paywallEntitlementIds: Set<String> = []
-          for id in await paywallVc.info.productIds {
-            let entitlements = superwall.entitlements.byProductId(id)
-            paywallEntitlementIds.formUnion(entitlements.map { $0.id })
-          }
-
-          // If the restored entitlements cover the paywall entitlements, track and dismiss
-          let activeEntitlementsIds = Set(activeEntitlements.map { $0.id })
-          if !paywallEntitlementIds.isEmpty,
-            paywallEntitlementIds.subtracting(activeEntitlementsIds).isEmpty {
-            let trackedEvent = await InternalSuperwallEvent.Restore(
-              state: .complete,
-              paywallInfo: paywallVc.info
-            )
-            await superwall.track(trackedEvent)
-
-            await paywallVc.webView.messageHandler.handle(PaywallMessage.restoreComplete)
-
-            let superwallOptions = factory.makeSuperwallOptions()
-            if superwallOptions.paywalls.automaticallyDismiss {
-              await superwall.dismiss(paywallVc, result: PaywallResult.restored)
-            }
-          }
+          await dismissIfCovered(
+            paywallVc,
+            activeEntitlementIds: Set(activeEntitlements.map { $0.id }),
+            superwall: superwall
+          )
         }
         #endif
       }
@@ -1531,5 +1523,111 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       )
       return nil
     }
+  }
+
+  #if canImport(WebKit)
+  /// Called when a paywall opens. Closes it as restored when web entitlements that cover its
+  /// products arrived after its placement was registered: it was let through while they were
+  /// still on their way, as at launch, when presentation doesn't wait for the first fetch.
+  /// A paywall registered after they arrived was shown to a subscribed user on purpose, and
+  /// stays.
+  ///
+  /// - Returns: Whether the paywall was found covered and closed.
+  @discardableResult
+  func dismissPaywallCoveredWhileLoading(_ paywallVc: PaywallViewController) async -> Bool {
+    guard let arrival = lastWebEntitlementsArrival else {
+      return false
+    }
+    let (requestedAt, isOnScreen) = await MainActor.run {
+      let requestedAt = paywallVc.request?.presentationInfo.placementData?.createdAt
+      let isOnScreen = paywallVc.store.read { state in
+        if case .presented = state.phase {
+          return true
+        }
+        return false
+      }
+      return (requestedAt, isOnScreen)
+    }
+    // A paywall already closing, such as one a recovered checkout just finished, is done.
+    guard isOnScreen,
+      arrival.cameAfter(requestedAt) else {
+      return false
+    }
+    guard factory.makePurchasingCoordinator().purchase == nil else {
+      return false
+    }
+    let superwall = superwall ?? (Superwall.isInitialized ? Superwall.shared : nil)
+    guard let superwall = superwall else {
+      return false
+    }
+    return await dismissIfCovered(
+      paywallVc,
+      activeEntitlementIds: Set(superwall.entitlements.active.map { $0.id }),
+      superwall: superwall
+    )
+  }
+
+  /// Tracks a restore and dismisses the paywall when the active entitlements cover every
+  /// entitlement its products unlock.
+  @discardableResult
+  private func dismissIfCovered(
+    _ paywallVc: PaywallViewController,
+    activeEntitlementIds: Set<String>,
+    superwall: Superwall
+  ) async -> Bool {
+    var paywallEntitlementIds: Set<String> = []
+    for id in await paywallVc.info.productIds {
+      let entitlements = superwall.entitlements.byProductId(id)
+      paywallEntitlementIds.formUnion(entitlements.map { $0.id })
+    }
+
+    guard !paywallEntitlementIds.isEmpty,
+      paywallEntitlementIds.subtracting(activeEntitlementIds).isEmpty else {
+      return false
+    }
+
+    let trackedEvent = await InternalSuperwallEvent.Restore(
+      state: .complete,
+      paywallInfo: paywallVc.info
+    )
+    await superwall.track(trackedEvent)
+
+    await paywallVc.webView.messageHandler.handle(PaywallMessage.restoreComplete)
+
+    let superwallOptions = factory.makeSuperwallOptions()
+    if superwallOptions.paywalls.automaticallyDismiss {
+      await superwall.dismiss(paywallVc, result: PaywallResult.restored)
+    }
+    return true
+  }
+  #endif
+}
+
+/// When a poll brought web entitlements that weren't active before.
+struct WebEntitlementsArrival: Equatable {
+  let arrivedAt: Date
+
+  /// An arrival when `webEntitlements` has an active entitlement `previousWebEntitlements`
+  /// didn't, or `nil` when nothing new became active.
+  init?(
+    previousWebEntitlements: Set<Entitlement>,
+    webEntitlements: Set<Entitlement>,
+    arrivedAt: Date = Date()
+  ) {
+    let previouslyActive = Set(previousWebEntitlements.filter { $0.isActive }.map { $0.id })
+    let active = Set(webEntitlements.filter { $0.isActive }.map { $0.id })
+    guard !active.subtracting(previouslyActive).isEmpty else {
+      return nil
+    }
+    self.arrivedAt = arrivedAt
+  }
+
+  /// Whether the entitlements arrived after a placement registered at `requestedAt`. A
+  /// paywall with no placement, such as one the debugger opens, never counts.
+  func cameAfter(_ requestedAt: Date?) -> Bool {
+    guard let requestedAt = requestedAt else {
+      return false
+    }
+    return arrivedAt > requestedAt
   }
 }

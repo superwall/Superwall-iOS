@@ -647,4 +647,185 @@ struct TeleportColdStartTests {
     )
     #expect(stored.purchase(checkoutContextId: "ctx_1", productId: "").productId == "prod_offered")
   }
+
+  // MARK: - Paywalls covered while loading
+
+  private let pro = Entitlement(id: "pro", isActive: true, store: .stripe)
+
+  private func entitlements(_ entitlements: [Entitlement]) -> EntitlementsResponse {
+    EntitlementsResponse(
+      customerInfo: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: entitlements)
+    )
+  }
+
+  @Test("An entitlement that becomes active is an arrival; one already active or inactive isn't")
+  func arrival_onlyForNewlyActiveEntitlements() {
+    let inactivePro = Entitlement(id: "pro", isActive: false, store: .stripe)
+    #expect(WebEntitlementsArrival(previousWebEntitlements: [], webEntitlements: [pro]) != nil)
+    #expect(WebEntitlementsArrival(previousWebEntitlements: [inactivePro], webEntitlements: [pro]) != nil)
+    #expect(WebEntitlementsArrival(previousWebEntitlements: [pro], webEntitlements: [pro]) == nil)
+    #expect(WebEntitlementsArrival(previousWebEntitlements: [], webEntitlements: [inactivePro]) == nil)
+    #expect(WebEntitlementsArrival(previousWebEntitlements: [pro], webEntitlements: []) == nil)
+  }
+
+  @Test("Only a paywall registered before the entitlements arrived counts as covered while loading")
+  func arrival_comparedWithRegistration() throws {
+    let arrivedAt = Date()
+    let arrival = try #require(
+      WebEntitlementsArrival(previousWebEntitlements: [], webEntitlements: [pro], arrivedAt: arrivedAt)
+    )
+    #expect(arrival.cameAfter(arrivedAt.addingTimeInterval(-1)))
+    #expect(!arrival.cameAfter(arrivedAt.addingTimeInterval(1)))
+    // A paywall with no placement, such as the debugger's, is never closed this way.
+    #expect(!arrival.cameAfter(nil))
+  }
+
+  @Test("A poll that brings new entitlements records when they arrived")
+  func poll_recordsArrival() async {
+    let (superwall, _) = makeSuperwall()
+    let network = makeNetwork()
+    network.getEntitlementsResponse = entitlements([pro])
+    let redeemer = makeRedeemer(storage: StorageMock(internalRedeemResponse: nil), network: network, superwall: superwall)
+
+    let before = Date()
+    await redeemer.pollWebEntitlements(isFirstTime: true)
+
+    let arrival = await redeemer.lastWebEntitlementsArrival
+    #expect(arrival != nil)
+    #expect((arrival?.arrivedAt ?? .distantPast) >= before)
+  }
+
+  @Test("A refresh after a purchase, or a poll that brings nothing new, records no arrival")
+  func refreshOrUnchangedPoll_recordsNoArrival() async {
+    let (superwall, _) = makeSuperwall()
+    let network = makeNetwork()
+    network.getEntitlementsResponse = entitlements([pro])
+    let redeemer = makeRedeemer(storage: StorageMock(internalRedeemResponse: nil), network: network, superwall: superwall)
+
+    // After an in-app or custom store purchase: that purchase reports its own result.
+    await redeemer.refreshWebEntitlements()
+    #expect(await redeemer.lastWebEntitlementsArrival == nil)
+
+    // Already active before this poll: the paywall was shown to a subscribed user.
+    await redeemer.pollWebEntitlements(isFirstTime: true)
+    #expect(await redeemer.lastWebEntitlementsArrival == nil)
+  }
+
+  @MainActor
+  private func makeOpenedPaywall(registeredAt: Date?, presented: Bool = true) -> PaywallViewControllerMock {
+    var paywall = Paywall.stub()
+    paywall.products = [
+      SuperwallKit.Product(
+        name: "prod_pro",
+        type: .stripe(.init(id: "prod_pro", trialDays: nil)),
+        id: "prod_pro",
+        entitlements: [Entitlement(id: "pro")]
+      )
+    ]
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let paywallVc = PaywallViewControllerMock(
+      paywall: paywall,
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      webView: FakeWebView(
+        isiOSAppOnMac: false,
+        messageHandler: messageHandler,
+        isOnDeviceCacheEnabled: true,
+        factory: dependencyContainer
+      ),
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      cache: nil,
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    messageHandler.delegate = paywallVc
+    let presentationInfo: PresentationInfo = registeredAt.map {
+      .explicitTrigger(PlacementData(name: "session_start", parameters: [:], createdAt: $0))
+    } ?? .fromIdentifier("paywall", freeTrialOverride: false)
+    let request = dependencyContainer.makePresentationRequest(
+      presentationInfo,
+      isPaywallPresented: false,
+      type: .presentation
+    )
+    paywallVc.set(
+      request: request,
+      paywall: paywall,
+      paywallStatePublisher: .init(),
+      unsavedOccurrence: nil
+    )
+    if presented {
+      _ = paywallVc.dispatch(.event(.presentationWillBegin(.init(isPresentedBySDK: true, claimId: nil))))
+      _ = paywallVc.dispatch(.event(.presentationDidFinish))
+    }
+    return paywallVc
+  }
+
+  /// A redeemer whose poll just brought `pro`, which the paywall's product unlocks.
+  private func makeRedeemerAfterArrival() async -> (WebEntitlementRedeemer, Superwall) {
+    let (superwall, _) = makeSuperwall()
+    dependencyContainer.entitlementsInfo.setEntitlementsFromConfig(["prod_pro": [pro]])
+    let network = makeNetwork()
+    network.getEntitlementsResponse = entitlements([pro])
+    let redeemer = makeRedeemer(storage: StorageMock(internalRedeemResponse: nil), network: network, superwall: superwall)
+    await redeemer.pollWebEntitlements(isFirstTime: true)
+    superwall.subscriptionStatus = .active([pro])
+    return (redeemer, superwall)
+  }
+
+  @Test("A paywall registered before its entitlements arrived closes as restored when it opens")
+  func paywallRegisteredBeforeArrival_closesOnOpen() async {
+    let registeredAt = Date()
+    let (redeemer, _) = await makeRedeemerAfterArrival()
+    let paywallVc = await makeOpenedPaywall(registeredAt: registeredAt)
+
+    #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == true)
+  }
+
+  @Test("A paywall registered after the entitlements arrived was shown on purpose, and stays")
+  func paywallRegisteredAfterArrival_stays() async {
+    let (redeemer, _) = await makeRedeemerAfterArrival()
+    let paywallVc = await makeOpenedPaywall(registeredAt: Date().addingTimeInterval(1))
+
+    #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == false)
+  }
+
+  @Test("A paywall the debugger opened, or one not on screen, stays")
+  func paywallWithoutPlacementOrNotOnScreen_stays() async {
+    let registeredAt = Date()
+    let (redeemer, _) = await makeRedeemerAfterArrival()
+
+    let debuggerPaywall = await makeOpenedPaywall(registeredAt: nil)
+    #expect(await redeemer.dismissPaywallCoveredWhileLoading(debuggerPaywall) == false)
+
+    let notOpened = await makeOpenedPaywall(registeredAt: registeredAt, presented: false)
+    #expect(await redeemer.dismissPaywallCoveredWhileLoading(notOpened) == false)
+  }
+
+  @Test("Entitlements that don't cover the paywall's products leave it up")
+  func uncoveredPaywall_stays() async {
+    let registeredAt = Date()
+    let (redeemer, _) = await makeRedeemerAfterArrival()
+    dependencyContainer.entitlementsInfo.setEntitlementsFromConfig([
+      "prod_pro": [Entitlement(id: "pro_plus", isActive: false, store: .stripe)]
+    ])
+    let paywallVc = await makeOpenedPaywall(registeredAt: registeredAt)
+
+    #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == false)
+  }
+
+  @Test("Without any arrival this session, nothing is closed")
+  func noArrival_nothingClosed() async {
+    let (superwall, _) = makeSuperwall()
+    let redeemer = makeRedeemer(storage: StorageMock(internalRedeemResponse: nil), network: makeNetwork(), superwall: superwall)
+    let paywallVc = await makeOpenedPaywall(registeredAt: Date())
+
+    #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == false)
+  }
 }
