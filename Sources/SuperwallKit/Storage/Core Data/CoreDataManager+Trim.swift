@@ -81,9 +81,10 @@ extension CoreDataManager {
       let metadata = coordinator.metadata(for: store)
       let trimmedVersion = metadata[Self.savedPlacementsTrimVersionKey] as? Int
       if (trimmedVersion ?? 0) >= Self.savedPlacementsTrimVersion {
-        if metadata[Self.needsSpaceReclaimKey] as? Bool == true {
-          // Trimmed in an earlier launch that ended before the space was given back.
-          self.reclaimSpaceWhenInBackground()
+        // If it was trimmed in an earlier launch that ended before the space was
+        // given back, that's still to come. Otherwise there's nothing to wait for.
+        if metadata[Self.needsSpaceReclaimKey] as? Bool != true {
+          self.stopObservingAppBackground()
         }
         completion?()
         return
@@ -131,7 +132,10 @@ extension CoreDataManager {
         metadata[Self.needsSpaceReclaimKey] = true
         coordinator.setMetadata(metadata, for: store)
         try context.save()
-        reclaimSpaceWhenInBackground()
+        if isAppInBackground {
+          // The app went to the background while the trim was running.
+          reclaimSpaceIfNeeded(in: context, store: store)
+        }
       }
     } catch {
       // The version isn't saved, so the trim carries on at the next launch.
@@ -153,61 +157,79 @@ extension CoreDataManager {
   /// Giving space back rewrites the whole store in one go, which takes longer
   /// the more placements it keeps and can't be split into steps. So it waits
   /// until the app is in the background, where nothing is likely to be saving
-  /// or resetting. Must be called on the context's queue.
-  private func reclaimSpaceWhenInBackground() {
-    if spaceReclaimObserver != nil {
-      return
-    }
-    spaceReclaimObserver = notificationCenter.addObserver(
-      forName: SystemInfo.applicationDidEnterBackgroundNotification,
-      object: nil,
-      queue: nil
-    ) { [weak self] _ in
-      self?.reclaimSpaceIfNeeded()
-    }
-  }
-
-  /// Gives the space freed by the trim back to the device, if that's still to
-  /// be done.
-  func reclaimSpaceIfNeeded(completion: (() -> Void)? = nil) {
+  /// or resetting.
+  ///
+  /// Starts following the app from `init`, so that going to the background
+  /// while the trim is still running isn't missed.
+  func observeAppBackground() {
     guard
       let backgroundContext = backgroundContext,
       let coordinator = coreDataStack.persistentContainer?.persistentStoreCoordinator,
       let store = coordinator.persistentStores.first,
-      store.type == NSSQLiteStoreType,
-      let storeUrl = store.url
+      store.type == NSSQLiteStoreType
     else {
-      completion?()
       return
     }
-
-    backgroundContext.perform {
-      defer {
-        completion?()
-      }
-      var metadata = coordinator.metadata(for: store)
-      if metadata[Self.needsSpaceReclaimKey] as? Bool != true {
-        return
-      }
-      do {
-        try Self.reclaimFreeSpace(inStoreAt: storeUrl)
-        metadata[Self.needsSpaceReclaimKey] = false
-        coordinator.setMetadata(metadata, for: store)
-        try backgroundContext.save()
-        if let spaceReclaimObserver = self.spaceReclaimObserver {
-          self.notificationCenter.removeObserver(spaceReclaimObserver)
-          self.spaceReclaimObserver = nil
+    appBackgroundObservers = [
+      notificationCenter.addObserver(
+        forName: SystemInfo.applicationDidEnterBackgroundNotification,
+        object: nil,
+        queue: nil
+      ) { [weak self] _ in
+        backgroundContext.perform {
+          self?.isAppInBackground = true
+          self?.reclaimSpaceIfNeeded(in: backgroundContext, store: store)
         }
-      } catch {
-        // Still marked as needed, so it's tried again the next time the app
-        // goes to the background.
-        Logger.debug(
-          logLevel: .error,
-          scope: .coreData,
-          message: "Could not give freed space back.",
-          error: error
-        )
+      },
+      notificationCenter.addObserver(
+        forName: SystemInfo.applicationWillEnterForegroundNotification,
+        object: nil,
+        queue: nil
+      ) { [weak self] _ in
+        backgroundContext.perform {
+          self?.isAppInBackground = false
+        }
       }
+    ]
+  }
+
+  /// Must be called on the context's queue, or when nothing else can reach
+  /// the manager.
+  func stopObservingAppBackground() {
+    for observer in appBackgroundObservers {
+      notificationCenter.removeObserver(observer)
+    }
+    appBackgroundObservers = []
+  }
+
+  /// Gives the space freed by the trim back to the device, if that's still to
+  /// be done. Must be called on `context`'s queue.
+  private func reclaimSpaceIfNeeded(in context: NSManagedObjectContext, store: NSPersistentStore) {
+    guard
+      let coordinator = context.persistentStoreCoordinator,
+      let storeUrl = store.url
+    else {
+      return
+    }
+    var metadata = coordinator.metadata(for: store)
+    if metadata[Self.needsSpaceReclaimKey] as? Bool != true {
+      return
+    }
+    do {
+      try Self.reclaimFreeSpace(inStoreAt: storeUrl)
+      metadata[Self.needsSpaceReclaimKey] = false
+      coordinator.setMetadata(metadata, for: store)
+      try context.save()
+      stopObservingAppBackground()
+    } catch {
+      // Still marked as needed, so it's tried again the next time the app
+      // goes to the background.
+      Logger.debug(
+        logLevel: .error,
+        scope: .coreData,
+        message: "Could not give freed space back.",
+        error: error
+      )
     }
   }
 

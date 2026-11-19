@@ -19,9 +19,13 @@ class CoreDataManager {
   /// Where the app going to the background is heard about.
   let notificationCenter: NotificationCenter
 
-  /// Waits for the app to go to the background, to give freed space back to
-  /// the device. Only touched on `backgroundContext`'s queue.
-  var spaceReclaimObserver: NSObjectProtocol?
+  /// Follow the app going to and from the background while a store still has
+  /// space to give back. Added in `init`, then only touched on
+  /// `backgroundContext`'s queue.
+  var appBackgroundObservers: [NSObjectProtocol] = []
+
+  /// Only touched on `backgroundContext`'s queue.
+  var isAppInBackground = false
 
   init(
     coreDataStack: CoreDataStack = CoreDataStack(),
@@ -32,13 +36,12 @@ class CoreDataManager {
     if let persistentContainer = coreDataStack.persistentContainer {
       backgroundContext = persistentContainer.newBackgroundContext()
     }
+    observeAppBackground()
     trimSavedPlacements()
   }
 
   deinit {
-    if let spaceReclaimObserver = spaceReclaimObserver {
-      notificationCenter.removeObserver(spaceReclaimObserver)
-    }
+    stopObservingAppBackground()
   }
 
   /// Saves when a placement happened, so audience filters can count it and tell

@@ -353,6 +353,56 @@ struct SavedPlacementTrimTests {
   }
 
   @Test
+  func spaceIsGivenBackIfTheAppWentToTheBackgroundDuringTheTrim() async throws {
+    defer { try? FileManager.default.removeItem(at: rootUrl) }
+    let stack = makeStack()
+    // Enough for the trim to still be running when the app goes to the background.
+    try insert(
+      CoreDataManager.trimBatchSize * 3,
+      named: "paywallWebviewLoad_complete",
+      parameters: largeParameters,
+      into: stack
+    )
+    let sizeBefore = sizeOnDisk()
+    let center = NotificationCenter()
+    let manager = CoreDataManager(coreDataStack: stack, notificationCenter: center)
+
+    // Queued behind the trim's first step, and ahead of its second.
+    center.post(name: SystemInfo.applicationDidEnterBackgroundNotification, object: nil)
+
+    await trim(manager)
+    await drain(manager)
+    #expect(sizeOnDisk() < sizeBefore / 10)
+    #expect(try needsSpaceReclaim(stack) == false)
+  }
+
+  @Test
+  func spaceIsKeptIfTheAppCameBackBeforeTheTrimFinished() async throws {
+    defer { try? FileManager.default.removeItem(at: rootUrl) }
+    let stack = makeStack()
+    try insert(
+      CoreDataManager.trimBatchSize * 3,
+      named: "paywallWebviewLoad_complete",
+      parameters: largeParameters,
+      into: stack
+    )
+    let sizeBefore = sizeOnDisk()
+    let center = NotificationCenter()
+    let manager = CoreDataManager(coreDataStack: stack, notificationCenter: center)
+
+    center.post(name: SystemInfo.applicationDidEnterBackgroundNotification, object: nil)
+    center.post(name: SystemInfo.applicationWillEnterForegroundNotification, object: nil)
+
+    await trim(manager)
+    await drain(manager)
+    #expect(sizeOnDisk() > sizeBefore / 2)
+    #expect(try needsSpaceReclaim(stack) == true)
+
+    await goToBackground(center, manager)
+    #expect(sizeOnDisk() < sizeBefore / 10)
+  }
+
+  @Test
   func trimRunsOncePerStore() async throws {
     defer { try? FileManager.default.removeItem(at: rootUrl) }
     let stack = makeStack()
