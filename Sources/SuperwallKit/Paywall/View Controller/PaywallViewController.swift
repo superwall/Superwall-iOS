@@ -192,6 +192,9 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
 
   /// What the user sees of a teleport's waiting screen while leaving and coming back.
   private var existingTeleportReturnCover: TeleportReturnCover?
+  /// The teleport this paywall opened that the page hasn't settled yet. Its settlement forgets
+  /// that stored teleport only, so a repeated report can't forget a newer one.
+  private var unsettledTeleportId: String?
 
   /// Ensures Stripe checkout callbacks are forwarded to WebEntitlementRedeemer in order.
   private let stripeCheckoutCoordinator = SerialTaskCoordinator()
@@ -1451,21 +1454,29 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     let completion: StripeCheckoutCompletion = shouldDismiss.map {
       .purchase(productId: productId, shouldDismiss: $0)
     } ?? .restore
+    let settlingTeleportId = unsettledTeleportId
+    unsettledTeleportId = nil
 
     enqueueStripeCheckoutTask { paywall in
       await paywall.webEntitlementRedeemer.handleStripeCheckoutComplete(
         contextId: checkoutContextId,
         productId: productId,
-        completion: completion
+        completion: completion,
+        settlingTeleportId: settlingTeleportId
       )
     }
   }
 
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String) {
     dispatch(.stripeCheckoutAbandoned)
+    let settlingTeleportId = unsettledTeleportId
+    unsettledTeleportId = nil
 
     enqueueStripeCheckoutTask { paywall in
-      await paywall.webEntitlementRedeemer.handleStripeCheckoutAbandon(productId: productId)
+      await paywall.webEntitlementRedeemer.handleStripeCheckoutAbandon(
+        productId: productId,
+        settlingTeleportId: settlingTeleportId
+      )
     }
   }
 
@@ -1564,6 +1575,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 
   func teleportDidOpen(_ teleport: PendingTeleportState) {
+    unsettledTeleportId = teleport.teleportId
     enqueueStripeCheckoutTask { paywall in
       await paywall.webEntitlementRedeemer.registerTeleportOpen(teleport)
     }

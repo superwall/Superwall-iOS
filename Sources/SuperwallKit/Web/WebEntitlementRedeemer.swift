@@ -207,8 +207,9 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// (`claimed`) asks the checkout itself, as the page does, since the backend only marks the
   /// teleport paid once the checkout page reports back, seconds after the payment. Unpaid, it's
   /// kept for the next launch or foreground until its time limit, and looked at again a few
-  /// times in the background, once per launch, without making the caller wait. Any other status
-  /// forgets the teleport; a failed request keeps it.
+  /// times in the background, once per launch, without making the caller wait. A `pending`
+  /// teleport is kept too, since the user may still pay. `expired` or an unknown status forgets
+  /// it; a failed request keeps it.
   ///
   /// - Returns: `true` if the teleport was paid and its checkout polled.
   @discardableResult
@@ -234,6 +235,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       await handlePurchasedReturn(purchase)
       return true
     case .settled,
+      .notStarted,
       .unknown:
       isCheckingPendingTeleport = false
       return false
@@ -274,6 +276,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         await handlePurchasedReturn(purchase)
         return true
       case .settled,
+        .notStarted,
         .unknown:
         return false
       case .checkoutStarted:
@@ -286,8 +289,10 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   private enum PendingTeleportReading {
     /// Paid: the purchase to finish. The teleport is forgotten.
     case paid(PurchasedReturn)
-    /// A checkout was started and isn't paid yet. The teleport is kept.
+    /// A checkout was started and isn't paid yet. The teleport is kept and looked at again.
     case checkoutStarted
+    /// No checkout was started yet. The teleport is kept for the next launch or foreground.
+    case notStarted
     /// Not paid and never will be, or replaced. The teleport is forgotten.
     case settled
     /// The request failed. The teleport is kept.
@@ -338,20 +343,24 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     if status.isClaimed, checkoutContextId != nil {
       return .checkoutStarted
     }
+    // Not opened yet, or Safari is still on the teleport page: the user may still pay, so it's
+    // kept for the next launch or foreground until its time limit.
+    if status.isPending {
+      return .notStarted
+    }
     clearPendingTeleport(teleport.teleportId)
     return .settled
   }
 
-  /// Forgets the stored teleport, whichever it is, once the paywall page has settled it.
-  func clearPendingTeleport() {
-    storage.delete(PendingTeleportStorage.self)
-  }
-
-  private func clearPendingTeleport(_ teleportId: String) {
-    guard storage.get(PendingTeleportStorage.self)?.teleportId == teleportId else {
+  /// Forgets the stored teleport, but only if it's this one, so a newer teleport stays.
+  private func clearPendingTeleport(_ teleportId: String?) {
+    guard
+      let teleportId,
+      storage.get(PendingTeleportStorage.self)?.teleportId == teleportId
+    else {
       return
     }
-    clearPendingTeleport()
+    storage.delete(PendingTeleportStorage.self)
   }
 
   private func hasVisiblePaywall() async -> Bool {
@@ -455,11 +464,13 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   func handleStripeCheckoutComplete(
     contextId: String,
     productId: String,
-    completion: StripeCheckoutCompletion = .restore
+    completion: StripeCheckoutCompletion = .restore,
+    settlingTeleportId: String? = nil
   ) async {
     awaitingCheckoutComplete = false
     // The page heard how its teleport went, so there's nothing left to check in the background.
-    clearPendingTeleport()
+    // Only that teleport: a repeated report has none, and leaves a newer teleport alone.
+    clearPendingTeleport(settlingTeleportId)
 
     // The page can report one purchase more than once (its status poll and the return check).
     // Redeemed once is enough: a second redemption would put the spinner back up behind the
@@ -541,9 +552,9 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     }
   }
 
-  func handleStripeCheckoutAbandon(productId: String) async {
+  func handleStripeCheckoutAbandon(productId: String, settlingTeleportId: String? = nil) async {
     awaitingCheckoutComplete = false
-    clearPendingTeleport()
+    clearPendingTeleport(settlingTeleportId)
     let superwall = superwall ?? Superwall.shared
     let product = StoreProduct.blank(productIdentifier: productId)
     let paywallInfo = await MainActor.run { superwall.paywallViewController?.info ?? .empty() }
@@ -1377,7 +1388,20 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     if isRedeemed(contextId) {
       return
     }
-    if pendingStripeCheckoutState?.checkoutContextId != contextId {
+    if let existing = pendingStripeCheckoutState, existing.checkoutContextId == contextId {
+      // Already pending, as after an embedded submit, which can't say how to finish. A link that
+      // says so wins, keeping the attempts left; one that doesn't keeps what the page stored.
+      if purchase.completion != .restore {
+        savePendingStripeCheckoutState(
+          .init(
+            checkoutContextId: contextId,
+            productId: purchase.productId,
+            completion: purchase.completion,
+            remainingForegroundAttempts: existing.remainingForegroundAttempts
+          )
+        )
+      }
+    } else {
       savePendingStripeCheckoutState(
         .init(
           checkoutContextId: contextId,

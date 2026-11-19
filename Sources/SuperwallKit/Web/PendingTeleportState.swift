@@ -74,6 +74,11 @@ struct TeleportStatusResponse: Decodable, Equatable {
   var isClaimed: Bool {
     status == "claimed"
   }
+
+  /// Opened but no checkout started yet. The user may still pay.
+  var isPending: Bool {
+    status == "pending"
+  }
 }
 
 struct CheckoutStatusRequest: Encodable {

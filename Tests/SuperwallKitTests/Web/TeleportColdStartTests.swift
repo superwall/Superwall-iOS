@@ -512,7 +512,7 @@ struct TeleportColdStartTests {
 
   @Test(
     "A teleport that isn't paid is forgotten and never holds a paywall",
-    arguments: ["pending", "expired", "something_new"]
+    arguments: ["expired", "something_new"]
   )
   func unpaidTeleport_isForgotten(teleportStatus: String) async {
     let (superwall, _) = makeSuperwall()
@@ -749,6 +749,71 @@ struct TeleportColdStartTests {
     #expect(network.teleportStatusRequests.isEmpty)
   }
 
+  @Test("A teleport still pending is kept for later, without holding a paywall or rechecking")
+  func pendingTeleport_isKept() async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    network.teleportStatusResponses = [status("pending", checkoutContextId: nil)]
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerTeleportOpen(teleport)
+    let fresh = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    #expect(await fresh.recoverPendingTeleport() == false)
+    #expect(await fresh.waitForClaimedTeleportRecheck() == false)
+
+    #expect(storage.get(PendingTeleportStorage.self) == teleport)
+    #expect(network.teleportStatusRequests.count == 1)
+    #expect(network.pollRedemptionResultCallCount == 0)
+    #expect(await fresh.shouldShowStripeRecoveryLoadingOnPaywallOpen() == false)
+
+    // Paid later in Safari: the next launch or foreground finishes it.
+    network.teleportStatusResponses = [status("completed")]
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    #expect(await fresh.recoverPendingTeleport() == true)
+    #expect(storage.get(PendingTeleportStorage.self) == nil)
+  }
+
+  @Test("A repeated settlement of an older teleport keeps the newer one")
+  func repeatedSettlement_keepsNewerTeleport() async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    let newer = PendingTeleportState(teleportId: "tp_2", productId: "prod_offered")
+    await redeemer.registerTeleportOpen(newer)
+
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    await redeemer.handleStripeCheckoutComplete(
+      contextId: "ctx_1",
+      productId: "prod_1",
+      completion: .purchase(productId: "prod_1", shouldDismiss: true),
+      settlingTeleportId: nil
+    )
+    #expect(storage.get(PendingTeleportStorage.self) == newer)
+
+    await redeemer.handleStripeCheckoutAbandon(productId: "prod_1", settlingTeleportId: "tp_1")
+    #expect(storage.get(PendingTeleportStorage.self) == newer)
+  }
+
+  @Test("A purchased link for a submitted checkout finishes it as the link says")
+  func purchasedReturn_forSubmittedCheckout_takesLinkCompletion() async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    network.pollRedemptionResultResponses = [.failure(NetworkError.unknown)]
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerStripeCheckoutSubmit(contextId: "ctx_1", productId: "prod_submitted")
+    let attempts = storage.get(PendingStripeCheckoutPollStorage.self)?.remainingForegroundAttempts
+
+    await redeemer.handlePurchasedReturn(purchase)
+
+    let pending = storage.get(PendingStripeCheckoutPollStorage.self)
+    #expect(pending?.productId == "prod_1")
+    #expect(pending?.completion == .purchase(productId: "prod_1", shouldDismiss: true))
+    #expect(pending.map { $0.remainingForegroundAttempts <= (attempts ?? 0) } == true)
+  }
+
   @Test("A teleport the page settled itself isn't checked again")
   func pageSettledTeleport_isForgotten() async {
     let (superwall, _) = makeSuperwall()
@@ -757,7 +822,7 @@ struct TeleportColdStartTests {
     let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
 
     await redeemer.registerTeleportOpen(teleport)
-    await redeemer.handleStripeCheckoutAbandon(productId: "prod_1")
+    await redeemer.handleStripeCheckoutAbandon(productId: "prod_1", settlingTeleportId: "tp_1")
     #expect(storage.get(PendingTeleportStorage.self) == nil)
 
     await redeemer.registerTeleportOpen(teleport)
@@ -765,7 +830,8 @@ struct TeleportColdStartTests {
     await redeemer.handleStripeCheckoutComplete(
       contextId: "ctx_1",
       productId: "prod_1",
-      completion: .purchase(productId: "prod_1", shouldDismiss: true)
+      completion: .purchase(productId: "prod_1", shouldDismiss: true),
+      settlingTeleportId: "tp_1"
     )
     #expect(storage.get(PendingTeleportStorage.self) == nil)
     #expect(await redeemer.recoverPendingTeleport() == false)
