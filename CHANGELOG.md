@@ -19,6 +19,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.
 - Fixes a teleport checkout paid on the web not being credited when the return to the app launches it from scratch. The SDK now checks the teleport and its checkout in the background at launch and on foreground, and redeems the purchase once the checkout is paid. A paywall opened before then waits behind its loading spinner, and only once the SDK knows the user paid. Once checkout pages put the checkout on the return link, the SDK redeems it from the link straight away; pass your app's launch URL to `Superwall.handleDeepLink(_:)` so the link is handled on a cold launch too.
 - Fixes a paywall staying up for a user whose web entitlements arrived while it was loading. It now closes as restored when it opens, so a user who already paid isn't asked to pay again. Paywalls you show to subscribed users on purpose aren't affected.
+- Fixes the "Occurrences in the last month" audience filter counting the last 30 weeks instead of the last month.
 
 ## 4.19.1
 

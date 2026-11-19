@@ -226,8 +226,6 @@ class CoreDataManager {
     _ placementName: String,
     interval: TriggerAudienceOccurrence.Interval
   ) async -> Int {
-    let fetchRequest = ManagedEventData.fetchRequest()
-
     switch interval {
     case .minutes(let minutes):
       guard let date = Calendar.current.date(
@@ -243,16 +241,30 @@ class CoreDataManager {
         // Return maxCount so that it won't fire the trigger.
         return 0
       }
+      return await countPlacement(placementName, since: date)
+    case .infinity:
+      return await countPlacement(placementName, since: nil)
+    }
+  }
+
+  /// Counts the placements with the given name saved on or after `startDate`,
+  /// or all of them when `startDate` is `nil`.
+  func countPlacement(
+    _ placementName: String,
+    since startDate: Date?
+  ) async -> Int {
+    let fetchRequest = ManagedEventData.fetchRequest()
+
+    if let startDate = startDate {
       fetchRequest.predicate = NSPredicate(
         format: "createdAt >= %@ AND name == %@",
-        date as NSDate,
+        startDate as NSDate,
         placementName
       )
-
-      return await coreDataStack.count(for: fetchRequest)
-    case .infinity:
+    } else {
       fetchRequest.predicate = NSPredicate(format: "name == %@", placementName)
-      return await coreDataStack.count(for: fetchRequest)
     }
+
+    return await coreDataStack.count(for: fetchRequest)
   }
 }
