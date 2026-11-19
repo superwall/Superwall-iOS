@@ -1124,10 +1124,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// loading spinner on the paywall if needed) and then refreshes web entitlements.
   private func handleForegroundPolling() async {
     guard factory.makeIsContainerReady() else { return }
-    #if !canImport(WebKit)
-    await pollPendingStripeCheckoutOnForegroundIfNeeded()
-    await pollWebEntitlements()
-    #else
+    #if canImport(WebKit)
     let superwall = superwall ?? Superwall.shared
     let hasVisiblePaywall = await MainActor.run { superwall.paywallViewController != nil }
 
@@ -1139,7 +1136,20 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       await pollWebEntitlements()
       return
     }
+    #endif
 
+    await pollPendingStripeCheckoutShowingLoading()
+    await pollWebEntitlements()
+  }
+
+  /// Polls the pending Stripe checkout, if there is one, with the spinner on the visible
+  /// paywall while it does.
+  private func pollPendingStripeCheckoutShowingLoading() async {
+    #if !canImport(WebKit)
+    await pollPendingStripeCheckoutOnForegroundIfNeeded()
+    #else
+    let superwall = superwall ?? Superwall.shared
+    let hasVisiblePaywall = await MainActor.run { superwall.paywallViewController != nil }
     let shouldShowLoading = hasVisiblePaywall && shouldShowStripeRecoveryLoadingOnPaywallOpen()
 
     if shouldShowLoading {
@@ -1155,9 +1165,40 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         superwall.paywallViewController?.updateLoading(.manualLoadingEnded)
       }
     }
-
-    await pollWebEntitlements()
     #endif
+  }
+
+  /// A return link says the checkout was paid for. Keeps it pending, like a submitted
+  /// checkout, so it's redeemed even when the paywall that started it is gone: a paywall
+  /// opened meanwhile waits behind the spinner, and later launches and foregrounds poll again.
+  func handlePurchasedReturn(_ purchase: PurchasedReturn) async {
+    let contextId = purchase.checkoutContextId
+    // On a warm return the paywall page may have reported it first and redeemed it already.
+    if isRedeemed(contextId) {
+      return
+    }
+    if pendingStripeCheckoutState?.checkoutContextId != contextId {
+      savePendingStripeCheckoutState(
+        .init(
+          checkoutContextId: contextId,
+          productId: purchase.productId,
+          completion: purchase.completion
+        )
+      )
+    }
+
+    // A poll in flight may be this checkout's, started by the page. Let it finish rather than
+    // take its spinner down.
+    if hasActiveStripePoll {
+      await waitForActiveStripePoll()
+      if isRedeemed(contextId) || hasActiveStripePoll {
+        return
+      }
+    }
+    guard pendingStripeCheckoutState?.checkoutContextId == contextId else {
+      return
+    }
+    await pollPendingStripeCheckoutShowingLoading()
   }
 
   private func hasStripePendingTimedOut(_ state: PendingStripeCheckoutPollState) -> Bool {

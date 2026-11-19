@@ -447,6 +447,7 @@
 		51EF4E2118D585D5CF8B12BF /* TransactionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 646E6799FE4934BF76A06F34 /* TransactionManager.swift */; };
 		5229D3DDC70993C5CE31D5EB /* UIColor+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2888B05A273E9EB6E9382332 /* UIColor+Hex.swift */; };
 		524A6850BF306D3266686D54 /* NSView+Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81C8433C72B83DC158E13729 /* NSView+Platform.swift */; };
+		52B8B68510CACFBD9E365706 /* DeepLinkRouter+PurchasedReturn.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3886F405885E25C7BD2CA6 /* DeepLinkRouter+PurchasedReturn.swift */; };
 		530D043EFBD8A7669EAF0E0B /* SK2ObserverModePurchaseDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EC8705042D6AA74D40350A9 /* SK2ObserverModePurchaseDetector.swift */; };
 		53113582D4E7F54236FD493C /* CacheKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 865262BC55BAEA135E51698D /* CacheKeys.swift */; };
 		53227994995EA43A8CAFB0DA /* LocalizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF091A5565631C9F426F304B /* LocalizationManager.swift */; };
@@ -877,6 +878,7 @@
 		A97F1F4ECE003EA75FE714FA /* ConfigManagerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D40C4BD67FF5E6C27AA4D9D /* ConfigManagerState.swift */; };
 		A9F9A35AEC72D17C7C15DAD4 /* PaywallArchiveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB580546C647ED707C43FEC /* PaywallArchiveManager.swift */; };
 		AA03C5CBE5B2FE302EA817F0 /* WebViewURLConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22439CFFFC5166F34D0DA524 /* WebViewURLConfig.swift */; };
+		AA5AB7075DD1185E71BE7368 /* TeleportColdStartTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E424037CCF6935C1C9D53739 /* TeleportColdStartTests.swift */; };
 		AA86FF87863EB7A7917969D3 /* PermissionHandling.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D0B6F781D32B2DCDBE689C /* PermissionHandling.swift */; };
 		AABDB99DB18643D1E9C14768 /* ConfigManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8EB37FEDBC70B749E52834A /* ConfigManagerTests.swift */; };
 		AACC7BEE37DDDD7068A1E48C /* TransactionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 646E6799FE4934BF76A06F34 /* TransactionManager.swift */; };
@@ -1110,6 +1112,7 @@
 		D50A6B8B1359C8367C6BF330 /* PublicIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4493EE88B00CADF85EF1196 /* PublicIdentity.swift */; };
 		D53CF842EF1BC49B98D9904E /* HiddenListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B0C261DCC1ED74DD2BF3EA /* HiddenListener.swift */; };
 		D56F32CB484F74EC7E49E581 /* PaywallViewControllerCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BAEECE2DBFEB8817E6C36DA /* PaywallViewControllerCache.swift */; };
+		D5720F2975ADA43A015FF670 /* DeepLinkRouter+PurchasedReturn.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3886F405885E25C7BD2CA6 /* DeepLinkRouter+PurchasedReturn.swift */; };
 		D57BB97D70BE6F31DBAD413B /* LoadingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20365697A9C396E8EC746B77 /* LoadingViewController.swift */; };
 		D5A1334579BE0B0A207B0BF7 /* TestModeModalViewController+TableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C0D4F9888B5827992153F5F /* TestModeModalViewController+TableView.swift */; };
 		D5AC32FC1EEFA1D27DF0D101 /* HandleTriggerResultOperatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4546093996665B2DDC13C4B4 /* HandleTriggerResultOperatorTests.swift */; };
@@ -2105,6 +2108,7 @@
 		DE3942C132BF1F8A532EAF87 /* PlacementsQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacementsQueueTests.swift; sourceTree = "<group>"; };
 		DEF0596D5BDDE0911046E60D /* IntroOfferToken.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroOfferToken.swift; sourceTree = "<group>"; };
 		DEFDA9310B29A0C918D7A292 /* EventsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsResponse.swift; sourceTree = "<group>"; };
+		DF3886F405885E25C7BD2CA6 /* DeepLinkRouter+PurchasedReturn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeepLinkRouter+PurchasedReturn.swift"; sourceTree = "<group>"; };
 		DFD187AF612C4E33BFF191E2 /* SystemWindowHidingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemWindowHidingTests.swift; sourceTree = "<group>"; };
 		DFE7B1045C0541E66A965FC1 /* IARError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IARError.swift; sourceTree = "<group>"; };
 		E0420B6530042C9575643E01 /* IdentityState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityState.swift; sourceTree = "<group>"; };
@@ -2123,6 +2127,7 @@
 		E364A6139859987BA527862B /* PaywallBillingPlanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallBillingPlanTests.swift; sourceTree = "<group>"; };
 		E38D941C1AA6C92745A14E7A /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E3BFF03C1812D7239003448A /* Stubbable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stubbable.swift; sourceTree = "<group>"; };
+		E424037CCF6935C1C9D53739 /* TeleportColdStartTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeleportColdStartTests.swift; sourceTree = "<group>"; };
 		E439B70BB6190AFF6DDB81F2 /* CustomCallback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCallback.swift; sourceTree = "<group>"; };
 		E46F598A47D6E3E84AECF1DF /* Storage+FirstDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Storage+FirstDeepLink.swift"; sourceTree = "<group>"; };
 		E4A115838AD9EF531851B4A6 /* PaywallViewStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewStateTests.swift; sourceTree = "<group>"; };
@@ -3334,6 +3339,7 @@
 			children = (
 				09CF8AFB5EFFEF543E8063EF /* CustomStoreEntitlementRefreshTests.swift */,
 				EB37EACD9D7F4F658CA65A85 /* MockSuperwallDelegate.swift */,
+				E424037CCF6935C1C9D53739 /* TeleportColdStartTests.swift */,
 				F43149F5278EBE68B7537833 /* WebEntitlementRedeemerTests.swift */,
 			);
 			path = Web;
@@ -3499,6 +3505,7 @@
 			children = (
 				0EA0BD57CE7F03A50ACA9D25 /* DeepLinkRouter.swift */,
 				3494B9DC481A0A724FCE9181 /* DeepLinkRouter+FirstDeepLink.swift */,
+				DF3886F405885E25C7BD2CA6 /* DeepLinkRouter+PurchasedReturn.swift */,
 				C22CA9431D5F791BE7A9BE27 /* Documentation.docc */,
 				2F7EDB6D68D0AEDD332E40BB /* Superwall.swift */,
 				618F0D37FD3B2213A296DEF4 /* Superwall+CustomerCenter.swift */,
@@ -4934,6 +4941,7 @@
 				9B93FD3D0D9825BB0F8D341A /* SurveyManagerTests.swift in Sources */,
 				BB53F8F54FFDFC1483A14C66 /* SurveyTests.swift in Sources */,
 				A8D6A99700CFAB87642C21D1 /* TaskRetryingTests.swift in Sources */,
+				AA5AB7075DD1185E71BE7368 /* TeleportColdStartTests.swift in Sources */,
 				5C1ADC8D79CF214C1066AC53 /* TeleportReturnCoverTests.swift in Sources */,
 				2580DE3250D478594C25FBC9 /* TemplateLogicTests.swift in Sources */,
 				84B5C609E9E0F7BA595A560C /* TestFileManager.swift in Sources */,
@@ -5089,6 +5097,7 @@
 				11FF1373BAAE0B019CE6AE21 /* DebugViewController.swift in Sources */,
 				B5AE7BCDCB6D49FC8493D55B /* DecodingError+Extensions.swift in Sources */,
 				1292A91CB042A6D3DD9E5497 /* DeepLinkRouter+FirstDeepLink.swift in Sources */,
+				D5720F2975ADA43A015FF670 /* DeepLinkRouter+PurchasedReturn.swift in Sources */,
 				CB2F2B4DA3709F171E54CBB8 /* DeepLinkRouter.swift in Sources */,
 				3F4BE7ECC80EEA757454F9B6 /* DependencyContainer.swift in Sources */,
 				50E0E5F4B476F2F5B8DF299E /* DevMode.swift in Sources */,
@@ -5658,6 +5667,7 @@
 				12B50247E6E07A3C573DC794 /* DebugViewController.swift in Sources */,
 				648C85D1CD926A0A82109D9A /* DecodingError+Extensions.swift in Sources */,
 				9261DFE5324B5858A6877787 /* DeepLinkRouter+FirstDeepLink.swift in Sources */,
+				52B8B68510CACFBD9E365706 /* DeepLinkRouter+PurchasedReturn.swift in Sources */,
 				F265A2E36BD0CCCF9C3E2076 /* DeepLinkRouter.swift in Sources */,
 				938EA9F73264AA03DCF23D39 /* DependencyContainer.swift in Sources */,
 				A4871CCBBB4691319C938DDA /* DevMode.swift in Sources */,
