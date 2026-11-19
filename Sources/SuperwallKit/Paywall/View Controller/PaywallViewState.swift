@@ -177,6 +177,9 @@ struct PaywallViewState {
   /// paywall reports how that checkout ends, so closing its sheet isn't
   /// tracked as an abandoned Stripe checkout.
   var customStoreCheckoutProductId: String?
+  /// The teleport this paywall opened that the page hasn't settled yet. Its settlement forgets
+  /// that stored teleport only, so a repeated report can't forget a newer one.
+  var unsettledTeleportId: String?
   /// The product bought since the last presentation began, App Store or web.
   /// A close that follows a purchase, such as a `close` among the button's
   /// after-purchase actions, finishes the presentation as purchased.
@@ -438,6 +441,8 @@ enum PaywallViewUpdate: Reducer {
   case browserWentUnreported
   case redeemSucceeded
   case stripeCheckoutAbandoned
+  /// The page opened a teleport with this id in the browser.
+  case teleportOpened(String)
   /// The page reported a Stripe checkout completed: it isn't an abandon, and
   /// the spinner shows while the purchase finishes.
   case stripeCheckoutCompleted
@@ -611,8 +616,12 @@ enum PaywallViewUpdate: Reducer {
       state.settleCheckout(.redeemed)
     case .stripeCheckoutAbandoned:
       state.settleCheckout(.pageReportedOutcome)
+      state.unsettledTeleportId = nil
+    case .teleportOpened(let teleportId):
+      state.unsettledTeleportId = teleportId
     case .stripeCheckoutCompleted:
       state.settleCheckout(.pageReportedOutcome)
+      state.unsettledTeleportId = nil
       state.writeLoadingState(.manualLoading)
     case let .customStoreCheckoutAdvanced(productId, closesBrowser):
       state.customStoreCheckoutProductId = productId

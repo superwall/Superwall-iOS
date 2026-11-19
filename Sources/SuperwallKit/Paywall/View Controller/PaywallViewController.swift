@@ -192,9 +192,6 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
 
   /// What the user sees of a teleport's waiting screen while leaving and coming back.
   private var existingTeleportReturnCover: TeleportReturnCover?
-  /// The teleport this paywall opened that the page hasn't settled yet. Its settlement forgets
-  /// that stored teleport only, so a repeated report can't forget a newer one.
-  private var unsettledTeleportId: String?
 
   /// Ensures Stripe checkout callbacks are forwarded to WebEntitlementRedeemer in order.
   private let stripeCheckoutCoordinator = SerialTaskCoordinator()
@@ -1446,7 +1443,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     productId: String,
     shouldDismiss: Bool?
   ) {
-    dispatch(.event(.stripeCheckoutCompleted))
+    let settled = dispatch(.stripeCheckoutCompleted)
     closeSafari()
 
     // A paywall that says whether to dismiss wants the purchase finished
@@ -1454,8 +1451,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     let completion: StripeCheckoutCompletion = shouldDismiss.map {
       .purchase(productId: productId, shouldDismiss: $0)
     } ?? .restore
-    let settlingTeleportId = unsettledTeleportId
-    unsettledTeleportId = nil
+    let settlingTeleportId = Self.settledTeleportId(settled)
 
     enqueueStripeCheckoutTask { paywall in
       await paywall.webEntitlementRedeemer.handleStripeCheckoutComplete(
@@ -1468,9 +1464,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String) {
-    dispatch(.stripeCheckoutAbandoned)
-    let settlingTeleportId = unsettledTeleportId
-    unsettledTeleportId = nil
+    let settlingTeleportId = Self.settledTeleportId(dispatch(.stripeCheckoutAbandoned))
 
     enqueueStripeCheckoutTask { paywall in
       await paywall.webEntitlementRedeemer.handleStripeCheckoutAbandon(
@@ -1575,10 +1569,14 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 
   func teleportDidOpen(_ teleport: PendingTeleportState) {
-    unsettledTeleportId = teleport.teleportId
-    enqueueStripeCheckoutTask { paywall in
-      await paywall.webEntitlementRedeemer.registerTeleportOpen(teleport)
+    dispatch(.teleportOpened(teleport))
+  }
+
+  private static func settledTeleportId(_ outcome: PaywallViewAction.Outcome) -> String? {
+    if case .teleportSettled(let teleportId) = outcome {
+      return teleportId
     }
+    return nil
   }
 
   private var teleportReturnCover: TeleportReturnCover {
@@ -1841,6 +1839,29 @@ extension PaywallViewController {
     ) else {
       return
     }
+    carryOutDismissal(dismissal)
+  }
+
+  /// Dismisses the presentation with this id, only while it's still on screen, so a newer
+  /// presentation of this view controller is left alone.
+  ///
+  /// - Returns: Whether the dismissal was asked for.
+  @discardableResult
+  func dismiss(
+    presentation presentationId: UUID,
+    result: PaywallResult,
+    closeReason: PaywallCloseReason
+  ) -> Bool {
+    guard case .dismissal(let dismissal) = dispatch(
+      .requestDismissalOfPresentation(presentationId, result: result, closeReason: closeReason)
+    ) else {
+      return false
+    }
+    carryOutDismissal(dismissal)
+    return true
+  }
+
+  private func carryOutDismissal(_ dismissal: PaywallViewState.Dismissal) {
     let result = dismissal.result
     let closeReason = dismissal.closeReason
 
@@ -2106,6 +2127,12 @@ extension PaywallViewController: PaywallViewContext {
     }
     transactionAbandonWorkItem = workItem
     DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1.0, execute: workItem)
+  }
+
+  func registerTeleportOpen(_ teleport: PendingTeleportState) {
+    enqueueStripeCheckoutTask { paywall in
+      await paywall.webEntitlementRedeemer.registerTeleportOpen(teleport)
+    }
   }
 
   func cancelCheckoutAbandonTracking() {

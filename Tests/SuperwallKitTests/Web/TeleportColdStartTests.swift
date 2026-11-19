@@ -1064,6 +1064,41 @@ struct TeleportColdStartTests {
     #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == false)
   }
 
+  @Test("Entitlements that arrive for something else don't close a paywall whose own was already active")
+  func unrelatedArrival_stays() async {
+    let (superwall, _) = makeSuperwall()
+    dependencyContainer.entitlementsInfo.setEntitlementsFromConfig(["prod_pro": [pro]])
+    let network = makeNetwork()
+    network.getEntitlementsResponse = entitlements([pro])
+    let redeemer = makeRedeemer(storage: StorageMock(internalRedeemResponse: nil), network: network, superwall: superwall)
+    // `pro` was active when the offer's audience was evaluated: it was shown on purpose.
+    await redeemer.pollWebEntitlements(isFirstTime: true)
+    let evaluatedAt = Date()
+
+    let extra = Entitlement(id: "extra", isActive: true, store: .stripe)
+    network.getEntitlementsResponse = entitlements([pro, extra])
+    await redeemer.pollWebEntitlements(isFirstTime: true)
+    #expect(await redeemer.lastWebEntitlementsArrival?.newlyActiveIds == ["extra"])
+    superwall.subscriptionStatus = .active([pro, extra])
+
+    let paywallVc = await makeOpenedPaywall(evaluatedAt: evaluatedAt)
+    #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == false)
+  }
+
+  @Test("A dismissal for a presentation that has ended leaves the paywall alone")
+  @MainActor
+  func dismissalOfEndedPresentation_doesNothing() async {
+    let paywallVc = makeOpenedPaywall(evaluatedAt: Date())
+    #expect(paywallVc.dismiss(presentation: UUID(), result: .restored, closeReason: .systemLogic) == false)
+    let isPresented = paywallVc.store.read { state in
+      if case .presented(let presentation) = state.phase {
+        return presentation.dismissal == nil
+      }
+      return false
+    }
+    #expect(isPresented)
+  }
+
   @Test("Without any arrival this session, nothing is closed")
   func noArrival_nothingClosed() async {
     let (superwall, _) = makeSuperwall()

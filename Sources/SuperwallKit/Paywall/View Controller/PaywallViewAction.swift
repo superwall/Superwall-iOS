@@ -71,6 +71,8 @@ protocol PaywallViewContext: AnyObject {
   /// Tracks the Stripe checkout as abandoned shortly, unless cancelled.
   func scheduleCheckoutAbandonTracking()
   func cancelCheckoutAbandonTracking()
+  /// Stores a teleport the page opened, so it can be recovered after a cold launch.
+  func registerTeleportOpen(_ teleport: PendingTeleportState)
   /// Tells the page's custom store checkout it has ended.
   func notifyCustomStoreCheckoutEnded()
 }
@@ -143,6 +145,8 @@ enum PaywallViewAction: StoreAction {
     /// Whether the browser opened. It doesn't while another browser is open
     /// or closing, so the view controller doesn't present it.
     case browserOpened(Bool)
+    /// The teleport a page's checkout report settled, if the paywall had one open.
+    case teleportSettled(String?)
 
     var didStartLoad: Bool {
       if case .loadStarted(let didStart) = self {
@@ -191,8 +195,21 @@ enum PaywallViewAction: StoreAction {
   case openCheckout(UUID)
   case openSafari
   case closeCheckout(UUID)
+  /// Asks for the presentation with this id to be dismissed, only while it's on screen, so
+  /// a newer presentation of the same view controller is left alone. Returns `.done` when
+  /// it has gone.
+  case requestDismissalOfPresentation(
+    UUID,
+    result: PaywallResult,
+    closeReason: PaywallCloseReason
+  )
   case redeemSucceeded
+  /// The page reported its Stripe checkout abandoned. Returns the teleport it settled.
   case stripeCheckoutAbandoned
+  /// The page reported its Stripe checkout completed. Returns the teleport it settled.
+  case stripeCheckoutCompleted
+  /// The page opened a teleport in the browser.
+  case teleportOpened(PendingTeleportState)
 
   // swiftlint:disable:next function_body_length cyclomatic_complexity
   func execute(in context: PaywallViewContext) -> Outcome {
@@ -261,24 +278,12 @@ enum PaywallViewAction: StoreAction {
       }
       return .done
     case let .requestDismissal(result, closeReason, completion):
-      let state = context.state
-      let dismissal = state.resolvedDismissal(result: result, closeReason: closeReason)
-      let presentationId: UUID
-      if let presentation = state.latestPresentation {
-        presentationId = presentation.id
-        context.update(.dismissRequested(dismissal))
-      } else {
-        presentationId = state.earlyDismissal?.presentationId ?? UUID()
-        context.update(
-          .earlyDismissRequested(
-            PaywallViewState.EarlyDismissal(presentationId: presentationId, dismissal: dismissal)
-          )
-        )
-      }
-      if let completion = completion {
-        context.saveDismissCompletion(completion, forPresentation: presentationId)
-      }
-      return .dismissal(dismissal)
+      return Self.requestDismissal(
+        result: result,
+        closeReason: closeReason,
+        completion: completion,
+        in: context
+      )
     case .reportFinished(let dismissal):
       if context.delegate == nil {
         return .finishReported(toDelegate: false)
@@ -350,10 +355,54 @@ enum PaywallViewAction: StoreAction {
       context.effect { context.cancelCheckoutAbandonTracking() }
       return .done
     case .stripeCheckoutAbandoned:
+      let teleportId = context.state.unsettledTeleportId
       context.update(.stripeCheckoutAbandoned)
       context.effect { context.cancelCheckoutAbandonTracking() }
+      return .teleportSettled(teleportId)
+    case .stripeCheckoutCompleted:
+      let teleportId = context.state.unsettledTeleportId
+      context.update(.stripeCheckoutCompleted)
+      return .teleportSettled(teleportId)
+    case .teleportOpened(let teleport):
+      context.update(.teleportOpened(teleport.teleportId))
+      context.effect { context.registerTeleportOpen(teleport) }
       return .done
+    case let .requestDismissalOfPresentation(id, result, closeReason):
+      guard
+        case .presented(let presentation) = context.state.phase,
+        presentation.id == id
+      else {
+        return .done
+      }
+      return Self.requestDismissal(result: result, closeReason: closeReason, completion: nil, in: context)
     }
+  }
+
+  /// Resolves a dismissal for the latest presentation, or saves it for the next one.
+  private static func requestDismissal(
+    result: PaywallResult,
+    closeReason: PaywallCloseReason,
+    completion: (() -> Void)?,
+    in context: PaywallViewContext
+  ) -> Outcome {
+    let state = context.state
+    let dismissal = state.resolvedDismissal(result: result, closeReason: closeReason)
+    let presentationId: UUID
+    if let presentation = state.latestPresentation {
+      presentationId = presentation.id
+      context.update(.dismissRequested(dismissal))
+    } else {
+      presentationId = state.earlyDismissal?.presentationId ?? UUID()
+      context.update(
+        .earlyDismissRequested(
+          PaywallViewState.EarlyDismissal(presentationId: presentationId, dismissal: dismissal)
+        )
+      )
+    }
+    if let completion = completion {
+      context.saveDismissCompletion(completion, forPresentation: presentationId)
+    }
+    return .dismissal(dismissal)
   }
 
   /// Applies a claim with `update`, installing its delegate first so anything

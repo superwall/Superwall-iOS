@@ -69,10 +69,15 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// How long to wait before each new look at a teleport whose checkout was started but isn't
   /// paid yet. The backend can mark the payment a second or two after the app is back.
   private let claimedTeleportRecheckDelays: [TimeInterval]
-  /// When a poll last brought newly active web entitlements this session. A paywall
-  /// requested before then was let through without them, so it closes as restored once it
-  /// opens if they cover it.
-  private(set) var lastWebEntitlementsArrival: WebEntitlementsArrival?
+  /// The latest polls this session that brought newly active web entitlements, oldest first.
+  /// A paywall whose audience was evaluated before one of them was let through without its
+  /// entitlements, so it closes as restored once it opens if they newly cover it.
+  private(set) var webEntitlementsArrivals: [WebEntitlementsArrival] = []
+  /// How many arrivals are kept. Only a paywall loading when one came needs it.
+  private static let keptArrivals = 10
+  var lastWebEntitlementsArrival: WebEntitlementsArrival? {
+    webEntitlementsArrivals.last
+  }
   private var superwall: Superwall?
   typealias Factory = WebEntitlementFactory
     & OptionsFactory
@@ -1614,7 +1619,10 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         await updateSubscriptionStatus(with: deviceAndWebEntitlements, superwall: superwall)
 
         if dismissesCoveredPaywall, let arrival {
-          lastWebEntitlementsArrival = arrival
+          webEntitlementsArrivals.append(arrival)
+          if webEntitlementsArrivals.count > Self.keptArrivals {
+            webEntitlementsArrivals.removeFirst(webEntitlementsArrivals.count - Self.keptArrivals)
+          }
         }
 
         #if canImport(WebKit)
@@ -1654,26 +1662,27 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// - Returns: Whether the paywall was found covered and closed.
   @discardableResult
   func dismissPaywallCoveredWhileLoading(_ paywallVc: PaywallViewController) async -> Bool {
-    guard let arrival = lastWebEntitlementsArrival else {
+    guard !webEntitlementsArrivals.isEmpty else {
       return false
     }
-    let (evaluatedAt, isOnScreen) = await MainActor.run {
+    let (evaluatedAt, presentationId) = await MainActor.run {
       let request = paywallVc.request
       // A paywall with no placement, such as one the debugger opens, never counts.
       let evaluatedAt = request?.presentationInfo.placementData == nil
         ? nil
         : request?.audienceEvaluatedAt
-      let isOnScreen = paywallVc.store.read { state in
-        if case .presented = state.phase {
-          return true
-        }
-        return false
-      }
-      return (evaluatedAt, isOnScreen)
+      return (evaluatedAt, Self.presentedPresentationId(of: paywallVc))
     }
     // A paywall already closing, such as one a recovered checkout just finished, is done.
-    guard isOnScreen,
-      arrival.cameAfter(evaluatedAt) else {
+    guard let presentationId else {
+      return false
+    }
+    // Only entitlements that arrived after its audience was evaluated count: one already
+    // active then was seen, and a paywall shown anyway, such as an upgrade offer, stays.
+    let arrivedSinceEvaluation = webEntitlementsArrivals
+      .filter { $0.cameAfter(evaluatedAt) }
+      .reduce(into: Set<String>()) { $0.formUnion($1.newlyActiveIds) }
+    guard !arrivedSinceEvaluation.isEmpty else {
       return false
     }
     guard factory.makePurchasingCoordinator().purchase == nil else {
@@ -1686,16 +1695,37 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     return await dismissIfCovered(
       paywallVc,
       activeEntitlementIds: Set(superwall.entitlements.active.map { $0.id }),
+      newlyCoveredBy: arrivedSinceEvaluation,
+      presentationId: presentationId,
       superwall: superwall
     )
+  }
+
+  /// The id of the paywall's presentation once it's fully on screen, or `nil`.
+  @MainActor
+  private static func presentedPresentationId(of paywallVc: PaywallViewController) -> UUID? {
+    paywallVc.store.read { state in
+      if case .presented(let presentation) = state.phase {
+        return presentation.id
+      }
+      return nil
+    }
   }
 
   /// Tracks a restore and dismisses the paywall when the active entitlements cover every
   /// entitlement its products unlock.
   @discardableResult
+  ///
+  /// - Parameters:
+  ///   - newlyCoveredBy: When set, at least one of these entitlements must be one the paywall
+  ///     unlocks, so entitlements that arrived for something else don't close it.
+  ///   - presentationId: When set, only that presentation is told and dismissed. One that has
+  ///     ended meanwhile is left alone, and so is a newer one.
   private func dismissIfCovered(
     _ paywallVc: PaywallViewController,
     activeEntitlementIds: Set<String>,
+    newlyCoveredBy newlyActiveIds: Set<String>? = nil,
+    presentationId: UUID? = nil,
     superwall: Superwall
   ) async -> Bool {
     var paywallEntitlementIds: Set<String> = []
@@ -1706,6 +1736,14 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
     guard !paywallEntitlementIds.isEmpty,
       paywallEntitlementIds.subtracting(activeEntitlementIds).isEmpty else {
+      return false
+    }
+    if let newlyActiveIds,
+      paywallEntitlementIds.isDisjoint(with: newlyActiveIds) {
+      return false
+    }
+    if let presentationId,
+      await Self.presentedPresentationId(of: paywallVc) != presentationId {
       return false
     }
 
@@ -1719,7 +1757,20 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
     let superwallOptions = factory.makeSuperwallOptions()
     if superwallOptions.paywalls.automaticallyDismiss {
-      await superwall.dismiss(paywallVc, result: PaywallResult.restored)
+      if let presentationId {
+        await MainActor.run {
+          paywallVc.closeSafari {
+            // Checked again as the dismissal is asked for, in the same step.
+            paywallVc.dismiss(
+              presentation: presentationId,
+              result: .restored,
+              closeReason: .systemLogic
+            )
+          }
+        }
+      } else {
+        await superwall.dismiss(paywallVc, result: PaywallResult.restored)
+      }
     }
     return true
   }
@@ -1729,6 +1780,8 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 /// When a poll brought web entitlements that weren't active before.
 struct WebEntitlementsArrival: Equatable {
   let arrivedAt: Date
+  /// The entitlements that became active.
+  let newlyActiveIds: Set<String>
 
   /// An arrival when `webEntitlements` has an active entitlement `previousWebEntitlements`
   /// didn't, or `nil` when nothing new became active.
@@ -1739,10 +1792,12 @@ struct WebEntitlementsArrival: Equatable {
   ) {
     let previouslyActive = Set(previousWebEntitlements.filter { $0.isActive }.map { $0.id })
     let active = Set(webEntitlements.filter { $0.isActive }.map { $0.id })
-    guard !active.subtracting(previouslyActive).isEmpty else {
+    let newlyActiveIds = active.subtracting(previouslyActive)
+    guard !newlyActiveIds.isEmpty else {
       return nil
     }
     self.arrivedAt = arrivedAt
+    self.newlyActiveIds = newlyActiveIds
   }
 
   /// Whether the entitlements arrived after an audience evaluated at `evaluatedAt`, so it
