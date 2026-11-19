@@ -275,10 +275,13 @@ is really on screen (`isBrowserOnScreen`); a browser the state has open that isn
 `CoreDataManager` saves when each placement happened, so audience filters can count it or tell how
 long ago it last happened. Only the name and time are saved. The `parameters` column stays in the
 model but is written empty, so the store needs no model migration. Preloading and loading placements
-(`CoreDataManager.unsavedPlacementPrefixes`) aren't saved at all, and the dashboard doesn't offer
+(`CoreDataManager.unsavedPlacementNames`) aren't saved or counted, and the dashboard doesn't offer
 them in audience filters; keep the two lists in step. `trimSavedPlacements` cleans up a store written
-by earlier versions once, then marks it in the store's metadata. It runs in the background because
-it takes over a second on a large store; don't move it onto the calling thread.
+by earlier versions once, then saves `savedPlacementsTrimVersion` in the store's metadata; raise that
+number when adding to the unsaved names, so stores are cleaned again. The trim works in small steps
+on the context that saves placements, each queued behind whatever is waiting, because the whole of it
+takes over a second on a large store. Don't turn it into one long block: placements saved at launch
+and `reset()` would wait for it.
 
 ### Native macOS
 

@@ -9,23 +9,12 @@ import Foundation
 import CoreData
 
 class CoreDataManager {
-  /// Preloading and loading placements aren't saved. They follow what the SDK
-  /// does, not what the user does: the loading ones fire for every paywall on
-  /// every preload, the same as when a paywall is shown.
-  static let unsavedPlacementPrefixes = [
-    "paywallPreload_",
-    "paywallResponseLoad_",
-    "paywallProductsLoad_",
-    "paywallWebviewLoad_",
-    "shimmerView_"
-  ]
-
   let coreDataStack: CoreDataStack
   private(set) var backgroundContext: NSManagedObjectContext?
 
-  static func isSaved(placementNamed name: String) -> Bool {
-    return !unsavedPlacementPrefixes.contains { name.hasPrefix($0) }
-  }
+  /// Called once the trim that's running has finished. `nil` when none is
+  /// running. Only touched on `backgroundContext`'s queue.
+  var trimCompletions: [() -> Void]?
 
   init(coreDataStack: CoreDataStack = CoreDataStack()) {
     self.coreDataStack = coreDataStack
@@ -190,6 +179,9 @@ class CoreDataManager {
     _ placement: PlacementData?,
     request: ComputedPropertyRequest
   ) async -> Int? {
+    if !Self.isSaved(placementNamed: request.placementName) {
+      return nil
+    }
     var lastEventDate: Date?
     if let placement = placement {
       lastEventDate = placement.name == request.placementName ? placement.createdAt : nil
@@ -274,6 +266,9 @@ class CoreDataManager {
     _ placementName: String,
     since startDate: Date?
   ) async -> Int {
+    if !Self.isSaved(placementNamed: placementName) {
+      return 0
+    }
     let fetchRequest = ManagedEventData.fetchRequest()
 
     if let startDate = startDate {

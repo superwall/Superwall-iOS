@@ -114,6 +114,20 @@ struct SavedPlacementTrimTests {
       paywallInfo: .stub(),
       placementData: nil
     ).rawName,
+    InternalSuperwallEvent.PaywallProductsLoad(
+      state: .fail(NSError(domain: "test", code: 1)),
+      paywallInfo: .stub(),
+      placementData: nil
+    ).rawName,
+    InternalSuperwallEvent.PaywallProductsLoad(
+      state: .missingProducts(["abc"]),
+      paywallInfo: .stub(),
+      placementData: nil
+    ).rawName,
+    InternalSuperwallEvent.PaywallWebviewLoad(
+      state: .fail(NSError(domain: "test", code: 1), []),
+      paywallInfo: .stub()
+    ).rawName,
     InternalSuperwallEvent.PaywallWebviewLoad(state: .start, paywallInfo: .stub()).rawName,
     InternalSuperwallEvent.PaywallWebviewLoad(state: .complete, paywallInfo: .stub()).rawName,
     InternalSuperwallEvent.PaywallWebviewLoad(state: .timeout, paywallInfo: .stub()).rawName,
@@ -140,7 +154,10 @@ struct SavedPlacementTrimTests {
     "transaction_complete",
     "review_requested",
     "paywallPresentationRequest",
-    "my_placement"
+    "my_placement",
+    // An app's own placements that only start like a loading one.
+    "shimmerView_dismissed",
+    "paywallPreload_seen"
   ])
   func otherPlacementsAreSaved(name: String) {
     #expect(CoreDataManager.isSaved(placementNamed: name))
@@ -218,6 +235,61 @@ struct SavedPlacementTrimTests {
       }
     }
     #expect(await manager.countPlacement("app_open", interval: .infinity) == 301)
+  }
+
+  @Test
+  func countsAndDatesIgnoreLoadingPlacementsStillInTheStore() async throws {
+    let stack = CoreDataStackMock()
+    let manager = CoreDataManagerMock(coreDataStack: stack)
+    await withCheckedContinuation { continuation in
+      stack.batchInsertPlacementData(eventName: "paywallWebviewLoad_complete", count: 3) {
+        continuation.resume()
+      }
+    }
+
+    #expect(await manager.countAllEvents() == 3)
+    #expect(await manager.countPlacement("paywallWebviewLoad_complete", interval: .infinity) == 0)
+    #expect(await manager.countPlacement("paywallWebviewLoad_complete", since: nil) == 0)
+    let daysSince = await manager.getComputedPropertySincePlacement(
+      nil,
+      request: ComputedPropertyRequest(type: .daysSince, placementName: "paywallWebviewLoad_complete")
+    )
+    #expect(daysSince == nil)
+  }
+
+  @Test
+  func savingAPlacementDoesntWaitForTheWholeTrim() async throws {
+    defer { try? FileManager.default.removeItem(at: rootUrl) }
+    let stack = makeStack()
+    // Enough loading placements for the trim to need several steps.
+    let loadingCount = CoreDataManager.trimBatchSize * 3
+    try insert(loadingCount, named: "paywallWebviewLoad_complete", parameters: Data([7]), into: stack)
+    try insert(
+      CoreDataManager.trimBatchSize + 1,
+      named: "app_open",
+      parameters: Data([7]),
+      into: stack
+    )
+
+    // Creating the manager starts the trim. The save is queued right behind
+    // its first step.
+    let manager = CoreDataManager(coreDataStack: stack)
+    let loadingPlacementsLeftAtSave: Int = await withCheckedContinuation { continuation in
+      manager.savePlacementData(.stub().setting(\.name, to: "paywall_open")) { placement in
+        let request = ManagedEventData.fetchRequest()
+        request.predicate = NSPredicate(format: "name == %@", "paywallWebviewLoad_complete")
+        let count = (try? placement.managedObjectContext?.count(for: request)) ?? -1
+        continuation.resume(returning: count)
+      }
+    }
+    #expect(loadingPlacementsLeftAtSave > 0)
+    #expect(loadingPlacementsLeftAtSave < loadingCount)
+
+    await trim(manager)
+    #expect(await count("paywallWebviewLoad_complete", in: stack) == 0)
+    #expect(await manager.countPlacement("app_open", interval: .infinity) == CoreDataManager.trimBatchSize + 1)
+    #expect(await manager.countPlacement("paywall_open", interval: .infinity) == 1)
+    #expect(try parameterBytes(in: stack) == 0)
   }
 
   @Test
