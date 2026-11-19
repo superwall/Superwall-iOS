@@ -98,6 +98,11 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
     openedTeleports.append(teleport)
   }
 
+  var startedCheckouts: [String] = []
+  func handleStripeCheckoutStart(checkoutContextId: String) {
+    startedCheckouts.append(checkoutContextId)
+  }
+
   func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool) {
     didPresentSafariExternal = true
     didDrawWaitingScreen = drawsWaitingScreen

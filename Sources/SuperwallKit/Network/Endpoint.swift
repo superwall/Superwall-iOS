@@ -428,7 +428,9 @@ extension Endpoint where
   static func teleportStatus(request: TeleportStatusRequest) -> Self {
     let bodyData = try? Kind.jsonEncoder.encode(request)
 
+    // The foreground polls wait behind this, so it gives up sooner than the default.
     return Endpoint(
+      retryCount: 2,
       components: Components(
         host: .subscriptionsApi,
         path: "checkout/teleport/status",
@@ -445,7 +447,9 @@ extension Endpoint where
   static func checkoutStatus(request: CheckoutStatusRequest) -> Self {
     let bodyData = try? Kind.jsonEncoder.encode(request)
 
+    // The foreground polls wait behind this, so it gives up sooner than the default.
     return Endpoint(
+      retryCount: 2,
       components: Components(
         host: .subscriptionsApi,
         path: "checkout/status",

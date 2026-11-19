@@ -14,6 +14,8 @@ protocol SWWebViewDelegate: AnyObject {
   var info: PaywallInfo { get }
   var isActive: Bool { get }
   func webViewDidFail()
+  /// The page's process ended, so the page has lost whatever it was keeping track of.
+  func webViewPageDidRestart()
 }
 
 enum WebViewError: LocalizedError {
@@ -331,6 +333,7 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+    delegate?.webViewPageDidRestart()
     if delegate?.isActive == true,
       activeProcessTerminationRetryCount < maxActiveProcessTerminationRetries {
       activeProcessTerminationRetryCount += 1

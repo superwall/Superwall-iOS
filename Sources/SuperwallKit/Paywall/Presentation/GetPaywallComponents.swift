@@ -33,6 +33,7 @@ extension Superwall {
     )
 
     request.audienceEvaluatedAt = Date()
+    request.entitlementIdsSeenByAudience = Set(entitlements.active.map { $0.id })
     let audienceOutcome = try await evaluateAudienceFilter(from: request)
 
     confirmHoldoutAssignment(

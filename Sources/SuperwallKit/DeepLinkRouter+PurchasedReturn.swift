@@ -10,6 +10,7 @@ import Foundation
 /// A checkout that a return link says the user paid for.
 struct PurchasedReturn: Equatable {
   let checkoutContextId: String
+  /// Empty when the link didn't name the product.
   let productId: String
   let completion: StripeCheckoutCompletion
 }
@@ -36,7 +37,7 @@ extension URL {
     guard let checkoutContextId = value("checkout_context_id") else {
       return nil
     }
-    let productId = value("product_identifier") ?? ""
+    let productId = value("product_identifier")
     let shouldDismiss: Bool? = value("should_dismiss").flatMap {
       switch $0.lowercased() {
       case "true", "1":
@@ -48,13 +49,15 @@ extension URL {
       }
     }
     // As with `stripe_checkout_complete`: a link that says whether to dismiss finishes the
-    // purchase like an App Store purchase, one that doesn't gets the legacy restore.
-    let completion: StripeCheckoutCompletion = shouldDismiss.map {
-      .purchase(productId: productId, shouldDismiss: $0)
-    } ?? .restore
+    // purchase like an App Store purchase, one that doesn't gets the legacy restore. So does
+    // one that doesn't name the product, since a purchase is reported with its product.
+    var completion: StripeCheckoutCompletion = .restore
+    if let productId, let shouldDismiss {
+      completion = .purchase(productId: productId, shouldDismiss: shouldDismiss)
+    }
     return PurchasedReturn(
       checkoutContextId: checkoutContextId,
-      productId: productId,
+      productId: productId ?? "",
       completion: completion
     )
   }

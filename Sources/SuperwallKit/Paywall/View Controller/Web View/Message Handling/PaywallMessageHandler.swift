@@ -28,6 +28,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool)
   func startTeleportWatch(_ watch: TeleportReturnCover.Watch)
   func teleportDidOpen(_ teleport: PendingTeleportState)
+  func handleStripeCheckoutStart(checkoutContextId: String)
   func endTeleportWatch()
   func requestReview(type: ReviewType)
   func openPaymentSheet(_ url: URL)
@@ -251,6 +252,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       break
     case let .stripeCheckoutStart(checkoutContextId, productId):
       lastCheckoutStart = (checkoutContextId, productId)
+      delegate?.handleStripeCheckoutStart(checkoutContextId: checkoutContextId)
       trackStripeCheckoutEvent(
         state: .start,
         productId: productId

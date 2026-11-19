@@ -73,6 +73,8 @@ protocol PaywallViewContext: AnyObject {
   func cancelCheckoutAbandonTracking()
   /// Stores a teleport the page opened, so it can be recovered after a cold launch.
   func registerTeleportOpen(_ teleport: PendingTeleportState)
+  /// Says the page won't report how this teleport went, so it's checked in the background.
+  func teleportPageWentAway(_ teleportId: String)
   /// Tells the page's custom store checkout it has ended.
   func notifyCustomStoreCheckoutEnded()
 }
@@ -210,6 +212,10 @@ enum PaywallViewAction: StoreAction {
   case stripeCheckoutCompleted
   /// The page opened a teleport in the browser.
   case teleportOpened(PendingTeleportState)
+  /// The page started a checkout. A teleport it opened before is no longer the one it reports on.
+  case stripeCheckoutStarted
+  /// The page loaded again, so it has lost whatever it was keeping track of.
+  case pageRestarted
 
   // swiftlint:disable:next function_body_length cyclomatic_complexity
   func execute(in context: PaywallViewContext) -> Outcome {
@@ -318,6 +324,7 @@ enum PaywallViewAction: StoreAction {
       }
       context.effect { context.trackClose() }
       context.update(.disappeared)
+      Self.leaveTeleportToBackground(in: context)
       return .dismissalStarted(presentation.id)
     case .finishDismissal(let id):
       Self.finishDismissal(id, in: context)
@@ -367,15 +374,30 @@ enum PaywallViewAction: StoreAction {
       context.update(.teleportOpened(teleport.teleportId))
       context.effect { context.registerTeleportOpen(teleport) }
       return .done
+    case .stripeCheckoutStarted,
+      .pageRestarted:
+      Self.leaveTeleportToBackground(in: context)
+      return .done
     case let .requestDismissalOfPresentation(id, result, closeReason):
+      // One already being dismissed keeps the result it was dismissed with.
       guard
         case .presented(let presentation) = context.state.phase,
-        presentation.id == id
+        presentation.id == id,
+        presentation.dismissal == nil
       else {
         return .done
       }
       return Self.requestDismissal(result: result, closeReason: closeReason, completion: nil, in: context)
     }
+  }
+
+  /// Forgets the unsettled teleport, if there is one, and hands it to the background check.
+  private static func leaveTeleportToBackground(in context: PaywallViewContext) {
+    guard let teleportId = context.state.unsettledTeleportId else {
+      return
+    }
+    context.update(.teleportLeftToBackground)
+    context.effect { context.teleportPageWentAway(teleportId) }
   }
 
   /// Resolves a dismissal for the latest presentation, or saves it for the next one.

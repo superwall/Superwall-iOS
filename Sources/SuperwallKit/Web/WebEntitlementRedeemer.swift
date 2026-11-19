@@ -56,9 +56,19 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// The checkout the paywall last reported complete, while it's being finished. An older
   /// checkout's poll stops for it, so it doesn't wait behind a poll that can't redeem it.
   private var completingCheckoutContextId: String?
-  /// Teleports opened since the app launched. While their paywall is on screen, its page is
-  /// still there to finish them, so the background check leaves them to it.
-  private var teleportsOpenedThisLaunch: Set<String> = []
+  /// Teleports whose page is still there to finish them: opened since the app launched, by a
+  /// paywall that hasn't been closed or had its page loaded again since. The background check
+  /// leaves these to the page.
+  private var teleportsWithPage: Set<String> = []
+  /// The checkout each teleport that read paid led to. The teleport is forgotten once that
+  /// checkout is redeemed, or can't be.
+  private var paidTeleportCheckouts: [String: String] = [:]
+  /// How long a return link that doesn't say how to finish its purchase waits for the page on
+  /// screen to report the purchase itself, which does say.
+  private let pageReportWaitNs: UInt64
+  /// The checkouts a paywall page has reported as completed or abandoned. A report it repeats
+  /// settles no teleport, since the page may have opened another one since.
+  private var checkoutsReportedByPage: Set<String> = []
   private var isCheckingPendingTeleport = false
   /// Teleports whose unpaid checkout was already looked at again this launch. Each gets one
   /// background round of rechecks per launch, so an abandoned checkout costs a later
@@ -156,6 +166,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     stripePendingPollIntervalNs: UInt64 = 1_500_000_000,
     stripePendingPollTimeoutNs: UInt64 = 60_000_000_000,
     claimedTeleportRecheckDelays: [TimeInterval] = [2, 3, 5],
+    pageReportWaitNs: UInt64 = 5_000_000_000,
     superwall: Superwall? = nil
   ) {
     self.network = network
@@ -170,6 +181,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     self.stripePendingPollIntervalNs = stripePendingPollIntervalNs
     self.stripePendingPollTimeoutNs = stripePendingPollTimeoutNs
     self.claimedTeleportRecheckDelays = claimedTeleportRecheckDelays
+    self.pageReportWaitNs = pageReportWaitNs
 
     // Observe when the app enters the foreground
     NotificationCenter.default.addObserver(
@@ -202,13 +214,20 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// check reads how it went, so it can be finished if iOS ends the app meanwhile. Nothing is
   /// blocked by it: a paywall only waits once the check reads it paid.
   func registerTeleportOpen(_ teleport: PendingTeleportState) {
-    teleportsOpenedThisLaunch.insert(teleport.teleportId)
+    teleportsWithPage.insert(teleport.teleportId)
     storage.save(teleport, forType: PendingTeleportStorage.self)
+  }
+
+  /// The paywall that opened the teleport was closed, or its page loaded again, so the page
+  /// won't report how the teleport went. The background check takes over.
+  func teleportPageWentAway(_ teleportId: String) {
+    teleportsWithPage.remove(teleportId)
   }
 
   /// Reads the status of the teleport left open, if there is one, without blocking anything.
   /// Only a paid teleport is finished, as a purchased return link would be: the paywall gets the
-  /// spinner, the code is redeemed and the paywall closes. A teleport whose checkout was started
+  /// spinner, the code is redeemed and the paywall closes. It's kept until that code is redeemed,
+  /// so a redemption that fails is tried again. A teleport whose checkout was started
   /// (`claimed`) asks the checkout itself, as the page does, since the backend only marks the
   /// teleport paid once the checkout page reports back, seconds after the payment. Unpaid, it's
   /// kept for the next launch or foreground until its time limit, and looked at again a few
@@ -227,7 +246,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       return false
     }
     // The page that opened it is still on screen and finishes it when the user is back.
-    if teleportsOpenedThisLaunch.contains(teleport.teleportId), await hasVisiblePaywall() {
+    if await isStoredTeleportWithItsPage() {
       return false
     }
     guard !isCheckingPendingTeleport else {
@@ -237,7 +256,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     switch await readPendingTeleport(teleport) {
     case .paid(let purchase):
       isCheckingPendingTeleport = false
-      await handlePurchasedReturn(purchase)
+      await finishPaidTeleport(purchase)
       return true
     case .settled,
       .notStarted,
@@ -278,7 +297,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       switch await readPendingTeleport(teleport) {
       case .paid(let purchase):
         isCheckingPendingTeleport = false
-        await handlePurchasedReturn(purchase)
+        await finishPaidTeleport(purchase)
         return true
       case .settled,
         .notStarted,
@@ -291,8 +310,17 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     return false
   }
 
+  /// Polls a paid teleport's checkout. The poll forgets the teleport when it redeems the
+  /// checkout; so does this when the page had redeemed it already.
+  private func finishPaidTeleport(_ purchase: PurchasedReturn) async {
+    await handlePurchasedReturn(purchase)
+    if isRedeemed(purchase.checkoutContextId) {
+      clearTeleport(paidFor: purchase.checkoutContextId)
+    }
+  }
+
   private enum PendingTeleportReading {
-    /// Paid: the purchase to finish. The teleport is forgotten.
+    /// Paid: the purchase to finish. The teleport is kept until its checkout is redeemed.
     case paid(PurchasedReturn)
     /// A checkout was started and isn't paid yet. The teleport is kept and looked at again.
     case checkoutStarted
@@ -337,7 +365,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       return .settled
     }
     if isPaid, let checkoutContextId {
-      clearPendingTeleport(teleport.teleportId)
+      paidTeleportCheckouts[checkoutContextId] = teleport.teleportId
       return .paid(
         teleport.purchase(
           checkoutContextId: checkoutContextId,
@@ -359,13 +387,43 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
   /// Forgets the stored teleport, but only if it's this one, so a newer teleport stays.
   private func clearPendingTeleport(_ teleportId: String?) {
-    guard
-      let teleportId,
-      storage.get(PendingTeleportStorage.self)?.teleportId == teleportId
-    else {
+    guard let teleportId else {
       return
     }
-    storage.delete(PendingTeleportStorage.self)
+    teleportsWithPage.remove(teleportId)
+    if storage.get(PendingTeleportStorage.self)?.teleportId == teleportId {
+      storage.delete(PendingTeleportStorage.self)
+    }
+  }
+
+  /// The page heard how its teleport went, so there's nothing left to check in the background.
+  /// Only on its first report of a checkout. One it repeats may come after it opened another
+  /// teleport: that one is kept and checked in the background, as the paywall no longer waits
+  /// to hear about it.
+  private func settleTeleport(_ teleportId: String?, reportedCheckout contextId: String?) {
+    if let contextId, !checkoutsReportedByPage.insert(contextId).inserted {
+      if let teleportId {
+        teleportPageWentAway(teleportId)
+      }
+      return
+    }
+    clearPendingTeleport(teleportId)
+  }
+
+  /// Forgets the teleport that led to this checkout, once the checkout is redeemed or can't be.
+  private func clearTeleport(paidFor checkoutContextId: String) {
+    clearPendingTeleport(paidTeleportCheckouts.removeValue(forKey: checkoutContextId))
+  }
+
+  /// Whether the page that opened the stored teleport is still on screen to finish it.
+  private func isStoredTeleportWithItsPage() async -> Bool {
+    guard
+      let teleport = storage.get(PendingTeleportStorage.self),
+      teleportsWithPage.contains(teleport.teleportId)
+    else {
+      return false
+    }
+    return await hasVisiblePaywall()
   }
 
   private func hasVisiblePaywall() async -> Bool {
@@ -473,9 +531,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     settlingTeleportId: String? = nil
   ) async {
     awaitingCheckoutComplete = false
-    // The page heard how its teleport went, so there's nothing left to check in the background.
-    // Only that teleport: a repeated report has none, and leaves a newer teleport alone.
-    clearPendingTeleport(settlingTeleportId)
+    settleTeleport(settlingTeleportId, reportedCheckout: contextId)
 
     // The page can report one purchase more than once (its status poll and the return check).
     // Redeemed once is enough: a second redemption would put the spinner back up behind the
@@ -557,9 +613,13 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     }
   }
 
-  func handleStripeCheckoutAbandon(productId: String, settlingTeleportId: String? = nil) async {
+  func handleStripeCheckoutAbandon(
+    contextId: String? = nil,
+    productId: String,
+    settlingTeleportId: String? = nil
+  ) async {
     awaitingCheckoutComplete = false
-    clearPendingTeleport(settlingTeleportId)
+    settleTeleport(settlingTeleportId, reportedCheckout: contextId)
     let superwall = superwall ?? Superwall.shared
     let product = StoreProduct.blank(productIdentifier: productId)
     let paywallInfo = await MainActor.run { superwall.paywallViewController?.info ?? .empty() }
@@ -775,6 +835,11 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     checkoutContextId: String? = nil
   ) async {
     var response = response
+    #if canImport(WebKit)
+    let previousWebEntitlements = Set(
+      storage.get(LatestRedeemResponse.self)?.customerInfo.entitlements ?? []
+    )
+    #endif
     // A later fetch has already saved newer customer info. The codes' results are still this
     // response's, but its customer info is out of date. Saved before anything suspends, so a
     // fetch finishing meanwhile can't be overwritten.
@@ -814,6 +879,19 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       with: mergedEntitlements(webCustomerInfo: latestWebCustomerInfo),
       superwall: superwall
     )
+
+    #if canImport(WebKit)
+    // A code redeemed with no paywall on screen has no paywall to finish on. One that was let
+    // through before it, and is still on its way, closes as restored when it opens.
+    if case .code = type,
+      await MainActor.run(body: { superwall.paywallViewController == nil }),
+      let arrival = WebEntitlementsArrival(
+        previousWebEntitlements: previousWebEntitlements,
+        webEntitlements: Set(latestWebCustomerInfo.entitlements)
+      ) {
+      recordArrival(arrival)
+    }
+    #endif
 
     if case .code(let code) = type {
       await handleCodeRedemptionCompletion(
@@ -1275,6 +1353,12 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
         if let code = response.results.first?.code {
           let superwall = superwall ?? Superwall.shared
+          clearTeleport(paidFor: contextId)
+          // The link or the page may have said how to finish since this poll started.
+          var completion = completion
+          if let state = pendingStripeCheckoutState, state.checkoutContextId == contextId {
+            completion = state.completion
+          }
           // Redeeming the checkout's code changed the user's entitlements, so this response
           // is newer than any fetch already in flight.
           await handleRedemptionSuccess(
@@ -1293,6 +1377,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         switch response.status {
         case .failed:
           clearPendingStripeCheckoutState(for: contextId)
+          clearTeleport(paidFor: contextId)
           finalOutcome = .checkoutFailed
           return finalOutcome
         case .pending:
@@ -1305,6 +1390,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
           continue
         case .complete:
           clearPendingStripeCheckoutState(for: contextId)
+          clearTeleport(paidFor: contextId)
           finalOutcome = .noRedemptionFound
           return finalOutcome
         case .none:
@@ -1393,19 +1479,28 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     if isRedeemed(contextId) {
       return
     }
+    // The page that opened the teleport is still on screen. It reports the purchase itself and
+    // says how to finish it, which this link doesn't, so it gets a moment to.
+    if purchase.completion == .restore, await isStoredTeleportWithItsPage() {
+      await waitForPageReport(of: contextId)
+      if isRedeemed(contextId) {
+        return
+      }
+    }
     if let existing = pendingStripeCheckoutState, existing.checkoutContextId == contextId {
       // Already pending, as after an embedded submit, which can't say how to finish. A link that
-      // says so wins, keeping the attempts left; one that doesn't keeps what the page stored.
-      if purchase.completion != .restore {
-        savePendingStripeCheckoutState(
-          .init(
-            checkoutContextId: contextId,
-            productId: purchase.productId,
-            completion: purchase.completion,
-            remainingForegroundAttempts: existing.remainingForegroundAttempts
-          )
+      // says so wins; one that doesn't keeps what's stored, as does one that names no product.
+      // It's saved again either way, keeping the attempts left: the link says it's paid, so the
+      // time it has to be redeemed starts over.
+      let saysHowToFinish = purchase.completion != .restore
+      savePendingStripeCheckoutState(
+        .init(
+          checkoutContextId: contextId,
+          productId: purchase.productId.isEmpty ? existing.productId : purchase.productId,
+          completion: saysHowToFinish ? purchase.completion : existing.completion,
+          remainingForegroundAttempts: existing.remainingForegroundAttempts
         )
-      }
+      )
     } else {
       savePendingStripeCheckoutState(
         .init(
@@ -1428,6 +1523,24 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       return
     }
     await pollPendingStripeCheckoutShowingLoading()
+  }
+
+  /// Waits for the paywall page to report the checkout, while its teleport is still the page's
+  /// to finish, for up to `pageReportWaitNs`.
+  private func waitForPageReport(of contextId: String) async {
+    let waitStart = DispatchTime.now().uptimeNanoseconds
+    while !Task.isCancelled {
+      if isRedeemed(contextId) || completingCheckoutContextId == contextId {
+        return
+      }
+      if await !isStoredTeleportWithItsPage() {
+        return
+      }
+      if DispatchTime.now().uptimeNanoseconds - waitStart >= pageReportWaitNs {
+        return
+      }
+      try? await Task.sleep(nanoseconds: 50_000_000)
+    }
   }
 
   private func hasStripePendingTimedOut(_ state: PendingStripeCheckoutPollState) -> Bool {
@@ -1611,18 +1724,15 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
           Set(response.customerInfo.entitlements)
         )
         let activeEntitlements = deviceAndWebEntitlements.filter { $0.isActive }
-        // Timed before the status changes: an audience evaluated from then on may see them.
-        let arrival = WebEntitlementsArrival(
-          previousWebEntitlements: existingWebEntitlements,
-          webEntitlements: webEntitlements
-        )
         await updateSubscriptionStatus(with: deviceAndWebEntitlements, superwall: superwall)
 
-        if dismissesCoveredPaywall, let arrival {
-          webEntitlementsArrivals.append(arrival)
-          if webEntitlementsArrivals.count > Self.keptArrivals {
-            webEntitlementsArrivals.removeFirst(webEntitlementsArrivals.count - Self.keptArrivals)
-          }
+        // Timed once the status has them: an audience evaluated before then didn't see them.
+        if dismissesCoveredPaywall,
+          let arrival = WebEntitlementsArrival(
+            previousWebEntitlements: existingWebEntitlements,
+            webEntitlements: webEntitlements
+          ) {
+          recordArrival(arrival)
         }
 
         #if canImport(WebKit)
@@ -1632,11 +1742,21 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         if dismissesCoveredPaywall,
           factory.makePurchasingCoordinator().purchase == nil,
           let paywallVc = superwall.paywallViewController {
-          await dismissIfCovered(
-            paywallVc,
-            activeEntitlementIds: Set(activeEntitlements.map { $0.id }),
-            superwall: superwall
-          )
+          let (presentationId, isClosing) = await MainActor.run {
+            (
+              Self.presentedPresentationId(of: paywallVc),
+              paywallVc.store.read { $0.latestPresentation?.dismissal != nil }
+            )
+          }
+          // A paywall already closing, such as one a purchase just finished on, keeps its result.
+          if !isClosing {
+            await dismissIfCovered(
+              paywallVc,
+              activeEntitlementIds: Set(activeEntitlements.map { $0.id }),
+              presentationId: presentationId,
+              superwall: superwall
+            )
+          }
         }
         #endif
       }
@@ -1652,12 +1772,20 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     }
   }
 
+  /// Remembers which web entitlements just became active, and when.
+  private func recordArrival(_ arrival: WebEntitlementsArrival) {
+    webEntitlementsArrivals.append(arrival)
+    if webEntitlementsArrivals.count > Self.keptArrivals {
+      webEntitlementsArrivals.removeFirst(webEntitlementsArrivals.count - Self.keptArrivals)
+    }
+  }
+
   #if canImport(WebKit)
   /// Called when a paywall opens. Closes it as restored when web entitlements that cover its
   /// products arrived after its audience was evaluated: it was let through while they were
   /// still on their way, as at launch, when presentation doesn't wait for the first fetch.
-  /// A paywall whose audience was evaluated after they arrived was shown to a subscribed user
-  /// on purpose, such as an upgrade offer, and stays.
+  /// A paywall whose audience already saw them active was shown to a subscribed user on
+  /// purpose, such as an upgrade offer, and stays.
   ///
   /// - Returns: Whether the paywall was found covered and closed.
   @discardableResult
@@ -1665,23 +1793,24 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     guard !webEntitlementsArrivals.isEmpty else {
       return false
     }
-    let (evaluatedAt, presentationId) = await MainActor.run {
-      let request = paywallVc.request
-      // A paywall with no placement, such as one the debugger opens, never counts.
-      let evaluatedAt = request?.presentationInfo.placementData == nil
-        ? nil
-        : request?.audienceEvaluatedAt
-      return (evaluatedAt, Self.presentedPresentationId(of: paywallVc))
+    let (request, presentationId) = await MainActor.run {
+      (paywallVc.request, Self.presentedPresentationId(of: paywallVc))
     }
     // A paywall already closing, such as one a recovered checkout just finished, is done.
     guard let presentationId else {
       return false
     }
-    // Only entitlements that arrived after its audience was evaluated count: one already
-    // active then was seen, and a paywall shown anyway, such as an upgrade offer, stays.
+    // A paywall with no placement, such as one the debugger opens, never counts.
+    let evaluatedAt = request?.presentationInfo.placementData == nil
+      ? nil
+      : request?.audienceEvaluatedAt
+    // Only entitlements that arrived after its audience was evaluated count, and only ones the
+    // audience didn't already see active from elsewhere, such as the App Store: a paywall
+    // shown anyway, such as an upgrade offer, stays.
     let arrivedSinceEvaluation = webEntitlementsArrivals
       .filter { $0.cameAfter(evaluatedAt) }
       .reduce(into: Set<String>()) { $0.formUnion($1.newlyActiveIds) }
+      .subtracting(request?.entitlementIdsSeenByAudience ?? [])
     guard !arrivedSinceEvaluation.isEmpty else {
       return false
     }
@@ -1701,11 +1830,13 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     )
   }
 
-  /// The id of the paywall's presentation once it's fully on screen, or `nil`.
+  /// The id of the paywall's presentation once it's fully on screen with nothing closing it
+  /// yet, or `nil`.
   @MainActor
   private static func presentedPresentationId(of paywallVc: PaywallViewController) -> UUID? {
     paywallVc.store.read { state in
-      if case .presented(let presentation) = state.phase {
+      if case .presented(let presentation) = state.phase,
+        presentation.dismissal == nil {
         return presentation.id
       }
       return nil
@@ -1714,13 +1845,13 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
   /// Tracks a restore and dismisses the paywall when the active entitlements cover every
   /// entitlement its products unlock.
-  @discardableResult
   ///
   /// - Parameters:
   ///   - newlyCoveredBy: When set, at least one of these entitlements must be one the paywall
   ///     unlocks, so entitlements that arrived for something else don't close it.
   ///   - presentationId: When set, only that presentation is told and dismissed. One that has
   ///     ended meanwhile is left alone, and so is a newer one.
+  @discardableResult
   private func dismissIfCovered(
     _ paywallVc: PaywallViewController,
     activeEntitlementIds: Set<String>,
@@ -1777,7 +1908,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   #endif
 }
 
-/// When a poll brought web entitlements that weren't active before.
+/// When web entitlements that weren't active before became active.
 struct WebEntitlementsArrival: Equatable {
   let arrivedAt: Date
   /// The entitlements that became active.

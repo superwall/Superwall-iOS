@@ -131,6 +131,10 @@ struct PresentationRequest {
   /// arrive later weren't seen by the audience.
   var audienceEvaluatedAt: Date?
 
+  /// The entitlements that were active when the audience filter was evaluated, so the ones the
+  /// audience saw. Nil until then.
+  var entitlementIdsSeenByAudience: Set<String>?
+
   /// The source function type that initiated the presentation request.
   var presentationSourceType: String? {
     switch presentationInfo {

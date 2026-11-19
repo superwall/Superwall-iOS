@@ -570,6 +570,7 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     }
 
     dispatch(.event(.webViewLoadStarted(Date())))
+    dispatch(.pageRestarted)
     webView.messageHandler.documentWillLoad()
 
     if let paywallArchiveManager = self.paywallArchiveManager,
@@ -1348,6 +1349,10 @@ extension PaywallViewController: SWWebViewDelegate {
       closeReason: .webViewFailedToLoad
     )
   }
+
+  func webViewPageDidRestart() {
+    dispatch(.pageRestarted)
+  }
 }
 
 // MARK: - UIAdaptivePresentationControllerDelegate
@@ -1468,6 +1473,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
     enqueueStripeCheckoutTask { paywall in
       await paywall.webEntitlementRedeemer.handleStripeCheckoutAbandon(
+        contextId: checkoutContextId,
         productId: productId,
         settlingTeleportId: settlingTeleportId
       )
@@ -1570,6 +1576,10 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
   func teleportDidOpen(_ teleport: PendingTeleportState) {
     dispatch(.teleportOpened(teleport))
+  }
+
+  func handleStripeCheckoutStart(checkoutContextId: String) {
+    dispatch(.stripeCheckoutStarted)
   }
 
   private static func settledTeleportId(_ outcome: PaywallViewAction.Outcome) -> String? {
@@ -2132,6 +2142,12 @@ extension PaywallViewController: PaywallViewContext {
   func registerTeleportOpen(_ teleport: PendingTeleportState) {
     enqueueStripeCheckoutTask { paywall in
       await paywall.webEntitlementRedeemer.registerTeleportOpen(teleport)
+    }
+  }
+
+  func teleportPageWentAway(_ teleportId: String) {
+    enqueueStripeCheckoutTask { paywall in
+      await paywall.webEntitlementRedeemer.teleportPageWentAway(teleportId)
     }
   }
 

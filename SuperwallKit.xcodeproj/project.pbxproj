@@ -568,6 +568,7 @@
 		6DCFC3B002082C9C2E1BBC67 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DB09C4AF80761DF4205C4C2 /* Logger.swift */; };
 		6E653F541D7BD2FA94D189ED /* CustomerCenterConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A87ACD3A2FC711292AA3F1E6 /* CustomerCenterConfigurationTests.swift */; };
 		6F1541FBF7C11418B6837738 /* PresentPaywall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7100728123E4690275724478 /* PresentPaywall.swift */; };
+		6F2A8D79579A5BAD2050EA57 /* WebCheckoutRecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70DF3CB882CDC94817614A2F /* WebCheckoutRecoveryTests.swift */; };
 		6F4A9A6472F22012DE9E5630 /* IdentityResetHandlingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8C4EB5A45CC2089AFC6A08 /* IdentityResetHandlingTests.swift */; };
 		6F6D3817664DA89BA9474085 /* ReceiptManager+Restore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120238C4AA04D65D43DB1820 /* ReceiptManager+Restore.swift */; };
 		6F7F87F78DDFE6566ABEE5AE /* MockSuperwallDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB37EACD9D7F4F658CA65A85 /* MockSuperwallDelegate.swift */; };
@@ -1723,6 +1724,7 @@
 		6F35F68AF572F7CDF174320C /* ContactStoreProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactStoreProxy.swift; sourceTree = "<group>"; };
 		701D6015B3D9E179D4E79282 /* TestModeModalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModeModalTests.swift; sourceTree = "<group>"; };
 		70D2B0D671B1A1E665B7CCD8 /* UIViewController+AsyncDismiss.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+AsyncDismiss.swift"; sourceTree = "<group>"; };
+		70DF3CB882CDC94817614A2F /* WebCheckoutRecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebCheckoutRecoveryTests.swift; sourceTree = "<group>"; };
 		70DF8C89C9FF162B35EAFDA0 /* EvaluationContextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvaluationContextTests.swift; sourceTree = "<group>"; };
 		70FC86C1189200C486627EAD /* ASN1Decoder+Unboxing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ASN1Decoder+Unboxing.swift"; sourceTree = "<group>"; };
 		7100728123E4690275724478 /* PresentPaywall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentPaywall.swift; sourceTree = "<group>"; };
@@ -3345,6 +3347,7 @@
 				09CF8AFB5EFFEF543E8063EF /* CustomStoreEntitlementRefreshTests.swift */,
 				EB37EACD9D7F4F658CA65A85 /* MockSuperwallDelegate.swift */,
 				E424037CCF6935C1C9D53739 /* TeleportColdStartTests.swift */,
+				70DF3CB882CDC94817614A2F /* WebCheckoutRecoveryTests.swift */,
 				F43149F5278EBE68B7537833 /* WebEntitlementRedeemerTests.swift */,
 			);
 			path = Web;
@@ -4966,6 +4969,7 @@
 				42AE38DD020BF6F04E09283F /* URLSessionRetryLogicTests.swift in Sources */,
 				1DD42DD6C5E31D68D3FE3B43 /* Utils.swift in Sources */,
 				3AC3D67530EE590DB6F7A20C /* WaitForEntitlementsAndConfigTests.swift in Sources */,
+				6F2A8D79579A5BAD2050EA57 /* WebCheckoutRecoveryTests.swift in Sources */,
 				C070A796A6689AC7EFF610DB /* WebEntitlementRedeemerTests.swift in Sources */,
 				6001D5EAB0937FA808A79076 /* WebProductPricingTests.swift in Sources */,
 				5B0E472B996C47C21B3F3AFA /* WebSubscriptionPathTests.swift in Sources */,

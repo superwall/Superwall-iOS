@@ -248,7 +248,8 @@ tracking stays in `TransactionManager`.
 `PaywallViewController` is the `PaywallViewContext` of a `PaywallViewStore`. Its state
 (`PaywallViewState`) holds the paywall, the claims (`currentClaim` and `HandedOut`), the
 presentation `Phase` (idle, requested, appearing, presented, dismissing), the `Browser` (with the
-`CheckoutSheet` and what settled it) and the loading state. Request and occurrence are read from the
+`CheckoutSheet` and what settled it), the teleport its page has still to report on (`unsettledTeleportId`)
+and the loading state. Request and occurrence are read from the
 claim; `isPresented`, `isBrowserOpen`, macOS `isClosing` and friends are computed from the phase.
 Publishers, dismiss completions, views, timers and tasks stay on the view controller. Safari doesn't
 always report it closed (never on visionOS), so a link or checkout is only refused while a browser
