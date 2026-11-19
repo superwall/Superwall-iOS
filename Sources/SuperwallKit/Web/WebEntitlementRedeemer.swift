@@ -60,6 +60,9 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// still there to finish them, so the background check leaves them to it.
   private var teleportsOpenedThisLaunch: Set<String> = []
   private var isCheckingPendingTeleport = false
+  /// How long to wait before each new look at a teleport whose checkout was started but isn't
+  /// paid yet. The backend can mark the payment a second or two after the app is back.
+  private let claimedTeleportRecheckDelays: [TimeInterval]
   /// When a poll last brought newly active web entitlements this session. A paywall
   /// requested before then was let through without them, so it closes as restored once it
   /// opens if they cover it.
@@ -141,6 +144,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     notificationScheduler: NotificationScheduling = NotificationScheduler.shared,
     stripePendingPollIntervalNs: UInt64 = 1_500_000_000,
     stripePendingPollTimeoutNs: UInt64 = 60_000_000_000,
+    claimedTeleportRecheckDelays: [TimeInterval] = [2, 3, 5],
     superwall: Superwall? = nil
   ) {
     self.network = network
@@ -154,6 +158,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     self.receiptManager = receiptManager
     self.stripePendingPollIntervalNs = stripePendingPollIntervalNs
     self.stripePendingPollTimeoutNs = stripePendingPollTimeoutNs
+    self.claimedTeleportRecheckDelays = claimedTeleportRecheckDelays
 
     // Observe when the app enters the foreground
     NotificationCenter.default.addObserver(
@@ -191,9 +196,12 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   }
 
   /// Reads the status of the teleport left open, if there is one, without blocking anything.
-  /// Only a completed teleport with its checkout is finished, as a purchased return link would
-  /// be: the paywall gets the spinner, the code is redeemed and the paywall closes. Any other
-  /// status forgets the teleport. A failed request keeps it for the next launch or foreground.
+  /// Only a paid teleport is finished, as a purchased return link would be: the paywall gets the
+  /// spinner, the code is redeemed and the paywall closes. A teleport whose checkout was started
+  /// (`claimed`) asks the checkout itself, as the page does, since the backend only marks the
+  /// teleport paid once the checkout page reports back, seconds after the payment. Unpaid, it's
+  /// checked again a few times, then kept for the next launch or foreground until its time
+  /// limit. Any other status forgets the teleport; a failed request keeps it.
   ///
   /// - Returns: `true` if the teleport was paid and its checkout polled.
   @discardableResult
@@ -215,6 +223,41 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     isCheckingPendingTeleport = true
     defer { isCheckingPendingTeleport = false }
 
+    var delays = claimedTeleportRecheckDelays[...]
+    while true {
+      switch await readPendingTeleport(teleport) {
+      case .paid(let purchase):
+        await handlePurchasedReturn(purchase)
+        return true
+      case .settled:
+        return false
+      case .unknown:
+        return false
+      case .checkoutStarted:
+        guard let delay = delays.popFirst() else {
+          return false
+        }
+        try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+        // The page settled it, or a newer teleport replaced it, while this waited.
+        guard storage.get(PendingTeleportStorage.self)?.teleportId == teleport.teleportId else {
+          return false
+        }
+      }
+    }
+  }
+
+  private enum PendingTeleportReading {
+    /// Paid: the purchase to finish. The teleport is forgotten.
+    case paid(PurchasedReturn)
+    /// A checkout was started and isn't paid yet. The teleport is kept.
+    case checkoutStarted
+    /// Not paid and never will be, or replaced. The teleport is forgotten.
+    case settled
+    /// The request failed. The teleport is kept.
+    case unknown
+  }
+
+  private func readPendingTeleport(_ teleport: PendingTeleportState) async -> PendingTeleportReading {
     let status: TeleportStatusResponse
     do {
       status = try await network.getTeleportStatus(teleportId: teleport.teleportId)
@@ -225,27 +268,41 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         message: "Checking the teleport left open failed; checking again later",
         error: error
       )
-      return false
+      return .unknown
+    }
+    let checkoutContextId = status.checkoutContextId.flatMap { $0.isEmpty ? nil : $0 }
+    var isPaid = status.isCompleted && checkoutContextId != nil
+    if !isPaid, status.isClaimed, let checkoutContextId {
+      do {
+        isPaid = try await network.getCheckoutStatus(checkoutId: checkoutContextId).isCompleted
+      } catch {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .webEntitlements,
+          message: "Checking the checkout of the teleport left open failed; checking again later",
+          error: error
+        )
+        return .unknown
+      }
     }
     // The page settled it, or a newer teleport replaced it, while the status was read.
     guard storage.get(PendingTeleportStorage.self)?.teleportId == teleport.teleportId else {
-      return false
+      return .settled
+    }
+    if isPaid, let checkoutContextId {
+      clearPendingTeleport(teleport.teleportId)
+      return .paid(
+        teleport.purchase(
+          checkoutContextId: checkoutContextId,
+          productId: status.checkoutProductIdentifier
+        )
+      )
+    }
+    if status.isClaimed, checkoutContextId != nil {
+      return .checkoutStarted
     }
     clearPendingTeleport(teleport.teleportId)
-    guard
-      status.isCompleted,
-      let checkoutContextId = status.checkoutContextId,
-      !checkoutContextId.isEmpty
-    else {
-      return false
-    }
-    await handlePurchasedReturn(
-      teleport.purchase(
-        checkoutContextId: checkoutContextId,
-        productId: status.checkoutProductIdentifier
-      )
-    )
-    return true
+    return .settled
   }
 
   /// Forgets the stored teleport, whichever it is, once the paywall page has settled it.
@@ -1488,13 +1545,14 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
           Set(response.customerInfo.entitlements)
         )
         let activeEntitlements = deviceAndWebEntitlements.filter { $0.isActive }
+        // Timed before the status changes: an audience evaluated from then on may see them.
+        let arrival = WebEntitlementsArrival(
+          previousWebEntitlements: existingWebEntitlements,
+          webEntitlements: webEntitlements
+        )
         await updateSubscriptionStatus(with: deviceAndWebEntitlements, superwall: superwall)
 
-        if dismissesCoveredPaywall,
-          let arrival = WebEntitlementsArrival(
-            previousWebEntitlements: existingWebEntitlements,
-            webEntitlements: webEntitlements
-          ) {
+        if dismissesCoveredPaywall, let arrival {
           lastWebEntitlementsArrival = arrival
         }
 
@@ -1527,10 +1585,10 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
   #if canImport(WebKit)
   /// Called when a paywall opens. Closes it as restored when web entitlements that cover its
-  /// products arrived after its placement was registered: it was let through while they were
+  /// products arrived after its audience was evaluated: it was let through while they were
   /// still on their way, as at launch, when presentation doesn't wait for the first fetch.
-  /// A paywall registered after they arrived was shown to a subscribed user on purpose, and
-  /// stays.
+  /// A paywall whose audience was evaluated after they arrived was shown to a subscribed user
+  /// on purpose, such as an upgrade offer, and stays.
   ///
   /// - Returns: Whether the paywall was found covered and closed.
   @discardableResult
@@ -1538,19 +1596,23 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     guard let arrival = lastWebEntitlementsArrival else {
       return false
     }
-    let (requestedAt, isOnScreen) = await MainActor.run {
-      let requestedAt = paywallVc.request?.presentationInfo.placementData?.createdAt
+    let (evaluatedAt, isOnScreen) = await MainActor.run {
+      let request = paywallVc.request
+      // A paywall with no placement, such as one the debugger opens, never counts.
+      let evaluatedAt = request?.presentationInfo.placementData == nil
+        ? nil
+        : request?.audienceEvaluatedAt
       let isOnScreen = paywallVc.store.read { state in
         if case .presented = state.phase {
           return true
         }
         return false
       }
-      return (requestedAt, isOnScreen)
+      return (evaluatedAt, isOnScreen)
     }
     // A paywall already closing, such as one a recovered checkout just finished, is done.
     guard isOnScreen,
-      arrival.cameAfter(requestedAt) else {
+      arrival.cameAfter(evaluatedAt) else {
       return false
     }
     guard factory.makePurchasingCoordinator().purchase == nil else {
@@ -1622,12 +1684,12 @@ struct WebEntitlementsArrival: Equatable {
     self.arrivedAt = arrivedAt
   }
 
-  /// Whether the entitlements arrived after a placement registered at `requestedAt`. A
-  /// paywall with no placement, such as one the debugger opens, never counts.
-  func cameAfter(_ requestedAt: Date?) -> Bool {
-    guard let requestedAt = requestedAt else {
+  /// Whether the entitlements arrived after an audience evaluated at `evaluatedAt`, so it
+  /// couldn't have seen them. Nil, for a paywall with no placement or audience, never counts.
+  func cameAfter(_ evaluatedAt: Date?) -> Bool {
+    guard let evaluatedAt = evaluatedAt else {
       return false
     }
-    return arrivedAt > requestedAt
+    return arrivedAt > evaluatedAt
   }
 }

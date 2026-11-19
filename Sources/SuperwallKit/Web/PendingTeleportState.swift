@@ -68,4 +68,24 @@ struct TeleportStatusResponse: Decodable, Equatable {
   var isCompleted: Bool {
     status == "completed"
   }
+
+  /// A checkout was started but the teleport isn't marked paid yet. The backend marks it paid
+  /// once the checkout page reports back, which can come seconds after the payment itself.
+  var isClaimed: Bool {
+    status == "claimed"
+  }
+}
+
+struct CheckoutStatusRequest: Encodable {
+  let checkoutId: String
+}
+
+/// What the subscriptions API says about a checkout, confirmed with the store.
+struct CheckoutStatusResponse: Decodable, Equatable {
+  /// `pending`, `completed` (paid) or `abandoned`.
+  let status: String
+
+  var isCompleted: Bool {
+    status == "completed"
+  }
 }

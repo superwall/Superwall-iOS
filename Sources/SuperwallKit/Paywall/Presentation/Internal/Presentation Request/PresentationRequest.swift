@@ -126,6 +126,11 @@ struct PresentationRequest {
   /// Overrides the default behavior and products of a paywall.
   var paywallOverrides: PaywallOverrides?
 
+  /// When the audience filter was evaluated for this request, which is after it waits for the
+  /// config and subscription status, not when the placement was registered. Entitlements that
+  /// arrive later weren't seen by the audience.
+  var audienceEvaluatedAt: Date?
+
   /// The source function type that initiated the presentation request.
   var presentationSourceType: String? {
     switch presentationInfo {

@@ -22,6 +22,7 @@ extension Superwall {
     _ request: PresentationRequest,
     _ publisher: PassthroughSubject<PaywallState, Never>? = nil
   ) async throws -> PaywallComponents {
+    var request = request
     try await waitForSubsStatusAndConfig(request, paywallStatePublisher: publisher)
 
     let debugInfo = log(request: request)
@@ -31,6 +32,7 @@ extension Superwall {
       paywallStatePublisher: publisher
     )
 
+    request.audienceEvaluatedAt = Date()
     let audienceOutcome = try await evaluateAudienceFilter(from: request)
 
     confirmHoldoutAssignment(
@@ -65,7 +67,8 @@ extension Superwall {
       paywall: paywall,
       presenter: presenter,
       audienceOutcome: audienceOutcome,
-      debugInfo: debugInfo
+      debugInfo: debugInfo,
+      request: request
     )
   }
   #endif

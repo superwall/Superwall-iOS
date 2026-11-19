@@ -47,7 +47,7 @@ extension Superwall {
         on: presenter,
         unsavedOccurrence: paywallComponents.audienceOutcome.unsavedOccurrence,
         debugInfo: paywallComponents.debugInfo,
-        request: request,
+        request: paywallComponents.request,
         paywallStatePublisher: publisher
       )
     } catch {

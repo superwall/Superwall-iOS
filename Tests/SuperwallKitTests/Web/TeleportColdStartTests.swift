@@ -38,6 +38,7 @@ struct TeleportColdStartTests {
       factory: dependencyContainer,
       stripePendingPollIntervalNs: 1_000_000,
       stripePendingPollTimeoutNs: 5_000_000_000,
+      claimedTeleportRecheckDelays: [0, 0],
       superwall: superwall
     )
   }
@@ -511,7 +512,7 @@ struct TeleportColdStartTests {
 
   @Test(
     "A teleport that isn't paid is forgotten and never holds a paywall",
-    arguments: ["pending", "claimed", "expired", "something_new"]
+    arguments: ["pending", "expired", "something_new"]
   )
   func unpaidTeleport_isForgotten(teleportStatus: String) async {
     let (superwall, _) = makeSuperwall()
@@ -527,6 +528,101 @@ struct TeleportColdStartTests {
     #expect(storage.get(PendingTeleportStorage.self) == nil)
     #expect(network.pollRedemptionResultCallCount == 0)
     #expect(await fresh.shouldShowStripeRecoveryLoadingOnPaywallOpen() == false)
+  }
+
+  @Test("A claimed teleport whose checkout is paid is redeemed before the backend marks it")
+  func claimedTeleport_paidCheckout_redeems() async {
+    let (superwall, mockDelegate) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerTeleportOpen(teleport)
+    network.teleportStatusResponses = [status("claimed")]
+    network.checkoutStatusResponses = [.success(CheckoutStatusResponse(status: "completed"))]
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    let fresh = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    #expect(await fresh.recoverPendingTeleport() == true)
+
+    #expect(network.checkoutStatusRequests == ["ctx_1"])
+    #expect(network.pollRedemptionResultRequest?.checkoutContextId == "ctx_1")
+    #expect(mockDelegate.receivedResult?.code == "redemption_123")
+    #expect(storage.get(PendingTeleportStorage.self) == nil)
+  }
+
+  @Test("A claimed teleport paid a moment after launch is redeemed on a later look")
+  func claimedTeleport_paidOnRecheck_redeems() async {
+    let (superwall, mockDelegate) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerTeleportOpen(teleport)
+    // The app is back before the payment lands: the first look reads it unpaid.
+    network.teleportStatusResponses = [status("claimed"), status("completed")]
+    network.checkoutStatusResponses = [.success(CheckoutStatusResponse(status: "pending"))]
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    let fresh = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    #expect(await fresh.recoverPendingTeleport() == true)
+
+    #expect(network.teleportStatusRequests == ["tp_1", "tp_1"])
+    #expect(mockDelegate.receivedResult?.code == "redemption_123")
+    #expect(storage.get(PendingTeleportStorage.self) == nil)
+  }
+
+  @Test("A claimed teleport that stays unpaid is kept for later and never holds a paywall")
+  func claimedTeleport_unpaid_isKept() async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerTeleportOpen(teleport)
+    network.teleportStatusResponses = [status("claimed"), status("claimed"), status("claimed")]
+    network.checkoutStatusResponses = Array(
+      repeating: .success(CheckoutStatusResponse(status: "pending")),
+      count: 3
+    )
+    let fresh = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    #expect(await fresh.recoverPendingTeleport() == false)
+
+    // The first look and one for each recheck delay, then it waits for the next foreground.
+    #expect(network.teleportStatusRequests.count == 3)
+    #expect(network.checkoutStatusRequests.count == 3)
+    #expect(storage.get(PendingTeleportStorage.self) == teleport)
+    #expect(network.pollRedemptionResultCallCount == 0)
+    #expect(await fresh.shouldShowStripeRecoveryLoadingOnPaywallOpen() == false)
+  }
+
+  @Test("A claimed teleport whose checkout can't be read is kept for later")
+  func claimedTeleport_checkoutCheckFails_isKept() async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerTeleportOpen(teleport)
+    network.teleportStatusResponses = [status("claimed")]
+    network.checkoutStatusResponses = [.failure(NetworkError.unknown)]
+    let fresh = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    #expect(await fresh.recoverPendingTeleport() == false)
+    #expect(storage.get(PendingTeleportStorage.self) == teleport)
+    #expect(network.pollRedemptionResultCallCount == 0)
+  }
+
+  @Test("A claimed teleport without a checkout is forgotten")
+  func claimedTeleport_withoutCheckout_isForgotten() async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerTeleportOpen(teleport)
+    network.teleportStatusResponses = [status("claimed", checkoutContextId: nil)]
+    let fresh = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    #expect(await fresh.recoverPendingTeleport() == false)
+    #expect(network.checkoutStatusRequests.isEmpty)
+    #expect(storage.get(PendingTeleportStorage.self) == nil)
   }
 
   @Test("A completed teleport without its checkout is forgotten")
@@ -668,8 +764,8 @@ struct TeleportColdStartTests {
     #expect(WebEntitlementsArrival(previousWebEntitlements: [pro], webEntitlements: []) == nil)
   }
 
-  @Test("Only a paywall registered before the entitlements arrived counts as covered while loading")
-  func arrival_comparedWithRegistration() throws {
+  @Test("Only a paywall whose audience was evaluated before the entitlements arrived counts")
+  func arrival_comparedWithAudienceEvaluation() throws {
     let arrivedAt = Date()
     let arrival = try #require(
       WebEntitlementsArrival(previousWebEntitlements: [], webEntitlements: [pro], arrivedAt: arrivedAt)
@@ -712,7 +808,12 @@ struct TeleportColdStartTests {
   }
 
   @MainActor
-  private func makeOpenedPaywall(registeredAt: Date?, presented: Bool = true) -> PaywallViewControllerMock {
+  private func makeOpenedPaywall(
+    evaluatedAt: Date?,
+    registeredAt: Date = Date().addingTimeInterval(-10),
+    hasPlacement: Bool = true,
+    presented: Bool = true
+  ) -> PaywallViewControllerMock {
     var paywall = Paywall.stub()
     paywall.products = [
       SuperwallKit.Product(
@@ -746,14 +847,15 @@ struct TeleportColdStartTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     messageHandler.delegate = paywallVc
-    let presentationInfo: PresentationInfo = registeredAt.map {
-      .explicitTrigger(PlacementData(name: "session_start", parameters: [:], createdAt: $0))
-    } ?? .fromIdentifier("paywall", freeTrialOverride: false)
-    let request = dependencyContainer.makePresentationRequest(
+    let presentationInfo: PresentationInfo = hasPlacement
+      ? .explicitTrigger(PlacementData(name: "session_start", parameters: [:], createdAt: registeredAt))
+      : .fromIdentifier("paywall", freeTrialOverride: false)
+    var request = dependencyContainer.makePresentationRequest(
       presentationInfo,
       isPaywallPresented: false,
       type: .presentation
     )
+    request.audienceEvaluatedAt = evaluatedAt
     paywallVc.set(
       request: request,
       paywall: paywall,
@@ -779,43 +881,60 @@ struct TeleportColdStartTests {
     return (redeemer, superwall)
   }
 
-  @Test("A paywall registered before its entitlements arrived closes as restored when it opens")
-  func paywallRegisteredBeforeArrival_closesOnOpen() async {
-    let registeredAt = Date()
+  @Test("A paywall whose audience was evaluated before its entitlements arrived closes when it opens")
+  func paywallEvaluatedBeforeArrival_closesOnOpen() async {
+    let evaluatedAt = Date()
     let (redeemer, _) = await makeRedeemerAfterArrival()
-    let paywallVc = await makeOpenedPaywall(registeredAt: registeredAt)
+    let paywallVc = await makeOpenedPaywall(evaluatedAt: evaluatedAt)
 
     #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == true)
   }
 
-  @Test("A paywall registered after the entitlements arrived was shown on purpose, and stays")
-  func paywallRegisteredAfterArrival_stays() async {
+  @Test("A paywall whose audience was evaluated after the entitlements arrived was shown on purpose")
+  func paywallEvaluatedAfterArrival_stays() async {
     let (redeemer, _) = await makeRedeemerAfterArrival()
-    let paywallVc = await makeOpenedPaywall(registeredAt: Date().addingTimeInterval(1))
+    let paywallVc = await makeOpenedPaywall(evaluatedAt: Date().addingTimeInterval(1))
+
+    #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == false)
+  }
+
+  @Test("A launch placement registered before the arrival but evaluated after it stays")
+  func paywallRegisteredBeforeButEvaluatedAfterArrival_stays() async {
+    // Registered at launch, then held by the launch waits while the entitlements arrived, so
+    // its audience saw a subscribed user (an upgrade offer, say).
+    let registeredAt = Date()
+    let (redeemer, _) = await makeRedeemerAfterArrival()
+    let paywallVc = await makeOpenedPaywall(
+      evaluatedAt: Date().addingTimeInterval(1),
+      registeredAt: registeredAt
+    )
 
     #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == false)
   }
 
   @Test("A paywall the debugger opened, or one not on screen, stays")
   func paywallWithoutPlacementOrNotOnScreen_stays() async {
-    let registeredAt = Date()
+    let evaluatedAt = Date()
     let (redeemer, _) = await makeRedeemerAfterArrival()
 
-    let debuggerPaywall = await makeOpenedPaywall(registeredAt: nil)
+    let debuggerPaywall = await makeOpenedPaywall(evaluatedAt: evaluatedAt, hasPlacement: false)
     #expect(await redeemer.dismissPaywallCoveredWhileLoading(debuggerPaywall) == false)
 
-    let notOpened = await makeOpenedPaywall(registeredAt: registeredAt, presented: false)
+    let notEvaluated = await makeOpenedPaywall(evaluatedAt: nil)
+    #expect(await redeemer.dismissPaywallCoveredWhileLoading(notEvaluated) == false)
+
+    let notOpened = await makeOpenedPaywall(evaluatedAt: evaluatedAt, presented: false)
     #expect(await redeemer.dismissPaywallCoveredWhileLoading(notOpened) == false)
   }
 
   @Test("Entitlements that don't cover the paywall's products leave it up")
   func uncoveredPaywall_stays() async {
-    let registeredAt = Date()
+    let evaluatedAt = Date()
     let (redeemer, _) = await makeRedeemerAfterArrival()
     dependencyContainer.entitlementsInfo.setEntitlementsFromConfig([
       "prod_pro": [Entitlement(id: "pro_plus", isActive: false, store: .stripe)]
     ])
-    let paywallVc = await makeOpenedPaywall(registeredAt: registeredAt)
+    let paywallVc = await makeOpenedPaywall(evaluatedAt: evaluatedAt)
 
     #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == false)
   }
@@ -824,7 +943,7 @@ struct TeleportColdStartTests {
   func noArrival_nothingClosed() async {
     let (superwall, _) = makeSuperwall()
     let redeemer = makeRedeemer(storage: StorageMock(internalRedeemResponse: nil), network: makeNetwork(), superwall: superwall)
-    let paywallVc = await makeOpenedPaywall(registeredAt: Date())
+    let paywallVc = await makeOpenedPaywall(evaluatedAt: Date())
 
     #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == false)
   }

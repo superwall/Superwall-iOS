@@ -411,6 +411,13 @@ class Network {
     )
   }
 
+  func getCheckoutStatus(checkoutId: String) async throws -> CheckoutStatusResponse {
+    return try await urlSession.request(
+      .checkoutStatus(request: CheckoutStatusRequest(checkoutId: checkoutId)),
+      data: SuperwallRequestData(factory: factory)
+    )
+  }
+
   func getEntitlements(
     appUserId: String?,
     deviceId: String

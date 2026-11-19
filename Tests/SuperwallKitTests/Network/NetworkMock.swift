@@ -38,6 +38,8 @@ final class NetworkMock: Network {
   var pollRedemptionResultCallCount = 0
   var teleportStatusResponses: [Result<TeleportStatusResponse, Error>] = []
   var teleportStatusRequests: [String] = []
+  var checkoutStatusResponses: [Result<CheckoutStatusResponse, Error>] = []
+  var checkoutStatusRequests: [String] = []
   var onRedeemEntitlements: (() -> Void)?
   var onPollRedemptionResult: (() -> Void)?
   var getEnrichmentCallCount = 0
@@ -133,6 +135,14 @@ final class NetworkMock: Network {
       throw NetworkError.unknown
     }
     return try teleportStatusResponses.removeFirst().get()
+  }
+
+  override func getCheckoutStatus(checkoutId: String) async throws -> CheckoutStatusResponse {
+    checkoutStatusRequests.append(checkoutId)
+    guard !checkoutStatusResponses.isEmpty else {
+      throw NetworkError.unknown
+    }
+    return try checkoutStatusResponses.removeFirst().get()
   }
 
   override func pollRedemptionResult(request: PollRedemptionResultRequest) async throws -> RedeemResponse {
