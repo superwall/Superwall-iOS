@@ -17,6 +17,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes a StoreKit 1 purchase that ended straight away, such as one the device refused, sometimes never returning its result.
 - Fixes a purchase never finishing, with its loading spinner left up, when another purchase started before it returned.
 - Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.
+- Fixes a teleport checkout paid on the web not being credited when the return to the app launches it from scratch. The SDK now redeems the purchase from the return link, or checks the teleport in the background at launch and on foreground. A paywall opened before then waits behind its loading spinner, and only once the SDK knows the user paid. Pass your app's launch URL to `Superwall.handleDeepLink(_:)` so the return link is handled on a cold launch.
+- Fixes a paywall staying up for a user whose web entitlements arrived while it was loading. It now closes as restored when it opens, so a user who already paid isn't asked to pay again. Paywalls you show to subscribed users on purpose aren't affected.
 
 ## 4.19.1
 
