@@ -615,6 +615,34 @@ struct WebCheckoutRecoveryTests {
     #expect(wasChecked)
   }
 
+  @Test("Entitlements that become active while the audience is evaluated count as seen by it")
+  func audienceSnapshot_includesEntitlementsActivatedDuringEvaluation() async {
+    var request = DependencyContainer().makePresentationRequest(
+      .explicitTrigger(PlacementData(name: "session_start", parameters: [:], createdAt: Date())),
+      isPaywallPresented: false,
+      type: .presentation
+    )
+    var active: Set<String> = []
+    var arrivedAt: Date?
+
+    let outcome = await Superwall.evaluatingAudience(
+      of: &request,
+      activeEntitlementIds: { active },
+      evaluate: { _ in
+        // `pro` arrives while the audience builds its attributes, so the audience sees it.
+        active = ["pro"]
+        arrivedAt = Date()
+        return "evaluated"
+      }
+    )
+
+    #expect(outcome == "evaluated")
+    #expect(request.entitlementIdsSeenByAudience == ["pro"])
+    // Timed once evaluation is done, so the arrival comes before it and isn't counted again.
+    let evaluatedAt = request.audienceEvaluatedAt ?? .distantPast
+    #expect(evaluatedAt >= (arrivedAt ?? .distantFuture))
+  }
+
   @Test("A checkout abandoned in a later presentation keeps an earlier presentation's teleport")
   func abandonInLaterPresentation_keepsEarlierTeleport() async {
     let mockDelegate = MockSuperwallDelegate()

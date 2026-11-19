@@ -32,9 +32,11 @@ extension Superwall {
       paywallStatePublisher: publisher
     )
 
-    request.audienceEvaluatedAt = Date()
-    request.entitlementIdsSeenByAudience = Set(entitlements.active.map { $0.id })
-    let audienceOutcome = try await evaluateAudienceFilter(from: request)
+    let audienceOutcome = try await Self.evaluatingAudience(
+      of: &request,
+      activeEntitlementIds: { Set(self.entitlements.active.map { $0.id }) },
+      evaluate: { try await self.evaluateAudienceFilter(from: $0) }
+    )
 
     confirmHoldoutAssignment(
       request: request,
@@ -99,5 +101,23 @@ extension Superwall {
     } catch {
       return nil
     }
+  }
+
+  /// Evaluates the audience and records what it may have seen. Building the audience's
+  /// attributes waits, so entitlements can become active part-way through: everything active
+  /// before or after counts as seen, and the time is taken once it's done. A paywall shown
+  /// to a subscriber on purpose, such as an upgrade offer, is never taken for one whose
+  /// entitlements arrived while it loaded.
+  static func evaluatingAudience<Outcome>(
+    of request: inout PresentationRequest,
+    activeEntitlementIds: () -> Set<String>,
+    now: () -> Date = Date.init,
+    evaluate: (PresentationRequest) async throws -> Outcome
+  ) async rethrows -> Outcome {
+    let activeBefore = activeEntitlementIds()
+    let outcome = try await evaluate(request)
+    request.entitlementIdsSeenByAudience = activeBefore.union(activeEntitlementIds())
+    request.audienceEvaluatedAt = now()
+    return outcome
   }
 }

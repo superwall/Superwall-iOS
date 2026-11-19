@@ -14,7 +14,8 @@ protocol SWWebViewDelegate: AnyObject {
   var info: PaywallInfo { get }
   var isActive: Bool { get }
   func webViewDidFail()
-  /// The page's process ended, so the page has lost whatever it was keeping track of.
+  /// The page's process ended or a new page replaced it, so the page has lost whatever it
+  /// was keeping track of.
   func webViewPageDidRestart()
 }
 
@@ -304,6 +305,9 @@ extension SWWebView: WKNavigationDelegate {
     // A new page has replaced the old one. A load that fails before this
     // point leaves the old page, and whether it was ready, as it was.
     messageHandler.documentWillLoad()
+    // The old page took what it was keeping track of with it, such as a
+    // teleport, whether the page reloaded itself or its process ended.
+    delegate?.webViewPageDidRestart()
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {

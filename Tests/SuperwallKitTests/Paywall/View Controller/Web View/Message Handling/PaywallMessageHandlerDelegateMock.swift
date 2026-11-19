@@ -65,6 +65,8 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
 
   var isActive = false
 
+  var pageRestartCount = 0
+
   init(
     paywallInfo: SuperwallKit.PaywallInfo,
     webView: FakeWebView
@@ -158,5 +160,13 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
 
   func webViewLoadFailed(at date: Date) {
     paywall.webviewLoadingInfo.failAt = date
+  }
+}
+
+extension PaywallMessageHandlerDelegateMock: SWWebViewDelegate {
+  func webViewDidFail() {}
+
+  func webViewPageDidRestart() {
+    pageRestartCount += 1
   }
 }

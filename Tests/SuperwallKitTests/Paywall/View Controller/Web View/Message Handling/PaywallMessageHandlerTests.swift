@@ -562,6 +562,16 @@ struct PaywallMessageHandlerTests {
   }
 
   @Test
+  func aReplacingPageTellsTheWebViewDelegateThePageRestarted() {
+    let (_, webView, delegate) = makeHandler()
+    webView.delegate = delegate
+
+    webView.webView(webView, didCommit: nil)
+
+    #expect(delegate.pageRestartCount == 1)
+  }
+
+  @Test
   func close() {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
