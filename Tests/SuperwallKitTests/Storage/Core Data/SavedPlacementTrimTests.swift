@@ -69,6 +69,29 @@ struct SavedPlacementTrimTests {
     }
   }
 
+  /// Waits for everything already queued on the manager's context.
+  private func drain(_ manager: CoreDataManager) async {
+    await withCheckedContinuation { continuation in
+      guard let context = manager.backgroundContext else {
+        return continuation.resume()
+      }
+      context.perform {
+        continuation.resume()
+      }
+    }
+  }
+
+  private func goToBackground(_ center: NotificationCenter, _ manager: CoreDataManager) async {
+    center.post(name: SystemInfo.applicationDidEnterBackgroundNotification, object: nil)
+    await drain(manager)
+  }
+
+  private func needsSpaceReclaim(_ stack: CoreDataStack) throws -> Bool? {
+    let coordinator = try #require(stack.persistentContainer?.persistentStoreCoordinator)
+    let store = try #require(coordinator.persistentStores.first)
+    return coordinator.metadata(for: store)[CoreDataManager.needsSpaceReclaimKey] as? Bool
+  }
+
   private func close(_ stack: CoreDataStack) throws {
     let coordinator = try #require(stack.persistentContainer?.persistentStoreCoordinator)
     for store in coordinator.persistentStores {
@@ -211,7 +234,8 @@ struct SavedPlacementTrimTests {
       into: stack
     )
     let sizeBefore = sizeOnDisk()
-    let manager = CoreDataManager(coreDataStack: stack)
+    let center = NotificationCenter()
+    let manager = CoreDataManager(coreDataStack: stack, notificationCenter: center)
 
     await trim(manager)
 
@@ -223,10 +247,17 @@ struct SavedPlacementTrimTests {
     #expect(await stack.getLastSavedPlacementDate(name: "app_open", before: nil) == lastOpen)
     #expect(try parameterBytes(in: stack) == 0)
 
-    // The store is still open here, as it is in an app.
-    let sizeAfter = sizeOnDisk()
+    // The space is only given back once the app is in the background, so that
+    // rewriting the store doesn't hold up saves or a reset while it's in use.
     #expect(sizeBefore > 4_000_000)
-    #expect(sizeAfter < sizeBefore / 10)
+    #expect(sizeOnDisk() > sizeBefore / 2)
+    #expect(try needsSpaceReclaim(stack) == true)
+
+    await goToBackground(center, manager)
+
+    // The store is still open here, as it is in an app.
+    #expect(sizeOnDisk() < sizeBefore / 10)
+    #expect(try needsSpaceReclaim(stack) == false)
 
     // It keeps working afterwards.
     await withCheckedContinuation { continuation in
@@ -290,6 +321,35 @@ struct SavedPlacementTrimTests {
     #expect(await manager.countPlacement("app_open", interval: .infinity) == CoreDataManager.trimBatchSize + 1)
     #expect(await manager.countPlacement("paywall_open", interval: .infinity) == 1)
     #expect(try parameterBytes(in: stack) == 0)
+  }
+
+  @Test
+  func spaceIsGivenBackOnALaterLaunchIfTheAppNeverWentToTheBackground() async throws {
+    defer { try? FileManager.default.removeItem(at: rootUrl) }
+    let stack = makeStack()
+    try insert(1_500, named: "paywallWebviewLoad_complete", parameters: largeParameters, into: stack)
+    try insert(10, named: "app_open", parameters: largeParameters, into: stack)
+    let sizeBefore = sizeOnDisk()
+    await trim(CoreDataManager(coreDataStack: stack, notificationCenter: NotificationCenter()))
+    #expect(try needsSpaceReclaim(stack) == true)
+    try close(stack)
+
+    // The next launch.
+    let reopenedStack = makeStack()
+    let center = NotificationCenter()
+    let manager = CoreDataManager(coreDataStack: reopenedStack, notificationCenter: center)
+    await trim(manager)
+    await goToBackground(center, manager)
+
+    #expect(sizeOnDisk() < sizeBefore / 10)
+    #expect(try needsSpaceReclaim(reopenedStack) == false)
+    #expect(await manager.countPlacement("app_open", interval: .infinity) == 10)
+
+    // Going to the background again has nothing left to do.
+    try insert(1_500, named: "paywall_open", parameters: largeParameters, into: reopenedStack)
+    let sizeWithNewRows = sizeOnDisk()
+    await goToBackground(center, manager)
+    #expect(sizeOnDisk() == sizeWithNewRows)
   }
 
   @Test

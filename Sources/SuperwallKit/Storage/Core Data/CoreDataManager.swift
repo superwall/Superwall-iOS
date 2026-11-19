@@ -16,12 +16,29 @@ class CoreDataManager {
   /// running. Only touched on `backgroundContext`'s queue.
   var trimCompletions: [() -> Void]?
 
-  init(coreDataStack: CoreDataStack = CoreDataStack()) {
+  /// Where the app going to the background is heard about.
+  let notificationCenter: NotificationCenter
+
+  /// Waits for the app to go to the background, to give freed space back to
+  /// the device. Only touched on `backgroundContext`'s queue.
+  var spaceReclaimObserver: NSObjectProtocol?
+
+  init(
+    coreDataStack: CoreDataStack = CoreDataStack(),
+    notificationCenter: NotificationCenter = .default
+  ) {
     self.coreDataStack = coreDataStack
+    self.notificationCenter = notificationCenter
     if let persistentContainer = coreDataStack.persistentContainer {
       backgroundContext = persistentContainer.newBackgroundContext()
     }
     trimSavedPlacements()
+  }
+
+  deinit {
+    if let spaceReclaimObserver = spaceReclaimObserver {
+      notificationCenter.removeObserver(spaceReclaimObserver)
+    }
   }
 
   /// Saves when a placement happened, so audience filters can count it and tell

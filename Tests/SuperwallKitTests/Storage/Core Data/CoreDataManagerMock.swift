@@ -11,9 +11,12 @@ import CoreData
 final class CoreDataManagerMock: CoreDataManager {
   let internalDataStack: CoreDataStack
 
-  override init(coreDataStack: CoreDataStack = CoreDataStack()) {
+  override init(
+    coreDataStack: CoreDataStack = CoreDataStack(),
+    notificationCenter: NotificationCenter = .default
+  ) {
     self.internalDataStack = coreDataStack
-    super.init(coreDataStack: coreDataStack)
+    super.init(coreDataStack: coreDataStack, notificationCenter: notificationCenter)
   }
 
   func countAllEvents() async -> Int {

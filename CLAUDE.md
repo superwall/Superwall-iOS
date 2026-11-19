@@ -280,8 +280,9 @@ them in audience filters; keep the two lists in step. `trimSavedPlacements` clea
 by earlier versions once, then saves `savedPlacementsTrimVersion` in the store's metadata; raise that
 number when adding to the unsaved names, so stores are cleaned again. The trim works in small steps
 on the context that saves placements, each queued behind whatever is waiting, because the whole of it
-takes over a second on a large store. Don't turn it into one long block: placements saved at launch
-and `reset()` would wait for it.
+takes seconds on a large store. Don't turn it into one long block: placements saved at launch and
+`reset()` would wait for it. Giving the freed space back means rewriting the whole store, which can't
+be split up, so it waits until the app goes to the background (`reclaimSpaceIfNeeded`).
 
 ### Native macOS
 
