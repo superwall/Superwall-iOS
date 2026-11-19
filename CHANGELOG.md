@@ -12,6 +12,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Fixes a paywall appearing in the wrong window on iPad and Mac Catalyst when several of the app's windows are on screen.
 - Fixes cached paywalls sometimes being torn down off the main thread when they're cleared, such as on `reset()`.
+- Fixes the SDK's on-device database growing very large over time. Ones that have already grown shrink the next time the app opens.
+- Audience filters no longer count paywall preloading and loading events.
 - Fixes `presentedViewController` sometimes returning a paywall that isn't on screen, which `reset()` then kept instead of clearing.
 - Fixes a paywall shown again while it was still closing being marked as closed, so its next close wasn't reported.
 - Fixes a StoreKit 1 purchase that ended straight away, such as one the device refused, sometimes never returning its result.

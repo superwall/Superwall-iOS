@@ -270,6 +270,16 @@ is really on screen (`isBrowserOnScreen`); a browser the state has open that isn
 - The public `loadingState` mirrors the store and can briefly lag it; SDK code changes it with
   `updateLoading(_:)` and a named `PaywallLoadingChange`, and reads the store to decide things.
 
+### Saved placements
+
+`CoreDataManager` saves when each placement happened, so audience filters can count it or tell how
+long ago it last happened. Only the name and time are saved. The `parameters` column stays in the
+model but is written empty, so the store needs no model migration. Preloading and loading placements
+(`CoreDataManager.unsavedPlacementPrefixes`) aren't saved at all, and the dashboard doesn't offer
+them in audience filters; keep the two lists in step. `trimSavedPlacements` cleans up a store written
+by earlier versions once, then marks it in the store's metadata. It runs in the background because
+it takes over a second on a large store; don't move it onto the calling thread.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.

@@ -9,16 +9,35 @@ import Foundation
 import CoreData
 
 class CoreDataManager {
-  private let coreDataStack: CoreDataStack
-  private var backgroundContext: NSManagedObjectContext?
+  /// Preloading and loading placements aren't saved. They follow what the SDK
+  /// does, not what the user does: the loading ones fire for every paywall on
+  /// every preload, the same as when a paywall is shown.
+  static let unsavedPlacementPrefixes = [
+    "paywallPreload_",
+    "paywallResponseLoad_",
+    "paywallProductsLoad_",
+    "paywallWebviewLoad_",
+    "shimmerView_"
+  ]
+
+  let coreDataStack: CoreDataStack
+  private(set) var backgroundContext: NSManagedObjectContext?
+
+  static func isSaved(placementNamed name: String) -> Bool {
+    return !unsavedPlacementPrefixes.contains { name.hasPrefix($0) }
+  }
 
   init(coreDataStack: CoreDataStack = CoreDataStack()) {
     self.coreDataStack = coreDataStack
     if let persistentContainer = coreDataStack.persistentContainer {
       backgroundContext = persistentContainer.newBackgroundContext()
     }
+    trimSavedPlacements()
   }
 
+  /// Saves when a placement happened, so audience filters can count it and tell
+  /// how long ago it last happened. Its parameters aren't saved: nothing reads
+  /// them back, and they're most of a placement's size.
   func savePlacementData(
     _ placementData: PlacementData,
     completion: ((ManagedEventData) -> Void)? = nil
@@ -26,14 +45,16 @@ class CoreDataManager {
     guard let backgroundContext = backgroundContext else {
       return
     }
+    if !Self.isSaved(placementNamed: placementData.name) {
+      return
+    }
     backgroundContext.perform {
-      let data = try? JSONEncoder().encode(placementData.parameters)
       guard let managedEventData = ManagedEventData(
         context: backgroundContext,
         id: placementData.id,
         createdAt: placementData.createdAt,
         name: placementData.name,
-        parameters: data ?? Data()
+        parameters: Data()
       ) else {
         return
       }
