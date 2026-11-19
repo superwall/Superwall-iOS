@@ -33,8 +33,11 @@ extension Superwall {
     )
 
     request.audienceEvaluatedAt = Date()
-    request.entitlementIdsSeenByAudience = Set(entitlements.active.map { $0.id })
+    let activeBeforeEvaluation = Set(entitlements.active.map { $0.id })
     let audienceOutcome = try await evaluateAudienceFilter(from: request)
+    // What the matched audience read, which can be newer than what was active before the
+    // evaluation began. An audience with no expression read nothing.
+    request.entitlementIdsSeenByAudience = audienceOutcome.entitlementIdsSeen ?? activeBeforeEvaluation
 
     confirmHoldoutAssignment(
       request: request,

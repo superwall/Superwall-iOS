@@ -346,6 +346,57 @@ struct WebCheckoutRecoveryTests {
     #expect(await redeemer.dismissPaywallCoveredWhileLoading(letThrough) == true)
   }
 
+  @Test("A matched audience reports the entitlements its expression saw active")
+  func matchedAudience_reportsEntitlementsSeen() async {
+    let superwall = makeSuperwall()
+    superwall.subscriptionStatus = .active([pro])
+    dependencyContainer.identityManager.mergeUserAttributes(["plan": "trial"])
+
+    func outcome(expression: String?) async -> AudienceFilterEvaluationOutcome {
+      let variantOption = VariantOption.stub()
+        .setting(\.type, to: .treatment)
+        .setting(\.paywallId, to: "upgrade")
+      let experiment = RawExperiment.stub().setting(\.variants, to: [variantOption])
+      let audience = TriggerRule(
+        experiment: experiment,
+        expression: expression,
+        computedPropertyRequests: [],
+        preload: .init(behavior: .always)
+      )
+      let storage = StorageMock()
+      storage.overwriteAssignments([
+        Assignment(
+          experimentId: experiment.id,
+          variant: variantOption.toExperimentVariant(),
+          isSentToServer: false
+        )
+      ])
+      let logic = AudienceLogic(
+        configManager: dependencyContainer.configManager,
+        storage: storage,
+        factory: dependencyContainer
+      )
+      return await logic.evaluateAudienceFilters(
+        forPlacement: PlacementData(name: "upgrade_offer", parameters: [:], createdAt: Date()),
+        triggers: [
+          "upgrade_offer": Trigger(placementName: "upgrade_offer", audiences: [audience])
+        ]
+      )
+    }
+
+    // The expression was evaluated with `pro` active, whenever that became so.
+    let withExpression = await outcome(expression: "user.plan == \"trial\"")
+    guard case .paywall = withExpression.triggerResult else {
+      Issue.record("Expected the audience to match")
+      return
+    }
+    #expect(withExpression.entitlementIdsSeen == ["pro"])
+
+    // An audience with no expression read nothing.
+    let withoutExpression = await outcome(expression: nil)
+    #expect(withoutExpression.entitlementIdsSeen == nil)
+  }
+
   @Test("A paywall already closing as purchased isn't closed again as restored when it opens")
   func paywallAlreadyClosing_keepsItsResult() async {
     let superwall = makeSuperwall()
@@ -605,6 +656,29 @@ struct WebCheckoutRecoveryTests {
     // and no longer knows about the teleport.
     await MainActor.run {
       paywallVc.webView.webViewWebContentProcessDidTerminate(paywallVc.webView)
+    }
+
+    network.teleportStatusResponses = Array(repeating: status("pending"), count: 200)
+    let wasChecked = await waitUntil(timeout: 1) {
+      await redeemer.recoverPendingTeleport()
+      return !network.teleportStatusRequests.isEmpty
+    }
+    #expect(wasChecked)
+  }
+
+  @Test("A teleport whose page was replaced by a reload is checked in the background")
+  func teleportWhosePageWasReplaced_isChecked() async {
+    let superwall = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    let paywallVc = await makePaywall(redeemer: redeemer, onScreenAs: "replaced")
+    await paywallVc.teleportDidOpen(teleport)
+    await waitUntil { storage.get(PendingTeleportStorage.self) == teleport }
+
+    // The page reloads itself, so a new document replaces the one that opened the teleport.
+    await MainActor.run {
+      paywallVc.webView.webView(paywallVc.webView, didCommit: nil)
     }
 
     network.teleportStatusResponses = Array(repeating: status("pending"), count: 200)
