@@ -1,0 +1,190 @@
+//
+//  EvaluationContextTests.swift
+//  SuperwallKit
+//
+//  Created by Adedeji Toki on 18/11/2026.
+//
+// swiftlint:disable all
+
+import Foundation
+import Superscript
+import Testing
+@testable import SuperwallKit
+
+struct EvaluationContextTests {
+  private static let hour: TimeInterval = 60 * 60
+  private static let day: TimeInterval = 24 * hour
+
+  private static func calendar(timeZone: String = "UTC") -> Calendar {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: timeZone)!
+    return calendar
+  }
+
+  /// Midday on the given day.
+  private static func date(
+    _ year: Int,
+    _ month: Int,
+    _ day: Int,
+    timeZone: String = "UTC"
+  ) -> Date {
+    calendar(timeZone: timeZone).date(
+      from: DateComponents(year: year, month: month, day: day, hour: 12)
+    )!
+  }
+
+  @Test(arguments: [
+    // February has 28 days.
+    (date(2026, 3, 15), date(2026, 2, 15)),
+    // July has 31 days.
+    (date(2026, 8, 15), date(2026, 7, 15)),
+    // April has 30 days.
+    (date(2026, 5, 15), date(2026, 4, 15)),
+    // February has no 31st, so it's pinned to its last day.
+    (date(2026, 3, 31), date(2026, 2, 28)),
+    // In a leap year that last day is the 29th.
+    (date(2028, 3, 31), date(2028, 2, 29)),
+    // January goes back to December of the year before.
+    (date(2027, 1, 15), date(2026, 12, 15))
+  ])
+  func placementsInMonth_startsOneCalendarMonthBack(now: Date, expectedStart: Date) {
+    let window = EvaluationContext.placementCountWindow(
+      for: .placementsInMonth,
+      now: now,
+      calendar: Self.calendar()
+    )
+
+    #expect(window == .since(expectedStart))
+  }
+
+  @Test func placementsInMonth_keepsTheTimeOfDayAcrossDaylightSaving() {
+    // The clocks in New York went forward an hour on March 8.
+    let timeZone = "America/New_York"
+    let now = Self.date(2026, 3, 20, timeZone: timeZone)
+    let expectedStart = Self.date(2026, 2, 20, timeZone: timeZone)
+
+    let window = EvaluationContext.placementCountWindow(
+      for: .placementsInMonth,
+      now: now,
+      calendar: Self.calendar(timeZone: timeZone)
+    )
+
+    #expect(window == .since(expectedStart))
+    #expect(now.timeIntervalSince(expectedStart) == 28 * Self.day - Self.hour)
+  }
+
+  @Test func placementsInMonth_isAMonthLongByDefault() {
+    let now = Date()
+    let window = EvaluationContext.placementCountWindow(for: .placementsInMonth, now: now)
+
+    guard case let .since(start) = window else {
+      Issue.record("Expected a start date, got \(String(describing: window))")
+      return
+    }
+    // A calendar month is 28 to 31 days, give or take an hour for daylight saving.
+    let length = now.timeIntervalSince(start)
+    #expect(length >= 28 * Self.day - Self.hour)
+    #expect(length <= 31 * Self.day + Self.hour)
+  }
+
+  @Test func otherPlacementCounts_keepTheirWindows() {
+    let now = Self.date(2026, 3, 15)
+
+    #expect(
+      EvaluationContext.placementCountWindow(for: .placementsInHour, now: now)
+        == .since(now.addingTimeInterval(-Self.hour))
+    )
+    #expect(
+      EvaluationContext.placementCountWindow(for: .placementsInDay, now: now)
+        == .since(now.addingTimeInterval(-Self.day))
+    )
+    #expect(
+      EvaluationContext.placementCountWindow(for: .placementsInWeek, now: now)
+        == .since(now.addingTimeInterval(-7 * Self.day))
+    )
+    #expect(
+      EvaluationContext.placementCountWindow(for: .placementsSinceInstall, now: now) == .allTime
+    )
+  }
+
+  @Test(arguments: [
+    ComputedPropertyRequestType.minutesSince,
+    .hoursSince,
+    .daysSince,
+    .monthsSince,
+    .yearsSince
+  ])
+  func timeSincePlacement_hasNoCountWindow(type: ComputedPropertyRequestType) {
+    #expect(EvaluationContext.placementCountWindow(for: type) == nil)
+  }
+
+  @Test(arguments: [
+    // The longest month is 31 days, so 32 days ago is always outside it and
+    // 27 days ago always inside.
+    ("placementsInMonth", 2),
+    ("placementsInWeek", 1),
+    ("placementsSinceInstall", 4)
+  ])
+  func computedProperty_countsThePlacementsInTheWindow(
+    property: String,
+    expectedCount: Int
+  ) async throws {
+    let storage = StorageMock()
+    let coreDataManager = storage.coreDataManager
+    await withCheckedContinuation { continuation in
+      coreDataManager.deleteAllEntities {
+        continuation.resume()
+      }
+    }
+
+    let placementName = "article_read"
+    for daysAgo in [1.0, 27, 32, 100] {
+      let placementData = PlacementData.stub()
+        .setting(\.name, to: placementName)
+        .setting(\.createdAt, to: Date().addingTimeInterval(-daysAgo * Self.day))
+      await withCheckedContinuation { continuation in
+        coreDataManager.savePlacementData(placementData) { _ in
+          continuation.resume()
+        }
+      }
+    }
+
+    let argsData = try JSONEncoder().encode([PassableValue.string(placementName)])
+    let args = try #require(String(data: argsData, encoding: .utf8))
+    let context = EvaluationContext(storage: storage)
+
+    let result = await withCheckedContinuation { continuation in
+      context.computedProperty(
+        name: property,
+        args: args,
+        callback: ResultCallbackFake { result in
+          continuation.resume(returning: result)
+        }
+      )
+    }
+
+    let value = try JSONDecoder().decode(PassableValue.self, from: Data(result.utf8))
+    guard case let .int(count) = value else {
+      Issue.record("Expected an int, got \(result)")
+      return
+    }
+    #expect(count == expectedCount)
+  }
+}
+
+private final class ResultCallbackFake: ResultCallback, @unchecked Sendable {
+  private let handler: (String) -> Void
+
+  init(handler: @escaping (String) -> Void) {
+    self.handler = handler
+    super.init(noPointer: NoPointer())
+  }
+
+  required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+    fatalError("Only made by tests")
+  }
+
+  override func onResult(result: String) {
+    handler(result)
+  }
+}
