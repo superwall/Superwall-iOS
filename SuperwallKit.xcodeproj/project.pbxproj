@@ -134,6 +134,7 @@
 		194D600137FDBC5D42FD8C83 /* DeviceHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5C26E43A3187E410FA27315 /* DeviceHelperTests.swift */; };
 		197EE7C1DC13F36D9334414A /* AdConsentUpdateQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F00A06AEE73D087036B81C /* AdConsentUpdateQueue.swift */; };
 		1989D3DAF3CD3E24D20B6B73 /* PermissionsHandler+Location.swift in Sources */ = {isa = PBXBuildFile; fileRef = C937320625239F3E10FE8D8E /* PermissionsHandler+Location.swift */; };
+		19AEEDE2D11A3A37F017A19C /* PendingTeleportState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F97E06335E6C7186A554F0 /* PendingTeleportState.swift */; };
 		1A319CE24EFB488CF9A4CD7F /* CustomerCenterSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4904244CA123DEE51D7E71 /* CustomerCenterSheets.swift */; };
 		1A39BDE388B9E6E188BFF40B /* ConfigState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28A1C8B0D79B8AC70ECF0CBB /* ConfigState.swift */; };
 		1A67B57AF77C0D578F01844B /* AdServicesResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0B4279B992779CAD5A0694A /* AdServicesResponse.swift */; };
@@ -327,6 +328,7 @@
 		3E9C3CD842688D71E6562E41 /* IdentityManagerMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECAD0BC47EF43AD9D8B83715 /* IdentityManagerMock.swift */; };
 		3EA92DE86764CBAC557F8522 /* Capabilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27E41300E7467F017BCD5E5C /* Capabilities.swift */; };
 		3EE4C1C4EC45718C2EED34E5 /* EventTrackingBehavior.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D8033AAF5549E30ACDA3EA /* EventTrackingBehavior.swift */; };
+		3EEC39B60890F7AF05DCA163 /* PendingTeleportState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F97E06335E6C7186A554F0 /* PendingTeleportState.swift */; };
 		3F09DBB658FED5DB70D51C7C /* EndpointKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E6FBB3D0826827A04F87AE /* EndpointKind.swift */; };
 		3F1493249A3BC8E2CD75306B /* ContactStoreProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F35F68AF572F7CDF174320C /* ContactStoreProxy.swift */; };
 		3F3774A066285BB0DFE61B61 /* JSONToDict.swift in Sources */ = {isa = PBXBuildFile; fileRef = E09C238ADC0B019047FAB1DF /* JSONToDict.swift */; };
@@ -1957,6 +1959,7 @@
 		B42EB041F4A8C66767922E1F /* V5Migrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V5Migrator.swift; sourceTree = "<group>"; };
 		B451C9ED4118694F15B925A7 /* SWWebViewLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWWebViewLogicTests.swift; sourceTree = "<group>"; };
 		B48AAFA27917F0BE3ADC6FFB /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Localizable.strings; sourceTree = "<group>"; };
+		B4F97E06335E6C7186A554F0 /* PendingTeleportState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingTeleportState.swift; sourceTree = "<group>"; };
 		B52A0EFBBFE9D2F949EA4C28 /* UserAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAttributes.swift; sourceTree = "<group>"; };
 		B5637C2D7DDA38C11E48DD1C /* RawPaywallResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawPaywallResponse.swift; sourceTree = "<group>"; };
 		B5767079F5B77224E6896990 /* PaywallViewControllerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewControllerMock.swift; sourceTree = "<group>"; };
@@ -4338,6 +4341,7 @@
 			isa = PBXGroup;
 			children = (
 				797EC0356AA1065ED11835BF /* PendingStripeCheckoutPollState.swift */,
+				B4F97E06335E6C7186A554F0 /* PendingTeleportState.swift */,
 				22919EFD263425D38E7D9D38 /* WebEntitlementRedeemer.swift */,
 			);
 			path = Web;
@@ -5281,6 +5285,7 @@
 				3AE78972EE7915E769A33259 /* PaywallViewState.swift in Sources */,
 				BF9ADF5761C34F584EC416B1 /* PaywallWebEvent.swift in Sources */,
 				3464196F9088F8A320FE24A4 /* PendingStripeCheckoutPollState.swift in Sources */,
+				19AEEDE2D11A3A37F017A19C /* PendingTeleportState.swift in Sources */,
 				E4A66E2235F7FE594EA82A06 /* PermissionHandler+Camera.swift in Sources */,
 				9735942D34369DA4412F8B63 /* PermissionHandler+Microphone.swift in Sources */,
 				746FCA3A2499F7BAF653F205 /* PermissionHandler+Notification.swift in Sources */,
@@ -5851,6 +5856,7 @@
 				5B5ED4F3EC0D685600D58153 /* PaywallViewState.swift in Sources */,
 				5871685ADA3883F272371DE7 /* PaywallWebEvent.swift in Sources */,
 				41E0EEB9164785F40B65B531 /* PendingStripeCheckoutPollState.swift in Sources */,
+				3EEC39B60890F7AF05DCA163 /* PendingTeleportState.swift in Sources */,
 				71EEF41986CDE5CD190D0F50 /* PermissionHandler+Camera.swift in Sources */,
 				C89C429F9F08DE2D6880BEF3 /* PermissionHandler+Microphone.swift in Sources */,
 				2996056D481E4B3A3B990103 /* PermissionHandler+Notification.swift in Sources */,

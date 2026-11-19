@@ -424,6 +424,23 @@ extension Endpoint where
 
 extension Endpoint where
   Kind == EndpointKinds.SubscriptionsAPI,
+  Response == TeleportStatusResponse {
+  static func teleportStatus(request: TeleportStatusRequest) -> Self {
+    let bodyData = try? Kind.jsonEncoder.encode(request)
+
+    return Endpoint(
+      components: Components(
+        host: .subscriptionsApi,
+        path: "checkout/teleport/status",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
+}
+
+extension Endpoint where
+  Kind == EndpointKinds.SubscriptionsAPI,
   Response == EntitlementsResponse {
   static func entitlements(
     appUserId: String?,

@@ -18,6 +18,7 @@ struct TeleportColdStartTests {
 
   init() {
     dependencyContainer.storage.delete(PendingStripeCheckoutPollStorage.self)
+    dependencyContainer.storage.delete(PendingTeleportStorage.self)
   }
 
   // MARK: - Helpers
@@ -317,5 +318,333 @@ struct TeleportColdStartTests {
 
     #expect(network.pollRedemptionResultRequest?.checkoutContextId == "ctx_1")
     #expect(storage.get(PendingStripeCheckoutPollStorage.self)?.checkoutContextId == "ctx_1")
+  }
+
+  // MARK: - Storing the teleport when Safari opens
+
+  @MainActor
+  private func makeMessageHandler() -> (PaywallMessageHandler, PaywallMessageHandlerDelegateMock) {
+    let container = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: container.receiptManager,
+      factory: container,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: container.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isiOSAppOnMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: container
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(paywallInfo: .stub(), webView: webView)
+    messageHandler.delegate = delegate
+    messageHandler.trackEvent = { _ in }
+    return (messageHandler, delegate)
+  }
+
+  private let checkoutUrl = URL(string: "https://example.com/sw-teleport/abc")!
+
+  @Test("open_url_external reads the teleport id, product and dismissal a page sends")
+  func decodeOpenUrlExternal_teleportDetails() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "open_url_external",
+            "url": "https://example.com/sw-teleport/abc",
+            "teleport": true,
+            "teleport_id": "tp_1",
+            "product_identifier": "prod_1",
+            "should_dismiss": false
+          }
+        ]
+      }
+    }
+    """
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(
+      WrappedPaywallMessages.self,
+      from: json.data(using: .utf8)!
+    )
+    #expect(wrapped.payload.messages.first == .openUrlInSafari(
+      checkoutUrl,
+      isTeleport: true,
+      teleport: TeleportOpening(teleportId: "tp_1", productId: "prod_1", shouldDismiss: false)
+    ))
+  }
+
+  @Test("A link that isn't a teleport carries no teleport details")
+  func decodeOpenUrlExternal_notTeleport_ignoresDetails() throws {
+    let json = """
+    {"version": 1, "payload": {"events": [
+      {"eventName": "open_url_external", "url": "https://example.com/sw-teleport/abc", "teleport_id": "tp_1"}
+    ]}}
+    """
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(
+      WrappedPaywallMessages.self,
+      from: json.data(using: .utf8)!
+    )
+    #expect(wrapped.payload.messages.first == .openUrlInSafari(checkoutUrl))
+  }
+
+  @Test("Today's page: the teleport is named by the checkout start sent just before Safari opens")
+  @MainActor
+  func teleportOpen_takesIdFromCheckoutStart() {
+    let (handler, delegate) = makeMessageHandler()
+    // What `teleport/flow.ts` `begin()` posts today.
+    handler.handle(.stripeCheckoutStart(checkoutContextId: "tp_1", productId: "prod_1"))
+    handler.handle(.openUrlInSafari(checkoutUrl, isTeleport: true))
+
+    #expect(delegate.openedTeleports.map(\.teleportId) == ["tp_1"])
+    #expect(delegate.openedTeleports.first?.productId == "prod_1")
+    #expect(delegate.openedTeleports.first?.shouldDismiss == nil)
+  }
+
+  @Test("A page that names its teleport is taken at its word")
+  @MainActor
+  func teleportOpen_prefersIdFromMessage() {
+    let (handler, delegate) = makeMessageHandler()
+    handler.handle(.stripeCheckoutStart(checkoutContextId: "tp_old", productId: "prod_old"))
+    handler.handle(.openUrlInSafari(
+      checkoutUrl,
+      isTeleport: true,
+      teleport: TeleportOpening(teleportId: "tp_1", productId: "prod_1", shouldDismiss: true)
+    ))
+
+    #expect(delegate.openedTeleports == [
+      PendingTeleportState(
+        teleportId: "tp_1",
+        productId: "prod_1",
+        shouldDismiss: true,
+        openedAt: delegate.openedTeleports.first?.openedAt ?? Date()
+      )
+    ])
+  }
+
+  @Test("Nothing is stored for a teleport that nothing names, or for a plain Safari link")
+  @MainActor
+  func teleportOpen_withoutId_recordsNothing() {
+    let (handler, delegate) = makeMessageHandler()
+    handler.handle(.openUrlInSafari(checkoutUrl, isTeleport: true))
+
+    // A plain link uses up the checkout start, so a later teleport can't take its id.
+    handler.handle(.stripeCheckoutStart(checkoutContextId: "tp_1", productId: "prod_1"))
+    handler.handle(.openUrlInSafari(checkoutUrl))
+    handler.handle(.openUrlInSafari(checkoutUrl, isTeleport: true))
+
+    // So does a checkout the page settled.
+    handler.handle(.stripeCheckoutStart(checkoutContextId: "tp_2", productId: "prod_1"))
+    handler.handle(.stripeCheckoutAbandon(checkoutContextId: "tp_2", productId: "prod_1"))
+    handler.handle(.openUrlInSafari(checkoutUrl, isTeleport: true))
+
+    #expect(delegate.openedTeleports.isEmpty)
+  }
+
+  // MARK: - Recovering a stored teleport
+
+  private let teleport = PendingTeleportState(
+    teleportId: "tp_1",
+    productId: "prod_offered",
+    shouldDismiss: true
+  )
+
+  private func status(
+    _ status: String,
+    checkoutContextId: String? = "ctx_1",
+    product: String? = "prod_1"
+  ) -> Result<TeleportStatusResponse, Error> {
+    .success(
+      TeleportStatusResponse(
+        status: status,
+        checkoutContextId: checkoutContextId,
+        checkoutProductIdentifier: product
+      )
+    )
+  }
+
+  @Test("A teleport the app was ended during, read completed on launch, is redeemed")
+  func coldLaunch_completedTeleport_redeems() async {
+    let (superwall, mockDelegate) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let before = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await before.registerTeleportOpen(teleport)
+    #expect(storage.get(PendingTeleportStorage.self) == teleport)
+
+    // Relaunched by hand: no return link, and the page that opened the teleport is gone.
+    network.teleportStatusResponses = [status("completed")]
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    // Only a teleport is known: nothing holds a paywall yet.
+    #expect(await redeemer.shouldShowStripeRecoveryLoadingOnPaywallOpen() == false)
+
+    #expect(await redeemer.recoverPendingTeleport() == true)
+
+    #expect(network.teleportStatusRequests == ["tp_1"])
+    #expect(network.pollRedemptionResultRequest?.checkoutContextId == "ctx_1")
+    #expect(mockDelegate.receivedResult?.code == "redemption_123")
+    #expect(storage.get(PendingTeleportStorage.self) == nil)
+    #expect(storage.get(PendingStripeCheckoutPollStorage.self) == nil)
+  }
+
+  @Test("Once a teleport reads completed, a paywall waits behind the spinner until it's redeemed")
+  func completedTeleport_notYetRedeemed_blocksPaywall() async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    network.teleportStatusResponses = [status("completed")]
+    // The redemption isn't there yet (the first poll fails).
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerTeleportOpen(teleport)
+
+    #expect(await redeemer.recoverPendingTeleport() == true)
+
+    let pending = storage.get(PendingStripeCheckoutPollStorage.self)
+    #expect(pending?.checkoutContextId == "ctx_1")
+    // The product the checkout sold, not the one the paywall offered, finishing as the page asked.
+    #expect(pending?.productId == "prod_1")
+    #expect(pending?.completion == .purchase(productId: "prod_1", shouldDismiss: true))
+    #expect(await redeemer.shouldShowStripeRecoveryLoadingOnPaywallOpen() == true)
+  }
+
+  @Test(
+    "A teleport that isn't paid is forgotten and never holds a paywall",
+    arguments: ["pending", "claimed", "expired", "something_new"]
+  )
+  func unpaidTeleport_isForgotten(teleportStatus: String) async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    network.teleportStatusResponses = [status(teleportStatus)]
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerTeleportOpen(teleport)
+    let fresh = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    #expect(await fresh.recoverPendingTeleport() == false)
+
+    #expect(storage.get(PendingTeleportStorage.self) == nil)
+    #expect(network.pollRedemptionResultCallCount == 0)
+    #expect(await fresh.shouldShowStripeRecoveryLoadingOnPaywallOpen() == false)
+  }
+
+  @Test("A completed teleport without its checkout is forgotten")
+  func completedTeleport_withoutCheckout_isForgotten() async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    network.teleportStatusResponses = [status("completed", checkoutContextId: nil)]
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerTeleportOpen(teleport)
+    let fresh = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    #expect(await fresh.recoverPendingTeleport() == false)
+    #expect(storage.get(PendingTeleportStorage.self) == nil)
+    #expect(network.pollRedemptionResultCallCount == 0)
+  }
+
+  @Test("A failed status check keeps the teleport for the next launch or foreground")
+  func failedCheck_keepsTeleport() async {
+    let (superwall, mockDelegate) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    network.teleportStatusResponses = [.failure(NetworkError.unknown)]
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerTeleportOpen(teleport)
+    let fresh = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    #expect(await fresh.recoverPendingTeleport() == false)
+    #expect(storage.get(PendingTeleportStorage.self) == teleport)
+    #expect(await fresh.shouldShowStripeRecoveryLoadingOnPaywallOpen() == false)
+
+    network.teleportStatusResponses = [status("completed")]
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    #expect(await fresh.recoverPendingTeleport() == true)
+    #expect(mockDelegate.receivedResult?.code == "redemption_123")
+  }
+
+  @Test("A teleport older than its time limit is forgotten without a request")
+  func expiredTeleport_isForgottenWithoutRequest() async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.registerTeleportOpen(
+      PendingTeleportState(
+        teleportId: "tp_1",
+        productId: "prod_1",
+        openedAt: Date().addingTimeInterval(-PendingTeleportState.timeLimit - 1)
+      )
+    )
+
+    #expect(await redeemer.recoverPendingTeleport() == false)
+    #expect(network.teleportStatusRequests.isEmpty)
+    #expect(storage.get(PendingTeleportStorage.self) == nil)
+  }
+
+  @Test("No stored teleport, no request")
+  func noTeleport_noRequest() async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    #expect(await redeemer.recoverPendingTeleport() == false)
+    #expect(network.teleportStatusRequests.isEmpty)
+  }
+
+  @Test("A teleport the page settled itself isn't checked again")
+  func pageSettledTeleport_isForgotten() async {
+    let (superwall, _) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    await redeemer.registerTeleportOpen(teleport)
+    await redeemer.handleStripeCheckoutAbandon(productId: "prod_1")
+    #expect(storage.get(PendingTeleportStorage.self) == nil)
+
+    await redeemer.registerTeleportOpen(teleport)
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    await redeemer.handleStripeCheckoutComplete(
+      contextId: "ctx_1",
+      productId: "prod_1",
+      completion: .purchase(productId: "prod_1", shouldDismiss: true)
+    )
+    #expect(storage.get(PendingTeleportStorage.self) == nil)
+    #expect(await redeemer.recoverPendingTeleport() == false)
+    #expect(network.teleportStatusRequests.isEmpty)
+  }
+
+  @Test("A completed teleport the page already redeemed isn't redeemed again")
+  func completedTeleport_afterPageRedeemed_redeemsOnce() async {
+    let (superwall, mockDelegate) = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.handleStripeCheckoutComplete(
+      contextId: "ctx_1",
+      productId: "prod_1",
+      completion: .purchase(productId: "prod_1", shouldDismiss: true)
+    )
+    // A teleport stored again afterwards (say by a second open) reads completed for that checkout.
+    await redeemer.registerTeleportOpen(teleport)
+    network.teleportStatusResponses = [status("completed")]
+
+    #expect(await redeemer.recoverPendingTeleport() == true)
+    #expect(network.pollRedemptionResultCallCount == 1)
+    #expect(mockDelegate.willRedeemCallCount == 1)
+  }
+
+  @Test("Without a dismissal from the page, a recovered teleport finishes as a restore")
+  func teleportPurchase_withoutDismissal_restores() {
+    let stored = PendingTeleportState(teleportId: "tp_1", productId: "prod_offered")
+    #expect(
+      stored.purchase(checkoutContextId: "ctx_1", productId: nil)
+        == PurchasedReturn(checkoutContextId: "ctx_1", productId: "prod_offered", completion: .restore)
+    )
+    #expect(stored.purchase(checkoutContextId: "ctx_1", productId: "").productId == "prod_offered")
   }
 }

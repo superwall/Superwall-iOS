@@ -51,6 +51,7 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   var stripeCheckoutCompleteShouldDismiss: Bool?
   var stripeCheckoutAbandon: (checkoutContextId: String, productId: String)?
   var customStoreCheckouts: [CustomStoreCheckout] = []
+  var openedTeleports: [PendingTeleportState] = []
 
   var request: PresentationRequest?
 
@@ -91,6 +92,10 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
 
   func endTeleportWatch() {
     teleportWatch = nil
+  }
+
+  func teleportDidOpen(_ teleport: PendingTeleportState) {
+    openedTeleports.append(teleport)
   }
 
   func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool) {

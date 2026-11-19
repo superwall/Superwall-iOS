@@ -404,6 +404,13 @@ class Network {
     )
   }
 
+  func getTeleportStatus(teleportId: String) async throws -> TeleportStatusResponse {
+    return try await urlSession.request(
+      .teleportStatus(request: TeleportStatusRequest(teleportId: teleportId)),
+      data: SuperwallRequestData(factory: factory)
+    )
+  }
+
   func getEntitlements(
     appUserId: String?,
     deviceId: String

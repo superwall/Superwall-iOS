@@ -56,6 +56,10 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// The checkout the paywall last reported complete, while it's being finished. An older
   /// checkout's poll stops for it, so it doesn't wait behind a poll that can't redeem it.
   private var completingCheckoutContextId: String?
+  /// Teleports opened since the app launched. While their paywall is on screen, its page is
+  /// still there to finish them, so the background check leaves them to it.
+  private var teleportsOpenedThisLaunch: Set<String> = []
+  private var isCheckingPendingTeleport = false
   private var superwall: Superwall?
   typealias Factory = WebEntitlementFactory
     & OptionsFactory
@@ -165,8 +169,100 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// still being set up.
   nonisolated func pollPendingStripeCheckoutOnColdLaunch() {
     Task {
+      // A teleport the app was ended during is checked first: if it was paid, finishing it
+      // polls its checkout, which replaces any older pending one.
+      if await recoverPendingTeleport() {
+        return
+      }
       await pollPendingStripeCheckoutOnForegroundIfNeeded()
     }
+  }
+
+  /// The paywall opened a teleport in Safari. Kept until the page settles it or a background
+  /// check reads how it went, so it can be finished if iOS ends the app meanwhile. Nothing is
+  /// blocked by it: a paywall only waits once the check reads it paid.
+  func registerTeleportOpen(_ teleport: PendingTeleportState) {
+    teleportsOpenedThisLaunch.insert(teleport.teleportId)
+    storage.save(teleport, forType: PendingTeleportStorage.self)
+  }
+
+  /// Reads the status of the teleport left open, if there is one, without blocking anything.
+  /// Only a completed teleport with its checkout is finished, as a purchased return link would
+  /// be: the paywall gets the spinner, the code is redeemed and the paywall closes. Any other
+  /// status forgets the teleport. A failed request keeps it for the next launch or foreground.
+  ///
+  /// - Returns: `true` if the teleport was paid and its checkout polled.
+  @discardableResult
+  func recoverPendingTeleport() async -> Bool {
+    guard let teleport = storage.get(PendingTeleportStorage.self) else {
+      return false
+    }
+    guard !teleport.hasExpired() else {
+      clearPendingTeleport(teleport.teleportId)
+      return false
+    }
+    // The page that opened it is still on screen and finishes it when the user is back.
+    if teleportsOpenedThisLaunch.contains(teleport.teleportId), await hasVisiblePaywall() {
+      return false
+    }
+    guard !isCheckingPendingTeleport else {
+      return false
+    }
+    isCheckingPendingTeleport = true
+    defer { isCheckingPendingTeleport = false }
+
+    let status: TeleportStatusResponse
+    do {
+      status = try await network.getTeleportStatus(teleportId: teleport.teleportId)
+    } catch {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .webEntitlements,
+        message: "Checking the teleport left open failed; checking again later",
+        error: error
+      )
+      return false
+    }
+    // The page settled it, or a newer teleport replaced it, while the status was read.
+    guard storage.get(PendingTeleportStorage.self)?.teleportId == teleport.teleportId else {
+      return false
+    }
+    clearPendingTeleport(teleport.teleportId)
+    guard
+      status.isCompleted,
+      let checkoutContextId = status.checkoutContextId,
+      !checkoutContextId.isEmpty
+    else {
+      return false
+    }
+    await handlePurchasedReturn(
+      teleport.purchase(
+        checkoutContextId: checkoutContextId,
+        productId: status.checkoutProductIdentifier
+      )
+    )
+    return true
+  }
+
+  /// Forgets the stored teleport, whichever it is, once the paywall page has settled it.
+  func clearPendingTeleport() {
+    storage.delete(PendingTeleportStorage.self)
+  }
+
+  private func clearPendingTeleport(_ teleportId: String) {
+    guard storage.get(PendingTeleportStorage.self)?.teleportId == teleportId else {
+      return
+    }
+    clearPendingTeleport()
+  }
+
+  private func hasVisiblePaywall() async -> Bool {
+    #if canImport(WebKit)
+    let superwall = superwall ?? Superwall.shared
+    return await MainActor.run { superwall.paywallViewController != nil }
+    #else
+    return false
+    #endif
   }
 
   func registerStripeCheckoutSubmit(
@@ -264,6 +360,8 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     completion: StripeCheckoutCompletion = .restore
   ) async {
     awaitingCheckoutComplete = false
+    // The page heard how its teleport went, so there's nothing left to check in the background.
+    clearPendingTeleport()
 
     // The page can report one purchase more than once (its status poll and the return check).
     // Redeemed once is enough: a second redemption would put the spinner back up behind the
@@ -347,6 +445,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
   func handleStripeCheckoutAbandon(productId: String) async {
     awaitingCheckoutComplete = false
+    clearPendingTeleport()
     let superwall = superwall ?? Superwall.shared
     let product = StoreProduct.blank(productIdentifier: productId)
     let paywallInfo = await MainActor.run { superwall.paywallViewController?.info ?? .empty() }
@@ -1138,7 +1237,10 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     }
     #endif
 
-    await pollPendingStripeCheckoutShowingLoading()
+    // A teleport read paid polls its checkout itself, so the pending one isn't polled twice.
+    if await !recoverPendingTeleport() {
+      await pollPendingStripeCheckoutShowingLoading()
+    }
     await pollWebEntitlements()
   }
 
