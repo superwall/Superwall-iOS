@@ -18,7 +18,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes a purchase never finishing, with its loading spinner left up, when another purchase started before it returned.
 - Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.
 - Fixes the "Occurrences in the last month" audience filter counting the last 30 weeks instead of the last month.
-- Fixes paywalls showing the status bar in apps that hide it, such as Unity games, where it then stayed on screen after the paywall closed. A paywall now hides the status bar when the screen it covers does.
+- Fixes paywalls showing the status bar in apps that hide it, such as Unity games.
+- Fixes a crash when a paywall is presented from a view controller that takes its orientations from whatever it presents.
 
 ## 4.19.1
 

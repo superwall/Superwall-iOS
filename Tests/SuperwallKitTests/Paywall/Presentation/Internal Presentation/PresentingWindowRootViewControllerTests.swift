@@ -52,18 +52,30 @@ struct PresentingWindowRootViewControllerTests {
 
   /// Stands in for an app view controller that decides for itself whether the status bar shows,
   /// the way Unity's does, or hands the decision to a child, the way a navigation controller does.
+  /// It can have another one presented on top of it.
   private final class StatusBarViewController: UIViewController {
     let isStatusBarHidden: Bool
     let statusBarChild: UIViewController?
+    let presented: StatusBarViewController?
+    weak var presenter: UIViewController?
     private(set) var statusBarUpdateCount = 0
+    private(set) var homeIndicatorUpdateCount = 0
+    private(set) var edgeGesturesUpdateCount = 0
 
     init(
       isStatusBarHidden: Bool,
-      child: UIViewController? = nil
+      child: UIViewController? = nil,
+      style: UIModalPresentationStyle = .fullScreen,
+      capturesStatusBar: Bool = false,
+      presenting presented: StatusBarViewController? = nil
     ) {
       self.isStatusBarHidden = isStatusBarHidden
       self.statusBarChild = child
+      self.presented = presented
       super.init(nibName: nil, bundle: nil)
+      modalPresentationStyle = style
+      modalPresentationCapturesStatusBarAppearance = capturesStatusBar
+      presented?.presenter = self
     }
 
     required init?(coder: NSCoder) {
@@ -78,8 +90,34 @@ struct PresentingWindowRootViewControllerTests {
       return statusBarChild
     }
 
+    override var presentedViewController: UIViewController? {
+      return presented
+    }
+
+    override var presentingViewController: UIViewController? {
+      return presenter
+    }
+
     override func setNeedsStatusBarAppearanceUpdate() {
       statusBarUpdateCount += 1
+    }
+
+    override func setNeedsUpdateOfHomeIndicatorAutoHidden() {
+      homeIndicatorUpdateCount += 1
+    }
+
+    override func setNeedsUpdateOfScreenEdgesDeferringSystemGestures() {
+      edgeGesturesUpdateCount += 1
+    }
+  }
+
+  /// Stands in for an app view controller that takes its orientations from another one, the way
+  /// one that goes by whatever is on top does.
+  private final class OrientationDeferringViewController: UIViewController {
+    weak var asked: UIViewController?
+
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+      return asked?.supportedInterfaceOrientations ?? .portrait
     }
   }
 
@@ -293,6 +331,151 @@ struct PresentingWindowRootViewControllerTests {
 
     #expect(Superwall.shared.presentationItems.window == nil)
     #expect(appViewController.statusBarUpdateCount == 1)
+  }
+
+  @Test
+  func destroyingThePresentingWindowAsksTheAppToCheckItsHomeIndicatorAndEdgeGestures() {
+    let appViewController = StatusBarViewController(isStatusBarHidden: true)
+    let window = hostWindow(root: appViewController)
+    let presentingWindow = UIWindow()
+    presentingWindow.rootViewController = PresentingWindowRootViewController(hostWindow: window)
+    Superwall.shared.presentationItems.window = presentingWindow
+
+    Superwall.shared.destroyPresentingWindow()
+
+    #expect(appViewController.homeIndicatorUpdateCount == 1)
+    #expect(appViewController.edgeGesturesUpdateCount == 1)
+  }
+
+  @Test
+  func goesByAFullScreenViewControllerOnTheAppsWindow() {
+    let window = hostWindow(
+      root: StatusBarViewController(
+        isStatusBarHidden: false,
+        presenting: StatusBarViewController(isStatusBarHidden: true)
+      )
+    )
+    let rootViewController = PresentingWindowRootViewController(hostWindow: window)
+
+    #expect(rootViewController.prefersStatusBarHidden)
+  }
+
+  @Test
+  func goesByASheetThatTakesTheStatusBar() {
+    let window = hostWindow(
+      root: StatusBarViewController(
+        isStatusBarHidden: false,
+        presenting: StatusBarViewController(
+          isStatusBarHidden: true,
+          style: .pageSheet,
+          capturesStatusBar: true
+        )
+      )
+    )
+    let rootViewController = PresentingWindowRootViewController(hostWindow: window)
+
+    #expect(rootViewController.prefersStatusBarHidden)
+  }
+
+  @Test(arguments: [UIModalPresentationStyle.pageSheet, .formSheet, .overFullScreen, .custom, .popover])
+  func ignoresAViewControllerThatLeavesTheStatusBarAlone(style: UIModalPresentationStyle) {
+    let window = hostWindow(
+      root: StatusBarViewController(
+        isStatusBarHidden: true,
+        presenting: StatusBarViewController(isStatusBarHidden: false, style: style)
+      )
+    )
+    let rootViewController = PresentingWindowRootViewController(hostWindow: window)
+
+    #expect(rootViewController.prefersStatusBarHidden)
+  }
+
+  @Test
+  func goesByTheTopmostViewControllerThatTakesTheStatusBar() {
+    let window = hostWindow(
+      root: StatusBarViewController(
+        isStatusBarHidden: false,
+        presenting: StatusBarViewController(
+          isStatusBarHidden: false,
+          presenting: StatusBarViewController(
+            isStatusBarHidden: true,
+            style: .pageSheet,
+            capturesStatusBar: true,
+            presenting: StatusBarViewController(isStatusBarHidden: false, style: .pageSheet)
+          )
+        )
+      )
+    )
+    let rootViewController = PresentingWindowRootViewController(hostWindow: window)
+
+    #expect(rootViewController.prefersStatusBarHidden)
+  }
+
+  @Test(arguments: [UIModalPresentationStyle.currentContext, .overCurrentContext])
+  func aViewControllerCoveringItsPresenterTakesTheStatusBarOnlyOverTheWholeWindow(
+    style: UIModalPresentationStyle
+  ) {
+    let overRoot = StatusBarViewController(isStatusBarHidden: true, style: style)
+    let root = StatusBarViewController(isStatusBarHidden: false, presenting: overRoot)
+
+    let overChild = StatusBarViewController(isStatusBarHidden: true, style: style)
+    let child = StatusBarViewController(isStatusBarHidden: false, presenting: overChild)
+    let parent = UIViewController()
+    parent.addChild(child)
+
+    #expect(root.statusBarDecidingViewController === overRoot)
+    #expect(!overChild.takesStatusBarWhenPresented)
+  }
+
+  @Test
+  func aPaywallOnASheetThatTakesTheStatusBarGoesByTheSheet() {
+    let sheet = StatusBarViewController(
+      isStatusBarHidden: true,
+      style: .pageSheet,
+      capturesStatusBar: true
+    )
+    let root = StatusBarViewController(isStatusBarHidden: false, presenting: sheet)
+    let paywall = makePaywall(presentedFrom: sheet)
+
+    #expect(sheet.statusBarDecidingAncestor === sheet)
+    #expect(root.statusBarDecidingAncestor === root)
+    #expect(paywall.prefersStatusBarHidden)
+  }
+
+  @Test
+  func aPaywallOnASheetThatLeavesTheStatusBarAloneGoesByTheScreenUnderIt() {
+    let sheet = StatusBarViewController(isStatusBarHidden: false, style: .pageSheet)
+    let root = StatusBarViewController(isStatusBarHidden: true, presenting: sheet)
+    let paywall = makePaywall(presentedFrom: sheet)
+
+    #expect(sheet.statusBarDecidingAncestor === root)
+    #expect(paywall.prefersStatusBarHidden)
+  }
+
+  @Test
+  func aPaywallAllowsTheOrientationsOfTheScreenItCovers() {
+    let paywall = makePaywall(presentedFrom: OrientationLockedViewController(.landscape))
+
+    #expect(paywall.supportedInterfaceOrientations == .landscape)
+  }
+
+  @Test
+  func aPaywallAnswersForItselfWhenTheScreenItCoversAsksItsOrientations() {
+    let presenter = OrientationDeferringViewController()
+    let paywall = makePaywall(presentedFrom: presenter)
+    presenter.asked = paywall
+
+    #expect(paywall.supportedInterfaceOrientations == UIViewController().supportedInterfaceOrientations)
+  }
+
+  @Test
+  func answersForItselfWhenTheAppsWindowAsksItsOrientations() {
+    let appViewController = OrientationDeferringViewController()
+    let window = hostWindow(root: appViewController)
+    let rootViewController = PresentingWindowRootViewController(hostWindow: window)
+    appViewController.asked = rootViewController
+
+    #expect(rootViewController.supportedInterfaceOrientations == UIViewController().supportedInterfaceOrientations)
   }
 
   @Test
