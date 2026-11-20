@@ -46,10 +46,23 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
 
   /// A paywall hides the status bar when the screen it covers does, so it doesn't bring it
   /// back in an app that hides it, such as a game.
+  ///
+  /// That screen may ask the paywall in turn, as a view controller that goes by whatever it
+  /// presents does. The paywall then answers for itself, so the two don't ask each other forever.
   override public var prefersStatusBarHidden: Bool {
-    return presentingViewController?.orientationDecidingAncestor.hidesStatusBar
-      ?? super.prefersStatusBarHidden
+    guard
+      !isAskingAboutStatusBar,
+      let presentingViewController = presentingViewController
+    else {
+      return super.prefersStatusBarHidden
+    }
+    isAskingAboutStatusBar = true
+    defer { isAskingAboutStatusBar = false }
+    return presentingViewController.orientationDecidingAncestor.hidesStatusBar
   }
+
+  /// Whether the paywall is asking the screen it covers if the status bar is hidden.
+  private var isAskingAboutStatusBar = false
 
   /// A paywall allows the orientations of the screen it covers, so it can't rotate the app
   /// into one the app doesn't allow. When it's presented from a sheet, that's the screen

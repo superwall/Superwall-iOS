@@ -44,9 +44,22 @@ final class PresentingWindowRootViewController: UIViewController {
     return hostViewController?.supportedInterfaceOrientations ?? super.supportedInterfaceOrientations
   }
 
+  /// The app's window may ask this one in turn, as an app that goes by the frontmost window
+  /// does. It then answers for itself, so the two don't ask each other forever.
   override var prefersStatusBarHidden: Bool {
-    return hostViewController?.hidesStatusBar ?? super.prefersStatusBarHidden
+    guard
+      !isAskingAboutStatusBar,
+      let hostViewController = hostViewController
+    else {
+      return super.prefersStatusBarHidden
+    }
+    isAskingAboutStatusBar = true
+    defer { isAskingAboutStatusBar = false }
+    return hostViewController.hidesStatusBar
   }
+
+  /// Whether this view controller is asking the app's window if the status bar is hidden.
+  private var isAskingAboutStatusBar = false
 
   /// Asks UIKit to check the app's orientations again once the paywall's window has gone, so the
   /// app returns to an orientation it allows.
@@ -103,9 +116,14 @@ extension UIViewController {
 
   /// Whether this view controller hides the status bar, going by the child it hands the decision
   /// to, as UIKit does.
+  ///
+  /// It stops at a child it has already been through, so view controllers that hand the
+  /// decision round in a circle don't keep it going forever.
   var hidesStatusBar: Bool {
     var deciding = self
-    while let child = deciding.childForStatusBarHidden {
+    var visited: Set<ObjectIdentifier> = [ObjectIdentifier(self)]
+    while let child = deciding.childForStatusBarHidden,
+      visited.insert(ObjectIdentifier(child)).inserted {
       deciding = child
     }
     return deciding.prefersStatusBarHidden
