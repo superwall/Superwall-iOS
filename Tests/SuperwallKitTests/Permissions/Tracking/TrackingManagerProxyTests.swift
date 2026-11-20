@@ -38,6 +38,12 @@ struct TrackingManagerProxyTests {
     #expect(PermissionHandler.PlistKey.tracking == "NSUserTrackingUsageDescription")
   }
 
+  @Test func missingManager_hasNoStatusToRead() {
+    let proxy = TrackingManagerProxy(trackingManagerClass: nil)
+
+    #expect(proxy.trackingAuthorizationStatusIfAvailable() == nil)
+  }
+
   @Test func missingManager_trackingAuthorizationStatus_returnsNotDetermined() {
     let proxy = TrackingManagerProxy(trackingManagerClass: nil)
     let status = proxy.trackingAuthorizationStatus()
