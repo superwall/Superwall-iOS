@@ -8,7 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Saves the first deep link received during the first app session as the `firstDeepLinkUrl` user attribute. If you assign deep links to your App Store custom product pages, you can use this attribute to break down results and filter audiences by the product page that drove the install. If you've connected App Store Connect, the page's ID and name are saved too, as `customProductPageId` and `customProductPageName`. Requires `Superwall.handleDeepLink(_:)` to be set up.
 - Adds the user's App Tracking Transparency status as the `attStatus` device attribute.
-- Reports ad user data consent as denied, as well as personalization, when the user has denied App Tracking Transparency or it's restricted, even if you set `adConsent` yourself. If you use the MMP, this limits what's sent to your ad networks for these users. For example, Meta only receives a conversion when the user came from a Meta ad click, and without any other user data.
+- Reports ad user data consent as denied, as well as personalization, when the user has denied App Tracking Transparency or it's restricted, even if you set `adConsent` yourself. If you use the MMP, conversions from these users are no longer sent to Meta or your other ad networks.
 
 ### Fixes
 
