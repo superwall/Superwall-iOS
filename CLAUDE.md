@@ -116,7 +116,11 @@ When bumping the version, update all three files:
 
 ### Pull Requests
 
-When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPLATE.md`:
+Before opening a PR, run a code review of the change and fix the bugs it finds. Once it's open, fix
+the bugs the review bots report as they come in, or reply to say why not.
+
+When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPLATE.md`, and only
+tick a box for something that was done:
 
 - [ ] All unit tests pass.
 - [ ] All UI tests pass.
@@ -126,6 +130,8 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 - [ ] I added/updated tests or detailed why my change isn't tested.
 - [ ] I added an entry to the `CHANGELOG.md` for any breaking changes, enhancements, or bug fixes.
 - [ ] I have run `swiftlint` in the main directory and fixed any issues.
+- [ ] I ran a code review of this pull request in my coding agent (such as `/code-review` in Claude Code) and fixed the bugs it found.
+- [ ] I fixed the bugs the review bots reported on this pull request, or replied to say why not, and will do the same for any that come in later.
 - [ ] I have updated the SDK documentation as well as the online docs.
 - [ ] I have reviewed the [contributing guide](https://github.com/superwall-me/paywall-ios/tree/master/.github/CONTRIBUTING.md)
 
