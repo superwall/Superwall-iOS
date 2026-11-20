@@ -162,7 +162,9 @@ extension Superwall {
     let rootViewController = presentationItems.window?.rootViewController
     presentationItems.window?.windowScene = nil
     presentationItems.window = nil
-    (rootViewController as? PresentingWindowRootViewController)?.updateHostOrientations()
+    let presentingWindowRoot = rootViewController as? PresentingWindowRootViewController
+    presentingWindowRoot?.updateHostOrientations()
+    presentingWindowRoot?.updateHostSystemUI()
   }
   #endif
 }
