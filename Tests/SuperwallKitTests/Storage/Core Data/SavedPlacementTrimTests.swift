@@ -7,6 +7,7 @@
 import Testing
 import Foundation
 import CoreData
+import SQLite3
 @testable import SuperwallKit
 
 struct SavedPlacementTrimTests {
@@ -86,10 +87,52 @@ struct SavedPlacementTrimTests {
     await drain(manager)
   }
 
-  private func needsSpaceReclaim(_ stack: CoreDataStack) throws -> Bool? {
+  private func spaceReclaimAttemptsLeft(_ stack: CoreDataStack) throws -> Int? {
     let coordinator = try #require(stack.persistentContainer?.persistentStoreCoordinator)
     let store = try #require(coordinator.persistentStores.first)
-    return coordinator.metadata(for: store)[CoreDataManager.needsSpaceReclaimKey] as? Bool
+    return coordinator.metadata(for: store)[CoreDataManager.spaceReclaimAttemptsLeftKey] as? Int
+  }
+
+  /// Runs background work straight away, so a test can wait for it.
+  private func lifecycle(_ center: NotificationCenter) -> CoreDataManager.AppLifecycle {
+    CoreDataManager.AppLifecycle(notificationCenter: center) { work in
+      work()
+    }
+  }
+
+  private func isFollowingTheApp(_ manager: CoreDataManager) async -> Bool {
+    await withCheckedContinuation { continuation in
+      guard let context = manager.backgroundContext else {
+        return continuation.resume(returning: false)
+      }
+      context.perform {
+        continuation.resume(returning: !manager.trimState.appBackgroundObservers.isEmpty)
+      }
+    }
+  }
+
+  /// Another connection with a read in progress, as a filter count in flight
+  /// is. While it's open, the store's freed space can't be given back.
+  private final class ReadInProgress {
+    private var connection: OpaquePointer?
+    private var statement: OpaquePointer?
+
+    init(storeAt url: URL) throws {
+      try #require(sqlite3_open_v2(url.path, &connection, SQLITE_OPEN_READONLY, nil) == SQLITE_OK)
+      try #require(sqlite3_exec(connection, "BEGIN", nil, nil, nil) == SQLITE_OK)
+      try #require(
+        sqlite3_prepare_v2(connection, "SELECT count(*) FROM ZEVENTDATA", -1, &statement, nil) == SQLITE_OK
+      )
+      try #require(sqlite3_step(statement) == SQLITE_ROW)
+    }
+
+    func finish() {
+      sqlite3_finalize(statement)
+      sqlite3_exec(connection, "COMMIT", nil, nil, nil)
+      sqlite3_close(connection)
+      statement = nil
+      connection = nil
+    }
   }
 
   private func close(_ stack: CoreDataStack) throws {
@@ -235,7 +278,7 @@ struct SavedPlacementTrimTests {
     )
     let sizeBefore = sizeOnDisk()
     let center = NotificationCenter()
-    let manager = CoreDataManager(coreDataStack: stack, notificationCenter: center)
+    let manager = CoreDataManager(coreDataStack: stack, lifecycle: lifecycle(center))
 
     await trim(manager)
 
@@ -251,13 +294,13 @@ struct SavedPlacementTrimTests {
     // rewriting the store doesn't hold up saves or a reset while it's in use.
     #expect(sizeBefore > 4_000_000)
     #expect(sizeOnDisk() > sizeBefore / 2)
-    #expect(try needsSpaceReclaim(stack) == true)
+    #expect(try spaceReclaimAttemptsLeft(stack) == CoreDataManager.spaceReclaimAttempts)
 
     await goToBackground(center, manager)
 
     // The store is still open here, as it is in an app.
     #expect(sizeOnDisk() < sizeBefore / 10)
-    #expect(try needsSpaceReclaim(stack) == false)
+    #expect(try spaceReclaimAttemptsLeft(stack) == 0)
 
     // It keeps working afterwards.
     await withCheckedContinuation { continuation in
@@ -330,19 +373,19 @@ struct SavedPlacementTrimTests {
     try insert(1_500, named: "paywallWebviewLoad_complete", parameters: largeParameters, into: stack)
     try insert(10, named: "app_open", parameters: largeParameters, into: stack)
     let sizeBefore = sizeOnDisk()
-    await trim(CoreDataManager(coreDataStack: stack, notificationCenter: NotificationCenter()))
-    #expect(try needsSpaceReclaim(stack) == true)
+    await trim(CoreDataManager(coreDataStack: stack, lifecycle: lifecycle(NotificationCenter())))
+    #expect(try spaceReclaimAttemptsLeft(stack) == CoreDataManager.spaceReclaimAttempts)
     try close(stack)
 
     // The next launch.
     let reopenedStack = makeStack()
     let center = NotificationCenter()
-    let manager = CoreDataManager(coreDataStack: reopenedStack, notificationCenter: center)
+    let manager = CoreDataManager(coreDataStack: reopenedStack, lifecycle: lifecycle(center))
     await trim(manager)
     await goToBackground(center, manager)
 
     #expect(sizeOnDisk() < sizeBefore / 10)
-    #expect(try needsSpaceReclaim(reopenedStack) == false)
+    #expect(try spaceReclaimAttemptsLeft(reopenedStack) == 0)
     #expect(await manager.countPlacement("app_open", interval: .infinity) == 10)
 
     // Going to the background again has nothing left to do.
@@ -365,7 +408,7 @@ struct SavedPlacementTrimTests {
     )
     let sizeBefore = sizeOnDisk()
     let center = NotificationCenter()
-    let manager = CoreDataManager(coreDataStack: stack, notificationCenter: center)
+    let manager = CoreDataManager(coreDataStack: stack, lifecycle: lifecycle(center))
 
     // Queued behind the trim's first step, and ahead of its second.
     center.post(name: SystemInfo.applicationDidEnterBackgroundNotification, object: nil)
@@ -373,7 +416,7 @@ struct SavedPlacementTrimTests {
     await trim(manager)
     await drain(manager)
     #expect(sizeOnDisk() < sizeBefore / 10)
-    #expect(try needsSpaceReclaim(stack) == false)
+    #expect(try spaceReclaimAttemptsLeft(stack) == 0)
   }
 
   @Test
@@ -388,7 +431,7 @@ struct SavedPlacementTrimTests {
     )
     let sizeBefore = sizeOnDisk()
     let center = NotificationCenter()
-    let manager = CoreDataManager(coreDataStack: stack, notificationCenter: center)
+    let manager = CoreDataManager(coreDataStack: stack, lifecycle: lifecycle(center))
 
     center.post(name: SystemInfo.applicationDidEnterBackgroundNotification, object: nil)
     center.post(name: SystemInfo.applicationWillEnterForegroundNotification, object: nil)
@@ -396,10 +439,83 @@ struct SavedPlacementTrimTests {
     await trim(manager)
     await drain(manager)
     #expect(sizeOnDisk() > sizeBefore / 2)
-    #expect(try needsSpaceReclaim(stack) == true)
+    #expect(try spaceReclaimAttemptsLeft(stack) == CoreDataManager.spaceReclaimAttempts)
 
     await goToBackground(center, manager)
     #expect(sizeOnDisk() < sizeBefore / 10)
+  }
+
+  @Test
+  func aNewInstallIsDoneAfterGoingToTheBackgroundOnce() async throws {
+    defer { try? FileManager.default.removeItem(at: rootUrl) }
+    let stack = makeStack()
+    let center = NotificationCenter()
+    let manager = CoreDataManager(coreDataStack: stack, lifecycle: lifecycle(center))
+    await trim(manager)
+    #expect(await isFollowingTheApp(manager))
+
+    // There's nothing to give back, so the store doesn't get smaller. That
+    // mustn't keep it trying.
+    await goToBackground(center, manager)
+
+    #expect(try spaceReclaimAttemptsLeft(stack) == 0)
+    #expect(await isFollowingTheApp(manager) == false)
+  }
+
+  @Test
+  func aReadInProgressIsntCountedAsDoneAndIsTriedAgain() async throws {
+    defer { try? FileManager.default.removeItem(at: rootUrl) }
+    let stack = makeStack()
+    try insert(1_500, named: "paywallWebviewLoad_complete", parameters: largeParameters, into: stack)
+    let sizeBefore = sizeOnDisk()
+    let center = NotificationCenter()
+    let manager = CoreDataManager(coreDataStack: stack, lifecycle: lifecycle(center))
+    await trim(manager)
+
+    let read = try ReadInProgress(storeAt: storeUrl)
+    let began = Date()
+    await goToBackground(center, manager)
+
+    // It gives up on this try quickly, and knows it didn't work.
+    #expect(Date().timeIntervalSince(began) < 10)
+    #expect(sizeOnDisk() > sizeBefore / 2)
+    #expect(try spaceReclaimAttemptsLeft(stack) == CoreDataManager.spaceReclaimAttempts - 1)
+    #expect(await isFollowingTheApp(manager))
+
+    read.finish()
+    await goToBackground(center, manager)
+
+    #expect(sizeOnDisk() < sizeBefore / 10)
+    #expect(try spaceReclaimAttemptsLeft(stack) == 0)
+    #expect(await isFollowingTheApp(manager) == false)
+  }
+
+  @Test
+  func givesUpAfterAFewTries() async throws {
+    defer { try? FileManager.default.removeItem(at: rootUrl) }
+    let stack = makeStack()
+    try insert(1_500, named: "paywallWebviewLoad_complete", parameters: largeParameters, into: stack)
+    let center = NotificationCenter()
+    let manager = CoreDataManager(coreDataStack: stack, lifecycle: lifecycle(center))
+    await trim(manager)
+
+    let read = try ReadInProgress(storeAt: storeUrl)
+    defer { read.finish() }
+    for _ in 0..<CoreDataManager.spaceReclaimAttempts {
+      #expect(await isFollowingTheApp(manager))
+      await goToBackground(center, manager)
+    }
+
+    #expect(try spaceReclaimAttemptsLeft(stack) == 0)
+    #expect(await isFollowingTheApp(manager) == false)
+    // The store still works.
+    #expect(await count("paywallWebviewLoad_complete", in: stack) == 0)
+    await withCheckedContinuation { continuation in
+      manager.savePlacementData(.stub().setting(\.name, to: "app_open")) { _ in
+        continuation.resume()
+      }
+    }
+    #expect(await manager.countPlacement("app_open", interval: .infinity) == 1)
   }
 
   @Test

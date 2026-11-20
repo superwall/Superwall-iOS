@@ -13,10 +13,10 @@ final class CoreDataManagerMock: CoreDataManager {
 
   override init(
     coreDataStack: CoreDataStack = CoreDataStack(),
-    notificationCenter: NotificationCenter = .default
+    lifecycle: AppLifecycle = .live
   ) {
     self.internalDataStack = coreDataStack
-    super.init(coreDataStack: coreDataStack, notificationCenter: notificationCenter)
+    super.init(coreDataStack: coreDataStack, lifecycle: lifecycle)
   }
 
   func countAllEvents() async -> Int {

@@ -12,27 +12,18 @@ class CoreDataManager {
   let coreDataStack: CoreDataStack
   private(set) var backgroundContext: NSManagedObjectContext?
 
-  /// Called once the trim that's running has finished. `nil` when none is
-  /// running. Only touched on `backgroundContext`'s queue.
-  var trimCompletions: [() -> Void]?
+  /// How the manager hears about the app going to the background.
+  let lifecycle: AppLifecycle
 
-  /// Where the app going to the background is heard about.
-  let notificationCenter: NotificationCenter
-
-  /// Follow the app going to and from the background while a store still has
-  /// space to give back. Added in `init`, then only touched on
-  /// `backgroundContext`'s queue.
-  var appBackgroundObservers: [NSObjectProtocol] = []
-
-  /// Only touched on `backgroundContext`'s queue.
-  var isAppInBackground = false
+  /// Only touched on `backgroundContext`'s queue, apart from in `init`.
+  var trimState = TrimState()
 
   init(
     coreDataStack: CoreDataStack = CoreDataStack(),
-    notificationCenter: NotificationCenter = .default
+    lifecycle: AppLifecycle = .live
   ) {
     self.coreDataStack = coreDataStack
-    self.notificationCenter = notificationCenter
+    self.lifecycle = lifecycle
     if let persistentContainer = coreDataStack.persistentContainer {
       backgroundContext = persistentContainer.newBackgroundContext()
     }

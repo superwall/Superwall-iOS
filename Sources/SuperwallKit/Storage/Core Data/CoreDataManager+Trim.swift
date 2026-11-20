@@ -7,6 +7,44 @@ import Foundation
 import CoreData
 
 extension CoreDataManager {
+  /// How the manager hears about the app going to the background, and keeps
+  /// it running once it's there. Tests pass their own.
+  struct AppLifecycle {
+    let notificationCenter: NotificationCenter
+
+    /// Runs `work` somewhere it may block, keeping the app awake until it
+    /// returns where the system would otherwise suspend it. Doesn't run it at
+    /// all if the system won't allow that.
+    let runWithBackgroundTime: (_ work: @escaping () -> Void) -> Void
+
+    static let live = AppLifecycle(notificationCenter: .default) { work in
+      #if os(macOS)
+      DispatchQueue.global(qos: .utility).async(execute: work)
+      #else
+      ProcessInfo.processInfo.performExpiringActivity(
+        withReason: "Superwall is tidying its database"
+      ) { expired in
+        if expired {
+          return
+        }
+        work()
+      }
+      #endif
+    }
+  }
+
+  struct TrimState {
+    /// Called once the trim that's running has finished. `nil` when none is
+    /// running.
+    var completions: [() -> Void]?
+
+    /// Follow the app going to and from the background while a store still
+    /// has space to give back.
+    var appBackgroundObservers: [NSObjectProtocol] = []
+
+    var isAppInBackground = false
+  }
+
   /// Preloading and loading placements aren't saved or counted. They follow
   /// what the SDK does, not what the user does: the loading ones fire for every
   /// paywall on every preload, the same as when a paywall is shown.
@@ -45,9 +83,13 @@ extension CoreDataManager {
   static let savedPlacementsTrimVersion = 1
   static let savedPlacementsTrimVersionKey = "SWKSavedPlacementsTrimVersion"
 
-  /// Saved as `true` in a store's metadata while it has freed space that
-  /// hasn't been given back to the device yet.
-  static let needsSpaceReclaimKey = "SWKSavedPlacementsNeedSpaceReclaim"
+  /// Saved in a store's metadata: how many more times to try giving its freed
+  /// space back to the device. Zero once that's done or given up on.
+  static let spaceReclaimAttemptsLeftKey = "SWKSavedPlacementsSpaceReclaimAttemptsLeft"
+
+  /// A try fails when something else is using the store at that moment. A few
+  /// tries on different days covers that without ever trying forever.
+  static let spaceReclaimAttempts = 3
 
   /// How many placements one step of the trim deletes or empties.
   static let trimBatchSize = 500
@@ -71,10 +113,10 @@ extension CoreDataManager {
     }
 
     backgroundContext.perform {
-      if self.trimCompletions != nil {
+      if self.trimState.completions != nil {
         // A trim is already running. Hear about it finishing instead.
         if let completion = completion {
-          self.trimCompletions?.append(completion)
+          self.trimState.completions?.append(completion)
         }
         return
       }
@@ -83,13 +125,13 @@ extension CoreDataManager {
       if (trimmedVersion ?? 0) >= Self.savedPlacementsTrimVersion {
         // If it was trimmed in an earlier launch that ended before the space was
         // given back, that's still to come. Otherwise there's nothing to wait for.
-        if metadata[Self.needsSpaceReclaimKey] as? Bool != true {
+        if (metadata[Self.spaceReclaimAttemptsLeftKey] as? Int ?? 0) <= 0 {
           self.stopObservingAppBackground()
         }
         completion?()
         return
       }
-      self.trimCompletions = [completion].compactMap { $0 }
+      self.trimState.completions = [completion].compactMap { $0 }
       self.runTrimStep(emptying: [], in: backgroundContext, store: store)
     }
   }
@@ -129,12 +171,12 @@ extension CoreDataManager {
       if let coordinator = context.persistentStoreCoordinator {
         var metadata = coordinator.metadata(for: store)
         metadata[Self.savedPlacementsTrimVersionKey] = Self.savedPlacementsTrimVersion
-        metadata[Self.needsSpaceReclaimKey] = true
+        metadata[Self.spaceReclaimAttemptsLeftKey] = Self.spaceReclaimAttempts
         coordinator.setMetadata(metadata, for: store)
         try context.save()
-        if isAppInBackground {
+        if trimState.isAppInBackground {
           // The app went to the background while the trim was running.
-          reclaimSpaceIfNeeded(in: context, store: store)
+          reclaimSpaceWithBackgroundTime(in: context, store: store)
         }
       }
     } catch {
@@ -147,8 +189,8 @@ extension CoreDataManager {
       )
     }
 
-    let completions = trimCompletions ?? []
-    trimCompletions = nil
+    let completions = trimState.completions ?? []
+    trimState.completions = nil
     for completion in completions {
       completion()
     }
@@ -170,24 +212,24 @@ extension CoreDataManager {
     else {
       return
     }
-    appBackgroundObservers = [
-      notificationCenter.addObserver(
+    trimState.appBackgroundObservers = [
+      lifecycle.notificationCenter.addObserver(
         forName: SystemInfo.applicationDidEnterBackgroundNotification,
         object: nil,
         queue: nil
       ) { [weak self] _ in
         backgroundContext.perform {
-          self?.isAppInBackground = true
-          self?.reclaimSpaceIfNeeded(in: backgroundContext, store: store)
+          self?.trimState.isAppInBackground = true
         }
+        self?.reclaimSpaceWithBackgroundTime(in: backgroundContext, store: store)
       },
-      notificationCenter.addObserver(
+      lifecycle.notificationCenter.addObserver(
         forName: SystemInfo.applicationWillEnterForegroundNotification,
         object: nil,
         queue: nil
       ) { [weak self] _ in
         backgroundContext.perform {
-          self?.isAppInBackground = false
+          self?.trimState.isAppInBackground = false
         }
       }
     ]
@@ -196,10 +238,23 @@ extension CoreDataManager {
   /// Must be called on the context's queue, or when nothing else can reach
   /// the manager.
   func stopObservingAppBackground() {
-    for observer in appBackgroundObservers {
-      notificationCenter.removeObserver(observer)
+    for observer in trimState.appBackgroundObservers {
+      lifecycle.notificationCenter.removeObserver(observer)
     }
-    appBackgroundObservers = []
+    trimState.appBackgroundObservers = []
+  }
+
+  /// The system suspends an app soon after it goes to the background, so this
+  /// asks it to hold off until the space has been given back.
+  private func reclaimSpaceWithBackgroundTime(
+    in context: NSManagedObjectContext,
+    store: NSPersistentStore
+  ) {
+    lifecycle.runWithBackgroundTime { [weak self] in
+      context.performAndWait {
+        self?.reclaimSpaceIfNeeded(in: context, store: store)
+      }
+    }
   }
 
   /// Gives the space freed by the trim back to the device, if that's still to
@@ -212,24 +267,32 @@ extension CoreDataManager {
       return
     }
     var metadata = coordinator.metadata(for: store)
-    if metadata[Self.needsSpaceReclaimKey] as? Bool != true {
+    var attemptsLeft = metadata[Self.spaceReclaimAttemptsLeftKey] as? Int ?? 0
+    if attemptsLeft <= 0 {
       return
     }
+
     do {
       try Self.reclaimFreeSpace(inStoreAt: storeUrl)
-      metadata[Self.needsSpaceReclaimKey] = false
-      coordinator.setMetadata(metadata, for: store)
-      try context.save()
-      stopObservingAppBackground()
+      // Done once the rewrite has been moved into the main file. That doesn't
+      // mean the file got smaller: a new install has nothing to give back.
+      let isDone = Self.isWriteAheadLogEmpty(forStoreAt: storeUrl)
+      attemptsLeft = isDone ? 0 : attemptsLeft - 1
     } catch {
-      // Still marked as needed, so it's tried again the next time the app
-      // goes to the background.
+      attemptsLeft -= 1
       Logger.debug(
         logLevel: .error,
         scope: .coreData,
         message: "Could not give freed space back.",
         error: error
       )
+    }
+
+    metadata[Self.spaceReclaimAttemptsLeftKey] = attemptsLeft
+    coordinator.setMetadata(metadata, for: store)
+    try? context.save()
+    if attemptsLeft <= 0 {
+      stopObservingAppBackground()
     }
   }
 
@@ -277,6 +340,10 @@ extension CoreDataManager {
   /// store with the vacuum option rewrites the file without them. The rewrite
   /// lands in the -wal file, so a second open moves it into the main file,
   /// which is what shortens it.
+  ///
+  /// The second open does nothing, without an error, if something is reading
+  /// the store. Left alone it waits half a minute for the reader first, so
+  /// both opens give up after a second.
   private static func reclaimFreeSpace(inStoreAt url: URL) throws {
     let optionsForEachOpen: [[AnyHashable: Any]] = [
       [NSSQLiteManualVacuumOption: true],
@@ -290,9 +357,16 @@ extension CoreDataManager {
         ofType: NSSQLiteStoreType,
         configurationName: nil,
         at: url,
-        options: options
+        options: options.merging([NSPersistentStoreTimeoutOption: 1]) { option, _ in option }
       )
       try coordinator.remove(store)
     }
+  }
+
+  /// Whether everything in the store's -wal file has been moved into its main
+  /// file, which empties it.
+  private static func isWriteAheadLogEmpty(forStoreAt url: URL) -> Bool {
+    let attributes = try? FileManager.default.attributesOfItem(atPath: url.path + "-wal")
+    return (attributes?[.size] as? Int ?? 0) == 0
   }
 }

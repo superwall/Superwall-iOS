@@ -282,7 +282,11 @@ number when adding to the unsaved names, so stores are cleaned again. The trim w
 on the context that saves placements, each queued behind whatever is waiting, because the whole of it
 takes seconds on a large store. Don't turn it into one long block: placements saved at launch and
 `reset()` would wait for it. Giving the freed space back means rewriting the whole store, which can't
-be split up, so it waits until the app goes to the background (`reclaimSpaceIfNeeded`).
+be split up, so it waits until the app goes to the background (`reclaimSpaceIfNeeded`) and asks the
+system to keep the app awake for it. It counts as done once SQLite has moved the rewrite into the
+main file (an empty -wal file), never by the file getting smaller: a new install has nothing to give
+back. Something reading the store at that moment makes it fail without an error, so it's tried again
+the next time, up to `spaceReclaimAttempts` times.
 
 ### Native macOS
 
