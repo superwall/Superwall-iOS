@@ -141,6 +141,35 @@ struct AdConsentTests {
     withExtendedLifetime(dependencyContainer) {}
   }
 
+  @Test(arguments: [
+    FakeTrackingAuthorizationStatus.notDetermined, .restricted, .denied, .authorized
+  ])
+  func attStatus_isReportedAsADeviceAttribute(
+    _ attStatus: FakeTrackingAuthorizationStatus
+  ) async {
+    let dependencyContainer = DependencyContainer(cache: CacheMock())
+    let deviceHelper = makeDeviceHelper(dependencyContainer, attStatus: attStatus)
+
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(template["attStatus"] as? String == String(attStatus.rawValue))
+    withExtendedLifetime(dependencyContainer) {}
+  }
+
+  @Test func attStatus_isLeftOutWhereTheOSHasNone() async {
+    let dependencyContainer = DependencyContainer(cache: CacheMock())
+    let banner = BannerDefaults()
+    let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+    deviceHelper.attStatusProvider = { nil }
+    deviceHelper.consentDefaults = banner.defaults
+
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(template["attStatus"] == nil)
+    #expect(template["adUserDataConsent"] as? String == "granted")
+    withExtendedLifetime((dependencyContainer, banner)) {}
+  }
+
   @Test func attDenied_withTrackingNone_deniesBoth() {
     let consent = AdConsent(adUserData: .granted, adPersonalization: .granted)
 
@@ -261,7 +290,8 @@ struct AdConsentTests {
     #expect(reported == ReportedAdConsent(
       adUserData: "granted",
       adPersonalization: "granted",
-      source: "developer"
+      source: "developer",
+      attStatus: "3"
     ))
     await drainAdConsentUpdates(superwall)
   }
@@ -274,7 +304,8 @@ struct AdConsentTests {
     #expect(deviceHelper.reportedAdConsent == ReportedAdConsent(
       adUserData: "denied",
       adPersonalization: "denied",
-      source: "tcf"
+      source: "tcf",
+      attStatus: "2"
     ))
     withExtendedLifetime(dependencyContainer) {}
   }
@@ -288,7 +319,8 @@ struct AdConsentTests {
     #expect(deviceHelper.reportedAdConsent == ReportedAdConsent(
       adUserData: "denied",
       adPersonalization: "denied",
-      source: "tcf"
+      source: "tcf",
+      attStatus: "3"
     ))
     withExtendedLifetime(dependencyContainer) {}
   }
@@ -452,6 +484,31 @@ struct AdConsentTests {
     // Already reflected: no second republish.
     #expect(await superwall.republishDeviceAttributesIfAdConsentChanged() == false)
     #expect(recorder.sent.count == 2)
+    await drainAdConsentUpdates(superwall)
+    withExtendedLifetime(dependencyContainer) {}
+  }
+
+  @Test func attRefusal_isResentEvenWhenConsentWasAlreadyDenied() async {
+    let attStatus = ATTStatusBox(.notDetermined)
+    let (superwall, dependencyContainer, recorder) = makeSuperwall(attStatus: attStatus)
+    dependencyContainer.configManager.options.adConsent = AdConsent(
+      adUserData: .denied,
+      adPersonalization: .denied
+    )
+
+    let initial = await dependencyContainer.makeSessionDeviceAttributes()
+    await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
+    // Let the reconcile that follows every send settle before the test changes anything.
+    await drainAdConsentUpdates(superwall)
+    #expect(recorder.sent.count == 1)
+    #expect(recorder.sent.last?["attStatus"] as? String == "0")
+
+    // The consent values stay denied, but the server has to learn why.
+    attStatus.value = .denied
+    #expect(await superwall.republishDeviceAttributesIfAdConsentChanged() == true)
+    #expect(recorder.sent.count == 2)
+    #expect(recorder.sent.last?["adUserDataConsent"] as? String == "denied")
+    #expect(recorder.sent.last?["attStatus"] as? String == "2")
     await drainAdConsentUpdates(superwall)
     withExtendedLifetime(dependencyContainer) {}
   }

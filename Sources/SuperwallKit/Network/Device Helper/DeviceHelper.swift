@@ -1109,14 +1109,16 @@ class DeviceHelper {
       consent = AdConsent()
       source = .default
     }
+    let attStatus = attStatusProvider()
     let reported = consent.reported(
       for: options.eventTrackingBehavior,
-      attStatus: attStatusProvider()
+      attStatus: attStatus
     )
     return ReportedAdConsent(
       adUserData: reported.adUserData.description,
       adPersonalization: reported.adPersonalization.description,
-      source: source.rawValue
+      source: source.rawValue,
+      attStatus: attStatus.map { String($0) }
     )
   }
 
@@ -1130,9 +1132,9 @@ class DeviceHelper {
     adConsentLock.unlock()
   }
 
-  /// Whether the ad consent or its source has changed since device attributes were
-  /// last sent, for example because the user answered the ATT prompt or a consent
-  /// banner.
+  /// Whether the ad consent, its source or the ATT status has changed since device
+  /// attributes were last sent, for example because the user answered the ATT prompt
+  /// or a consent banner.
   ///
   /// Returns `false` before the first send, which reports the current value anyway,
   /// and while `eventTrackingBehavior` is ``EventTrackingBehavior/none``, when nothing
@@ -1382,7 +1384,8 @@ class DeviceHelper {
       deviceId: factory.makeDeviceId(),
       adUserDataConsent: adConsent.adUserData,
       adPersonalizationConsent: adConsent.adPersonalization,
-      adConsentSource: adConsent.source
+      adConsentSource: adConsent.source,
+      attStatus: adConsent.attStatus
     )
 
     var deviceDictionary = template.toDictionary(
