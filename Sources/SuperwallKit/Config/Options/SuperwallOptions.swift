@@ -375,8 +375,9 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// device attribute (`developer`, `tcf` or `default`).
   ///
   /// Both are reported as denied while ``eventTrackingBehavior`` is
-  /// ``EventTrackingBehavior/none``. On iOS, personalization is reported as denied when
-  /// the user hasn't allowed tracking, unless you set `adConsent` yourself.
+  /// ``EventTrackingBehavior/none``. They're also reported as denied when the user has
+  /// denied App Tracking Transparency or it's restricted, unless you set `adConsent`
+  /// yourself.
   ///
   /// You can also change this at runtime via ``Superwall/adConsent``.
   public var adConsent = AdConsent() {

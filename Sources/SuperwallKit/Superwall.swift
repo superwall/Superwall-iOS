@@ -135,8 +135,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// consent flow. Where the values came from is reported in the `adConsentSource`
   /// device attribute (`developer`, `tcf` or `default`).
   ///
-  /// On iOS, personalization is reported as denied when the user hasn't allowed
-  /// tracking, unless you set `adConsent` yourself.
+  /// Both are reported as denied when the user has denied App Tracking Transparency
+  /// or it's restricted, unless you set `adConsent` yourself.
   ///
   /// You can also set the initial value via ``SuperwallOptions/adConsent``
   /// before calling `configure`.

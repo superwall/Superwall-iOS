@@ -81,7 +81,7 @@ struct AdConsentTests {
   }
 
   @Test(arguments: [FakeTrackingAuthorizationStatus.denied, .restricted])
-  func attNotAllowed_deniesDefaultPersonalizationOnly(
+  func attNotAllowed_deniesBothDefaults(
     _ attStatus: FakeTrackingAuthorizationStatus
   ) async {
     let dependencyContainer = DependencyContainer(cache: CacheMock())
@@ -90,11 +90,13 @@ struct AdConsentTests {
 
     let template = await deviceHelper.getTemplateDevice()
 
-    #expect(template["adUserDataConsent"] as? String == "granted")
+    #expect(template["adUserDataConsent"] as? String == "denied")
     #expect(template["adPersonalizationConsent"] as? String == "denied")
     #expect(template["adConsentSource"] as? String == "default")
     // The stored option, which `config_attributes` reports, is left untouched.
+    #expect(options.adConsent.adUserData == .granted)
     #expect(options.adConsent.adPersonalization == .granted)
+    #expect(options.toDictionary()["adUserDataConsent"] as? String == "granted")
     #expect(options.toDictionary()["adPersonalizationConsent"] as? String == "granted")
     withExtendedLifetime(dependencyContainer) {}
   }
@@ -263,13 +265,13 @@ struct AdConsentTests {
     await drainAdConsentUpdates(superwall)
   }
 
-  @Test func tcf_attStillDeniesPersonalization() async {
+  @Test func tcf_attStillDeniesBoth() async {
     let banner = BannerDefaults(gdprApplies: 1, purposes: "1111111111")
     let dependencyContainer = DependencyContainer(cache: CacheMock())
     let deviceHelper = makeDeviceHelper(dependencyContainer, attStatus: .denied, banner: banner)
 
     #expect(deviceHelper.reportedAdConsent == ReportedAdConsent(
-      adUserData: "granted",
+      adUserData: "denied",
       adPersonalization: "denied",
       source: "tcf"
     ))
@@ -433,6 +435,7 @@ struct AdConsentTests {
     await drainAdConsentUpdates(superwall)
     #expect(recorder.sent.count == 1)
     #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "granted")
+    #expect(recorder.sent.last?["adUserDataConsent"] as? String == "granted")
 
     // Unchanged: nothing to send.
     #expect(await superwall.republishDeviceAttributesIfAdConsentChanged() == false)
@@ -443,7 +446,7 @@ struct AdConsentTests {
     #expect(await superwall.republishDeviceAttributesIfAdConsentChanged() == true)
     #expect(recorder.sent.count == 2)
     #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "denied")
-    #expect(recorder.sent.last?["adUserDataConsent"] as? String == "granted")
+    #expect(recorder.sent.last?["adUserDataConsent"] as? String == "denied")
 
     // Already reflected: no second republish.
     #expect(await superwall.republishDeviceAttributesIfAdConsentChanged() == false)
