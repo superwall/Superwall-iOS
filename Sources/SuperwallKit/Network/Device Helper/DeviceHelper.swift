@@ -1080,11 +1080,11 @@ class DeviceHelper {
     registerForTraitChanges()
   }
 
-  /// The ATT authorization status, or `nil` where the OS has no such concept.
-  /// Returns `notDetermined` when AppTrackingTransparency isn't linked.
+  /// The ATT authorization status, or `nil` where there is none to read: the OS has
+  /// no such concept, or AppTrackingTransparency isn't in the app.
   static var attStatus: Int? {
-    #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS) || os(visionOS)
-    return TrackingManagerProxy().trackingAuthorizationStatus()
+    #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS) || os(visionOS) || os(tvOS)
+    return TrackingManagerProxy().trackingAuthorizationStatusIfAvailable()
     #else
     return nil
     #endif

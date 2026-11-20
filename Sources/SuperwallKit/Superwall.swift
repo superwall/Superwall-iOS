@@ -1069,9 +1069,9 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Re-sends device attributes if the ad consent they report, or its source, has
-  /// changed since they were last sent, such as after the user answers the ATT
-  /// prompt or a consent banner mid-session. Never prompts. Returns whether it sent them.
+  /// Re-sends device attributes if the ad consent they report, its source or the ATT
+  /// status has changed since they were last sent, such as after the user answers the
+  /// ATT prompt or a consent banner mid-session. Never prompts. Returns whether it sent them.
   ///
   /// Goes through the same queue as ``adConsent`` assignments, so it can't overtake
   /// one. If an assignment is made while it waits, it defers to that.
@@ -1081,8 +1081,8 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// Re-sends device attributes through the same queue as ``adConsent`` assignments.
-  /// With `onlyIfAdConsentChanged`, it does so only when the reported ad consent or
-  /// its source differs from what was last sent. Returns whether it sent them.
+  /// With `onlyIfAdConsentChanged`, it does so only when the reported ad consent, its
+  /// source or the ATT status differs from what was last sent. Returns whether it sent them.
   @discardableResult
   func republishDeviceAttributes(onlyIfAdConsentChanged: Bool) async -> Bool {
     return await withCheckedContinuation { continuation in
@@ -1094,7 +1094,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Queues a republish-if-changed without waiting for it. Called after every
   /// device attributes send, so consent that changed while that send was being
-  /// built is sent too. Does nothing when the consent is unchanged.
+  /// built is sent too. Does nothing when the consent and the ATT status are unchanged.
   func reconcileAdConsentAfterPublish() {
     enqueueDeviceAttributesRepublish(onlyIfAdConsentChanged: true) { _ in }
   }
