@@ -50,6 +50,39 @@ struct PresentingWindowRootViewControllerTests {
     }
   }
 
+  /// Stands in for an app view controller that decides for itself whether the status bar shows,
+  /// the way Unity's does, or hands the decision to a child, the way a navigation controller does.
+  private final class StatusBarViewController: UIViewController {
+    let isStatusBarHidden: Bool
+    let statusBarChild: UIViewController?
+    private(set) var statusBarUpdateCount = 0
+
+    init(
+      isStatusBarHidden: Bool,
+      child: UIViewController? = nil
+    ) {
+      self.isStatusBarHidden = isStatusBarHidden
+      self.statusBarChild = child
+      super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+      fatalError("init(coder:) has not been implemented")
+    }
+
+    override var prefersStatusBarHidden: Bool {
+      return isStatusBarHidden
+    }
+
+    override var childForStatusBarHidden: UIViewController? {
+      return statusBarChild
+    }
+
+    override func setNeedsStatusBarAppearanceUpdate() {
+      statusBarUpdateCount += 1
+    }
+  }
+
   private func hostWindow(root: UIViewController) -> UIWindow {
     let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
     window.rootViewController = root
@@ -154,5 +187,58 @@ struct PresentingWindowRootViewControllerTests {
 
     #expect(Superwall.shared.presentationItems.window == nil)
     #expect(appViewController.orientationUpdateCount == 1)
+  }
+
+  @Test
+  func hidesTheStatusBarWhenTheAppsWindowDoes() {
+    let window = hostWindow(root: StatusBarViewController(isStatusBarHidden: true))
+    let rootViewController = PresentingWindowRootViewController(hostWindow: window)
+
+    #expect(rootViewController.prefersStatusBarHidden)
+  }
+
+  @Test
+  func showsTheStatusBarWhenTheAppsWindowDoes() {
+    let window = hostWindow(root: StatusBarViewController(isStatusBarHidden: false))
+    let rootViewController = PresentingWindowRootViewController(hostWindow: window)
+
+    #expect(!rootViewController.prefersStatusBarHidden)
+  }
+
+  @Test
+  func asksTheChildTheAppHandsTheStatusBarTo() {
+    let window = hostWindow(
+      root: StatusBarViewController(
+        isStatusBarHidden: false,
+        child: StatusBarViewController(
+          isStatusBarHidden: false,
+          child: StatusBarViewController(isStatusBarHidden: true)
+        )
+      )
+    )
+    let rootViewController = PresentingWindowRootViewController(hostWindow: window)
+
+    #expect(rootViewController.prefersStatusBarHidden)
+  }
+
+  @Test
+  func showsTheStatusBarWithoutAnAppWindow() {
+    let rootViewController = PresentingWindowRootViewController(hostWindow: nil)
+
+    #expect(rootViewController.prefersStatusBarHidden == UIViewController().prefersStatusBarHidden)
+  }
+
+  @Test
+  func destroyingThePresentingWindowAsksTheAppToCheckItsStatusBar() {
+    let appViewController = StatusBarViewController(isStatusBarHidden: true)
+    let window = hostWindow(root: appViewController)
+    let presentingWindow = UIWindow()
+    presentingWindow.rootViewController = PresentingWindowRootViewController(hostWindow: window)
+    Superwall.shared.presentationItems.window = presentingWindow
+
+    Superwall.shared.destroyPresentingWindow()
+
+    #expect(Superwall.shared.presentationItems.window == nil)
+    #expect(appViewController.statusBarUpdateCount == 1)
   }
 }

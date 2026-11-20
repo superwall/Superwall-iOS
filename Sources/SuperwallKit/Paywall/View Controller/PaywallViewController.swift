@@ -44,6 +44,13 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     return .darkContent
   }
 
+  /// A paywall hides the status bar when the screen it covers does, so it doesn't bring it
+  /// back in an app that hides it, such as a game.
+  override public var prefersStatusBarHidden: Bool {
+    return presentingViewController?.orientationDecidingAncestor.hidesStatusBar
+      ?? super.prefersStatusBarHidden
+  }
+
   /// A paywall allows the orientations of the screen it covers, so it can't rotate the app
   /// into one the app doesn't allow. When it's presented from a sheet, that's the screen
   /// under the sheet.

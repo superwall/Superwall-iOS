@@ -12,6 +12,9 @@ import UIKit
 /// rotate the app into an orientation the app doesn't allow. Apps that lock orientation in a view
 /// controller rather than in their Info.plist, such as Unity games, depend on this: UIKit asks the
 /// paywall's window, not the app's, which orientations are allowed.
+///
+/// It hides the status bar when the app's window does, for the same reason: UIKit asks the
+/// paywall's window whether to show it.
 final class PresentingWindowRootViewController: UIViewController {
   /// The app's window that was active when the paywall's window was created.
   private weak var hostWindow: UIWindow?
@@ -41,12 +44,24 @@ final class PresentingWindowRootViewController: UIViewController {
     return hostViewController?.supportedInterfaceOrientations ?? super.supportedInterfaceOrientations
   }
 
+  override var prefersStatusBarHidden: Bool {
+    return hostViewController?.hidesStatusBar ?? super.prefersStatusBarHidden
+  }
+
   /// Asks UIKit to check the app's orientations again once the paywall's window has gone, so the
   /// app returns to an orientation it allows.
   func updateHostOrientations() {
     if #available(iOS 16.0, *) {
       hostViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
     }
+  }
+
+  /// Asks UIKit to check the app's status bar again once the paywall's window has gone, so a
+  /// status bar the app hides doesn't stay on screen.
+  func updateHostStatusBar() {
+    #if !os(visionOS)
+    hostViewController?.setNeedsStatusBarAppearanceUpdate()
+    #endif
   }
 }
 
@@ -84,6 +99,16 @@ extension UIViewController {
       current = presented
     }
     return deciding
+  }
+
+  /// Whether this view controller hides the status bar, going by the child it hands the decision
+  /// to, as UIKit does.
+  var hidesStatusBar: Bool {
+    var deciding = self
+    while let child = deciding.childForStatusBarHidden {
+      deciding = child
+    }
+    return deciding.prefersStatusBarHidden
   }
 
   /// The view controller that decided the window's orientations before this one was presented
