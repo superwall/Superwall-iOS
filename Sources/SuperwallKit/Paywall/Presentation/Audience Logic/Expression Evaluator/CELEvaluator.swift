@@ -93,10 +93,16 @@ struct CELEvaluator: ExpressionEvaluating {
     case .success(let value):
       switch value {
       case .bool(let value) where value == true:
-        return await expressionLogic.tryToMatchOccurrence(
+        let outcome = await expressionLogic.tryToMatchOccurrence(
           from: audience,
           expressionMatched: true
         )
+        guard case .match(var item) = outcome else {
+          return outcome
+        }
+        let device = attributes["device"] as? [String: Any]
+        item.entitlementIdsSeen = (device?["activeEntitlements"] as? [String]).map { Set($0) }
+        return .match(item)
       default:
         return noMatch
       }

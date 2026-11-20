@@ -27,6 +27,8 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func presentSafariInApp(_ url: URL)
   func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool)
   func startTeleportWatch(_ watch: TeleportReturnCover.Watch)
+  func teleportDidOpen(_ teleport: PendingTeleportState)
+  func handleStripeCheckoutStart(checkoutContextId: String)
   func endTeleportWatch()
   func requestReview(type: ReviewType)
   func openPaymentSheet(_ url: URL)
@@ -49,6 +51,10 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
 @MainActor
 final class PaywallMessageHandler: WebEventDelegate {
   weak var delegate: PaywallMessageHandlerDelegate?
+  /// The last `stripe_checkout_start`, until the page opens Safari. A teleport sends one with its
+  /// id just before it opens the checkout, so a page that doesn't name the teleport on
+  /// `open_url_external` still says which one it opened.
+  private var lastCheckoutStart: (checkoutContextId: String, productId: String)?
   private unowned let receiptManager: ReceiptManager
   private let factory: VariablesFactory
   private let permissionHandler: PermissionHandling
@@ -212,7 +218,11 @@ final class PaywallMessageHandler: WebEventDelegate {
       }
     case .openUrl(let url):
       openUrl(url)
-    case let .openUrlInSafari(url, drawsWaitingScreen, isTeleport):
+    case let .openUrlInSafari(url, drawsWaitingScreen, isTeleport, teleport):
+      if isTeleport {
+        recordTeleportOpen(teleport)
+      }
+      lastCheckoutStart = nil
       openUrlInSafari(
         url,
         drawsWaitingScreen: drawsWaitingScreen,
@@ -240,12 +250,15 @@ final class PaywallMessageHandler: WebEventDelegate {
       // No-op: This is only here for backwards compatibility so that we don't log
       // and error when decoding the message.
       break
-    case let .stripeCheckoutStart(_, productId):
+    case let .stripeCheckoutStart(checkoutContextId, productId):
+      lastCheckoutStart = (checkoutContextId, productId)
+      delegate?.handleStripeCheckoutStart(checkoutContextId: checkoutContextId)
       trackStripeCheckoutEvent(
         state: .start,
         productId: productId
       )
     case let .stripeCheckoutComplete(checkoutContextId, productId, shouldDismiss):
+      lastCheckoutStart = nil
       trackStripeCheckoutEvent(
         state: .complete,
         productId: productId
@@ -271,6 +284,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       )
     // No-op: don't clear checkout context on failure
     case let .stripeCheckoutAbandon(checkoutContextId, productId):
+      lastCheckoutStart = nil
       delegate?.handleStripeCheckoutAbandon(
         checkoutContextId: checkoutContextId,
         productId: productId
@@ -585,6 +599,19 @@ final class PaywallMessageHandler: WebEventDelegate {
       delegate?.eventDidOccur(.openedURL(url: url))
       delegate?.presentSafariInApp(url)
     #endif
+  }
+
+  private func recordTeleportOpen(_ opening: TeleportOpening?) {
+    guard let teleportId = opening?.teleportId ?? lastCheckoutStart?.checkoutContextId else {
+      return
+    }
+    delegate?.teleportDidOpen(
+      PendingTeleportState(
+        teleportId: teleportId,
+        productId: opening?.productId ?? lastCheckoutStart?.productId ?? "",
+        shouldDismiss: opening?.shouldDismiss
+      )
+    )
   }
 
   private func openUrlInSafari(

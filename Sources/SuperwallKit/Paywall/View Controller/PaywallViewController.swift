@@ -534,6 +534,7 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
     await maybeRecoverPendingStripeCheckoutOnPaywallOpen()
+    await webEntitlementRedeemer.dismissPaywallCoveredWhileLoading(self)
 
     let demandScore = await deviceHelper.enrichment?.device["demandScore"].int
     let demandTier = await deviceHelper.enrichment?.device["demandTier"].string
@@ -605,6 +606,7 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     }
 
     dispatch(.event(.webViewLoadStarted(Date())))
+    dispatch(.pageRestarted)
     webView.messageHandler.documentWillLoad()
 
     if let paywallArchiveManager = self.paywallArchiveManager,
@@ -1383,6 +1385,10 @@ extension PaywallViewController: SWWebViewDelegate {
       closeReason: .webViewFailedToLoad
     )
   }
+
+  func webViewPageDidRestart() {
+    dispatch(.pageRestarted)
+  }
 }
 
 // MARK: - UIAdaptivePresentationControllerDelegate
@@ -1478,7 +1484,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     productId: String,
     shouldDismiss: Bool?
   ) {
-    dispatch(.event(.stripeCheckoutCompleted))
+    let settled = dispatch(.stripeCheckoutCompleted)
     closeSafari()
 
     // A paywall that says whether to dismiss wants the purchase finished
@@ -1486,21 +1492,27 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     let completion: StripeCheckoutCompletion = shouldDismiss.map {
       .purchase(productId: productId, shouldDismiss: $0)
     } ?? .restore
+    let settlingTeleportId = Self.settledTeleportId(settled)
 
     enqueueStripeCheckoutTask { paywall in
       await paywall.webEntitlementRedeemer.handleStripeCheckoutComplete(
         contextId: checkoutContextId,
         productId: productId,
-        completion: completion
+        completion: completion,
+        settlingTeleportId: settlingTeleportId
       )
     }
   }
 
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String) {
-    dispatch(.stripeCheckoutAbandoned)
+    let settlingTeleportId = Self.settledTeleportId(dispatch(.stripeCheckoutAbandoned))
 
     enqueueStripeCheckoutTask { paywall in
-      await paywall.webEntitlementRedeemer.handleStripeCheckoutAbandon(productId: productId)
+      await paywall.webEntitlementRedeemer.handleStripeCheckoutAbandon(
+        contextId: checkoutContextId,
+        productId: productId,
+        settlingTeleportId: settlingTeleportId
+      )
     }
   }
 
@@ -1596,6 +1608,21 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
   func endTeleportWatch() {
     existingTeleportReturnCover?.stopWatching()
+  }
+
+  func teleportDidOpen(_ teleport: PendingTeleportState) {
+    dispatch(.teleportOpened(teleport))
+  }
+
+  func handleStripeCheckoutStart(checkoutContextId: String) {
+    dispatch(.stripeCheckoutStarted)
+  }
+
+  private static func settledTeleportId(_ outcome: PaywallViewAction.Outcome) -> String? {
+    if case .teleportSettled(let teleportId) = outcome {
+      return teleportId
+    }
+    return nil
   }
 
   private var teleportReturnCover: TeleportReturnCover {
@@ -1858,6 +1885,29 @@ extension PaywallViewController {
     ) else {
       return
     }
+    carryOutDismissal(dismissal)
+  }
+
+  /// Dismisses the presentation with this id, only while it's still on screen, so a newer
+  /// presentation of this view controller is left alone.
+  ///
+  /// - Returns: Whether the dismissal was asked for.
+  @discardableResult
+  func dismiss(
+    presentation presentationId: UUID,
+    result: PaywallResult,
+    closeReason: PaywallCloseReason
+  ) -> Bool {
+    guard case .dismissal(let dismissal) = dispatch(
+      .requestDismissalOfPresentation(presentationId, result: result, closeReason: closeReason)
+    ) else {
+      return false
+    }
+    carryOutDismissal(dismissal)
+    return true
+  }
+
+  private func carryOutDismissal(_ dismissal: PaywallViewState.Dismissal) {
     let result = dismissal.result
     let closeReason = dismissal.closeReason
 
@@ -2123,6 +2173,18 @@ extension PaywallViewController: PaywallViewContext {
     }
     transactionAbandonWorkItem = workItem
     DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1.0, execute: workItem)
+  }
+
+  func registerTeleportOpen(_ teleport: PendingTeleportState) {
+    enqueueStripeCheckoutTask { paywall in
+      await paywall.webEntitlementRedeemer.registerTeleportOpen(teleport)
+    }
+  }
+
+  func teleportPageWentAway(_ teleportId: String) {
+    enqueueStripeCheckoutTask { paywall in
+      await paywall.webEntitlementRedeemer.teleportPageWentAway(teleportId)
+    }
   }
 
   func cancelCheckoutAbandonTracking() {

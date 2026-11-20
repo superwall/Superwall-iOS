@@ -22,6 +22,8 @@ extension Superwall {
     let presenter: PlatformViewController?
     let audienceOutcome: AudienceFilterEvaluationOutcome
     let debugInfo: [String: Any]
+    /// The request, stamped with when its audience was evaluated.
+    let request: PresentationRequest
   }
 
   /// Gets a paywall to present, publishing ``PaywallState`` objects that provide updates on the lifecycle of the paywall.
@@ -39,7 +41,7 @@ extension Superwall {
       let paywallComponents = try await getPaywallComponents(request, publisher)
 
       await paywallComponents.viewController.set(
-        request: request,
+        request: paywallComponents.request,
         paywall: paywallComponents.paywall,
         paywallStatePublisher: publisher,
         unsavedOccurrence: paywallComponents.audienceOutcome.unsavedOccurrence

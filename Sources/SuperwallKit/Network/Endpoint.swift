@@ -424,6 +424,44 @@ extension Endpoint where
 
 extension Endpoint where
   Kind == EndpointKinds.SubscriptionsAPI,
+  Response == TeleportStatusResponse {
+  static func teleportStatus(request: TeleportStatusRequest) -> Self {
+    let bodyData = try? Kind.jsonEncoder.encode(request)
+
+    // The foreground polls wait behind this, so it gives up sooner than the default.
+    return Endpoint(
+      retryCount: 2,
+      components: Components(
+        host: .subscriptionsApi,
+        path: "checkout/teleport/status",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
+}
+
+extension Endpoint where
+  Kind == EndpointKinds.SubscriptionsAPI,
+  Response == CheckoutStatusResponse {
+  static func checkoutStatus(request: CheckoutStatusRequest) -> Self {
+    let bodyData = try? Kind.jsonEncoder.encode(request)
+
+    // The foreground polls wait behind this, so it gives up sooner than the default.
+    return Endpoint(
+      retryCount: 2,
+      components: Components(
+        host: .subscriptionsApi,
+        path: "checkout/status",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
+}
+
+extension Endpoint where
+  Kind == EndpointKinds.SubscriptionsAPI,
   Response == EntitlementsResponse {
   static func entitlements(
     appUserId: String?,

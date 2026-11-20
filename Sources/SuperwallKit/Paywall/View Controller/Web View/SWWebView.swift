@@ -14,6 +14,9 @@ protocol SWWebViewDelegate: AnyObject {
   var info: PaywallInfo { get }
   var isActive: Bool { get }
   func webViewDidFail()
+  /// The page was replaced by a new one, or its process ended, so whatever the page was
+  /// keeping track of is gone.
+  func webViewPageDidRestart()
 }
 
 enum WebViewError: LocalizedError {
@@ -302,6 +305,7 @@ extension SWWebView: WKNavigationDelegate {
     // A new page has replaced the old one. A load that fails before this
     // point leaves the old page, and whether it was ready, as it was.
     messageHandler.documentWillLoad()
+    delegate?.webViewPageDidRestart()
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -331,6 +335,7 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+    delegate?.webViewPageDidRestart()
     if delegate?.isActive == true,
       activeProcessTerminationRetryCount < maxActiveProcessTerminationRetries {
       activeProcessTerminationRetryCount += 1

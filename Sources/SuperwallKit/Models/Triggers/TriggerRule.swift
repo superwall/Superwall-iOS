@@ -28,6 +28,9 @@ extension UnmatchedAudience: Stubbable {
 struct MatchedItem {
   let audience: TriggerRule
   let unsavedOccurrence: TriggerAudienceOccurrence?
+  /// The entitlements that were active in the attributes the audience's expression was
+  /// evaluated with. Nil when it has no expression, so it read none.
+  var entitlementIdsSeen: Set<String>?
 }
 
 extension MatchedItem: Stubbable {

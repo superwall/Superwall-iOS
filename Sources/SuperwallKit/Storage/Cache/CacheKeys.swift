@@ -348,6 +348,14 @@ enum PendingStripeCheckoutPollStorage: Storable {
   typealias Value = PendingStripeCheckoutPollState
 }
 
+enum PendingTeleportStorage: Storable {
+  static var key: String {
+    "store.PendingTeleportStorage"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = PendingTeleportState
+}
+
 enum LatestCustomerInfo: Storable {
   static var key: String {
     "store.CustomerInfo"
