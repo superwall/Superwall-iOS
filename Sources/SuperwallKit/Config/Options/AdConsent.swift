@@ -55,8 +55,7 @@ public final class AdConsent: NSObject {
   /// The consent to report. Both purposes are denied while `eventTrackingBehavior`
   /// is ``EventTrackingBehavior/none``, and when the user has refused tracking
   /// (`attStatus` is restricted or denied). An undetermined or missing ATT status
-  /// leaves the values in place. Pass `nil` for consent the app set itself, which
-  /// the ATT rule doesn't override.
+  /// leaves the values in place.
   func reported(
     for eventTrackingBehavior: EventTrackingBehavior,
     attStatus: Int?

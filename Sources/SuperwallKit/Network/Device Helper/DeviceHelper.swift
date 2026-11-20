@@ -1093,9 +1093,8 @@ class DeviceHelper {
   /// The ad consent device attributes would report right now.
   ///
   /// The app's own ``SuperwallOptions/adConsent`` wins once it's been set, then a
-  /// consent banner's stored answer, then the granted default. The `.none` rule then
-  /// applies to all of them, and the ATT rule to all but the app's own setting,
-  /// which is always trusted.
+  /// consent banner's stored answer, then the granted default. The `.none` and ATT
+  /// rules then apply to all of them.
   var reportedAdConsent: ReportedAdConsent {
     let options = factory.makeSuperwallOptions()
     let consent: AdConsent
@@ -1112,7 +1111,7 @@ class DeviceHelper {
     }
     let reported = consent.reported(
       for: options.eventTrackingBehavior,
-      attStatus: source == .developer ? nil : attStatusProvider()
+      attStatus: attStatusProvider()
     )
     return ReportedAdConsent(
       adUserData: reported.adUserData.description,

@@ -136,7 +136,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// device attribute (`developer`, `tcf` or `default`).
   ///
   /// Both are reported as denied when the user has denied App Tracking Transparency
-  /// or it's restricted, unless you set `adConsent` yourself.
+  /// or it's restricted, whatever `adConsent` is set to.
   ///
   /// You can also set the initial value via ``SuperwallOptions/adConsent``
   /// before calling `configure`.

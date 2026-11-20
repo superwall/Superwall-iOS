@@ -376,8 +376,7 @@ public final class SuperwallOptions: NSObject, Encodable {
   ///
   /// Both are reported as denied while ``eventTrackingBehavior`` is
   /// ``EventTrackingBehavior/none``. They're also reported as denied when the user has
-  /// denied App Tracking Transparency or it's restricted, unless you set `adConsent`
-  /// yourself.
+  /// denied App Tracking Transparency or it's restricted, whatever `adConsent` is set to.
   ///
   /// You can also change this at runtime via ``Superwall/adConsent``.
   public var adConsent = AdConsent() {

@@ -102,21 +102,22 @@ struct AdConsentTests {
   }
 
   @Test(arguments: [FakeTrackingAuthorizationStatus.denied, .restricted])
-  func attNotAllowed_leavesTheAppsOwnConsentAlone(
+  func attNotAllowed_deniesTheAppsOwnConsentToo(
     _ attStatus: FakeTrackingAuthorizationStatus
   ) async {
     let dependencyContainer = DependencyContainer(cache: CacheMock())
     let deviceHelper = makeDeviceHelper(dependencyContainer, attStatus: attStatus)
-    dependencyContainer.configManager.options.adConsent = AdConsent(
-      adUserData: .granted,
-      adPersonalization: .granted
-    )
+    let options = dependencyContainer.configManager.options
+    options.adConsent = AdConsent(adUserData: .granted, adPersonalization: .granted)
 
     let template = await deviceHelper.getTemplateDevice()
 
-    #expect(template["adUserDataConsent"] as? String == "granted")
-    #expect(template["adPersonalizationConsent"] as? String == "granted")
+    #expect(template["adUserDataConsent"] as? String == "denied")
+    #expect(template["adPersonalizationConsent"] as? String == "denied")
     #expect(template["adConsentSource"] as? String == "developer")
+    // The stored option, which `config_attributes` reports, is left untouched.
+    #expect(options.toDictionary()["adUserDataConsent"] as? String == "granted")
+    #expect(options.toDictionary()["adPersonalizationConsent"] as? String == "granted")
     withExtendedLifetime(dependencyContainer) {}
   }
 
