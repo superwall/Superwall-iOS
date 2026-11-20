@@ -100,6 +100,29 @@ struct SavedPlacementTrimTests {
     }
   }
 
+  /// Holds background work until a test lets it go, as the system does when
+  /// it takes a moment to hand out background time.
+  private final class HeldBackgroundWork {
+    private let lock = NSLock()
+    private var held: [() -> Void] = []
+
+    func lifecycle(_ center: NotificationCenter) -> CoreDataManager.AppLifecycle {
+      CoreDataManager.AppLifecycle(notificationCenter: center) { [self] work in
+        lock.lock()
+        held.append(work)
+        lock.unlock()
+      }
+    }
+
+    func runAll() {
+      lock.lock()
+      let work = held
+      held = []
+      lock.unlock()
+      work.forEach { $0() }
+    }
+  }
+
   private func isFollowingTheApp(_ manager: CoreDataManager) async -> Bool {
     await withCheckedContinuation { continuation in
       guard let context = manager.backgroundContext else {
@@ -443,6 +466,37 @@ struct SavedPlacementTrimTests {
 
     await goToBackground(center, manager)
     #expect(sizeOnDisk() < sizeBefore / 10)
+  }
+
+  @Test
+  func spaceIsKeptIfTheAppCameBackBeforeTheBackgroundWorkGotItsTurn() async throws {
+    defer { try? FileManager.default.removeItem(at: rootUrl) }
+    let stack = makeStack()
+    try insert(1_500, named: "paywallWebviewLoad_complete", parameters: largeParameters, into: stack)
+    let sizeBefore = sizeOnDisk()
+    let center = NotificationCenter()
+    let heldWork = HeldBackgroundWork()
+    let manager = CoreDataManager(coreDataStack: stack, lifecycle: heldWork.lifecycle(center))
+    await trim(manager)
+
+    // The app goes to the background and comes back before the work runs.
+    center.post(name: SystemInfo.applicationDidEnterBackgroundNotification, object: nil)
+    center.post(name: SystemInfo.applicationWillEnterForegroundNotification, object: nil)
+    await drain(manager)
+    heldWork.runAll()
+    await drain(manager)
+
+    #expect(sizeOnDisk() > sizeBefore / 2)
+    #expect(try spaceReclaimAttemptsLeft(stack) == CoreDataManager.spaceReclaimAttempts)
+
+    // The next time it leaves, the work runs while it's still away.
+    center.post(name: SystemInfo.applicationDidEnterBackgroundNotification, object: nil)
+    await drain(manager)
+    heldWork.runAll()
+    await drain(manager)
+
+    #expect(sizeOnDisk() < sizeBefore / 10)
+    #expect(try spaceReclaimAttemptsLeft(stack) == 0)
   }
 
   @Test

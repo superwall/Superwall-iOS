@@ -252,6 +252,10 @@ extension CoreDataManager {
   ) {
     lifecycle.runWithBackgroundTime { [weak self] in
       context.performAndWait {
+        // This waits for its turn, and the app may have come back by then.
+        if self?.trimState.isAppInBackground != true {
+          return
+        }
         self?.reclaimSpaceIfNeeded(in: context, store: store)
       }
     }
