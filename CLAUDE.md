@@ -277,6 +277,24 @@ is really on screen (`isBrowserOnScreen`); a browser the state has open that isn
 - The public `loadingState` mirrors the store and can briefly lag it; SDK code changes it with
   `updateLoading(_:)` and a named `PaywallLoadingChange`, and reads the store to decide things.
 
+### Saved placements
+
+`CoreDataManager` saves when each placement happened, so audience filters can count it or tell how
+long ago it last happened. Only the name and time are saved. The `parameters` column stays in the
+model but is written empty, so the store needs no model migration. Preloading and loading placements
+(`CoreDataManager.unsavedPlacementNames`) aren't saved or counted, and the dashboard doesn't offer
+them in audience filters; keep the two lists in step. `trimSavedPlacements` cleans up a store written
+by earlier versions once, then saves `savedPlacementsTrimVersion` in the store's metadata; raise that
+number when adding to the unsaved names, so stores are cleaned again. The trim works in small steps
+on the context that saves placements, each queued behind whatever is waiting, because the whole of it
+takes seconds on a large store. Don't turn it into one long block: placements saved at launch and
+`reset()` would wait for it. Giving the freed space back means rewriting the whole store, which can't
+be split up, so it waits until the app goes to the background (`reclaimSpaceIfNeeded`) and asks the
+system to keep the app awake for it. It counts as done once SQLite has moved the rewrite into the
+main file (an empty -wal file), never by the file getting smaller: a new install has nothing to give
+back. Something reading the store at that moment makes it fail without an error, so it's tried again
+the next time, up to `spaceReclaimAttempts` times.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.
