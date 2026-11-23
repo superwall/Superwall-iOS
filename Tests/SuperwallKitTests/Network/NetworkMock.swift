@@ -44,8 +44,11 @@ final class NetworkMock: Network {
   var enrichmentResponse = Enrichment(user: JSON([:]), device: JSON(["demandScore": 42]))
   var enrichmentError: Error?
 
-  override func sendEvents(events: EventsRequest) async {
+  var sendEventsResult: EventsDelivery = .delivered(rejectedIndexes: [])
+
+  override func sendEvents(events: EventsRequest) async -> EventsDelivery {
     sentEvents.append(events)
+    return sendEventsResult
   }
 
   override func sendSessionEvents(_ session: SessionEventsRequest) async {

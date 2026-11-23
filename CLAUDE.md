@@ -169,6 +169,47 @@ ATT revocation. ATT is serialized as a numeric string in integration attributes.
 change to that set in the changelog and the online docs. Don't gate the IDFA on
 the ATT status: `identifierForAdvertisers` already filters the all-zero id.
 
+### Push notification tokens
+
+`NotificationTokenManager` reports the APNs token and notification permission
+in a `notification_token` event, and opens in `notification_open`. The app passes
+the token in (`setPushToken(_:)`); the SDK never swizzles or registers itself.
+Both are `PrivateSuperwallEvent`s, not `SuperwallEvent`s: they go through the
+normal event queue but never reach the delegate, implicit triggers or the
+on-device placement store, because customers forward delegate events to their
+own analytics. Anything sensitive the SDK sends must be a private event. Their
+params are sent unprefixed and the events encoder leaves dictionary keys alone,
+so the camelCase keys are the wire keys the server reads; don't rename them.
+Nothing is sent until the `user_notifications` flag is on, but the state is
+persisted in app-specific storage (surviving `reset()`) and flushed when the flag
+turns on. The state is re-sent when it or the identity changes, otherwise once a
+day.
+
+- The manager keeps its state in a `StateStore` (`NotificationReportingState`),
+  changed by `NotificationReportingUpdate` reducers through
+  `NotificationTokenAction`s. Everything asked of it runs on its
+  `SerialTaskCoordinator`, which is also where storage is read, so the public
+  calls never touch the disk or wait on the caller's thread.
+- A token event only counts as sent once its upload succeeds. The server keeps
+  the token event with the latest `created_at`, so a batch that lands late can't
+  undo a newer one; the SDK doesn't need to order uploads.
+- While `eventTrackingBehavior` is `.none` the one thing sent is an opt-out, and
+  only for the token that the newest token event Superwall has opted in
+  (`addressEnabledAtSuperwall`). The manager sets `isSentWhenTrackingIsOff` on
+  that event alone, which lets it through the queue; an opt-out carrying a
+  token Superwall hasn't had is dropped like any other event. Don't use the
+  flag for anything that tells Superwall something new.
+- Opens that arrive before config are saved and sent, with the time of the tap,
+  once config arrives, on a later launch if need be.
+- The public calls go through `NotificationCallRouter`, which keeps a token,
+  opt-out or open passed in before `Superwall.configure` and hands it to the
+  configured SDK's manager. Don't call the manager of `Superwall.shared`
+  directly from public API: before configure that's a throwaway instance.
+- The collector routes both events by name alone, so a customer placement called
+  `notification_open` or `notification_token` is routed with them. That's for
+  the collector to tell apart (`$is_standard_event`); rejecting the names in the
+  SDK would break apps already using them as placements.
+
 ### State stores
 
 Stateful parts of the SDK follow the same shape as Android's `misc/primitives` (compare with the

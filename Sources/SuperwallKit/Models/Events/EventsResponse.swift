@@ -22,3 +22,20 @@ struct EventsResponse: Codable {
   var status: Status
   var invalidIndexes: [Int]?
 }
+
+/// Which events of an `/events` request reached Superwall.
+enum EventsDelivery: Equatable {
+  /// The request failed, so none did.
+  case failed
+  /// The request succeeded, apart from the events at `rejectedIndexes`.
+  case delivered(rejectedIndexes: Set<Int>)
+
+  func isDelivered(at index: Int) -> Bool {
+    switch self {
+    case .failed:
+      return false
+    case .delivered(let rejectedIndexes):
+      return !rejectedIndexes.contains(index)
+    }
+  }
+}
