@@ -210,8 +210,9 @@ Go one part at a time, and keep the public API the same so the change can be und
    methods, and get them passing against the old code.
 2. Gather its state into one struct, its changes into `Reducer` cases, its side effects into a
    Context protocol, and hook the old public methods up to the store.
-3. Run the tests from step 1 unchanged, then add tests for each reducer, each action and the
-   context fake.
+3. Run the tests from step 1 without changing what they check, then add tests for each reducer,
+   each action and the context fake. A test may only change where the move forces it to, such as
+   a test hook that moved onto the context.
 4. Don't fix bugs in the same pull request. A bug the move turns up goes in a pull request of its
    own, before or after, so undoing the move doesn't bring the bug back. A test from step 1 that
    only passes because of a bug is marked with `withKnownIssue` and fixed in that pull request.

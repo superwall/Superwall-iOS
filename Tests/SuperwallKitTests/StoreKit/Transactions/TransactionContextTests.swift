@@ -74,14 +74,13 @@ private final class FakeTransactionContext: TransactionContext, @unchecked Senda
     return CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [], isPlaceholder: true)
   }
 
-  var makeTransaction: ((CustomStoreTransaction) async -> StoreTransaction)?
-
   func makeStoreTransaction(from transaction: CustomStoreTransaction) async -> StoreTransaction {
     record("makeStoreTransaction")
-    guard let makeTransaction = makeTransaction else {
-      fatalError("Set makeTransaction before a custom product purchase succeeds")
-    }
-    return await makeTransaction(transaction)
+    return StoreTransaction(
+      transaction: transaction,
+      configRequestId: "",
+      appSessionId: ""
+    )
   }
 
   func track(_ event: Trackable) async {
@@ -334,7 +333,9 @@ struct TransactionContextTests {
     )
   }
 
-  private func makeCustomProduct() -> StoreProduct {
+  private func makeCustomProduct(
+    subscription: SuperwallProductSubscription? = nil
+  ) -> StoreProduct {
     return StoreProduct(
       customProduct: APIStoreProduct(
         superwallProduct: SuperwallProduct(
@@ -342,7 +343,7 @@ struct TransactionContextTests {
           identifier: "custom",
           platform: .custom,
           price: SuperwallProductPrice(amount: 999, currency: "USD"),
-          subscription: nil,
+          subscription: subscription,
           entitlements: [],
           storefront: "USA"
         ),
@@ -436,9 +437,6 @@ struct TransactionContextTests {
   func successfulPurchaseRunsItsEffectsInOrder() async {
     let dependencyContainer = DependencyContainer()
     let context = FakeTransactionContext()
-    context.makeTransaction = { transaction in
-      await dependencyContainer.makeStoreTransaction(from: transaction)
-    }
     let transactionManager = makeTransactionManager(in: dependencyContainer, context: context)
     let coordinator = dependencyContainer.makePurchasingCoordinator()
     coordinator.reset()
