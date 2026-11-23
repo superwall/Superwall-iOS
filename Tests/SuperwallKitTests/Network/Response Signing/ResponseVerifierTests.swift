@@ -18,7 +18,9 @@ private struct Vectors: Decodable {
   struct Case: Decodable {
     struct Context: Decodable {
       let endpoint: String
+      let apiKey: String
       let subject: String
+      let deviceId: String
       let nonce: String
     }
 
@@ -57,7 +59,13 @@ private struct Vectors: Decodable {
 private extension Vectors.Case {
   var verifierContext: ResponseVerifier.Context? {
     ResponseVerifier.Endpoint(rawValue: context.endpoint).map {
-      ResponseVerifier.Context(endpoint: $0, subject: context.subject, nonce: context.nonce)
+      ResponseVerifier.Context(
+        endpoint: $0,
+        apiKey: context.apiKey,
+        subject: context.subject,
+        deviceId: context.deviceId,
+        nonce: context.nonce
+      )
     }
   }
 }
@@ -66,7 +74,7 @@ struct ResponseVerifierTests {
   @Test("there are vectors for both credential kinds")
   func vectorsAreLoaded() {
     let names = Vectors.shared.cases.map(\.name)
-    #expect(names.count >= 30)
+    #expect(names.count >= 39)
     #expect(names.contains("x509_entitlements_verified"))
     #expect(names.contains("raw_entitlements_verified"))
   }
@@ -115,7 +123,9 @@ struct ResponseVerifierTests {
     }
     let otherUser = ResponseVerifier.Context(
       endpoint: context.endpoint,
+      apiKey: context.apiKey,
       subject: "user_456",
+      deviceId: context.deviceId,
       nonce: context.nonce
     )
     #expect(
@@ -149,6 +159,43 @@ struct ResponseVerifierTests {
     #expect(SignatureEnvelope(header: "v=1, v=1, t=1, kind=raw, cred=:AA==:, sig=:AA==:") == nil)
     #expect(SignatureEnvelope(header: "v=1, t=-1, kind=raw, cred=:AA==:, sig=:AA==:") == nil)
     #expect(SignatureEnvelope(header: "v=1, t=1, kind=raw, cred=:AQI:, sig=:AA==:") == nil)
+  }
+
+  @Test("malformed DER is rejected without trapping, on 32-bit platforms too")
+  func malformedDER() {
+    let inputs: [[UInt8]] = [
+      [0x30, 0x84, 0x80, 0x00, 0x00, 0x00], // length wraps negative in a 32-bit Int
+      [0x30, 0x84, 0x7f, 0xff, 0xff, 0xff], // length overflows position + length
+      [0x30, 0x85, 0x01, 0x00, 0x00, 0x00, 0x00], // five length bytes
+      [0x30, 0x80], // indefinite length
+      [0x30, 0x82, 0x01], // truncated length
+      [0x30, 0x05, 0x01], // value shorter than its length
+      [0x30],
+      []
+    ]
+    for input in inputs {
+      var reader = DERReader(input)
+      #expect(reader.read(tag: 0x30) == nil)
+      #expect(CertificateFields(der: Data(input)) == nil)
+    }
+  }
+
+  @Test("a version too large for Int is malformed, not a trap")
+  func hugeVersion() {
+    // 64-bit: an unsupported version. 32-bit (arm64_32 watches): too large for Int, so malformed.
+    let result = ResponseVerifier(roots: []).verify(
+      header: "v=999999999999999, t=1, kind=raw, cred=:AA==:, sig=:AA==:",
+      context: ResponseVerifier.Context(
+        endpoint: .entitlements,
+        apiKey: "pk",
+        subject: "u",
+        deviceId: "",
+        nonce: "n"
+      ),
+      body: Data(),
+      now: 0
+    )
+    #expect(result == .failed(.unsupportedVersion) || result == .failed(.malformedHeader))
   }
 
   @Test("certificate validity is read in UTC from both time formats")

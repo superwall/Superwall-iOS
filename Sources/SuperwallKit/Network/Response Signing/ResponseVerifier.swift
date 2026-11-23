@@ -4,7 +4,6 @@
 //
 //  Created by Superwall on 19/11/2026.
 //
-// swiftlint:disable type_body_length
 
 import CryptoKit
 import Foundation
@@ -32,11 +31,19 @@ final class ResponseVerifier: @unchecked Sendable {
     case entitlements
   }
 
-  /// What the response is about. `subject` is the public API key for config, and the user ID in
-  /// the path for entitlements. `nonce` is the request's `X-Superwall-Nonce`, or empty.
+  /// What the response must be about, from the request this SDK sent:
+  /// - `apiKey`: the public API key the request used.
+  /// - `subject`: entitlements only, the user ID in the path (not URL-encoded); empty for config.
+  /// - `deviceId`: entitlements only, the `deviceId` query value; empty for config.
+  /// - `nonce`: the `X-Superwall-Nonce` this request sent; empty for config.
+  ///
+  /// Callers that enforce must also treat ``Result/unsigned`` as a failure, always send a fresh
+  /// nonce for entitlements, and reject a response with more than one signature header.
   struct Context: Equatable {
     let endpoint: Endpoint
+    let apiKey: String
     let subject: String
+    let deviceId: String
     let nonce: String
   }
 
@@ -48,6 +55,7 @@ final class ResponseVerifier: @unchecked Sendable {
     case invalidCredentialSignature = "invalid_credential_signature"
     case credentialNotValidAtSigningTime = "credential_not_valid_at_signing_time"
     case signedInFuture = "signed_in_future"
+    case credentialExpired = "credential_expired"
     case invalidSignature = "invalid_signature"
   }
 
@@ -63,8 +71,11 @@ final class ResponseVerifier: @unchecked Sendable {
     let notAfter: Int64
   }
 
-  /// Signatures dated further ahead than this, by the device's clock, are rejected.
-  static let maxClockSkewSeconds: Int64 = 5 * 60
+  /// How far the device clock may be from the server's: a signature dated further ahead than this
+  /// is rejected, and so is any response once the clock is this far past the signing key's expiry.
+  /// Generous, because device clocks are often wrong; entitlements get their freshness from the
+  /// nonce, not the clock.
+  static let clockToleranceSeconds: Int64 = 24 * 60 * 60
 
   private static let statementLength = 1 + 1 + 32 + 8 + 8 + 65
   private static let keyStatementPrefix = Data("superwall-signing-key-v1\u{0}".utf8)
@@ -117,7 +128,7 @@ final class ResponseVerifier: @unchecked Sendable {
       case .raw:
         verified = verifyRawCredential(envelope.credential)
       case .x509:
-        verified = verifyX509Credential(envelope.credential, signedAt: envelope.signedAt)
+        verified = verifyX509Credential(envelope.credential)
       }
       switch verified {
       case .success(let verifiedKey):
@@ -127,14 +138,8 @@ final class ResponseVerifier: @unchecked Sendable {
       }
     }
 
-    guard
-      envelope.signedAt >= key.notBefore,
-      envelope.signedAt <= key.notAfter
-    else {
-      return .failed(.credentialNotValidAtSigningTime)
-    }
-    guard envelope.signedAt <= now + Self.maxClockSkewSeconds else {
-      return .failed(.signedInFuture)
+    if let failure = Self.timeFailure(signedAt: envelope.signedAt, key: key, now: now) {
+      return .failed(failure)
     }
     // Only cache a credential once it's been used for a valid signing time.
     lock.withLock {
@@ -153,6 +158,22 @@ final class ResponseVerifier: @unchecked Sendable {
     return Self.verifyEcdsa(key.publicKey, derSignature: envelope.signature, message: message)
       ? .verified
       : .failed(.invalidSignature)
+  }
+
+  /// The signing time must be inside the key's validity and not far ahead of the device clock,
+  /// and the device clock not far past the key's expiry: that bounds what a leaked signing key, or
+  /// a replayed config, is good for.
+  private static func timeFailure(signedAt: Int64, key: VerifiedKey, now: Int64) -> Failure? {
+    if signedAt < key.notBefore || signedAt > key.notAfter {
+      return .credentialNotValidAtSigningTime
+    }
+    if signedAt > now + clockToleranceSeconds {
+      return .signedInFuture
+    }
+    if now - clockToleranceSeconds > key.notAfter {
+      return .credentialExpired
+    }
+    return nil
   }
 
   // MARK: - Raw key statements
@@ -212,11 +233,12 @@ final class ResponseVerifier: @unchecked Sendable {
 
   // MARK: - X.509
 
-  /// Validates the certificate against the embedded roots at the signing time, with network
-  /// fetches off: there's no CRL or OCSP for these certificates, and a lookup could hang.
+  /// Validates the chain against the embedded roots only, with network fetches off: there's no CRL
+  /// or OCSP for these certificates, and a lookup could hang. The chain is checked at the
+  /// certificate's own start, so it covers signatures and structure; the signing time and the
+  /// device clock are checked against the validity in `verify`, the same way for both kinds.
   private func verifyX509Credential(
-    _ credential: Data,
-    signedAt: Int64
+    _ credential: Data
   ) -> Swift.Result<VerifiedKey, Failure> {
     guard
       let fields = CertificateFields(der: credential),
@@ -244,12 +266,16 @@ final class ResponseVerifier: @unchecked Sendable {
       SecTrustSetNetworkFetchAllowed(trust, false) == errSecSuccess,
       SecTrustSetVerifyDate(
         trust,
-        Date(timeIntervalSince1970: TimeInterval(signedAt)) as CFDate
+        Date(timeIntervalSince1970: TimeInterval(fields.notBefore)) as CFDate
       ) == errSecSuccess
     else {
       return .failure(.malformedCredential)
     }
-    guard SecTrustEvaluateWithError(trust, nil) else {
+    // The root issues signing certificates directly: the chain is the certificate and a root.
+    guard
+      SecTrustEvaluateWithError(trust, nil),
+      (SecTrustCopyCertificateChain(trust) as? [SecCertificate])?.count == 2
+    else {
       return .failure(.invalidCredentialSignature)
     }
     guard
@@ -281,7 +307,9 @@ final class ResponseVerifier: @unchecked Sendable {
       credentialHash,
       Data(String(signedAt).utf8),
       Data(context.endpoint.rawValue.utf8),
+      Data(context.apiKey.utf8),
       Data(context.subject.utf8),
+      Data(context.deviceId.utf8),
       Data(context.nonce.utf8),
       Data(SHA256.hash(data: body))
     ]
@@ -303,180 +331,5 @@ final class ResponseVerifier: @unchecked Sendable {
       return false
     }
     return publicKey.isValidSignature(signature, for: message)
-  }
-}
-
-// MARK: - Certificate fields
-
-/// The validity and CA flag of a certificate. `Security` has no API for these on every platform,
-/// so the few fields are read from the DER directly.
-struct CertificateFields {
-  let notBefore: Int64
-  let notAfter: Int64
-  let isCA: Bool
-
-  init?(der: Data) {
-    var outer = DERReader(Array(der))
-    guard
-      let certificateBytes = outer.read(tag: 0x30),
-      outer.isAtEnd
-    else {
-      return nil
-    }
-    var certificate = DERReader(certificateBytes)
-    guard let tbsBytes = certificate.read(tag: 0x30) else {
-      return nil
-    }
-    var tbs = DERReader(tbsBytes)
-    guard
-      tbs.read(tag: 0xa0) != nil, // version
-      tbs.read(tag: 0x02) != nil, // serial
-      tbs.read(tag: 0x30) != nil, // signature algorithm
-      tbs.read(tag: 0x30) != nil, // issuer
-      let validityBytes = tbs.read(tag: 0x30)
-    else {
-      return nil
-    }
-    var validity = DERReader(validityBytes)
-    guard
-      let notBefore = validity.readTime(),
-      let notAfter = validity.readTime(),
-      tbs.read(tag: 0x30) != nil, // subject
-      tbs.read(tag: 0x30) != nil, // subject public key info
-      let extensionsWrapper = tbs.read(tag: 0xa3)
-    else {
-      return nil
-    }
-    self.notBefore = notBefore
-    self.notAfter = notAfter
-
-    var wrapper = DERReader(extensionsWrapper)
-    guard
-      let extensions = wrapper.read(tag: 0x30),
-      let isCA = Self.isCertificateAuthority(extensions: extensions)
-    else {
-      return nil
-    }
-    self.isCA = isCA
-  }
-
-  /// The `cA` flag of the basic constraints extension, `false` when it's absent.
-  private static func isCertificateAuthority(extensions: [UInt8]) -> Bool? {
-    var reader = DERReader(extensions)
-    let basicConstraints: [UInt8] = [0x55, 0x1d, 0x13]
-    while let extensionBytes = reader.read(tag: 0x30) {
-      var item = DERReader(extensionBytes)
-      guard let oid = item.read(tag: 0x06) else {
-        return nil
-      }
-      guard oid == basicConstraints else {
-        continue
-      }
-      _ = item.read(tag: 0x01) // critical, optional
-      guard let value = item.read(tag: 0x04) else {
-        return nil
-      }
-      var valueReader = DERReader(value)
-      guard let constraints = valueReader.read(tag: 0x30) else {
-        return nil
-      }
-      var constraintsReader = DERReader(constraints)
-      return constraintsReader.read(tag: 0x01).map { $0.first.map { $0 != 0 } ?? false } ?? false
-    }
-    return false
-  }
-}
-
-/// Reads definite-length DER TLVs with single-byte tags. A read that doesn't match leaves the
-/// position where it was.
-struct DERReader {
-  private let bytes: [UInt8]
-  private var offset = 0
-
-  init(_ bytes: [UInt8]) {
-    self.bytes = bytes
-  }
-
-  var isAtEnd: Bool {
-    offset == bytes.count
-  }
-
-  mutating func read(tag: UInt8) -> [UInt8]? {
-    var position = offset
-    guard
-      position + 2 <= bytes.count,
-      bytes[position] == tag
-    else {
-      return nil
-    }
-    position += 1
-    var length = Int(bytes[position])
-    position += 1
-    if length & 0x80 != 0 {
-      let count = length & 0x7f
-      guard
-        count > 0,
-        count <= 4,
-        position + count <= bytes.count
-      else {
-        return nil
-      }
-      length = 0
-      for _ in 0..<count {
-        length = length << 8 | Int(bytes[position])
-        position += 1
-      }
-    }
-    guard position + length <= bytes.count else {
-      return nil
-    }
-    offset = position + length
-    return Array(bytes[position..<(position + length)])
-  }
-
-  /// UTCTime (years 1950–2049) or GeneralizedTime, as Unix seconds.
-  mutating func readTime() -> Int64? {
-    let text: String
-    if let utc = read(tag: 0x17) {
-      guard let value = String(bytes: utc, encoding: .ascii), value.count == 13 else {
-        return nil
-      }
-      let year = Int(value.prefix(2)) ?? 0
-      text = (year >= 50 ? "19" : "20") + value
-    } else if let generalized = read(tag: 0x18) {
-      guard let value = String(bytes: generalized, encoding: .ascii) else {
-        return nil
-      }
-      text = value
-    } else {
-      return nil
-    }
-    let digits = Array(text.dropLast())
-    guard
-      text.count == 15,
-      text.hasSuffix("Z"),
-      digits.allSatisfy({ $0.isASCII && $0.isNumber })
-    else {
-      return nil
-    }
-    func field(_ start: Int, _ length: Int) -> Int {
-      Int(String(digits[start..<(start + length)])) ?? 0
-    }
-    var components = DateComponents()
-    components.year = field(0, 4)
-    components.month = field(4, 2)
-    components.day = field(6, 2)
-    components.hour = field(8, 2)
-    components.minute = field(10, 2)
-    components.second = field(12, 2)
-    var calendar = Calendar(identifier: .gregorian)
-    guard let utc = TimeZone(identifier: "UTC") else {
-      return nil
-    }
-    calendar.timeZone = utc
-    guard let date = calendar.date(from: components) else {
-      return nil
-    }
-    return Int64(date.timeIntervalSince1970)
   }
 }

@@ -77,14 +77,14 @@ struct SignatureEnvelope: Equatable {
 
     guard
       let kind = members["kind"].flatMap(CredentialKind.init(rawValue:)),
-      let version = integer("v"),
+      let version = integer("v").flatMap({ Int(exactly: $0) }),
       let signedAt = integer("t"),
       let credential = bytes("cred"),
       let signature = bytes("sig")
     else {
       return nil
     }
-    self.version = Int(version)
+    self.version = version
     self.signedAt = signedAt
     self.kind = kind
     self.credential = credential
