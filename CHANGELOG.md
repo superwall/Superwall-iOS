@@ -7,19 +7,26 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Saves the first deep link received during the first app session as the `firstDeepLinkUrl` user attribute. If you assign deep links to your App Store custom product pages, you can use this attribute to break down results and filter audiences by the product page that drove the install. If you've connected App Store Connect, the page's ID and name are saved too, as `customProductPageId` and `customProductPageName`. Requires `Superwall.handleDeepLink(_:)` to be set up.
+- Adds the user's App Tracking Transparency status as the `attStatus` device attribute.
+- Reports ad user data consent as denied, as well as personalization, when the user has denied App Tracking Transparency or it's restricted, even if you set `adConsent` yourself. If you use the MMP, conversions from these users are no longer sent to Meta or your other ad networks.
 
 ### Fixes
 
 - Fixes a paywall appearing in the wrong window on iPad and Mac Catalyst when several of the app's windows are on screen.
 - Fixes cached paywalls sometimes being torn down off the main thread when they're cleared, such as on `reset()`.
+- Fixes the SDK's on-device database growing very large over time. Ones that have already grown shrink the next time the app opens.
+- Audience filters no longer count paywall preloading and loading events.
 - Fixes `presentedViewController` sometimes returning a paywall that isn't on screen, which `reset()` then kept instead of clearing.
 - Fixes a paywall shown again while it was still closing being marked as closed, so its next close wasn't reported.
 - Fixes a StoreKit 1 purchase that ended straight away, such as one the device refused, sometimes never returning its result.
 - Fixes a purchase never finishing, with its loading spinner left up, when another purchase started before it returned.
 - Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.
-- Fixes text in the Customer Center falling below WCAG contrast in light mode: the status badges, the grey secondary text and the section headers now reach 4.5:1, as do the red and grey badges in dark mode. The close button's icon is now a grey that reaches 3:1 on iOS 26's glass button, instead of the faded accent colour.
-- Fixes the Customer Center's purchase card breaking words and prices mid-word at accessibility text sizes. The badge now sits above the text, and the original download date row stacks too.
-- Makes the Customer Center's Copy button at least 44 by 44 points to tap.
+- Fixes the "Occurrences in the last month" audience filter counting the last 30 weeks instead of the last month.
+- Fixes paywalls showing the status bar in apps that hide it, such as Unity games.
+- Fixes a crash when a paywall is presented from a view controller that takes its orientations from whatever it presents.
+- Improves the contrast of text and icons in the Customer Center.
+- Fixes the Customer Center's purchase cards breaking words mid-word at the largest text sizes.
+- Makes the Customer Center's Copy button easier to tap.
 
 ## 4.19.1
 
