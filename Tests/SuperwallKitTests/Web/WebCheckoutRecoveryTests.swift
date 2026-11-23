@@ -50,7 +50,8 @@ struct WebCheckoutRecoveryTests {
   private func makeRedeemer(
     storage: StorageMock = StorageMock(internalRedeemResponse: nil),
     network: NetworkMock,
-    superwall: Superwall
+    superwall: Superwall,
+    stripePendingPollTimeoutNs: UInt64 = 5_000_000_000
   ) -> WebEntitlementRedeemer {
     let redeemer = WebEntitlementRedeemer(
       network: network,
@@ -61,7 +62,7 @@ struct WebCheckoutRecoveryTests {
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
       stripePendingPollIntervalNs: 1_000_000,
-      stripePendingPollTimeoutNs: 5_000_000_000,
+      stripePendingPollTimeoutNs: stripePendingPollTimeoutNs,
       claimedTeleportRecheckDelays: [0, 0],
       superwall: superwall
     )
@@ -262,6 +263,20 @@ struct WebCheckoutRecoveryTests {
   @MainActor
   private func completedPurchase(on paywallVc: PaywallViewController) -> String? {
     paywallVc.store.read { $0.completedPurchase?.productIdentifier }
+  }
+
+  private func tracked(
+    _ delegate: MockSuperwallDelegate,
+    _ matches: (SuperwallEvent) -> Bool
+  ) -> Int {
+    delegate.eventsReceived.filter(matches).count
+  }
+
+  private func isRestoreComplete(_ event: SuperwallEvent) -> Bool {
+    if case .restoreComplete = event {
+      return true
+    }
+    return false
   }
 
   // MARK: - Paywalls covered while loading
@@ -473,6 +488,47 @@ struct WebCheckoutRecoveryTests {
     #expect(await dismissal(of: paywallVc) == purchased)
   }
 
+  @Test("A paywall the app kept up after a decline still closes as restored when its entitlements arrive")
+  func poll_restoresPaywallKeptUpAfterDecline() async {
+    let mockDelegate = MockSuperwallDelegate()
+    let superwall = makeSuperwall(delegate: mockDelegate)
+    mapProductToPro()
+    let network = makeNetwork()
+    network.getEntitlementsResponse = entitlements([pro])
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+    let paywallVc = await makePaywall(redeemer: redeemer, onScreenAs: "kept up")
+    // The user declined, but the app that shows the paywall itself left it on screen.
+    let declined = PaywallViewState.Dismissal(result: .declined, closeReason: .manualClose)
+    _ = await paywallVc.dispatch(.event(.dismissRequested(declined)))
+
+    await redeemer.pollWebEntitlements(isFirstTime: true)
+
+    let wasRestored = await waitUntil { tracked(mockDelegate, isRestoreComplete) == 1 }
+    #expect(wasRestored)
+  }
+
+  @Test("A covered paywall that stays up is told it was restored once")
+  func coveredPaywall_isRestoredOnce() async {
+    let mockDelegate = MockSuperwallDelegate()
+    let superwall = makeSuperwall(delegate: mockDelegate)
+    mapProductToPro()
+    let network = makeNetwork()
+    dependencyContainer.makeSuperwallOptions().paywalls.automaticallyDismiss = false
+    network.getEntitlementsResponse = entitlements([pro])
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+
+    let evaluatedAt = Date()
+    try? await Task.sleep(nanoseconds: 5_000_000)
+    await redeemer.pollWebEntitlements(isFirstTime: true)
+    superwall.subscriptionStatus = .active([pro])
+    let paywallVc = await makePaywall(redeemer: redeemer, evaluatedAt: evaluatedAt)
+
+    #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == true)
+    #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == false)
+    await waitUntil(timeout: 0.2) { tracked(mockDelegate, isRestoreComplete) > 1 }
+    #expect(tracked(mockDelegate, isRestoreComplete) == 1)
+  }
+
   @Test("A covered paywall that was closed and shown again meanwhile is left alone")
   func coveredPaywall_shownAgainWhileRestoring_staysUp() async {
     let delegate = EventHookDelegate()
@@ -624,6 +680,99 @@ struct WebCheckoutRecoveryTests {
     #expect(await completedPurchase(on: paywallVc) == "prod_1")
   }
 
+  @Test("A purchase a link said was paid is still redeemed after its first poll failed and time passed")
+  func purchasedLink_firstPollFails_isRedeemedLater() async {
+    let mockDelegate = MockSuperwallDelegate()
+    let superwall = makeSuperwall(delegate: mockDelegate)
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    // The link launches the app before the network is up.
+    network.pollRedemptionResultResponses = [.failure(NetworkError.unknown)]
+    let redeemer = makeRedeemer(
+      storage: storage,
+      network: network,
+      superwall: superwall,
+      stripePendingPollTimeoutNs: 50_000_000
+    )
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(
+        checkoutContextId: "ctx_1",
+        productId: "prod_1",
+        completion: .purchase(productId: "prod_1", shouldDismiss: true)
+      )
+    )
+    #expect(network.pollRedemptionResultCallCount == 1)
+
+    // The app is opened again once a pending checkout would have run out of time.
+    try? await Task.sleep(nanoseconds: 120_000_000)
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+
+    #expect(network.pollRedemptionResultCallCount == 2)
+    #expect(mockDelegate.receivedResult?.code == "redemption_123")
+  }
+
+  @Test("A purchased link doesn't wait behind a poll for an older checkout")
+  func purchasedLink_stopsOlderCheckoutsPoll() async {
+    let mockDelegate = MockSuperwallDelegate()
+    let superwall = makeSuperwall(delegate: mockDelegate)
+    let storage = StorageMock(internalRedeemResponse: nil)
+    storage.save(
+      PendingStripeCheckoutPollState(checkoutContextId: "ctx_old", productId: "prod_old"),
+      forType: PendingStripeCheckoutPollStorage.self
+    )
+    let network = makeNetwork()
+    // The older checkout stays pending on the server; the new one is paid.
+    network.pollRedemptionResultResponses = Array(repeating: pendingResponse, count: 20_000)
+    let redeemed = redeemedResponse()
+    network.onPollRedemptionResult = { [weak network] in
+      if network?.pollRedemptionResultRequest?.checkoutContextId == "ctx_new" {
+        network?.pollRedemptionResultResponses = [redeemed]
+      }
+    }
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    let older = Task {
+      await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+    }
+    await waitUntil { network.pollRedemptionResultCallCount > 0 }
+
+    let linkArrived = Date()
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(
+        checkoutContextId: "ctx_new",
+        productId: "prod_1",
+        completion: .purchase(productId: "prod_1", shouldDismiss: true)
+      )
+    )
+
+    #expect(Date().timeIntervalSince(linkArrived) < 2)
+    #expect(mockDelegate.receivedResult?.code == "redemption_123")
+    await older.value
+  }
+
+  @Test("A link that doesn't say how to finish, for the teleport left open, finishes as that teleport's purchase")
+  func linkWithoutCompletion_forTeleportLeftOpen_finishesAsItsPurchase() async {
+    // Today's pages don't say whether the paywall closes after the purchase.
+    let stored = PendingTeleportState(teleportId: "tp_1", productId: "prod_basic")
+    let asPurchase = StripeCheckoutCompletion.purchase(productId: "prod_basic", shouldDismiss: true)
+    #expect(stored.purchase(checkoutContextId: "ctx_1", productId: nil).completion == asPurchase)
+
+    // The return link doesn't say either, and can be handled before the teleport is read.
+    let superwall = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    storage.save(stored, forType: PendingTeleportStorage.self)
+    let network = makeNetwork()
+    network.pollRedemptionResultResponses = [.failure(NetworkError.unknown)]
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(checkoutContextId: "ctx_1", productId: "", completion: .restore)
+    )
+
+    let pending = storage.get(PendingStripeCheckoutPollStorage.self)
+    #expect(pending?.completion == asPurchase)
+    #expect(pending?.productId == "prod_basic")
+  }
+
   // MARK: - Stored teleports
 
   @Test("A paid teleport is kept until its checkout is redeemed")
@@ -719,6 +868,79 @@ struct WebCheckoutRecoveryTests {
       return !network.teleportStatusRequests.isEmpty
     }
     #expect(wasChecked)
+  }
+
+  @Test("A teleport paid after its first round of looks is found on the next foreground")
+  func claimedTeleport_paidAfterFirstRound_isFoundOnNextForeground() async {
+    let mockDelegate = MockSuperwallDelegate()
+    let superwall = makeSuperwall(delegate: mockDelegate)
+    let storage = StorageMock(internalRedeemResponse: nil)
+    storage.save(teleport, forType: PendingTeleportStorage.self)
+    let network = makeNetwork()
+    let unpaid: Result<CheckoutStatusResponse, Error> = .success(CheckoutStatusResponse(status: "pending"))
+    let paid: Result<CheckoutStatusResponse, Error> = .success(CheckoutStatusResponse(status: "completed"))
+    network.teleportStatusResponses = Array(repeating: status("claimed"), count: 5)
+    // Unpaid on launch and on both rechecks. Back from Safari, the first look comes before
+    // the backend has the payment, and the next one after.
+    network.checkoutStatusResponses = [unpaid, unpaid, unpaid, unpaid, paid]
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    #expect(await redeemer.recoverPendingTeleport() == false)
+    #expect(await redeemer.waitForClaimedTeleportRecheck() == false)
+
+    #expect(await redeemer.recoverPendingTeleport(onForeground: true) == false)
+    #expect(await redeemer.waitForClaimedTeleportRecheck() == true)
+
+    #expect(mockDelegate.receivedResult?.code == "redemption_123")
+  }
+
+  @Test("A teleport whose page reloads is checked at once, without waiting for the next foreground")
+  func teleportWhosePageReloaded_isCheckedAtOnce() async {
+    let superwall = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    network.teleportStatusResponses = Array(repeating: status("pending"), count: 20)
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    let paywallVc = await makePaywall(redeemer: redeemer, onScreenAs: "reloaded at once")
+    await paywallVc.teleportDidOpen(teleport)
+    await waitUntil { storage.get(PendingTeleportStorage.self) == teleport }
+
+    await MainActor.run {
+      paywallVc.webView.webViewWebContentProcessDidTerminate(paywallVc.webView)
+    }
+
+    let wasChecked = await waitUntil(timeout: 1) { !network.teleportStatusRequests.isEmpty }
+    #expect(wasChecked)
+  }
+
+  @Test("A late report about an embedded checkout keeps the teleport opened after it")
+  func lateAbandonOfEmbeddedCheckout_keepsTeleportOpenedSince() async {
+    let mockDelegate = MockSuperwallDelegate()
+    let superwall = makeSuperwall(delegate: mockDelegate)
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    let paywallVc = await makePaywall(redeemer: redeemer)
+    // The user opens the embedded checkout and closes it.
+    await paywallVc.handleStripeCheckoutStart(checkoutContextId: "ctx_embedded")
+    // They tap again and a teleport opens, named by the checkout start sent just before it.
+    await paywallVc.handleStripeCheckoutStart(checkoutContextId: "tp_1")
+    await paywallVc.teleportDidOpen(teleport)
+    await waitUntil { storage.get(PendingTeleportStorage.self) == teleport }
+
+    // The page's report that the embedded checkout was abandoned only arrives now.
+    await paywallVc.handleStripeCheckoutAbandon(checkoutContextId: "ctx_embedded", productId: "prod_2")
+    let wasAbandoned = await waitUntil {
+      mockDelegate.eventsReceived.contains {
+        if case .transactionAbandon = $0 {
+          return true
+        }
+        return false
+      }
+    }
+    #expect(wasAbandoned)
+
+    #expect(storage.get(PendingTeleportStorage.self) == teleport)
   }
 
   @Test("A checkout abandoned in a later presentation keeps an earlier presentation's teleport")

@@ -403,6 +403,39 @@ struct TeleportColdStartTests {
     #expect(delegate.openedTeleports.first?.shouldDismiss == nil)
   }
 
+  @Test("A checkout start from a page that's been replaced doesn't name a later teleport")
+  @MainActor
+  func checkoutStart_isForgottenWhenThePageIsReplaced() {
+    let (handler, delegate) = makeMessageHandler()
+    handler.handle(.stripeCheckoutStart(checkoutContextId: "ctx_old", productId: "prod_old"))
+    handler.documentWillLoad()
+    handler.handle(.openUrlInSafari(checkoutUrl, isTeleport: true))
+
+    #expect(delegate.openedTeleports.isEmpty)
+  }
+
+  @Test("A checkout start for a checkout that failed doesn't name a later teleport")
+  @MainActor
+  func checkoutStart_isForgottenWhenItsCheckoutFails() {
+    let (handler, delegate) = makeMessageHandler()
+    handler.handle(.stripeCheckoutStart(checkoutContextId: "ctx_old", productId: "prod_old"))
+    handler.handle(.stripeCheckoutFail(checkoutContextId: "ctx_old", productId: "prod_old"))
+    handler.handle(.openUrlInSafari(checkoutUrl, isTeleport: true))
+
+    #expect(delegate.openedTeleports.isEmpty)
+  }
+
+  @Test("A checkout start for a checkout shown in a sheet doesn't name a later teleport")
+  @MainActor
+  func checkoutStart_isForgottenWhenItsSheetOpens() {
+    let (handler, delegate) = makeMessageHandler()
+    handler.handle(.stripeCheckoutStart(checkoutContextId: "ctx_old", productId: "prod_old"))
+    handler.handle(.openPaymentSheet(checkoutUrl))
+    handler.handle(.openUrlInSafari(checkoutUrl, isTeleport: true))
+
+    #expect(delegate.openedTeleports.isEmpty)
+  }
+
   @Test("A page that names its teleport is taken at its word")
   @MainActor
   func teleportOpen_prefersIdFromMessage() {
@@ -597,8 +630,8 @@ struct TeleportColdStartTests {
     #expect(await fresh.shouldShowStripeRecoveryLoadingOnPaywallOpen() == false)
   }
 
-  @Test("A later foreground looks at an unpaid claimed teleport once, without rechecks")
-  func claimedTeleport_unpaid_laterForegroundReadsOnce() async {
+  @Test("Another look before the next foreground reads an unpaid claimed teleport once, without rechecks")
+  func claimedTeleport_unpaid_anotherLookReadsOnce() async {
     let (superwall, _) = makeSuperwall()
     let storage = StorageMock(internalRedeemResponse: nil)
     let network = makeNetwork()
@@ -613,7 +646,7 @@ struct TeleportColdStartTests {
     #expect(await fresh.recoverPendingTeleport() == false)
     #expect(await fresh.waitForClaimedTeleportRecheck() == false)
 
-    // The next foreground of the same launch.
+    // Another look before the app next comes to the foreground, as when the paywall closes.
     #expect(await fresh.recoverPendingTeleport() == false)
 
     #expect(network.teleportStatusRequests.count == 4)
@@ -859,12 +892,16 @@ struct TeleportColdStartTests {
     #expect(mockDelegate.willRedeemCallCount == 1)
   }
 
-  @Test("Without a dismissal from the page, a recovered teleport finishes as a restore")
-  func teleportPurchase_withoutDismissal_restores() {
+  @Test("Without a dismissal from the page, a recovered teleport finishes as a purchase that closes the paywall")
+  func teleportPurchase_withoutDismissal_isAPurchase() {
     let stored = PendingTeleportState(teleportId: "tp_1", productId: "prod_offered")
     #expect(
       stored.purchase(checkoutContextId: "ctx_1", productId: nil)
-        == PurchasedReturn(checkoutContextId: "ctx_1", productId: "prod_offered", completion: .restore)
+        == PurchasedReturn(
+          checkoutContextId: "ctx_1",
+          productId: "prod_offered",
+          completion: .purchase(productId: "prod_offered", shouldDismiss: true)
+        )
     )
     #expect(stored.purchase(checkoutContextId: "ctx_1", productId: "").productId == "prod_offered")
   }

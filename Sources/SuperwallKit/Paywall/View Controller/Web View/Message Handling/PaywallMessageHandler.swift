@@ -51,9 +51,9 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
 @MainActor
 final class PaywallMessageHandler: WebEventDelegate {
   weak var delegate: PaywallMessageHandlerDelegate?
-  /// The last `stripe_checkout_start`, until the page opens Safari. A teleport sends one with its
-  /// id just before it opens the checkout, so a page that doesn't name the teleport on
-  /// `open_url_external` still says which one it opened.
+  /// The last `stripe_checkout_start`, until the page opens that checkout, says how it went or
+  /// is replaced. A teleport sends one with its id just before it opens the checkout, so a page
+  /// that doesn't name the teleport on `open_url_external` still says which one it opened.
   private var lastCheckoutStart: (checkoutContextId: String, productId: String)?
   private unowned let receiptManager: ReceiptManager
   private let factory: VariablesFactory
@@ -233,6 +233,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     case .teleportWatchEnd:
       delegate?.endTeleportWatch()
     case .openPaymentSheet(let url):
+      lastCheckoutStart = nil
       openPaymentSheet(url)
     case .openDeepLink(let url):
       openDeepLink(url)
@@ -278,11 +279,12 @@ final class PaywallMessageHandler: WebEventDelegate {
         productId: productId
       )
     case let .stripeCheckoutFail(_, productId):
+      lastCheckoutStart = nil
       trackStripeCheckoutEvent(
         state: .fail,
         productId: productId
       )
-    // No-op: don't clear checkout context on failure
+    // The pending checkout is kept on failure.
     case let .stripeCheckoutAbandon(checkoutContextId, productId):
       lastCheckoutStart = nil
       delegate?.handleStripeCheckoutAbandon(
@@ -353,6 +355,7 @@ final class PaywallMessageHandler: WebEventDelegate {
   func documentWillLoad() {
     isDocumentReady = false
     documentId += 1
+    lastCheckoutStart = nil
     delegate?.endTeleportWatch()
   }
 

@@ -1616,6 +1616,9 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
   func handleStripeCheckoutStart(checkoutContextId: String) {
     dispatch(.stripeCheckoutStarted)
+    enqueueStripeCheckoutTask { paywall in
+      await paywall.webEntitlementRedeemer.registerStripeCheckoutStart(contextId: checkoutContextId)
+    }
   }
 
   private static func settledTeleportId(_ outcome: PaywallViewAction.Outcome) -> String? {

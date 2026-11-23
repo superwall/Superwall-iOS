@@ -18,8 +18,7 @@ struct PendingTeleportState: Codable, Equatable {
   /// The product the paywall sent the user to buy. Empty when the page didn't say.
   let productId: String
   /// Whether the paywall dismisses after the purchase. Nil when the page didn't say, in which
-  /// case the purchase finishes as a restore, as a `stripe_checkout_complete` without it does.
-  /// It also finishes as a restore when nothing names the product.
+  /// case it does, as paywalls do unless they say otherwise.
   let shouldDismiss: Bool?
   let openedAt: Date
 
@@ -42,10 +41,12 @@ struct PendingTeleportState: Codable, Equatable {
   /// The purchase to finish once the teleport reads completed, for the checkout it led to.
   func purchase(checkoutContextId: String, productId checkoutProductId: String?) -> PurchasedReturn {
     let productId = checkoutProductId.flatMap { $0.isEmpty ? nil : $0 } ?? self.productId
-    // A purchase is reported with its product, so without one it finishes as a restore.
+    // A purchase is reported with its product, so without one it finishes as a restore. With
+    // one it's a purchase even when the page didn't say whether to dismiss: a restore needs
+    // every entitlement the paywall on screen sells, which buying one product needn't give.
     var completion: StripeCheckoutCompletion = .restore
-    if !productId.isEmpty, let shouldDismiss {
-      completion = .purchase(productId: productId, shouldDismiss: shouldDismiss)
+    if !productId.isEmpty {
+      completion = .purchase(productId: productId, shouldDismiss: shouldDismiss ?? true)
     }
     return PurchasedReturn(
       checkoutContextId: checkoutContextId,
