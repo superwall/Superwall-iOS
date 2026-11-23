@@ -434,87 +434,145 @@ struct SDKEnvironmentTests {
     withExtendedLifetime((superwall, dependencyContainer)) {}
   }
 
-  // MARK: - Collector
+  // MARK: - Report state
 
-  @Test func collector_collectsOncePerProcess() async {
-    let lookups = Counter()
-    var sources = sources()
-    sources.classNames = {
-      lookups.increment()
-      return ["RevenueCat.PurchasesOrchestrator"]
-    }
-    let collector = SDKEnvironmentCollector(sources: sources)
+  @Test(arguments: [
+    (SDKEnvironmentReportUpdate.foundUnchanged, SDKEnvironmentReportState.Outcome.unchanged, false),
+    (.eventNotQueued, .notQueued, false),
+    (.eventQueued, .sent, true)
+  ])
+  func update_finishesThePendingReport(
+    update: SDKEnvironmentReportUpdate,
+    outcome: SDKEnvironmentReportState.Outcome,
+    didSend: Bool
+  ) {
+    let state = SDKEnvironmentReportState()
+    #expect(state.phase == .pending)
+    #expect(!state.didSend)
 
-    async let first = collector.environment()
-    async let second = collector.environment()
-    let results = await [first, second]
-    let third = await collector.environment()
+    let finished = update.reduce(state)
 
-    let revenueCat = SDKEnvironmentLogic.nameHashes(["RevenueCat"])
-    #expect(results.allSatisfy { $0.swiftModules == revenueCat })
-    #expect(third.swiftModules == revenueCat)
-    #expect(lookups.value == 1)
+    #expect(finished.phase == .finished(outcome))
+    #expect(finished.didSend == didSend)
+  }
+
+  @Test(arguments: [
+    SDKEnvironmentReportUpdate.foundUnchanged,
+    .eventNotQueued,
+    .eventQueued
+  ])
+  func update_afterTheReportFinished_keepsItsOutcome(update: SDKEnvironmentReportUpdate) {
+    let sent = SDKEnvironmentReportUpdate.eventQueued.reduce(SDKEnvironmentReportState())
+    let unchanged = SDKEnvironmentReportUpdate.foundUnchanged.reduce(SDKEnvironmentReportState())
+
+    #expect(update.reduce(sent) == sent)
+    #expect(update.reduce(unchanged) == unchanged)
+  }
+
+  @Test func action_finishSent_savesTheHash() {
+    let context = FakeReportContext(savedHash: "old")
+
+    let didSend = context.store.dispatch(SDKEnvironmentReportAction.finishSent(sdkHash: "new"), in: context)
+
+    #expect(didSend)
+    #expect(context.store.state.phase == .finished(.sent))
+    #expect(context.storedHash == "new")
+  }
+
+  @Test(arguments: [
+    (SDKEnvironmentReportAction.finishUnchanged, SDKEnvironmentReportState.Outcome.unchanged),
+    (.finishNotQueued, .notQueued)
+  ])
+  func action_finishWithoutSending_keepsTheSavedHash(
+    action: SDKEnvironmentReportAction,
+    outcome: SDKEnvironmentReportState.Outcome
+  ) {
+    let context = FakeReportContext(savedHash: "old")
+
+    let didSend = context.store.dispatch(action, in: context)
+
+    #expect(!didSend)
+    #expect(context.store.state.phase == .finished(outcome))
+    #expect(context.storedHash == "old")
+  }
+
+  @Test func action_afterTheReportFinished_changesNothing() {
+    let context = FakeReportContext(savedHash: "old")
+    context.store.dispatch(SDKEnvironmentReportAction.finishUnchanged, in: context)
+
+    let didSend = context.store.dispatch(SDKEnvironmentReportAction.finishSent(sdkHash: "new"), in: context)
+
+    #expect(!didSend)
+    #expect(context.store.state.phase == .finished(.unchanged))
+    #expect(context.storedHash == "old")
   }
 
   // MARK: - Sending only when the SDKs change
 
   @Test func reporter_withNoSavedHash_sendsAndSaves() async {
-    let reporter = ReporterHarness(info: .stub(), savedHash: nil)
+    let context = FakeReportContext(savedHash: nil)
 
-    let didSend = await reporter.reporter.reportIfChanged()
+    let didSend = await SDKEnvironmentReporter(context: context).reportIfChanged()
 
     #expect(didSend)
-    #expect(reporter.sent.value == 1)
-    #expect(reporter.storedHash.value == SDKEnvironmentInfo.stub().sdkHash)
+    #expect(context.sendCount == 1)
+    #expect(context.storedHash == SDKEnvironmentInfo.stub().sdkHash)
+    #expect(context.store.state.phase == .finished(.sent))
   }
 
   @Test func reporter_withTheSameHash_sendsNothing() async {
-    let reporter = ReporterHarness(info: .stub(), savedHash: SDKEnvironmentInfo.stub().sdkHash)
+    let context = FakeReportContext(savedHash: SDKEnvironmentInfo.stub().sdkHash)
 
-    let didSend = await reporter.reporter.reportIfChanged()
+    let didSend = await SDKEnvironmentReporter(context: context).reportIfChanged()
 
     #expect(!didSend)
-    #expect(reporter.sent.value == 0)
-    #expect(reporter.storedHash.value == SDKEnvironmentInfo.stub().sdkHash)
+    #expect(context.sendCount == 0)
+    #expect(context.storedHash == SDKEnvironmentInfo.stub().sdkHash)
+    #expect(context.store.state.phase == .finished(.unchanged))
   }
 
   @Test func reporter_withADifferentHash_sendsAndSavesTheNewOne() async {
-    let reporter = ReporterHarness(info: .stub(), savedHash: "the hash of an older build's SDKs")
+    let firstOpen = FakeReportContext(savedHash: "the hash of an older build's SDKs")
+    let didSendOnFirstOpen = await SDKEnvironmentReporter(context: firstOpen).reportIfChanged()
 
-    let firstOpen = await reporter.reporter.reportIfChanged()
-    let nextOpen = await reporter.reporter.reportIfChanged()
+    // The next app open starts with what the first one saved.
+    let nextOpen = FakeReportContext(savedHash: firstOpen.storedHash)
+    let didSendOnNextOpen = await SDKEnvironmentReporter(context: nextOpen).reportIfChanged()
 
-    #expect(firstOpen)
-    #expect(!nextOpen)
-
-    #expect(reporter.sent.value == 1)
-    #expect(reporter.storedHash.value == SDKEnvironmentInfo.stub().sdkHash)
+    #expect(didSendOnFirstOpen)
+    #expect(firstOpen.sendCount == 1)
+    #expect(firstOpen.storedHash == SDKEnvironmentInfo.stub().sdkHash)
+    #expect(!didSendOnNextOpen)
+    #expect(nextOpen.sendCount == 0)
   }
 
   @Test func reporter_whenTheEventIsNotQueued_keepsTheOldHash() async {
     // As with `eventTrackingBehavior` set to `.none`.
-    let reporter = ReporterHarness(info: .stub(), savedHash: "old", isQueued: false)
+    let context = FakeReportContext(savedHash: "old", isQueued: false)
 
-    let didSend = await reporter.reporter.reportIfChanged()
+    let didSend = await SDKEnvironmentReporter(context: context).reportIfChanged()
 
     #expect(!didSend)
-    #expect(reporter.sent.value == 1)
-    #expect(reporter.storedHash.value == "old")
+    #expect(context.sendCount == 1)
+    #expect(context.storedHash == "old")
+    #expect(context.store.state.phase == .finished(.notQueued))
   }
 
-  @Test func reportOnce_withOverlappingCalls_sendsOnce() async {
-    let reporter = ReporterHarness(info: .stub(), savedHash: nil, sendDelay: 50_000_000)
-    let once = SDKEnvironmentReportOnce()
+  @Test func reporter_withOverlappingCalls_reportsOncePerAppOpen() async {
+    // Holds the send open, so overlapping reports would both read the old hash.
+    let context = FakeReportContext(savedHash: nil, sendDelay: 50_000_000)
+    let reporter = SDKEnvironmentReporter(context: context)
 
-    async let first = once.run { reporter.reporter }
-    async let second = once.run { reporter.reporter }
+    async let first = reporter.reportIfChanged()
+    async let second = reporter.reportIfChanged()
     let results = await [first, second]
-    let later = await once.run { reporter.reporter }
+    let later = await reporter.reportIfChanged()
 
     #expect(results == [true, true])
     #expect(later)
-    #expect(reporter.sent.value == 1)
-    #expect(reporter.storedHash.value == SDKEnvironmentInfo.stub().sdkHash)
+    #expect(context.collectCount == 1)
+    #expect(context.sendCount == 1)
+    #expect(context.storedHash == SDKEnvironmentInfo.stub().sdkHash)
   }
 
   @Test func savedHash_isOnePerInstallAndSurvivesReset() {
@@ -607,33 +665,54 @@ struct SDKEnvironmentTests {
   }
 }
 
-/// An ``SDKEnvironmentReporter`` with its storage and sending recorded.
-private struct ReporterHarness {
-  let sent: Counter
-  let storedHash: Box<String?>
-  let reporter: SDKEnvironmentReporter
+/// Reports the stub SDKs, and records what a report collects, sends and saves.
+private final class FakeReportContext: SDKEnvironmentReportContext, @unchecked Sendable {
+  let store = SDKEnvironmentReportStore(initial: SDKEnvironmentReportState())
+  private let isQueued: Bool
+  private let sendDelay: UInt64
+  private let saved: Box<String?>
+  private let collections = Counter()
+  private let sends = Counter()
+
+  var storedHash: String? {
+    saved.value
+  }
+
+  var collectCount: Int {
+    collections.value
+  }
+
+  var sendCount: Int {
+    sends.value
+  }
 
   init(
-    info: SDKEnvironmentInfo,
     savedHash: String?,
     isQueued: Bool = true,
     sendDelay: UInt64 = 0
   ) {
-    let storedHash = Box(savedHash)
-    let sent = Counter()
-    self.sent = sent
-    self.storedHash = storedHash
-    self.reporter = SDKEnvironmentReporter(
-      environment: { info },
-      savedHash: { storedHash.value },
-      saveHash: { storedHash.value = $0 },
-      send: { _ in
-        sent.increment()
-        // Holds the send open, so overlapping reports would both read the old hash.
-        try? await Task.sleep(nanoseconds: sendDelay)
-        return isQueued
-      }
-    )
+    self.saved = Box(savedHash)
+    self.isQueued = isQueued
+    self.sendDelay = sendDelay
+  }
+
+  func collectEnvironment() async -> SDKEnvironmentInfo {
+    collections.increment()
+    return .stub()
+  }
+
+  func savedHash() -> String? {
+    return saved.value
+  }
+
+  func saveHash(_ hash: String) {
+    saved.value = hash
+  }
+
+  func send(_ info: SDKEnvironmentInfo) async -> Bool {
+    sends.increment()
+    try? await Task.sleep(nanoseconds: sendDelay)
+    return isQueued
   }
 }
 

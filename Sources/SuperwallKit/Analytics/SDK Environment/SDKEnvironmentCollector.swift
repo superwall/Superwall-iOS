@@ -7,8 +7,8 @@
 
 import Foundation
 
-/// Where ``SDKEnvironmentCollector`` looks. Tests point it at their own directories,
-/// Info.plist and class names.
+/// Where ``SDKEnvironmentLogic/collect(from:)`` looks. Tests point it at their own
+/// directories, Info.plist and class names.
 struct SDKEnvironmentSources {
   /// The directory holding the app's embedded `.framework` bundles.
   var frameworksDirectory: URL?
@@ -34,33 +34,6 @@ struct SDKEnvironmentSources {
       },
       systemModules: LinkedCodeLogic.loadedSystemModules
     )
-  }
-}
-
-/// Collects the ``SDKEnvironmentInfo`` once per process. A running app can't gain or
-/// lose an SDK, so every later call reuses the first result.
-actor SDKEnvironmentCollector {
-  static let shared = SDKEnvironmentCollector(sources: .live)
-
-  private let sources: SDKEnvironmentSources
-  private var collection: Task<SDKEnvironmentInfo, Never>?
-
-  init(sources: SDKEnvironmentSources) {
-    self.sources = sources
-  }
-
-  func environment() async -> SDKEnvironmentInfo {
-    if let collection = collection {
-      return await collection.value
-    }
-    let sources = sources
-    // Reading the bundles touches the disk and compressing the class names takes a
-    // few milliseconds, so keep it off the main thread.
-    let collection = Task.detached(priority: .utility) {
-      SDKEnvironmentLogic.collect(from: sources)
-    }
-    self.collection = collection
-    return await collection.value
   }
 }
 
