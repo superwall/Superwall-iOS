@@ -821,6 +821,33 @@ struct WebCheckoutRecoveryTests {
     #expect(storage.get(PendingStripeCheckoutPollStorage.self)?.completion == .restore)
   }
 
+  @Test("A checkout redeemed while its teleport is read isn't redeemed again")
+  func checkoutRedeemedDuringTeleportLookup_isNotRevived() async {
+    let mockDelegate = MockSuperwallDelegate()
+    let superwall = makeSuperwall(delegate: mockDelegate)
+    let storage = StorageMock(internalRedeemResponse: nil)
+    // The teleport's checkout isn't known yet, so the link reads it.
+    storage.save(
+      PendingTeleportState(teleportId: "tp_1", productId: "prod_1", shouldDismiss: true),
+      forType: PendingTeleportStorage.self
+    )
+    let network = makeNetwork()
+    network.teleportStatusResponses = [status("claimed", checkoutContextId: "ctx_1")]
+    network.pollRedemptionResultResponses = [redeemedResponse(), redeemedResponse()]
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    // The page reports the same checkout and it's redeemed while that read is in flight.
+    network.whileTeleportStatusRequested = {
+      await redeemer.handleStripeCheckoutComplete(contextId: "ctx_1", productId: "prod_1")
+    }
+
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(checkoutContextId: "ctx_1", productId: "", completion: .restore)
+    )
+
+    #expect(network.pollRedemptionResultCallCount == 1)
+    #expect(storage.get(PendingStripeCheckoutPollStorage.self) == nil)
+  }
+
   // MARK: - Stored teleports
 
   @Test("A paid teleport is kept until its checkout is redeemed")

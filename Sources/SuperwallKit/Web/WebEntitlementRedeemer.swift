@@ -1523,6 +1523,11 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       }
     }
     let fromTeleport = await teleportPurchase(for: purchase)
+    // The page or a recovery poll may have redeemed it while the teleport was read. Saving it
+    // again would poll it again and finish the purchase a second time.
+    if isRedeemed(contextId) {
+      return
+    }
     savePaidCheckout(purchase, fromTeleport: fromTeleport)
 
     // An older checkout's poll stops for this one, as it does for one the page reports

@@ -129,8 +129,15 @@ final class NetworkMock: Network {
     throw NetworkError.unknown
   }
 
+  /// Runs while a teleport status request is in flight, before it answers.
+  var whileTeleportStatusRequested: (() async -> Void)?
+
   override func getTeleportStatus(teleportId: String) async throws -> TeleportStatusResponse {
     teleportStatusRequests.append(teleportId)
+    if let whileTeleportStatusRequested {
+      self.whileTeleportStatusRequested = nil
+      await whileTeleportStatusRequested()
+    }
     guard !teleportStatusResponses.isEmpty else {
       throw NetworkError.unknown
     }
