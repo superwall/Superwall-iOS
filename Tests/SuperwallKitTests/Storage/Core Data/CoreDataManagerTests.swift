@@ -47,8 +47,7 @@ class CoreDataManagerTests: XCTestCase {
       XCTAssertEqual(savedPlacementData.name, eventName)
       XCTAssertEqual(savedPlacementData.createdAt, eventData.createdAt)
 
-      let encodedParams = try? JSONEncoder().encode(eventData.parameters)
-      XCTAssertEqual(savedPlacementData.parameters, encodedParams)
+      XCTAssertEqual(savedPlacementData.parameters, Data())
       expectation.fulfill()
     }
 
@@ -70,8 +69,7 @@ class CoreDataManagerTests: XCTestCase {
       XCTAssertEqual(savedPlacementData.name, eventName)
       XCTAssertEqual(savedPlacementData.createdAt, eventData.createdAt)
 
-      let encodedParams = try? JSONEncoder().encode(eventData.parameters)
-      XCTAssertEqual(savedPlacementData.parameters, encodedParams)
+      XCTAssertEqual(savedPlacementData.parameters, Data())
       expectation.fulfill()
     }
 

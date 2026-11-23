@@ -69,6 +69,7 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 - Neither has WebKit, so `#if canImport(WebKit)` marks everything that needs a paywall on screen: the paywall view controller and presentation, debugger, Test Mode, Customer Center, permissions and the SDK's alerts. Build both after any change (`build-platforms.yml` shows the commands); the iOS build won't catch a paywall type leaking into shared code.
 - `register` evaluates audience filters, then `finishWithoutPaywallUI` unlocks the feature as iOS does when a paywall fails to load: skipped, or the paywall is fetched and a non-gated feature runs while a gated one gets error 106. No present or dismiss state is sent, so `register` passes the feature block down. Implicit triggers and paywall preloading do nothing.
 - When a shared `@available`/`#available` names iOS, also name the matching watchOS and tvOS versions, or the `*` lets them through.
+- `TrackingManagerProxy` also builds on tvOS, which has App Tracking Transparency, so the ad consent rule can read the status there. watchOS has none.
 
 ### Code Conventions
 
@@ -116,7 +117,11 @@ When bumping the version, update all three files:
 
 ### Pull Requests
 
-When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPLATE.md`:
+Before opening a PR, run a code review of the change and fix the bugs it finds. Once it's open, fix
+the bugs the review bots report as they come in, or reply to say why not.
+
+When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPLATE.md`, and only
+tick a box for something that was done:
 
 - [ ] All unit tests pass.
 - [ ] All UI tests pass.
@@ -126,6 +131,8 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 - [ ] I added/updated tests or detailed why my change isn't tested.
 - [ ] I added an entry to the `CHANGELOG.md` for any breaking changes, enhancements, or bug fixes.
 - [ ] I have run `swiftlint` in the main directory and fixed any issues.
+- [ ] I ran a code review of this pull request in my coding agent (such as `/code-review` in Claude Code) and fixed the bugs it found.
+- [ ] I fixed the bugs the review bots reported on this pull request, or replied to say why not, and will do the same for any that come in later.
 - [ ] I have updated the SDK documentation as well as the online docs.
 - [ ] I have reviewed the [contributing guide](https://github.com/superwall-me/paywall-ios/tree/master/.github/CONTRIBUTING.md)
 
@@ -299,6 +306,24 @@ is really on screen (`isBrowserOnScreen`); a browser the state has open that isn
   moves to `supersededDismissals` and the new one is left alone.
 - The public `loadingState` mirrors the store and can briefly lag it; SDK code changes it with
   `updateLoading(_:)` and a named `PaywallLoadingChange`, and reads the store to decide things.
+
+### Saved placements
+
+`CoreDataManager` saves when each placement happened, so audience filters can count it or tell how
+long ago it last happened. Only the name and time are saved. The `parameters` column stays in the
+model but is written empty, so the store needs no model migration. Preloading and loading placements
+(`CoreDataManager.unsavedPlacementNames`) aren't saved or counted, and the dashboard doesn't offer
+them in audience filters; keep the two lists in step. `trimSavedPlacements` cleans up a store written
+by earlier versions once, then saves `savedPlacementsTrimVersion` in the store's metadata; raise that
+number when adding to the unsaved names, so stores are cleaned again. The trim works in small steps
+on the context that saves placements, each queued behind whatever is waiting, because the whole of it
+takes seconds on a large store. Don't turn it into one long block: placements saved at launch and
+`reset()` would wait for it. Giving the freed space back means rewriting the whole store, which can't
+be split up, so it waits until the app goes to the background (`reclaimSpaceIfNeeded`) and asks the
+system to keep the app awake for it. It counts as done once SQLite has moved the rewrite into the
+main file (an empty -wal file), never by the file getting smaller: a new install has nothing to give
+back. Something reading the store at that moment makes it fail without an error, so it's tried again
+the next time, up to `spaceReclaimAttempts` times.
 
 ### Native macOS
 

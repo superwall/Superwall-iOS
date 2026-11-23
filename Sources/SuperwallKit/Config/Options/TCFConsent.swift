@@ -17,16 +17,21 @@ enum AdConsentSource: String {
   case `default`
 }
 
-/// The ad consent device attributes report, as their string values.
+/// The ad consent device attributes report, as their string values, with the ATT
+/// status they were worked out from.
 struct ReportedAdConsent: Equatable {
   let adUserData: String
   let adPersonalization: String
   let source: String
+  /// The ATT authorization status as a numeric string, or `nil` where the OS has
+  /// no such concept.
+  let attStatus: String?
 
-  init(adUserData: String, adPersonalization: String, source: String) {
+  init(adUserData: String, adPersonalization: String, source: String, attStatus: String?) {
     self.adUserData = adUserData
     self.adPersonalization = adPersonalization
     self.source = source
+    self.attStatus = attStatus
   }
 
   /// Reads them back from device attributes.
@@ -38,7 +43,12 @@ struct ReportedAdConsent: Equatable {
     else {
       return nil
     }
-    self.init(adUserData: adUserData, adPersonalization: adPersonalization, source: source)
+    self.init(
+      adUserData: adUserData,
+      adPersonalization: adPersonalization,
+      source: source,
+      attStatus: attributes["attStatus"] as? String
+    )
   }
 }
 
