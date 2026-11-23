@@ -16,6 +16,7 @@ import Combine
 private final class Harness: @unchecked Sendable {
   private let lock = NSLock()
 
+  var hasConfig = true
   var featureEnabled = true
   var trackingAllowed = true
   var identity = NotificationTokenManager.Identity(aliasId: "$SuperwallAlias:1", appUserId: nil)
@@ -44,6 +45,9 @@ private final class Harness: @unchecked Sendable {
   var tokenEvents: [PrivateSuperwallEvents.NotificationToken] {
     tracked.compactMap { $0 as? PrivateSuperwallEvents.NotificationToken }
   }
+  var opens: [PrivateSuperwallEvents.NotificationOpen] {
+    tracked.compactMap { $0 as? PrivateSuperwallEvents.NotificationOpen }
+  }
 
   let storage: StorageMock
 
@@ -58,8 +62,8 @@ private final class Harness: @unchecked Sendable {
         self.settingsReads += 1
         return self.settings
       },
+      hasConfig: { [unowned self] in self.hasConfig },
       isFeatureEnabled: { [unowned self] in self.featureEnabled },
-      waitForConfig: {},
       isTrackingAllowed: { [unowned self] in self.trackingAllowed },
       identity: { [unowned self] in self.identity },
       track: { [unowned self] event, onDelivery in
@@ -507,6 +511,102 @@ struct NotificationTokenManagerTests {
     #expect(harness.tokenEvents.count == 2)
   }
 
+  // MARK: - Tracking off
+
+  @Test func optOut_whileTrackingIsOff_isSentIfSuperwallHasTheToken() async {
+    let harness = Harness()
+    let manager = harness.makeManager()
+    manager.setPushToken(token)
+    await manager.waitUntilIdle()
+
+    harness.trackingAllowed = false
+    manager.setEnabled(false)
+    await manager.waitUntilIdle()
+
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [true, false])
+    #expect(harness.tokenEvents.last?.isSentWhenTrackingIsOff == true)
+
+    // Superwall has the opt-out now, so nothing more is sent with tracking off.
+    harness.now = harness.now.addingTimeInterval(25 * 60 * 60)
+    manager.refresh()
+    await manager.waitUntilIdle()
+    #expect(harness.tokenEvents.count == 2)
+  }
+
+  @Test func optOut_whileTrackingIsOff_isNotSentIfSuperwallNeverHadTheToken() async {
+    let harness = Harness()
+    harness.trackingAllowed = false
+    let manager = harness.makeManager()
+
+    manager.setPushToken(token)
+    manager.setEnabled(false)
+    await manager.waitUntilIdle()
+
+    #expect(harness.tracked.isEmpty)
+  }
+
+  @Test func optOut_thatFailedToSend_isSentOnceTrackingIsOff() async {
+    let harness = Harness()
+    let manager = harness.makeManager()
+    manager.setPushToken(token)
+    await manager.waitUntilIdle()
+
+    // The opt-out is dropped before it's uploaded, then tracking is turned off.
+    harness.deliversImmediately = false
+    manager.setEnabled(false)
+    await manager.waitUntilIdle()
+    harness.pendingDeliveries.removeFirst()(false)
+
+    harness.trackingAllowed = false
+    harness.deliversImmediately = true
+    manager.refresh()
+    await manager.waitUntilIdle()
+
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [true, false, false])
+    #expect(harness.storage.get(NotificationTokenStateStorage.self)?.isEnabledAtSuperwall == false)
+  }
+
+  @Test func optIn_whileTrackingIsOff_waitsForTracking() async {
+    let harness = Harness()
+    let manager = harness.makeManager()
+    manager.setPushToken(token)
+    manager.setEnabled(false)
+    await manager.waitUntilIdle()
+
+    harness.trackingAllowed = false
+    manager.setEnabled(true)
+    await manager.waitUntilIdle()
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [true, false])
+
+    harness.trackingAllowed = true
+    manager.refresh()
+    await manager.waitUntilIdle()
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [true, false, true])
+  }
+
+  @Test func olderEventLandingLate_stillSaysWhetherSuperwallCanSend() async {
+    let harness = Harness()
+    harness.deliversImmediately = false
+    let manager = harness.makeManager()
+
+    // Opted in, then out. The opt-in lands; the opt-out's upload fails.
+    manager.setPushToken(token)
+    manager.setEnabled(false)
+    await manager.waitUntilIdle()
+    let deliveries = harness.pendingDeliveries
+    harness.pendingDeliveries = []
+    deliveries[0](true)
+    deliveries[1](false)
+    #expect(harness.storage.get(NotificationTokenStateStorage.self)?.isEnabledAtSuperwall == true)
+
+    // So the opt-out still goes out with tracking off.
+    harness.trackingAllowed = false
+    harness.deliversImmediately = true
+    manager.refresh()
+    await manager.waitUntilIdle()
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [true, false, false])
+  }
+
   // MARK: - Opens
 
   @Test func trackOpen_onlyForSuperwallNotifications() async {
@@ -517,41 +617,74 @@ struct NotificationTokenManagerTests {
     manager.trackOpen(userInfo: ["sw": ["sendId": "send_1", "cpId": "cp_1"]])
     await manager.waitUntilIdle()
 
-    let opens = harness.tracked.compactMap { $0 as? PrivateSuperwallEvents.NotificationOpen }
     #expect(harness.tracked.count == 1)
-    #expect(opens.first?.sendId == "send_1")
-    #expect(opens.first?.contactPointId == "cp_1")
+    #expect(harness.opens.first?.sendId == "send_1")
+    #expect(harness.opens.first?.contactPointId == "cp_1")
   }
 
-  @Test func trackOpen_waitsForConfig() async throws {
+  @Test func trackOpen_waitsForConfig() async {
     let harness = Harness()
-    let config = PassthroughSubject<Bool, Never>()
-    let manager = NotificationTokenManager(
-      storage: harness.storage,
-      notificationSettings: { harness.settings },
-      isFeatureEnabled: { harness.featureEnabled },
-      waitForConfig: {
-        _ = await config.values.first { _ in true }
-      },
-      isTrackingAllowed: { true },
-      identity: { harness.identity },
-      track: { event, _ in
-        harness.recordForTest(event)
-        return true
-      },
-      appVersion: "2.3.4",
-      sdkVersion: "4.18.3"
-    )
+    harness.hasConfig = false
+    let manager = harness.makeManager()
 
     // A tap launches the app before config has arrived.
     manager.trackOpen(userInfo: ["sw": ["sendId": "send_1"]])
-    try await Task.sleep(nanoseconds: 50_000_000)
+    await manager.waitUntilIdle()
     #expect(harness.tracked.isEmpty)
 
-    config.send(true)
-    try await Task.sleep(nanoseconds: 100_000_000)
+    harness.hasConfig = true
+    manager.refresh()
     await manager.waitUntilIdle()
-    #expect(harness.tracked.count == 1)
+    #expect(harness.opens.map { $0.sendId } == ["send_1"])
+
+    // It's only sent once.
+    manager.refresh()
+    await manager.waitUntilIdle()
+    #expect(harness.opens.count == 1)
+  }
+
+  @Test func trackOpen_withoutConfig_isSentOnALaterLaunchWithTheTapTime() async {
+    let harness = Harness()
+    harness.hasConfig = false
+    let manager = harness.makeManager()
+    let openedAt = Date(timeIntervalSince1970: 1_799_000_000)
+
+    manager.trackOpen(userInfo: ["sw": ["sendId": "send_1", "cpId": "cp_1"]], openedAt: openedAt)
+    await manager.waitUntilIdle()
+    #expect(harness.tracked.isEmpty)
+
+    // The app quits before config arrives. It arrives on the next launch.
+    harness.hasConfig = true
+    let relaunched = harness.makeManager()
+    relaunched.refresh()
+    await relaunched.waitUntilIdle()
+
+    #expect(harness.opens.count == 1)
+    #expect(harness.opens.first?.sendId == "send_1")
+    #expect(harness.opens.first?.contactPointId == "cp_1")
+    #expect(harness.opens.first?.occurredAt == openedAt)
+    #expect(harness.storage.get(NotificationHeldOpensStorage.self) == nil)
+  }
+
+  @Test func trackOpen_heldUntilConfig_isDroppedIfTheFlagIsOff() async {
+    let harness = Harness()
+    harness.hasConfig = false
+    harness.featureEnabled = false
+    let manager = harness.makeManager()
+
+    manager.trackOpen(userInfo: ["sw": ["sendId": "send_1"]])
+    await manager.waitUntilIdle()
+
+    harness.hasConfig = true
+    manager.refresh()
+    await manager.waitUntilIdle()
+    #expect(harness.tracked.isEmpty)
+
+    // It isn't kept for when the flag turns on.
+    harness.featureEnabled = true
+    manager.refresh()
+    await manager.waitUntilIdle()
+    #expect(harness.opens.isEmpty)
   }
 
   @Test func trackOpen_flagOff_sendsNothing() async {
@@ -563,6 +696,51 @@ struct NotificationTokenManagerTests {
     await manager.waitUntilIdle()
 
     #expect(harness.tracked.isEmpty)
+  }
+
+  // MARK: - Calls before configure
+
+  @Test func callsBeforeConfigure_areAppliedOnceTheManagerExists() async {
+    let harness = Harness()
+    let router = NotificationCallRouter()
+    let openedAt = Date(timeIntervalSince1970: 1_799_000_000)
+
+    // The app registers for notifications and is opened from one before it
+    // configures Superwall.
+    router.setPushToken(Data([0x01]))
+    router.setPushToken(token)
+    router.setEnabled(false)
+    router.trackOpen(.init(sendId: "send_1", contactPointId: nil, openedAt: openedAt))
+
+    let manager = harness.makeManager()
+    router.attach(manager)
+    await manager.waitUntilIdle()
+
+    // The latest token, sent once with the opt-out applied.
+    #expect(harness.tokenEvents.map { $0.payload.address } == ["deadbeef0001"])
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [false])
+    #expect(harness.opens.map { $0.sendId } == ["send_1"])
+    #expect(harness.opens.first?.occurredAt == openedAt)
+  }
+
+  @Test func callsAfterConfigure_goStraightToTheManager() async {
+    let harness = Harness()
+    let router = NotificationCallRouter()
+    let manager = harness.makeManager()
+    router.attach(manager)
+
+    router.setPushToken(token)
+    router.setEnabled(false)
+    router.trackOpen(.init(sendId: "send_1", contactPointId: nil, openedAt: harness.now))
+    await manager.waitUntilIdle()
+
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [true, false])
+    #expect(harness.opens.count == 1)
+
+    // Nothing is replayed if the manager is attached again.
+    router.attach(manager)
+    await manager.waitUntilIdle()
+    #expect(harness.tracked.count == 3)
   }
 
   // MARK: - Fingerprint

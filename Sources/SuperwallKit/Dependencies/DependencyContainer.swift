@@ -228,11 +228,11 @@ final class DependencyContainer {
         let settings: UNNotificationSettings = await UNUserNotificationCenter.current().notificationSettings()
         return NotificationSettingsSnapshot(settings)
       },
+      hasConfig: { [weak configManager] in
+        configManager?.config != nil
+      },
       isFeatureEnabled: { [weak configManager] in
         configManager?.config?.featureFlags.userNotifications == true
-      },
-      waitForConfig: { [weak configManager] in
-        _ = try? await configManager?.hasConfig.throwableAsync()
       },
       isTrackingAllowed: { [weak configManager] in
         guard let configManager = configManager else {

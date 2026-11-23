@@ -18,9 +18,27 @@ import Foundation
 /// Its ``Trackable/audienceFilterParams`` are sent with the event exactly as
 /// they're keyed: unlike Superwall parameters they aren't given a `$` prefix,
 /// and the events encoder leaves dictionary keys alone.
-protocol PrivateSuperwallEvent: Trackable {}
+protocol PrivateSuperwallEvent: Trackable {
+  /// Whether the event is still sent while `eventTrackingBehavior` is `.none`.
+  ///
+  /// Only for an event that makes Superwall do less with the device, such as
+  /// an opt-out of notifications. Defaults to `false`.
+  var isSentWhenTrackingIsOff: Bool { get }
+
+  /// When what the event reports happened, if that's earlier than when it's
+  /// tracked. It becomes the event's `created_at`. Defaults to `nil`.
+  var occurredAt: Date? { get }
+}
 
 extension PrivateSuperwallEvent {
+  var isSentWhenTrackingIsOff: Bool {
+    return false
+  }
+
+  var occurredAt: Date? {
+    return nil
+  }
+
   var canImplicitlyTriggerPaywall: Bool {
     return false
   }
@@ -45,20 +63,33 @@ enum PrivateSuperwallEvents {
       return Self.name
     }
 
+    /// An opt-out still goes out with tracking off: it stops Superwall
+    /// sending to the device and tells it nothing it didn't already have.
+    var isSentWhenTrackingIsOff: Bool {
+      return !payload.enabled
+    }
+
     var audienceFilterParams: [String: Any] {
       return payload.parameters
     }
   }
 
   /// Tracked when the user opens a notification that Superwall sent.
-  struct NotificationOpen: PrivateSuperwallEvent {
+  struct NotificationOpen: PrivateSuperwallEvent, Codable, Equatable {
     static let name = "notification_open"
 
     let sendId: String
     let contactPointId: String?
+    /// When the user opened the notification. The open can be sent later than
+    /// this, once config has arrived.
+    let openedAt: Date
 
     var rawName: String {
       return Self.name
+    }
+
+    var occurredAt: Date? {
+      return openedAt
     }
 
     var audienceFilterParams: [String: Any] {

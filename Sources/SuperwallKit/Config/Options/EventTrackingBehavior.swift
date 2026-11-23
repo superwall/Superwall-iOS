@@ -16,7 +16,8 @@ import Foundation
 /// - `.superwallOnly`: Only internal Superwall events are tracked. User-initiated
 ///   ``Superwall/track(event:params:)`` calls, trigger fires, and user-attribute updates
 ///   are suppressed. Equivalent to the deprecated `isExternalDataCollectionEnabled = false`.
-/// - `.none`: No events are sent to the Superwall servers. Install-attribution
+/// - `.none`: No events are sent to the Superwall servers, apart from an opt-out
+///   of notifications for a device Superwall already has. Install-attribution
 ///   matching and enrichment are also skipped, so `acquisition_*` user attributes,
 ///   `demandScore` and `demandTier` won't populate and audience rules that rely on
 ///   them won't match. Use `.superwallOnly` if you need that targeting with
@@ -44,6 +45,10 @@ public enum EventTrackingBehavior: Int, CustomStringConvertible, Encodable, Send
   /// so `demandScore` and `demandTier` aren't populated either. Use
   /// ``superwallOnly`` instead if you need attribution-based or demand-based
   /// targeting with minimal tracking.
+  ///
+  /// The one thing still sent is ``Superwall/optOutOfNotifications()``, and
+  /// only if Superwall already has the device's push token, so it stops
+  /// sending notifications to the device.
   case none = 2
 
   public var description: String {

@@ -192,13 +192,17 @@ struct NotificationTokenLogicTests {
 
   // MARK: - Notification open
 
+  private let openedAt = Date(timeIntervalSince1970: 1_800_000_000)
+
   @Test func notificationOpen_readsSendAndContactPoint() {
     let userInfo: [AnyHashable: Any] = [
       "aps": ["alert": "Hello"],
       "sw": ["sendId": "send_123", "cpId": "cp_456"]
     ]
-    let event = NotificationTokenLogic.notificationOpen(fromUserInfo: userInfo)
+    let event = NotificationTokenLogic.notificationOpen(fromUserInfo: userInfo, openedAt: openedAt)
     #expect(event?.sendId == "send_123")
+    #expect(event?.openedAt == openedAt)
+    #expect(event?.occurredAt == openedAt)
     #expect(event?.contactPointId == "cp_456")
     #expect(event?.rawName == "notification_open")
     #expect(event?.audienceFilterParams["sendId"] as? String == "send_123")
@@ -207,17 +211,17 @@ struct NotificationTokenLogicTests {
 
   @Test func notificationOpen_withoutSw_isIgnored() {
     let userInfo: [AnyHashable: Any] = ["aps": ["alert": "Not from Superwall"]]
-    #expect(NotificationTokenLogic.notificationOpen(fromUserInfo: userInfo) == nil)
+    #expect(NotificationTokenLogic.notificationOpen(fromUserInfo: userInfo, openedAt: openedAt) == nil)
   }
 
   @Test func notificationOpen_swWithoutSendId_isIgnored() {
     let userInfo: [AnyHashable: Any] = ["sw": ["cpId": "cp_456"]]
-    #expect(NotificationTokenLogic.notificationOpen(fromUserInfo: userInfo) == nil)
+    #expect(NotificationTokenLogic.notificationOpen(fromUserInfo: userInfo, openedAt: openedAt) == nil)
   }
 
   @Test func notificationOpen_withoutContactPoint() {
     let userInfo: [AnyHashable: Any] = ["sw": ["sendId": "send_123"]]
-    let event = NotificationTokenLogic.notificationOpen(fromUserInfo: userInfo)
+    let event = NotificationTokenLogic.notificationOpen(fromUserInfo: userInfo, openedAt: openedAt)
     #expect(event?.sendId == "send_123")
     #expect(event?.contactPointId == nil)
     #expect(event?.audienceFilterParams["contactPointId"] == nil)

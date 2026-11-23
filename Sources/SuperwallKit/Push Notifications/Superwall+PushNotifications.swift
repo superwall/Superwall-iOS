@@ -13,8 +13,9 @@ extension Superwall {
   /// Registers the device's APNs token with Superwall, so Superwall can send
   /// it push notifications.
   ///
-  /// Call this from your app delegate whenever the system hands you a token.
-  /// It's safe to call on every launch: an unchanged token isn't sent again.
+  /// Call this from your app delegate whenever the system hands you a token,
+  /// after you've configured Superwall. It's safe to call on every launch: an
+  /// unchanged token isn't sent again.
   ///
   /// ```swift
   /// func application(
@@ -38,7 +39,7 @@ extension Superwall {
   ///   `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`.
   @objc(setPushToken:)
   public func setPushToken(_ deviceToken: Data) {
-    dependencyContainer.notificationTokenManager.setPushToken(deviceToken)
+    NotificationCallRouter.shared.setPushToken(deviceToken)
   }
 
   /// Stops Superwall sending push notifications to this device.
@@ -46,9 +47,13 @@ extension Superwall {
   /// The choice is remembered across launches, `reset()` and `identify(userId:)`
   /// until you call ``optInToNotifications()``. It doesn't change the
   /// system's notification permission.
+  ///
+  /// Superwall is told about the opt-out even while
+  /// ``eventTrackingBehavior`` is ``EventTrackingBehavior/none``, if it has
+  /// the device's token from before.
   @objc
   public func optOutOfNotifications() {
-    dependencyContainer.notificationTokenManager.setEnabled(false)
+    NotificationCallRouter.shared.setEnabled(false)
   }
 
   /// Lets Superwall send push notifications to this device again after
@@ -58,7 +63,7 @@ extension Superwall {
   /// opt-out.
   @objc
   public func optInToNotifications() {
-    dependencyContainer.notificationTokenManager.setEnabled(true)
+    NotificationCallRouter.shared.setEnabled(true)
   }
 
   // tvOS has no notification responses: its notifications only badge the app icon.
@@ -66,8 +71,9 @@ extension Superwall {
   /// Tells Superwall the user opened a notification, so it can measure the
   /// notifications it sends.
   ///
-  /// Call this from your `UNUserNotificationCenterDelegate`. Notifications that
-  /// Superwall didn't send are ignored, so you can pass every response in:
+  /// Call this from your `UNUserNotificationCenterDelegate`, after you've
+  /// configured Superwall. Notifications that Superwall didn't send are
+  /// ignored, so you can pass every response in:
   ///
   /// ```swift
   /// func userNotificationCenter(
@@ -84,12 +90,16 @@ extension Superwall {
   /// - Parameter response: The user's response to the notification.
   @objc(handleNotificationResponse:)
   public func handleNotificationResponse(_ response: UNNotificationResponse) {
-    guard response.actionIdentifier != UNNotificationDismissActionIdentifier else {
+    if response.actionIdentifier == UNNotificationDismissActionIdentifier {
       return
     }
-    dependencyContainer.notificationTokenManager.trackOpen(
-      userInfo: response.notification.request.content.userInfo
-    )
+    guard let open = NotificationTokenLogic.notificationOpen(
+      fromUserInfo: response.notification.request.content.userInfo,
+      openedAt: Date()
+    ) else {
+      return
+    }
+    NotificationCallRouter.shared.trackOpen(open)
   }
   #endif
 }

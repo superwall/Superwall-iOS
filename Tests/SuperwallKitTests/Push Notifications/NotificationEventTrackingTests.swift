@@ -84,9 +84,16 @@ struct NotificationEventTrackingTests {
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
     await superwall.track(event)
-    await superwall.track(
-      PrivateSuperwallEvents.NotificationOpen(sendId: "send_1", contactPointId: "cp_1")
+    let openedAt = Date(timeIntervalSince1970: 1_800_000_000)
+    let open = await superwall.track(
+      PrivateSuperwallEvents.NotificationOpen(
+        sendId: "send_1",
+        contactPointId: "cp_1",
+        openedAt: openedAt
+      )
     )
+    // An open is stamped with when the user tapped, not when it's tracked.
+    #expect(open.data.createdAt == openedAt)
     await superwall.track(InternalSuperwallEvent.AppOpen())
 
     let queued = await dependencyContainer.placementsQueue.queuedEventNames

@@ -19,6 +19,8 @@ actor PlacementsQueue {
   private struct QueuedEvent {
     let data: JSON
     let onDelivery: DeliveryHandler?
+    /// Whether it's still sent while the tracking behavior is `.none`.
+    let isSentWhenTrackingIsOff: Bool
   }
 
   private let maxEventCount = 50
@@ -90,10 +92,18 @@ actor PlacementsQueue {
     from placement: Trackable,
     onDelivery: DeliveryHandler? = nil
   ) -> Bool {
-    guard trackingAllowed(from: placement) else {
+    let isSentWhenTrackingIsOff = (placement as? PrivateSuperwallEvent)?.isSentWhenTrackingIsOff == true
+    if !isSentWhenTrackingIsOff,
+      !trackingAllowed(from: placement) {
       return false
     }
-    elements.append(QueuedEvent(data: data, onDelivery: onDelivery))
+    elements.append(
+      QueuedEvent(
+        data: data,
+        onDelivery: onDelivery,
+        isSentWhenTrackingIsOff: isSentWhenTrackingIsOff
+      )
+    )
     return true
   }
 
@@ -102,9 +112,11 @@ actor PlacementsQueue {
     elements.compactMap { $0.data["event_name"].string }
   }
 
+  /// Empties the queue, apart from the events that are sent whatever the
+  /// tracking behavior.
   private func discardQueuedEvents() {
-    let discarded = elements
-    elements.removeAll()
+    let discarded = elements.filter { !$0.isSentWhenTrackingIsOff }
+    elements.removeAll { !$0.isSentWhenTrackingIsOff }
     for event in discarded {
       event.onDelivery?(false)
     }
@@ -136,7 +148,6 @@ actor PlacementsQueue {
   func flushInternal(depth: Int = 10) {
     if trackingBehavior == .none {
       discardQueuedEvents()
-      return
     }
 
     var eventsToSend: [QueuedEvent] = []

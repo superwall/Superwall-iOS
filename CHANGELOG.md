@@ -9,6 +9,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Saves the first deep link received during the first app session as the `firstDeepLinkUrl` user attribute. If you assign deep links to your App Store custom product pages, you can use this attribute to break down results and filter audiences by the product page that drove the install. If you've connected App Store Connect, the page's ID and name are saved too, as `customProductPageId` and `customProductPageName`. Requires `Superwall.handleDeepLink(_:)` to be set up.
 - Adds the user's App Tracking Transparency status as the `attStatus` device attribute.
 - Reports ad user data consent as denied, as well as personalization, when the user has denied App Tracking Transparency or it's restricted, even if you set `adConsent` yourself. If you use the MMP, conversions from these users are no longer sent to Meta or your other ad networks.
+- Adds `Superwall.shared.setPushToken(_:)` so Superwall can send push notifications to the device. Call it from `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`; the SDK doesn't swizzle or ask for notification permission itself.
+- Adds `optOutOfNotifications()` and `optInToNotifications()` to stop and resume Superwall push notifications on the device.
+- Adds `handleNotificationResponse(_:)` to count opens of the notifications Superwall sends. Call it from `userNotificationCenter(_:didReceive:)`.
 
 ### Fixes
 
@@ -33,9 +36,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds watchOS 8+ and tvOS 15+ support through Swift Package Manager, for purchases, subscription status, entitlements, user attributes and events. Paywalls can't be shown there, so when one would show, `register` runs non-gated features and returns an error for gated ones.
-- Adds `Superwall.shared.setPushToken(_:)` so Superwall can send push notifications to the device. Call it from `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`; the SDK doesn't swizzle or ask for notification permission itself.
-- Adds `optOutOfNotifications()` and `optInToNotifications()` to stop and resume Superwall push notifications on the device.
-- Adds `handleNotificationResponse(_:)` to count opens of the notifications Superwall sends. Call it from `userNotificationCenter(_:didReceive:)`.
 
 ### Fixes
 

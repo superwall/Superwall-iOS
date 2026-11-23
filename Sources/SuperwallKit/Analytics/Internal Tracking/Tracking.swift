@@ -30,7 +30,7 @@ extension Superwall {
     onDelivery: PlacementsQueue.DeliveryHandler?
   ) async -> TrackingResult {
     // Get parameters to be sent to the delegate and stored in an event.
-    let eventCreatedAt = Date()
+    let eventCreatedAt = (event as? PrivateSuperwallEvent)?.occurredAt ?? Date()
     let parameters = await TrackingLogic.processParameters(
       fromTrackableEvent: event,
       appSessionId: dependencyContainer.appSessionManager.appSession.id

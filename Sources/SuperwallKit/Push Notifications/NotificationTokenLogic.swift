@@ -253,7 +253,8 @@ enum NotificationTokenLogic {
   ///
   /// Returns `nil` for notifications Superwall didn't send.
   static func notificationOpen(
-    fromUserInfo userInfo: [AnyHashable: Any]
+    fromUserInfo userInfo: [AnyHashable: Any],
+    openedAt: Date
   ) -> PrivateSuperwallEvents.NotificationOpen? {
     guard
       let superwall = userInfo["sw"] as? [String: Any],
@@ -264,7 +265,8 @@ enum NotificationTokenLogic {
     }
     return PrivateSuperwallEvents.NotificationOpen(
       sendId: sendId,
-      contactPointId: superwall["cpId"] as? String
+      contactPointId: superwall["cpId"] as? String,
+      openedAt: openedAt
     )
   }
 }

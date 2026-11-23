@@ -145,6 +145,66 @@ struct PlacementsQueueTests {
     #expect(setup.network.sentEvents.isEmpty)
   }
 
+  // MARK: - Events sent with tracking off
+
+  private func tokenEvent(enabled: Bool) -> PrivateSuperwallEvents.NotificationToken {
+    PrivateSuperwallEvents.NotificationToken(
+      payload: NotificationTokenPayload(
+        address: "deadbeef",
+        apnsEnvironment: .production,
+        apnsTopic: "com.example.app",
+        authorizationOptions: 7,
+        permissionStatus: .authorized,
+        enabled: enabled,
+        appVersion: "2.3.4",
+        sdkVersion: "4.19.2"
+      )
+    )
+  }
+
+  @Test
+  func none_stillSendsANotificationOptOut() async throws {
+    let setup = makeQueue(behavior: .none)
+
+    let optIn = await setup.queue.enqueue(data: stubJSON, from: tokenEvent(enabled: true))
+    let optOut = await setup.queue.enqueue(data: stubJSON, from: tokenEvent(enabled: false))
+    await setup.queue.flushInternal()
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(optIn == false)
+    #expect(optOut == true)
+    #expect(setup.network.sentEvents.count == 1)
+    #expect(setup.network.sentEvents.first?.events.count == 1)
+  }
+
+  @Test
+  func none_setTrackingBehaviorKeepsAQueuedNotificationOptOut() async throws {
+    let setup = makeQueue(behavior: .all)
+    let dropped = DeliveryRecorder()
+    let kept = DeliveryRecorder()
+
+    await setup.queue.enqueue(
+      data: stubJSON,
+      from: InternalSuperwallEvent.AppOpen(),
+      onDelivery: { dropped.record($0) }
+    )
+    await setup.queue.enqueue(
+      data: stubJSON,
+      from: tokenEvent(enabled: false),
+      onDelivery: { kept.record($0) }
+    )
+    await setup.queue.setTrackingBehavior(.none)
+    #expect(dropped.results == [false])
+    #expect(kept.results.isEmpty)
+
+    await setup.queue.flushInternal()
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(kept.results == [true])
+    #expect(setup.network.sentEvents.count == 1)
+    #expect(setup.network.sentEvents.first?.events.count == 1)
+  }
+
   // MARK: - EventTrackingBehavior.superwallOnly
 
   @Test
