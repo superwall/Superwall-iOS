@@ -266,20 +266,35 @@ final class NotificationTokenManager: NotificationTokenContext {
         isTrackingAllowed: isTrackingAllowed()
       )
     )
-    guard case .sendEvent(let number) = outcome else {
+    guard case let .sendEvent(number, isSentWhenTrackingIsOff) = outcome else {
       return
     }
 
     // Only marked as sent once Superwall has it. If the upload fails, the
     // queue is emptied first or the app quits before it's sent, the next
     // refresh sends it again.
-    let enabled = payload.enabled
-    let event = PrivateSuperwallEvents.NotificationToken(payload: payload)
+    let event = PrivateSuperwallEvents.NotificationToken(
+      payload: payload,
+      isSentWhenTrackingIsOff: isSentWhenTrackingIsOff
+    )
     let isQueued = await track(event) { [weak self] isDelivered in
-      self?.dispatch(.finishEvent(number: number, enabled: enabled, isDelivered: isDelivered))
+      self?.finishEvent(number, payload: payload, isDelivered: isDelivered)
     }
     if !isQueued {
-      dispatch(.finishEvent(number: number, enabled: enabled, isDelivered: false))
+      finishEvent(number, payload: payload, isDelivered: false)
+    }
+  }
+
+  private func finishEvent(
+    _ number: Int,
+    payload: NotificationTokenPayload,
+    isDelivered: Bool
+  ) {
+    let outcome = dispatch(
+      .finishEvent(number: number, payload: payload, isDelivered: isDelivered)
+    )
+    if outcome == .reportAgain {
+      refresh()
     }
   }
 
@@ -300,7 +315,11 @@ final class NotificationTokenManager: NotificationTokenContext {
       _ = await track(open) { _ in }
     }
   }
+}
 
+// MARK: - Deciding what to send
+
+extension NotificationTokenManager {
   static func shouldSend(
     fingerprint: String,
     lastSent: NotificationTokenLastSent?,

@@ -147,7 +147,9 @@ struct PlacementsQueueTests {
 
   // MARK: - Events sent with tracking off
 
-  private func tokenEvent(enabled: Bool) -> PrivateSuperwallEvents.NotificationToken {
+  /// An opt-out token event. `isOwed` is whether Superwall already has the
+  /// token opted in, which is what lets it go with tracking off.
+  private func optOutEvent(isOwed: Bool) -> PrivateSuperwallEvents.NotificationToken {
     PrivateSuperwallEvents.NotificationToken(
       payload: NotificationTokenPayload(
         address: "deadbeef",
@@ -155,10 +157,11 @@ struct PlacementsQueueTests {
         apnsTopic: "com.example.app",
         authorizationOptions: 7,
         permissionStatus: .authorized,
-        enabled: enabled,
+        enabled: false,
         appVersion: "2.3.4",
         sdkVersion: "4.19.2"
-      )
+      ),
+      isSentWhenTrackingIsOff: isOwed
     )
   }
 
@@ -166,12 +169,12 @@ struct PlacementsQueueTests {
   func none_stillSendsANotificationOptOut() async throws {
     let setup = makeQueue(behavior: .none)
 
-    let optIn = await setup.queue.enqueue(data: stubJSON, from: tokenEvent(enabled: true))
-    let optOut = await setup.queue.enqueue(data: stubJSON, from: tokenEvent(enabled: false))
+    let unknownToken = await setup.queue.enqueue(data: stubJSON, from: optOutEvent(isOwed: false))
+    let optOut = await setup.queue.enqueue(data: stubJSON, from: optOutEvent(isOwed: true))
     await setup.queue.flushInternal()
     try await Task.sleep(nanoseconds: 100_000_000)
 
-    #expect(optIn == false)
+    #expect(unknownToken == false)
     #expect(optOut == true)
     #expect(setup.network.sentEvents.count == 1)
     #expect(setup.network.sentEvents.first?.events.count == 1)
@@ -181,6 +184,7 @@ struct PlacementsQueueTests {
   func none_setTrackingBehaviorKeepsAQueuedNotificationOptOut() async throws {
     let setup = makeQueue(behavior: .all)
     let dropped = DeliveryRecorder()
+    let unknownToken = DeliveryRecorder()
     let kept = DeliveryRecorder()
 
     await setup.queue.enqueue(
@@ -188,13 +192,20 @@ struct PlacementsQueueTests {
       from: InternalSuperwallEvent.AppOpen(),
       onDelivery: { dropped.record($0) }
     )
+    // An opt-out carrying a token Superwall hasn't had is dropped too.
     await setup.queue.enqueue(
       data: stubJSON,
-      from: tokenEvent(enabled: false),
+      from: optOutEvent(isOwed: false),
+      onDelivery: { unknownToken.record($0) }
+    )
+    await setup.queue.enqueue(
+      data: stubJSON,
+      from: optOutEvent(isOwed: true),
       onDelivery: { kept.record($0) }
     )
     await setup.queue.setTrackingBehavior(.none)
     #expect(dropped.results == [false])
+    #expect(unknownToken.results == [false])
     #expect(kept.results.isEmpty)
 
     await setup.queue.flushInternal()

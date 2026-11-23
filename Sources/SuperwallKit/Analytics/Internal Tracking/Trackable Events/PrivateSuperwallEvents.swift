@@ -58,15 +58,20 @@ enum PrivateSuperwallEvents {
     static let name = "notification_token"
 
     let payload: NotificationTokenPayload
+    /// `true` only for an opt-out of a token Superwall already has opted in:
+    /// it stops Superwall sending to the device and tells it nothing new.
+    let isSentWhenTrackingIsOff: Bool
+
+    init(
+      payload: NotificationTokenPayload,
+      isSentWhenTrackingIsOff: Bool = false
+    ) {
+      self.payload = payload
+      self.isSentWhenTrackingIsOff = isSentWhenTrackingIsOff
+    }
 
     var rawName: String {
       return Self.name
-    }
-
-    /// An opt-out still goes out with tracking off: it stops Superwall
-    /// sending to the device and tells it nothing it didn't already have.
-    var isSentWhenTrackingIsOff: Bool {
-      return !payload.enabled
     }
 
     var audienceFilterParams: [String: Any] {

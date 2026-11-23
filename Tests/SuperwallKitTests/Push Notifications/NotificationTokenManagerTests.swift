@@ -545,6 +545,60 @@ struct NotificationTokenManagerTests {
     #expect(harness.tracked.isEmpty)
   }
 
+  @Test func optOut_withATokenSuperwallNeverHad_isNotMarkedToSendWithTrackingOff() async {
+    let harness = Harness()
+    harness.deliversImmediately = false
+    let manager = harness.makeManager()
+
+    // Queued while tracking is on. If tracking is turned off before it's
+    // uploaded, the queue has to drop it: the token would be new to Superwall.
+    manager.setEnabled(false)
+    manager.setPushToken(token)
+    await manager.waitUntilIdle()
+
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [false])
+    #expect(harness.tokenEvents.first?.isSentWhenTrackingIsOff == false)
+  }
+
+  @Test func optOut_whileTrackingIsOff_isNotSentForANewToken() async {
+    let harness = Harness()
+    let manager = harness.makeManager()
+    manager.setPushToken(token)
+    await manager.waitUntilIdle()
+
+    // The device gets a new token, which Superwall hasn't had.
+    harness.trackingAllowed = false
+    manager.setPushToken(Data([0x01, 0x02]))
+    manager.setEnabled(false)
+    await manager.waitUntilIdle()
+
+    #expect(harness.tokenEvents.count == 1)
+  }
+
+  @Test func optOut_whileTheOptInIsUploading_isSentOnceItLands() async {
+    let harness = Harness()
+    harness.deliversImmediately = false
+    let manager = harness.makeManager()
+    manager.setPushToken(token)
+    await manager.waitUntilIdle()
+
+    // Tracking is turned off and the app opts out while the opt-in is being
+    // uploaded. Superwall doesn't have the token yet, so the opt-out waits.
+    harness.trackingAllowed = false
+    manager.setEnabled(false)
+    await manager.waitUntilIdle()
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [true])
+
+    // The opt-in lands, so the opt-out follows it without another trigger.
+    harness.deliversImmediately = true
+    harness.pendingDeliveries.removeFirst()(true)
+    await manager.waitUntilIdle()
+
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [true, false])
+    #expect(harness.tokenEvents.last?.isSentWhenTrackingIsOff == true)
+    #expect(harness.storage.get(NotificationTokenStateStorage.self)?.addressEnabledAtSuperwall == nil)
+  }
+
   @Test func optOut_thatFailedToSend_isSentOnceTrackingIsOff() async {
     let harness = Harness()
     let manager = harness.makeManager()
@@ -563,7 +617,7 @@ struct NotificationTokenManagerTests {
     await manager.waitUntilIdle()
 
     #expect(harness.tokenEvents.map { $0.payload.enabled } == [true, false, false])
-    #expect(harness.storage.get(NotificationTokenStateStorage.self)?.isEnabledAtSuperwall == false)
+    #expect(harness.storage.get(NotificationTokenStateStorage.self)?.addressEnabledAtSuperwall == nil)
   }
 
   @Test func optIn_whileTrackingIsOff_waitsForTracking() async {
@@ -597,7 +651,7 @@ struct NotificationTokenManagerTests {
     harness.pendingDeliveries = []
     deliveries[0](true)
     deliveries[1](false)
-    #expect(harness.storage.get(NotificationTokenStateStorage.self)?.isEnabledAtSuperwall == true)
+    #expect(harness.storage.get(NotificationTokenStateStorage.self)?.addressEnabledAtSuperwall == "deadbeef0001")
 
     // So the opt-out still goes out with tracking off.
     harness.trackingAllowed = false

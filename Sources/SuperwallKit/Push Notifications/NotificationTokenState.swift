@@ -21,9 +21,9 @@ struct NotificationTokenState: Codable, Equatable {
   var apnsTopic: String?
   var authorizationOptions: Int?
   var permissionStatus: NotificationPermissionStatus?
-  /// Whether the newest token event known to have reached Superwall opted the
-  /// device in. While it's `true`, Superwall believes it can send to the device.
-  var isEnabledAtSuperwall = false
+  /// The token Superwall believes it can send to: the address in the newest
+  /// token event known to have reached it, if that event opted the device in.
+  var addressEnabledAtSuperwall: String?
 }
 
 /// The last `notification_token` event that was sent.
@@ -31,43 +31,6 @@ struct NotificationTokenLastSent: Codable, Equatable {
   /// A hash of the event's parameters and the identity it was sent for.
   let fingerprint: String
   let sentAt: Date
-}
-
-// MARK: - Storage
-
-/// The device's latest push token, its notification permission and whether
-/// the app has opted it out of Superwall notifications.
-///
-/// Device-scoped, so it survives `reset()`: the token belongs to the install,
-/// not the user, and the opt-out is the app's choice for the device. It's only
-/// ever sent in a `notification_token` event, never as a user or device
-/// attribute.
-enum NotificationTokenStateStorage: Storable {
-  static var key: String {
-    "store.notificationTokenState"
-  }
-  static var directory: SearchPathDirectory = .appSpecificDocuments
-  typealias Value = NotificationTokenState
-}
-
-/// A fingerprint of the last `notification_token` event sent and when it was
-/// sent, so an unchanged state is only re-sent once a day.
-enum NotificationTokenLastSentStorage: Storable {
-  static var key: String {
-    "store.notificationTokenLastSent"
-  }
-  static var directory: SearchPathDirectory = .appSpecificDocuments
-  typealias Value = NotificationTokenLastSent
-}
-
-/// Notification opens that arrived before config, kept so they're still
-/// counted if config only arrives on a later launch.
-enum NotificationHeldOpensStorage: Storable {
-  static var key: String {
-    "store.notificationHeldOpens"
-  }
-  static var directory: SearchPathDirectory = .appSpecificDocuments
-  typealias Value = [PrivateSuperwallEvents.NotificationOpen]
 }
 
 // MARK: - State
@@ -128,8 +91,13 @@ enum NotificationReportingUpdate: Reducer {
   /// A token event's upload finished, or it was dropped before being sent.
   ///
   /// Only the latest event's result says what Superwall ends up with, so an
-  /// older one changes nothing but whether the device is enabled there.
-  case eventFinished(number: Int, enabled: Bool, isDelivered: Bool, date: Date)
+  /// older one changes nothing but which token is enabled there.
+  case eventFinished(
+    number: Int,
+    payload: NotificationTokenPayload,
+    isDelivered: Bool,
+    date: Date
+  )
   /// A notification was opened before config arrived.
   case openHeld(PrivateSuperwallEvents.NotificationOpen)
   /// The held opens were taken, to be sent or dropped.
@@ -168,11 +136,11 @@ extension NotificationReportingState {
         fingerprint: fingerprint
       )
       state.lastSent = nil
-    case let .eventFinished(number, enabled, isDelivered, date):
+    case let .eventFinished(number, payload, isDelivered, date):
       if isDelivered,
         number > state.lastDeliveredNumber {
         state.lastDeliveredNumber = number
-        state.registration.isEnabledAtSuperwall = enabled
+        state.registration.addressEnabledAtSuperwall = payload.enabled ? payload.address : nil
       }
       guard
         let pendingEvent = state.pendingEvent,
@@ -199,6 +167,16 @@ extension NotificationReportingState {
     return state
   }
 
+  /// Whether a token event for `payload` may be sent while tracking is off:
+  /// only an opt-out of the token Superwall believes it can send to, which
+  /// tells it nothing it doesn't have.
+  func canSendWithTrackingOff(_ payload: NotificationTokenPayload) -> Bool {
+    if payload.enabled {
+      return false
+    }
+    return registration.addressEnabledAtSuperwall == payload.address
+  }
+
   /// Whether a token event with `fingerprint` should be queued.
   func shouldQueueEvent(
     for payload: NotificationTokenPayload,
@@ -206,15 +184,9 @@ extension NotificationReportingState {
     isTrackingAllowed: Bool,
     now: Date
   ) -> Bool {
-    // With tracking off, the only thing sent is an opt-out Superwall hasn't
-    // had, for a device it believes it can send to.
-    if !isTrackingAllowed {
-      if payload.enabled {
-        return false
-      }
-      if !registration.isEnabledAtSuperwall {
-        return false
-      }
+    if !isTrackingAllowed,
+      !canSendWithTrackingOff(payload) {
+      return false
     }
     if let pendingEvent = pendingEvent {
       // The same state is on its way. A different one would land after the
@@ -259,8 +231,13 @@ enum NotificationTokenAction: StoreAction {
   enum Outcome: Equatable {
     case done
     /// A token event was claimed and should be tracked. The number matches
-    /// its delivery result to it.
-    case sendEvent(number: Int)
+    /// its delivery result to it. `isSentWhenTrackingIsOff` says whether it
+    /// may still be uploaded if tracking is turned off before it is.
+    case sendEvent(number: Int, isSentWhenTrackingIsOff: Bool)
+    /// Superwall turned out to have the device opted in while the app has it
+    /// opted out and nothing is on its way, so the state should be reported
+    /// again.
+    case reportAgain
     /// The opens that were held, oldest first.
     case opens([PrivateSuperwallEvents.NotificationOpen])
   }
@@ -284,8 +261,13 @@ enum NotificationTokenAction: StoreAction {
     fingerprint: String,
     isTrackingAllowed: Bool
   )
-  /// Records whether a token event reached Superwall.
-  case finishEvent(number: Int, enabled: Bool, isDelivered: Bool)
+  /// Records whether a token event reached Superwall. Returns
+  /// ``Outcome/reportAgain`` if that leaves an opt-out to send.
+  case finishEvent(
+    number: Int,
+    payload: NotificationTokenPayload,
+    isDelivered: Bool
+  )
   /// Keeps an open until config arrives.
   case holdOpen(PrivateSuperwallEvents.NotificationOpen)
   /// Hands back the held opens and forgets them.
@@ -295,53 +277,12 @@ enum NotificationTokenAction: StoreAction {
   func execute(in context: NotificationTokenContext) -> Outcome {
     let store = context.store
     let before = store.state
-    var outcome = Outcome.done
+    let outcome = apply(in: context, to: before)
 
-    switch self {
-    case let .load(registration, lastSent, heldOpens):
-      store.update(
-        NotificationReportingUpdate.loaded(
-          registration: registration,
-          lastSent: lastSent,
-          heldOpens: heldOpens
-        )
-      )
-      // It's what storage already holds.
+    // What `load` took on is what storage already holds.
+    if case .load = self {
       return outcome
-    case .receiveToken(let address):
-      store.update(NotificationReportingUpdate.tokenReceived(address: address))
-    case .setEnabled(let isEnabled):
-      store.update(isEnabled ? NotificationReportingUpdate.optedIn : .optedOut)
-    case .recordSettings(let payload):
-      store.update(NotificationReportingUpdate.settingsRead(payload))
-    case let .queueEvent(payload, fingerprint, isTrackingAllowed):
-      let shouldQueue = before.shouldQueueEvent(
-        for: payload,
-        fingerprint: fingerprint,
-        isTrackingAllowed: isTrackingAllowed,
-        now: context.currentDate
-      )
-      if !shouldQueue {
-        return outcome
-      }
-      store.update(NotificationReportingUpdate.eventQueued(fingerprint: fingerprint))
-      outcome = .sendEvent(number: store.state.lastEventNumber)
-    case let .finishEvent(number, enabled, isDelivered):
-      store.update(
-        NotificationReportingUpdate.eventFinished(
-          number: number,
-          enabled: enabled,
-          isDelivered: isDelivered,
-          date: context.currentDate
-        )
-      )
-    case .holdOpen(let open):
-      store.update(NotificationReportingUpdate.openHeld(open))
-    case .takeHeldOpens:
-      outcome = .opens(before.heldOpens)
-      store.update(NotificationReportingUpdate.heldOpensTaken)
     }
-
     let after = store.state
     if after.registration != before.registration {
       context.save(after.registration)
@@ -353,5 +294,71 @@ enum NotificationTokenAction: StoreAction {
       context.save(heldOpens: after.heldOpens)
     }
     return outcome
+  }
+
+  /// Makes the action's change to the store, whose state was `state`, and
+  /// returns what it reports back.
+  private func apply(
+    in context: NotificationTokenContext,
+    to state: NotificationReportingState
+  ) -> Outcome {
+    let store = context.store
+
+    switch self {
+    case let .load(registration, lastSent, heldOpens):
+      store.update(
+        NotificationReportingUpdate.loaded(
+          registration: registration,
+          lastSent: lastSent,
+          heldOpens: heldOpens
+        )
+      )
+    case .receiveToken(let address):
+      store.update(NotificationReportingUpdate.tokenReceived(address: address))
+    case .setEnabled(let isEnabled):
+      store.update(isEnabled ? NotificationReportingUpdate.optedIn : .optedOut)
+    case .recordSettings(let payload):
+      store.update(NotificationReportingUpdate.settingsRead(payload))
+    case let .queueEvent(payload, fingerprint, isTrackingAllowed):
+      let shouldQueue = state.shouldQueueEvent(
+        for: payload,
+        fingerprint: fingerprint,
+        isTrackingAllowed: isTrackingAllowed,
+        now: context.currentDate
+      )
+      if !shouldQueue {
+        return .done
+      }
+      store.update(NotificationReportingUpdate.eventQueued(fingerprint: fingerprint))
+      return .sendEvent(
+        number: store.state.lastEventNumber,
+        isSentWhenTrackingIsOff: state.canSendWithTrackingOff(payload)
+      )
+    case let .finishEvent(number, payload, isDelivered):
+      store.update(
+        NotificationReportingUpdate.eventFinished(
+          number: number,
+          payload: payload,
+          isDelivered: isDelivered,
+          date: context.currentDate
+        )
+      )
+      // An opt-out held back while tracking was off, because Superwall didn't
+      // have the token yet, can go now that this opt-in has landed.
+      let finished = store.state
+      if isDelivered,
+        payload.enabled,
+        !finished.registration.enabled,
+        finished.pendingEvent == nil,
+        finished.registration.addressEnabledAtSuperwall != nil {
+        return .reportAgain
+      }
+    case .holdOpen(let open):
+      store.update(NotificationReportingUpdate.openHeld(open))
+    case .takeHeldOpens:
+      store.update(NotificationReportingUpdate.heldOpensTaken)
+      return .opens(state.heldOpens)
+    }
+    return .done
   }
 }

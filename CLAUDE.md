@@ -194,9 +194,11 @@ day.
   the token event with the latest `created_at`, so a batch that lands late can't
   undo a newer one; the SDK doesn't need to order uploads.
 - While `eventTrackingBehavior` is `.none` the one thing sent is an opt-out, and
-  only when the newest token event Superwall has opted the device in
-  (`isEnabledAtSuperwall`). `isSentWhenTrackingIsOff` lets that event through the
-  queue. Don't use it for anything that tells Superwall something new.
+  only for the token that the newest token event Superwall has opted in
+  (`addressEnabledAtSuperwall`). The manager sets `isSentWhenTrackingIsOff` on
+  that event alone, which lets it through the queue; an opt-out carrying a
+  token Superwall hasn't had is dropped like any other event. Don't use the
+  flag for anything that tells Superwall something new.
 - Opens that arrive before config are saved and sent, with the time of the tap,
   once config arrives, on a later launch if need be.
 - The public calls go through `NotificationCallRouter`, which keeps a token,

@@ -82,7 +82,7 @@ struct NotificationReportingUpdateTests {
   func eventQueued() {
     let sent = state(
       .eventQueued(fingerprint: "a"),
-      .eventFinished(number: 1, enabled: true, isDelivered: true, date: now)
+      .eventFinished(number: 1, payload: payload(enabled: true), isDelivered: true, date: now)
     )
     #expect(sent.lastSent == NotificationTokenLastSent(fingerprint: "a", sentAt: now))
 
@@ -96,19 +96,19 @@ struct NotificationReportingUpdateTests {
   func eventFinished() {
     let delivered = state(
       .eventQueued(fingerprint: "a"),
-      .eventFinished(number: 1, enabled: true, isDelivered: true, date: now)
+      .eventFinished(number: 1, payload: payload(enabled: true), isDelivered: true, date: now)
     )
     #expect(delivered.pendingEvent == nil)
     #expect(delivered.lastSent?.fingerprint == "a")
-    #expect(delivered.registration.isEnabledAtSuperwall)
+    #expect(delivered.registration.addressEnabledAtSuperwall == "deadbeef")
 
     let failed = state(
       .eventQueued(fingerprint: "a"),
-      .eventFinished(number: 1, enabled: true, isDelivered: false, date: now)
+      .eventFinished(number: 1, payload: payload(enabled: true), isDelivered: false, date: now)
     )
     #expect(failed.pendingEvent == nil)
     #expect(failed.lastSent == nil)
-    #expect(failed.registration.isEnabledAtSuperwall == false)
+    #expect(failed.registration.addressEnabledAtSuperwall == nil)
   }
 
   @Test("eventFinished for an older event leaves the latest one pending")
@@ -116,24 +116,24 @@ struct NotificationReportingUpdateTests {
     let result = state(
       .eventQueued(fingerprint: "a"),
       .eventQueued(fingerprint: "b"),
-      .eventFinished(number: 1, enabled: true, isDelivered: true, date: now)
+      .eventFinished(number: 1, payload: payload(enabled: true), isDelivered: true, date: now)
     )
     #expect(result.pendingEvent == NotificationReportingState.PendingEvent(number: 2, fingerprint: "b"))
     #expect(result.lastSent == nil)
-    // It still says Superwall can send to the device.
-    #expect(result.registration.isEnabledAtSuperwall)
+    // It still says Superwall can send to the token.
+    #expect(result.registration.addressEnabledAtSuperwall == "deadbeef")
   }
 
-  @Test("the newest delivered event decides whether the device is enabled at Superwall")
+  @Test("the newest delivered event decides which token is enabled at Superwall")
   func eventFinished_enabledAtSuperwall() {
     let optedOut = state(
       .eventQueued(fingerprint: "a"),
       .eventQueued(fingerprint: "b"),
-      .eventFinished(number: 2, enabled: false, isDelivered: true, date: now),
+      .eventFinished(number: 2, payload: payload(enabled: false), isDelivered: true, date: now),
       // The older opt-in reports back after the opt-out.
-      .eventFinished(number: 1, enabled: true, isDelivered: true, date: now)
+      .eventFinished(number: 1, payload: payload(enabled: true), isDelivered: true, date: now)
     )
-    #expect(optedOut.registration.isEnabledAtSuperwall == false)
+    #expect(optedOut.registration.addressEnabledAtSuperwall == nil)
     #expect(optedOut.lastSent?.fingerprint == "b")
   }
 
@@ -156,12 +156,13 @@ struct NotificationShouldQueueEventTests {
   private func shouldQueue(
     _ state: NotificationReportingState,
     enabled: Bool = true,
+    address: String = "deadbeef",
     fingerprint: String = "a",
     isTrackingAllowed: Bool = true,
     at date: Date = now
   ) -> Bool {
     state.shouldQueueEvent(
-      for: payload(enabled: enabled),
+      for: payload(enabled: enabled, address: address),
       fingerprint: fingerprint,
       isTrackingAllowed: isTrackingAllowed,
       now: date
@@ -170,7 +171,7 @@ struct NotificationShouldQueueEventTests {
 
   private let sentA = state(
     .eventQueued(fingerprint: "a"),
-    .eventFinished(number: 1, enabled: true, isDelivered: true, date: now)
+    .eventFinished(number: 1, payload: payload(enabled: true), isDelivered: true, date: now)
   )
 
   @Test("a state that was never sent is queued")
@@ -204,10 +205,15 @@ struct NotificationShouldQueueEventTests {
       shouldQueue(NotificationReportingState(), enabled: false, isTrackingAllowed: false) == false
     )
 
+    // The device's token has changed to one Superwall hasn't had.
+    #expect(
+      shouldQueue(sentA, enabled: false, address: "new", fingerprint: "out", isTrackingAllowed: false) == false
+    )
+
     // Superwall already has the opt-out.
     let optedOut = sentA
       .applying(.eventQueued(fingerprint: "out"))
-      .applying(.eventFinished(number: 2, enabled: false, isDelivered: true, date: now))
+      .applying(.eventFinished(number: 2, payload: payload(enabled: false), isDelivered: true, date: now))
     #expect(shouldQueue(optedOut, enabled: false, fingerprint: "out", isTrackingAllowed: false) == false)
   }
 }
@@ -279,7 +285,7 @@ struct NotificationTokenActionTests {
     let first = context.dispatch(
       .queueEvent(payload: payload(), fingerprint: "a", isTrackingAllowed: true)
     )
-    #expect(first == .sendEvent(number: 1))
+    #expect(first == .sendEvent(number: 1, isSentWhenTrackingIsOff: false))
 
     // The same state again is already on its way.
     let repeated = context.dispatch(
@@ -287,9 +293,9 @@ struct NotificationTokenActionTests {
     )
     #expect(repeated == .done)
 
-    context.dispatch(.finishEvent(number: 1, enabled: true, isDelivered: true))
+    context.dispatch(.finishEvent(number: 1, payload: payload(enabled: true), isDelivered: true))
     var enabledAtSuperwall = NotificationTokenState()
-    enabledAtSuperwall.isEnabledAtSuperwall = true
+    enabledAtSuperwall.addressEnabledAtSuperwall = "deadbeef"
     #expect(context.saves == [
       .registration(enabledAtSuperwall),
       .lastSent(NotificationTokenLastSent(fingerprint: "a", sentAt: now))
@@ -298,7 +304,8 @@ struct NotificationTokenActionTests {
     let next = context.dispatch(
       .queueEvent(payload: payload(enabled: false), fingerprint: "b", isTrackingAllowed: true)
     )
-    #expect(next == .sendEvent(number: 2))
+    // Superwall has this token opted in, so the opt-out may go with tracking off.
+    #expect(next == .sendEvent(number: 2, isSentWhenTrackingIsOff: true))
     #expect(context.saves.last == .lastSent(nil))
   }
 
@@ -313,11 +320,47 @@ struct NotificationTokenActionTests {
     #expect(context.saves.isEmpty)
   }
 
+  @Test("an opt-in landing while the app has opted out asks for another report")
+  func finishEvent_optOutOwed() {
+    let context = FakeNotificationContext()
+    context.dispatch(.receiveToken(address: "deadbeef"))
+    context.dispatch(.queueEvent(payload: payload(), fingerprint: "a", isTrackingAllowed: true))
+    // Held back: tracking is off and Superwall doesn't have the token yet.
+    context.dispatch(.setEnabled(false))
+    let optOut = context.dispatch(
+      .queueEvent(payload: payload(enabled: false), fingerprint: "b", isTrackingAllowed: false)
+    )
+    #expect(optOut == .done)
+
+    let landed = context.dispatch(.finishEvent(number: 1, payload: payload(), isDelivered: true))
+    #expect(landed == .reportAgain)
+  }
+
+  @Test("an opt-in landing asks for nothing more when the app hasn't opted out or an event is on its way")
+  func finishEvent_nothingOwed() {
+    let optedIn = FakeNotificationContext()
+    optedIn.dispatch(.queueEvent(payload: payload(), fingerprint: "a", isTrackingAllowed: true))
+    #expect(optedIn.dispatch(.finishEvent(number: 1, payload: payload(), isDelivered: true)) == .done)
+
+    // The opt-out is already on its way behind the opt-in.
+    let pending = FakeNotificationContext()
+    pending.dispatch(.queueEvent(payload: payload(), fingerprint: "a", isTrackingAllowed: true))
+    pending.dispatch(.setEnabled(false))
+    pending.dispatch(.queueEvent(payload: payload(enabled: false), fingerprint: "b", isTrackingAllowed: true))
+    #expect(pending.dispatch(.finishEvent(number: 1, payload: payload(), isDelivered: true)) == .done)
+
+    // The opt-in's upload failed, so Superwall has nothing to undo.
+    let failed = FakeNotificationContext()
+    failed.dispatch(.queueEvent(payload: payload(), fingerprint: "a", isTrackingAllowed: true))
+    failed.dispatch(.setEnabled(false))
+    #expect(failed.dispatch(.finishEvent(number: 1, payload: payload(), isDelivered: false)) == .done)
+  }
+
   @Test("finishEvent that fails saves nothing")
   func finishEvent_failed() {
     let context = FakeNotificationContext()
     context.dispatch(.queueEvent(payload: payload(), fingerprint: "a", isTrackingAllowed: true))
-    context.dispatch(.finishEvent(number: 1, enabled: true, isDelivered: false))
+    context.dispatch(.finishEvent(number: 1, payload: payload(enabled: true), isDelivered: false))
 
     #expect(context.store.state.pendingEvent == nil)
     #expect(context.saves.isEmpty)
