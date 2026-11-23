@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 struct PathsListView: View {
@@ -69,3 +70,4 @@ struct PathsListView: View {
     }
   }
 }
+#endif

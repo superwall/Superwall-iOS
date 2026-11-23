@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 28/08/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 /// Pushes one of the Customer Center's own screens — purchase history, purchase detail.
@@ -154,3 +155,4 @@ struct PushedSurfaces: Equatable {
     claims.removeAll { $0.id == id }
   }
 }
+#endif

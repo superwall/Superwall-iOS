@@ -5,6 +5,8 @@
 //  Created by Claude on 2026-02-05.
 //
 
+#if canImport(WebKit)
+#if !os(macOS)
 import UIKit
 
 /// A cell displaying a label, detail text, and optional copy/view buttons.
@@ -138,3 +140,5 @@ final class TestModeInfoCell: UITableViewCell {
     }
   }
 }
+#endif
+#endif

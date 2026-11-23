@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Builds display-ready `PurchasePresentation` rows from raw `CustomerInfo`.
@@ -269,3 +270,4 @@ extension SubscriptionTransaction {
     return isActive || hasBillingIssue
   }
 }
+#endif

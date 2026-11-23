@@ -5,6 +5,8 @@
 //  Created by Claude on 2026-02-05.
 //
 
+#if canImport(WebKit)
+#if !os(macOS)
 import UIKit
 
 // MARK: - DeviceAttributesViewController
@@ -289,3 +291,5 @@ final class DeviceAttributeCell: UITableViewCell {
     }
   }
 }
+#endif
+#endif

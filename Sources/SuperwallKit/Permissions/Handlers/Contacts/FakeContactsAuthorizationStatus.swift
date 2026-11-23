@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 13/01/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 @objc enum FakeContactsAuthorizationStatus: Int {
@@ -24,3 +25,4 @@ extension FakeContactsAuthorizationStatus: CustomStringConvertible {
     }
   }
 }
+#endif

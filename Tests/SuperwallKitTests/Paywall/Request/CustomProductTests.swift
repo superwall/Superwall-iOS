@@ -351,7 +351,7 @@ struct CustomProductTests {
     let product = makeCustomStoreProduct()
     #expect(product.customTransactionId == nil)
 
-    await dependencyContainer.transactionManager.prepareToPurchase(
+    let purchase = await dependencyContainer.transactionManager.prepareToPurchase(
       product: product,
       purchaseSource: .purchaseFunc(product)
     )
@@ -360,10 +360,11 @@ struct CustomProductTests {
     #expect(idForCheckout.flatMap(UUID.init(uuidString:)) != nil)
 
     // ...is the original transaction id `transaction_complete` reports.
-    let transaction = await dependencyContainer.transactionManager.latestTransaction(
-      for: product,
-      purchaseDate: Date()
-    )
+    guard let purchase else {
+      Issue.record("Expected the purchase to begin")
+      return
+    }
+    let transaction = await dependencyContainer.transactionManager.latestTransaction(for: purchase)
     #expect(transaction?.originalTransactionIdentifier == idForCheckout)
 
     // Each purchase attempt gets its own id.
@@ -396,7 +397,7 @@ struct CustomProductTests {
     )
 
     let coordinator = dependencyContainer.makePurchasingCoordinator()
-    #expect(await coordinator.isFreeTrialAvailable)
+    #expect(coordinator.purchase?.isFreeTrialAvailable == true)
   }
 
   @Test
@@ -429,7 +430,7 @@ struct CustomProductTests {
     )
 
     let coordinator = dependencyContainer.makePurchasingCoordinator()
-    #expect(!(await coordinator.isFreeTrialAvailable))
+    #expect(coordinator.purchase?.isFreeTrialAvailable == false)
   }
 
   // MARK: - Custom Trial Eligibility

@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 12/05/2023.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 extension Superwall {
@@ -36,3 +37,4 @@ extension Superwall {
     return error
   }
 }
+#endif

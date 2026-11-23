@@ -7,7 +7,11 @@
 // swiftlint:disable type_body_length function_body_length trailing_closure file_length
 
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// How a web checkout the paywall reported as complete finishes once its code is redeemed.
 /// Stored with the pending checkout, so a poll that recovers it later finishes it the same way.
@@ -147,7 +151,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleAppForeground),
-      name: UIApplication.willEnterForegroundNotification,
+      name: SystemInfo.applicationWillEnterForegroundNotification,
       object: nil
     )
   }
@@ -253,6 +257,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     return outcome == .redeemed
   }
 
+  #if canImport(WebKit)
   func handleStripeCheckoutComplete(
     contextId: String,
     productId: String,
@@ -268,8 +273,14 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       await MainActor.run {
         // The success alert's close takes the spinner down once the purchase is finished.
         let paywallViewController = superwall.paywallViewController
-        if !(paywallViewController?.presentedViewController is UIAlertController) {
-          paywallViewController?.loadingState = .ready
+        #if os(macOS)
+        // AppKit alerts are window sheets, not presented view controllers.
+        let isShowingAlert = paywallViewController?.view.window?.attachedSheet != nil
+        #else
+        let isShowingAlert = paywallViewController?.presentedViewController is UIAlertController
+        #endif
+        if !isShowingAlert {
+          paywallViewController?.updateLoading(.finished)
         }
       }
       return
@@ -329,7 +340,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     if outcome != .redeemed {
       let superwall = self.superwall ?? Superwall.shared
       await MainActor.run {
-        superwall.paywallViewController?.loadingState = .ready
+        superwall.paywallViewController?.updateLoading(.finished)
       }
     }
   }
@@ -353,6 +364,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     await superwall.track(event)
   }
 
+  #endif
   /// Polls for the redemption result of a pending Stripe checkout, if one exists,
   /// decrementing the remaining foreground attempts and clearing state when exhausted.
   func pollPendingStripeCheckoutOnForegroundIfNeeded() async {
@@ -407,12 +419,14 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         return
       }
 
+      #if canImport(WebKit)
       let hasPaywall = await MainActor.run { superwall.paywallViewController != nil }
 
       if hasPaywall {
         isProcessing = true
         shouldCleanupProcessingFlag = true
       }
+      #endif
     }
     defer {
       if shouldCleanupProcessingFlag {
@@ -485,6 +499,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     let redeemable = Redeemable(code: code, isFirstRedemption: isFirstRedemption)
     allCodes.insert(redeemable)
 
+    #if canImport(WebKit)
     if let paywallVc = superwall.paywallViewController {
       // Mark that redeem called so that we stop the transaction abandon tracking
       await MainActor.run {
@@ -498,6 +513,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       await superwall.track(trackedEvent)
     }
 
+    #endif
     return allCodes
   }
 
@@ -526,10 +542,12 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
   private func prepareUIForRedemption(type: RedeemType, superwall: Superwall) async {
     guard case .code = type else { return }
+    #if canImport(WebKit)
     await MainActor.run {
-      superwall.paywallViewController?.loadingState = .manualLoading
+      superwall.paywallViewController?.updateLoading(.manualLoadingStarted)
       superwall.paywallViewController?.closeSafari()
     }
+    #endif
     await delegate.willRedeemLink()
   }
 
@@ -611,6 +629,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     // A restore is only complete once every entitlement the paywall offers is active, and the
     // paywall hears restore_complete or restore_fail. A purchase bought one product, so none of
     // that applies: it hears transaction_complete instead.
+    #if canImport(WebKit)
     if case .code = type, completion == .restore, let paywallVc = superwall.paywallViewController {
       for id in await paywallVc.info.productIds {
         let entitlements = superwall.entitlements.byProductId(id)
@@ -638,6 +657,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       }
     }
 
+    #endif
     return (allEntitlements, paywallEntitlementIds)
   }
 
@@ -703,7 +723,9 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     guard let codeResult = response.results.first(where: { $0.code == code }) else { return }
 
     let superwallOptions = factory.makeSuperwallOptions()
+    #if canImport(WebKit)
     let showConfirmation = superwallOptions.paywalls.shouldShowWebPurchaseConfirmationAlert
+    #endif
 
     func afterRedeem() async {
       if callbackMode == .pollFakeCompatibility {
@@ -712,6 +734,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         await self.delegate.didRedeemLink(result: codeResult)
       }
 
+      #if canImport(WebKit)
       // Track free trial start and schedule notification if applicable
       if case .success(_, let redemptionInfo) = codeResult,
         let redemptionProduct = redemptionInfo.paywallInfo?.product,
@@ -740,15 +763,19 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         }
       }
 
+      #endif
       switch completion {
       case .restore:
+        #if canImport(WebKit)
         if let paywallVc = superwall.paywallViewController,
           !paywallEntitlementIds.isEmpty,
           paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty,
           superwallOptions.paywalls.automaticallyDismiss {
           await superwall.dismiss(paywallVc, result: .restored)
         }
+        #endif
       case let .purchase(productId, shouldDismiss):
+        #if canImport(WebKit)
         if case .success(_, let redemptionInfo) = codeResult,
           let paywallVc = superwall.paywallViewController {
           await finishWebPurchase(
@@ -759,17 +786,21 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
             superwall: superwall
           )
         }
+        #endif
       }
 
+      #if canImport(WebKit)
       await MainActor.run {
-        superwall.paywallViewController?.loadingState = .ready
+        superwall.paywallViewController?.updateLoading(.finished)
       }
 
+      #endif
       if callbackMode == .legacy {
         await self.delegate.didRedeemLink(result: codeResult)
       }
     }
 
+    #if canImport(WebKit)
     if showConfirmation {
       let title = LocalizationLogic.localizedBundle().localizedString(
         forKey: "purchase_success_title",
@@ -816,8 +847,14 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       await afterRedeem()
       clearPendingStripeCheckoutState(for: checkoutContextId)
     }
+    #else
+    // There's no SDK alert UI here, so the redemption finishes without one.
+    await afterRedeem()
+    clearPendingStripeCheckoutState(for: checkoutContextId)
+    #endif
   }
 
+  #if canImport(WebKit)
   /// Finishes a redeemed web purchase the way `TransactionManager` finishes
   /// an App Store purchase made from a paywall.
   private func finishWebPurchase(
@@ -855,10 +892,24 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     closeActionTitle: String,
     onClose: (() -> Void)?
   ) {
-    guard let topVc = UIViewController.topMostViewController else {
+    guard let topVc = PlatformViewController.topMostViewController else {
       onClose?()
       return
     }
+    #if os(macOS)
+    // A window shows one sheet at a time.
+    guard topVc.view.window?.attachedSheet == nil else {
+      onClose?()
+      return
+    }
+    AlertControllerFactory.present(
+      title: title,
+      message: message,
+      closeActionTitle: closeActionTitle,
+      onClose: onClose,
+      on: topVc
+    )
+    #else
     guard topVc.presentedViewController == nil else {
       onClose?()
       return
@@ -871,8 +922,10 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       sourceView: topVc.view
     )
     topVc.present(alertController, animated: true)
+    #endif
   }
 
+  #endif
   private func handleRedemptionFailure(
     error: Error,
     type: RedeemType,
@@ -888,6 +941,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     }
 
     if case .code(let code) = type {
+      #if canImport(WebKit)
       if let paywallVc = superwall.paywallViewController {
         await trackRestorationFailure(
           paywallViewController: paywallVc,
@@ -896,14 +950,17 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         )
       }
 
+      #endif
       let errorResult = RedemptionResult.error(
         code: code,
         error: RedemptionResult.ErrorInfo(message: error.localizedDescription)
       )
 
+      #if canImport(WebKit)
       await MainActor.run {
-        superwall.paywallViewController?.loadingState = .ready
+        superwall.paywallViewController?.updateLoading(.finished)
       }
+      #endif
       await delegate.didRedeemLink(result: errorResult)
     }
 
@@ -915,6 +972,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     )
   }
 
+  #if canImport(WebKit)
   private func trackRestorationFailure(
     paywallViewController: PaywallViewController,
     message: String,
@@ -932,6 +990,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       closeActionTitle: superwall.options.paywalls.restoreFailed.closeButtonTitle
     )
   }
+  #endif
 
   private var pendingStripeCheckoutState: PendingStripeCheckoutPollState? {
     storage.get(PendingStripeCheckoutPollStorage.self)
@@ -1065,6 +1124,10 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// loading spinner on the paywall if needed) and then refreshes web entitlements.
   private func handleForegroundPolling() async {
     guard factory.makeIsContainerReady() else { return }
+    #if !canImport(WebKit)
+    await pollPendingStripeCheckoutOnForegroundIfNeeded()
+    await pollWebEntitlements()
+    #else
     let superwall = superwall ?? Superwall.shared
     let hasVisiblePaywall = await MainActor.run { superwall.paywallViewController != nil }
 
@@ -1081,7 +1144,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
     if shouldShowLoading {
       await MainActor.run {
-        superwall.paywallViewController?.loadingState = .manualLoading
+        superwall.paywallViewController?.updateLoading(.manualLoadingStarted)
       }
     }
 
@@ -1089,13 +1152,12 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
 
     if shouldShowLoading {
       await MainActor.run {
-        if superwall.paywallViewController?.loadingState == .manualLoading {
-          superwall.paywallViewController?.loadingState = .ready
-        }
+        superwall.paywallViewController?.updateLoading(.manualLoadingEnded)
       }
     }
 
     await pollWebEntitlements()
+    #endif
   }
 
   private func hasStripePendingTimedOut(_ state: PendingStripeCheckoutPollState) -> Bool {
@@ -1282,11 +1344,12 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         let activeEntitlements = deviceAndWebEntitlements.filter { $0.isActive }
         await updateSubscriptionStatus(with: deviceAndWebEntitlements, superwall: superwall)
 
+        #if canImport(WebKit)
         // If there's a paywall, check if we should dismiss it
         // A purchase in progress, such as one in a custom store's checkout,
         // reports its own result, so its entitlements aren't a restore.
         if dismissesCoveredPaywall,
-          await factory.makePurchasingCoordinator().source == nil,
+          factory.makePurchasingCoordinator().purchase == nil,
           let paywallVc = superwall.paywallViewController {
           // Get entitlement IDs of products from paywall
           var paywallEntitlementIds: Set<String> = []
@@ -1313,6 +1376,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
             }
           }
         }
+        #endif
       }
       return response.customerInfo
     } catch {

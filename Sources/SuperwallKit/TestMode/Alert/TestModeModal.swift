@@ -5,7 +5,12 @@
 //  Created by Claude on 2026-01-27.
 //
 
+#if canImport(WebKit)
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// Result from the test mode modal.
 struct TestModeModalResult {
@@ -16,6 +21,7 @@ struct TestModeModalResult {
   let freeTrialOverride: FreeTrialOverride
 }
 
+#if !os(macOS)
 /// Presents the test mode modal when a user is first detected as being in test mode.
 enum TestModeModal {
   @MainActor
@@ -160,3 +166,5 @@ extension TestModeModalViewController {
     finish()
   }
 }
+#endif
+#endif

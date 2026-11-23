@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 12/10/2022.
 //
 
+#if canImport(WebKit)
 import Combine
 import SwiftUI
 
@@ -49,3 +50,4 @@ extension View {
     )
   }
 }
+#endif

@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 12/10/2022.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 struct ScaleAnimationModifier: ViewModifier {
@@ -25,3 +26,4 @@ extension View {
     )
   }
 }
+#endif

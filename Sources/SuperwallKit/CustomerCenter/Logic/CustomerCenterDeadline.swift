@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 15/10/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Stops waiting on a task that's taking too long, without waiting for the task to stop.
@@ -69,3 +70,4 @@ private final class FirstOutcome<T>: @unchecked Sendable {
     continuation?.resume(with: result)
   }
 }
+#endif

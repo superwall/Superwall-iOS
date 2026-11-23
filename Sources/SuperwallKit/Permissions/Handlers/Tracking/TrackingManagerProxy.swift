@@ -11,6 +11,8 @@
 // that don't actually use tracking. Class and selector names are ROT13-encoded
 // to avoid static analysis detection.
 
+// tvOS has App Tracking Transparency but no WebKit, so it's named here.
+#if canImport(WebKit) || os(tvOS)
 import Foundation
 import ObjectiveC.runtime
 
@@ -53,13 +55,20 @@ final class TrackingManagerProxy: NSObject {
   }
 
   func trackingAuthorizationStatus() -> Int {
+    return trackingAuthorizationStatusIfAvailable()
+      ?? FakeTrackingAuthorizationStatus.notDetermined.rawValue
+  }
+
+  /// The status, or `nil` when AppTrackingTransparency isn't in the app, so there
+  /// is no status to read.
+  func trackingAuthorizationStatusIfAvailable() -> Int? {
     guard let trackingManagerClass else {
-      return FakeTrackingAuthorizationStatus.notDetermined.rawValue
+      return nil
     }
     let sel = NSSelectorFromString(trackingStatusSelectorName)
 
     guard let imp = Self.classIMP(trackingManagerClass, sel) else {
-      return FakeTrackingAuthorizationStatus.notDetermined.rawValue
+      return nil
     }
 
     typealias Function = @convention(c) (AnyObject, Selector) -> Int
@@ -88,3 +97,4 @@ final class TrackingManagerProxy: NSObject {
     }
   }
 }
+#endif

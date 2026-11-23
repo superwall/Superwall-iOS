@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 11/05/2023.
 //
 
+#if canImport(WebKit)
 import Foundation
 import Combine
 
@@ -32,3 +33,4 @@ extension Superwall {
     presentationItems.last = lastPaywallPresentation
   }
 }
+#endif

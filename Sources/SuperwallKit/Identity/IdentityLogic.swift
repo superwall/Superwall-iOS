@@ -29,25 +29,15 @@ enum IdentityLogic {
   ) -> [String: Any] {
     var mergedAttributes = oldAttributes
 
-    for key in newAttributes.keys {
-      if key == "$is_standard_event" {
+    for (key, value) in newAttributes {
+      // Keys beginning with `$` are reserved for Superwall and dropped, as
+      // `setUserAttributes(_:)` documents. They used to be renamed without
+      // the `$` and then looked up under the new name, which found nothing
+      // and deleted any attribute already stored under that name.
+      if key.starts(with: "$") {
         continue
       }
-      if key == "$application_installed_at" {
-        continue
-      }
-
-      var key = key
-
-      if key.starts(with: "$") { // replace dollar signs
-        key = key.replacingOccurrences(of: "$", with: "")
-      }
-
-      if let value = newAttributes[key] {
-        mergedAttributes[key] = value
-      } else {
-        mergedAttributes[key] = nil
-      }
+      mergedAttributes[key] = value
     }
 
     // we want camel case

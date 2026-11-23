@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 struct NoPurchasesScreenView: View {
@@ -20,7 +21,7 @@ struct NoPurchasesScreenView: View {
             .font(.headline)
           Text(screen.subtitle ?? strings.string("customer_center_no_purchases_subtitle"))
             .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color.customerCenterSecondaryText)
         }
         .padding(.vertical, 4)
         .accessibilityIdentifier("customer_center.no_purchases")
@@ -28,7 +29,11 @@ struct NoPurchasesScreenView: View {
       Section { PathsListView(viewModel: viewModel, purchase: nil) }
       if viewModel.configuration.showsAccountDetails { AccountDetailsSection(viewModel: viewModel) }
     }
-    .listStyle(.insetGrouped)
-    .navigationBarTitleDisplayMode(.inline)
+    .customerCenterListStyle()
+    .customerCenterInlineTitle()
+    #if os(macOS)
+    .navigationTitle(strings.string("customer_center_management_title"))
+    #endif
   }
 }
+#endif

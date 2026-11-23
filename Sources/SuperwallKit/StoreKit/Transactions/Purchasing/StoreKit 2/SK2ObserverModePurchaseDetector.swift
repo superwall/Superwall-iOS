@@ -16,7 +16,7 @@ import Foundation
 import StoreKit
 
 /// A delegate protocol for handling verified transactions in observer mode.
-@available(iOS 17.2, *)
+@available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, *)
 protocol SK2ObserverModePurchaseDetectorDelegate: AnyObject {
   /// Handles a verified transaction.
   /// - Parameters:
@@ -27,7 +27,7 @@ protocol SK2ObserverModePurchaseDetectorDelegate: AnyObject {
 }
 
 /// Actor responsibile for detecting purchases from StoreKit2 that should be processed by observer mode.
-@available(iOS 17.2, *)
+@available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, *)
 actor SK2ObserverModePurchaseDetector {
   private let storage: Storage
   private let allTransactionsProvider: AllTransactionsProviderType
@@ -73,7 +73,7 @@ actor SK2ObserverModePurchaseDetector {
     await cacheLegacyTransactionTask.value
 
     let coordinator = factory.makePurchasingCoordinator()
-    let source = await coordinator.source
+    let source = coordinator.purchase?.source
 
     // Check that a Superwall purchase hasn't already started.
     // This could race with a transactionDidSucceed, however, in that function

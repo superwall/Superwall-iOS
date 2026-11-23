@@ -5,6 +5,7 @@
 //  Created by Jake Mor on 10/5/21.
 //
 
+#if canImport(WebKit)
 import Foundation
 import GameController
 
@@ -129,3 +130,4 @@ final class GameControllerManager: NSObject {
     }
 	}
 }
+#endif

@@ -2,22 +2,71 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.19.2
+
+### Enhancements
+
+- Saves the first deep link received during the first app session as the `firstDeepLinkUrl` user attribute. If you assign deep links to your App Store custom product pages, you can use this attribute to break down results and filter audiences by the product page that drove the install. If you've connected App Store Connect, the page's ID and name are saved too, as `customProductPageId` and `customProductPageName`. Requires `Superwall.handleDeepLink(_:)` to be set up.
+- Adds the user's App Tracking Transparency status as the `attStatus` device attribute.
+- Reports ad user data consent as denied, as well as personalization, when the user has denied App Tracking Transparency or it's restricted, even if you set `adConsent` yourself. If you use the MMP, conversions from these users are no longer sent to Meta or your other ad networks.
+
+### Fixes
+
+- Fixes a paywall appearing in the wrong window on iPad and Mac Catalyst when several of the app's windows are on screen.
+- Fixes cached paywalls sometimes being torn down off the main thread when they're cleared, such as on `reset()`.
+- Fixes the SDK's on-device database growing very large over time. Ones that have already grown shrink the next time the app opens.
+- Audience filters no longer count paywall preloading and loading events.
+- Fixes `presentedViewController` sometimes returning a paywall that isn't on screen, which `reset()` then kept instead of clearing.
+- Fixes a paywall shown again while it was still closing being marked as closed, so its next close wasn't reported.
+- Fixes a StoreKit 1 purchase that ended straight away, such as one the device refused, sometimes never returning its result.
+- Fixes a purchase never finishing, with its loading spinner left up, when another purchase started before it returned.
+- Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.
+- Fixes the "Occurrences in the last month" audience filter counting the last 30 weeks instead of the last month.
+- Fixes paywalls showing the status bar in apps that hide it, such as Unity games.
+- Fixes a crash when a paywall is presented from a view controller that takes its orientations from whatever it presents.
+- Improves the contrast of text and icons in the Customer Center.
+- Fixes the Customer Center's purchase cards breaking words mid-word at the largest text sizes.
+- Makes the Customer Center's Copy button easier to tap.
+
+## 4.19.1
+
+### Enhancements
+
+- Adds watchOS 8+ and tvOS 15+ support through Swift Package Manager, for purchases, subscription status, entitlements, user attributes and events. Paywalls can't be shown there, so when one would show, `register` runs non-gated features and returns an error for gated ones.
+
+### Fixes
+
+- Placements named after a standard Superwall event are now rejected by `getPaywall` and `PaywallView` too, and `register` reports this to its error handler instead of silently doing nothing.
+- Fixes setting a `$`-prefixed attribute from a paywall deleting the existing attribute with the same name. Keys beginning with `$` are reserved, so they're now ignored.
+- Fixes `reset()` leaving the new user's attributes without `aliasId` and `seed`, so audience filters on them didn't match.
+- Fixes `reset()` occasionally deleting the new user's alias and seed from disk, giving them another alias on the next launch.
+- Fixes the seed derived from the user ID being applied to a user who had since logged out or switched.
+- Fixes `reset()`, and `identify(userId:)` switching user, sending several `user_attributes` events for one change. The new user's Apple Search Ads, MMP and install-scoped integration attributes are now in place when the call returns.
+- Fixes config refreshes being able to run at the same time and apply their configs out of order. A refresh called while the launch config fetch is still finishing now waits for it.
+- Fixes `Superwall.shared.configurationStatus` staying `.pending` when the config couldn't be fetched. It's now `.failed`.
+- Fixes `getCustomerInfo()` never returning when the SDK can't load its configuration, such as on a first launch without a connection.
+- Fixes `refreshCustomerInfo()` returning empty customer info when the fetch fails, instead of the device's purchases.
+- Fixes the Mac preview window sometimes selecting a different paywall than the one linked, without saying why.
+- Stops sending user and device attributes for enrichment, such as the demand score, while `eventTrackingBehavior` is `.none`.
+- Fixes a paywall showing and charging the wrong billing plan when the same App Store product is sold on both the up-front and monthly plans, on one paywall or across paywalls. Each paywall slot now keeps its own plan. Product identifiers are unchanged.
+- Fixes paywalls letting the app rotate into orientations it doesn't allow. A paywall now allows the same orientations as the screen it covers, which matters for apps that lock orientation in a view controller rather than in their Info.plist, such as Unity games. Previously, a landscape-only game could be rotated to portrait while a paywall was showing and stayed in portrait after it closed.
+
 ## 4.19.0
 
 ### Enhancements
 
-- Adds `Superwall.shared.refreshCustomerInfo()`, which fetches the user's entitlements from Superwall, even if they were fetched recently, and returns the updated `CustomerInfo`. Use it when your server has just reported a purchase to Superwall and you want the device to reflect it straight away.
-- After a custom product purchase succeeds, the SDK now syncs with Superwall in the background, as it already does after App Store purchases, so entitlements your server has already reported to Superwall reach `customerInfo` and `entitlements.web` straight away. This works in apps without web checkout and doesn't delay the purchase result or the paywall's dismissal. If your server reports the purchase later, the entitlements arrive on the next app foreground, or call `refreshCustomerInfo()` once it has.
-- Adds `StoreProduct.customTransactionId`, the transaction ID the SDK reports for a custom product's purchase. Pass it to your checkout and have your server send it back as `custom_transaction_id` with the purchase's events, and Superwall attributes that revenue, renewals included, to the paywall, campaign and experiment that sold it.
-- Paywalls can now sell a custom store's products through the checkout endpoint set up for it on the dashboard, without calling your `PurchaseController`.
-- Apps without web paywalls now also refresh the user's entitlements from Superwall on foreground, at most every 15 minutes, as well as on launch. Purchases, refunds and renewals that your server reports to Superwall, such as those of custom products, now reach a running app without it calling `refreshCustomerInfo()`. Apps with web paywalls keep the refresh interval set on the dashboard.
-- Improves install attribution matching for devices on both IPv4 and IPv6 networks: the install match now includes the device's IPv4 and IPv6 addresses, so it can be matched to an ad click made over either one.
-- Adds `SuperwallOptions.enableUserIdSeed` to derive `user.seed` from the ID passed to `identify(userId:)` without a remote flag. Users who are already identified keep their current seed.
+- Adds native macOS 12+ support, including paywalls, SwiftUI embedding, purchases, Customer Center and Test Mode. See the Mac example to get started.
+- Adds `Superwall.shared.refreshCustomerInfo()`, which fetches the user's latest entitlements from Superwall and returns the updated `CustomerInfo`.
+- Adds `StoreProduct.customTransactionId`. Send it back from your server with a custom product's purchase events to attribute that revenue to the paywall that sold it.
+- Paywalls can sell custom store products through the checkout set up on the dashboard, without a `PurchaseController`.
+- Entitlements your server has already reported for a custom product purchase now show up in the app straight after the purchase. If it reports them later, call `refreshCustomerInfo()` once it has.
+- Apps without web paywalls now also refresh entitlements when they come to the foreground.
+- Improves MMP install matching.
 
 ### Fixes
 
-- Fixes a slow background sync with Superwall, such as the one after a purchase, overwriting entitlements from a `refreshCustomerInfo()` or foreground refresh requested after it, and saving its response to a different user when the user logged out or switched accounts while it ran.
-- Fixes transaction events for custom products, such as `transaction_complete`, reporting their store as `APP_STORE` instead of `CUSTOM`.
+- Fixes newer entitlements sometimes being overwritten, or saved to the wrong user after logging out.
+- Fixes custom product purchases being reported as App Store purchases.
 
 ## 4.18.3
 

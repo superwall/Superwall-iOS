@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 11/09/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 // MARK: - What the purchase detail screen shows below the card
@@ -73,3 +74,4 @@ extension CustomerCenterViewModel {
     }
   }
 }
+#endif

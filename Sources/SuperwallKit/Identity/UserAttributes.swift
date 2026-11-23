@@ -95,6 +95,15 @@ extension Superwall {
   }
 
   private func mergeAttributes(_ attributes: [String: Any?]) {
+    dependencyContainer.identityManager.mergeUserAttributes(
+      Self.sanitizedUserAttributes(attributes)
+    )
+  }
+
+  /// The attributes `setUserAttributes(_:)` would merge: without keys
+  /// beginning with `$`, which are reserved for Superwall, or values that
+  /// can't be represented as JSON, and with schema-constrained values checked.
+  static func sanitizedUserAttributes(_ attributes: [String: Any?]) -> [String: Any?] {
     var customAttributes: [String: Any?] = [:]
 
     for key in attributes.keys {
@@ -104,12 +113,12 @@ extension Superwall {
           continue
         }
         if JSONSerialization.isValidJSONObject([key: value]) {
-          customAttributes[key] = Self.sanitizeAttribute(key: key, value: value)
+          customAttributes[key] = sanitizeAttribute(key: key, value: value)
         }
       }
     }
 
-    dependencyContainer.identityManager.mergeUserAttributes(customAttributes)
+    return customAttributes
   }
 
   /// Validates attribute values that have server-side schema constraints.

@@ -9,6 +9,7 @@ import Foundation
 import Combine
 
 extension Superwall {
+  #if canImport(WebKit)
   /// Runs a pipeline of operations to get a paywall to present and associated components.
   ///
   /// - Parameters:
@@ -67,6 +68,7 @@ extension Superwall {
       debugInfo: debugInfo
     )
   }
+  #endif
 
   func confirmAssignments(
     _ request: PresentationRequest

@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 17/10/2024.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 /// A SwiftUI paywall view that you can embed into your app.
@@ -273,3 +274,4 @@ extension PaywallView where OnErrorView == Never {
     self.onRequestDismiss = onRequestDismiss
   }
 }
+#endif

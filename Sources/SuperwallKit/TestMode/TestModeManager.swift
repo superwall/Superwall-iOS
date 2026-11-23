@@ -157,6 +157,11 @@ final class TestModeManager {
     options: SuperwallOptions,
     warnAboutIgnoredMismatch: Bool
   ) -> TestModeReason? {
+    #if !canImport(WebKit)
+    // Test mode picks entitlements and simulates purchases in its own screens,
+    // which watchOS and tvOS don't have.
+    return nil
+    #else
     if DevMode.isActive(options) {
       return .testModeOption
     }
@@ -177,6 +182,7 @@ final class TestModeManager {
       return configMatchReason(config: config)
         ?? bundleIdMismatchReason(config: config, warnIfIgnored: warnAboutIgnoredMismatch)
     }
+    #endif
   }
 
   /// Whether `config` itself would put the current user in test mode. Such a

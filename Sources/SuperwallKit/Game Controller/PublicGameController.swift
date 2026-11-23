@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 29/09/2022.
 //
 
+#if canImport(WebKit)
 import GameController
 
 extension Superwall {
@@ -26,3 +27,4 @@ extension Superwall {
     }
   }
 }
+#endif

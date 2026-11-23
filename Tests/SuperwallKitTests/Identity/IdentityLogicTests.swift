@@ -62,4 +62,25 @@ struct IdentityLogicTests {
     )
     #expect(!outcome)
   }
+
+  @Test func sanitize_trimsWhitespaceAndNewlines() {
+    #expect(IdentityLogic.sanitize(userId: "  user-1 \n") == "user-1")
+  }
+
+  @Test func sanitize_rejectsEmptyAndBlankIds() {
+    #expect(IdentityLogic.sanitize(userId: "") == nil)
+    #expect(IdentityLogic.sanitize(userId: " \n\t ") == nil)
+  }
+
+  @Test func generateAlias_isPrefixedAndUnique() {
+    let first = IdentityLogic.generateAlias()
+    #expect(first.hasPrefix(IdentityLogic.superwallPrefix))
+    #expect(first != IdentityLogic.generateAlias())
+  }
+
+  @Test func generateSeed_isWithinRange() {
+    for _ in 0..<200 {
+      #expect((0..<100).contains(IdentityLogic.generateSeed()))
+    }
+  }
 }

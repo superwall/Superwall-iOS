@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 11/10/2022.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Corresponds to the variables in the paywall editor.
@@ -60,3 +61,4 @@ struct Variables: Encodable {
     return JSON(template)
   }
 }
+#endif

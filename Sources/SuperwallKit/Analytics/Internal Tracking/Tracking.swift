@@ -103,6 +103,7 @@ extension Superwall {
     forPlacement placement: Trackable,
     withData placementData: PlacementData
   ) async {
+    #if canImport(WebKit)
     // Queue the work behind any register call already in flight and return,
     // so implicit triggers and `register` calls don't present over each other.
     registerTaskCoordinator.enqueue { [weak self] in
@@ -111,8 +112,12 @@ extension Superwall {
         withData: placementData
       )
     }
+    #else
+    // watchOS and tvOS can't show paywalls, so implicit triggers do nothing.
+    #endif
   }
 
+  #if canImport(WebKit)
   @MainActor
   private func internallyHandleImplicitTrigger(
     forPlacement placement: Trackable,
@@ -161,4 +166,5 @@ extension Superwall {
 
     await internallyPresent(request, statePublisher)
   }
+  #endif
 }

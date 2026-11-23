@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 23/09/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 // MARK: - Pushed screens
@@ -69,3 +70,4 @@ extension CustomerCenterViewModel {
     return true
   }
 }
+#endif

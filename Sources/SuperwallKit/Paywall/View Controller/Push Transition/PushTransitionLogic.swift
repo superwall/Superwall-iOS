@@ -5,6 +5,8 @@
 //  Created by Yusuf Tör on 07/06/2022.
 //
 
+#if canImport(WebKit)
+#if !os(macOS)
 import UIKit
 
 enum PushTransitionLogic {
@@ -116,3 +118,5 @@ enum PushTransitionLogic {
     return animator
   }
 }
+#endif
+#endif

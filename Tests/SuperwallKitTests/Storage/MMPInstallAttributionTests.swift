@@ -139,7 +139,8 @@ struct MMPInstallAttributionTests {
     // MMP attribution is an install-scoped fact: the completion flag,
     // eligibility, and the cached `acquisition_*` payload all survive reset.
     // The new user is repopulated from the cache by
-    // `Superwall.reset(duringIdentify:)`, not by re-running the backend match.
+    // the reset, as an attribute the new user keeps, not by re-running the
+    // backend match.
     #expect(storage.get(DidCompleteMMPInstallAttributionRequest.self) == true)
     #expect(storage.get(IsEligibleForMMPInstallAttributionMatch.self) == true)
     #expect(storage.get(MMPAcquisitionDataStorage.self)?["acquisition_source"]?.string == "facebook")

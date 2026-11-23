@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 23/09/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Converts ISO 3166-1 country codes from three letters to two.
@@ -20,7 +21,7 @@ enum CountryCode {
     }
     let locale = Locale(identifier: "und_\(code.uppercased())")
     let region: String?
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, *) {
       region = locale.region?.identifier
     } else {
       region = locale.regionCode
@@ -29,3 +30,4 @@ enum CountryCode {
     return region
   }
 }
+#endif

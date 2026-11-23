@@ -5,6 +5,7 @@
 //  Created by Superwall on 2024.
 //
 
+#if canImport(WebKit)
 import AVFoundation
 
 extension PermissionHandler {
@@ -28,3 +29,4 @@ extension PermissionHandler {
     return granted ? .granted : .denied
   }
 }
+#endif

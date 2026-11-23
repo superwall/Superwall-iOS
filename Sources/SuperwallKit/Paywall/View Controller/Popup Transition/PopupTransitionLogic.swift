@@ -5,6 +5,8 @@
 //  Created by Yusuf Tör on 06/08/2025.
 //
 
+#if canImport(WebKit)
+#if !os(macOS)
 import UIKit
 
 enum PopupTransitionLogic {
@@ -132,3 +134,5 @@ enum PopupTransitionLogic {
     return animator
   }
 }
+#endif
+#endif

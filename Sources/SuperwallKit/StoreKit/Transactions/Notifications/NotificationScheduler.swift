@@ -5,7 +5,11 @@
 //  Created by Yusuf Tör on 19/06/2023.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import UserNotifications
 
 protocol NotificationScheduling {
@@ -48,6 +52,16 @@ actor NotificationScheduler: NotificationScheduling {
     )
   }
 
+  #if os(tvOS)
+  /// A tvOS notification can't show any text, so there's nothing to remind
+  /// the user with.
+  func scheduleNotifications(
+    _ notifications: [LocalNotification],
+    fromPaywallId paywallId: String,
+    factory: DeviceHelperFactory,
+    notificationCenter: NotificationAuthorizable?
+  ) async {}
+  #else
   func scheduleNotifications(
     _ notifications: [LocalNotification],
     fromPaywallId paywallId: String,
@@ -79,17 +93,21 @@ actor NotificationScheduler: NotificationScheduling {
     }
 
     guard await askForPermissionsIfNecessary(using: notificationCenter) else {
+      #if canImport(WebKit)
       if let notificationPermissionsDenied = Superwall.shared.options.paywalls.notificationPermissionsDenied {
         await withCheckedContinuation { continuation in
           Task { @MainActor in
-            Superwall.shared.paywallViewController?.presentAlert(
+            guard let paywallViewController = Superwall.shared.paywallViewController else {
+              return continuation.resume()
+            }
+            paywallViewController.presentAlert(
               title: notificationPermissionsDenied.title,
               message: notificationPermissionsDenied.message,
               actionTitle: notificationPermissionsDenied.actionButtonTitle,
               closeActionTitle: notificationPermissionsDenied.closeButtonTitle,
               action: {
-                if let url = URL(string: UIApplication.openSettingsURLString) {
-                  guard let sharedApplication = UIApplication.sharedApplication else {
+                if let url = SystemInfo.notificationSettingsURL {
+                  guard let sharedApplication = PlatformApplication.sharedApplication else {
                     return continuation.resume()
                   }
                   sharedApplication.open(url)
@@ -103,6 +121,7 @@ actor NotificationScheduler: NotificationScheduling {
           }
         }
       }
+      #endif
       return
     }
 
@@ -168,6 +187,7 @@ actor NotificationScheduler: NotificationScheduling {
       )
     }
   }
+  #endif
 
   private static func makeNotificationIdentifier(
     paywallId: String,

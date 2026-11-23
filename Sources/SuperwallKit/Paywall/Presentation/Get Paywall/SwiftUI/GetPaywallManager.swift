@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 17/10/2024.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 final class GetPaywallManager: ObservableObject {
@@ -81,3 +82,4 @@ extension GetPaywallManager: PaywallViewControllerDelegate {
     }
   }
 }
+#endif

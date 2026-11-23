@@ -5,10 +5,12 @@
 //  Created by Yusuf Tör on 07/03/2022.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 enum PaywallWebEvent: Equatable {
   case closed
+  /// `productId` is the slot's `Product.cacheKey`, which also carries its billing plan.
   case initiatePurchase(
     productId: String,
     shouldDismiss: Bool
@@ -32,3 +34,4 @@ enum PaywallWebEvent: Equatable {
     variables: JSON?
   )
 }
+#endif

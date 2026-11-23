@@ -114,7 +114,7 @@ enum PaywallLogic {
     var swProducts: [SWProduct] = []
 
     for productItem in productItems {
-      guard let storeProduct = productsById[productItem.id] else {
+      guard let storeProduct = productsById[productItem.cacheKey] else {
         continue
       }
 

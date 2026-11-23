@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 11/05/2023.
 //
 
+#if canImport(WebKit)
 import Foundation
 import Combine
 
@@ -24,9 +25,15 @@ extension Superwall {
     guard request.flags.isDebuggerLaunched else {
       return
     }
+    #if os(macOS)
+    if request.presenter is MacDebugViewController {
+      return
+    }
+    #else
     if request.presenter is DebugViewController {
       return
     }
+    #endif
     let error = InternalPresentationLogic.presentationError(
       domain: "SWKPresentationError",
       code: 101,
@@ -39,3 +46,4 @@ extension Superwall {
     throw PresentationPipelineError.debuggerPresented
   }
 }
+#endif

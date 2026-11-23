@@ -6,6 +6,7 @@
 //
 
 
+#if canImport(WebKit)
 import SwiftUI
 
 struct OpacityAnimationModifier: ViewModifier {
@@ -26,3 +27,4 @@ extension View {
     )
   }
 }
+#endif

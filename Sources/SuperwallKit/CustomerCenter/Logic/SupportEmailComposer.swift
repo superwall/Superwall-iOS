@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 struct SupportEmailDiagnostics: Equatable {
@@ -55,3 +56,4 @@ enum SupportEmailComposer {
     return components.url
   }
 }
+#endif

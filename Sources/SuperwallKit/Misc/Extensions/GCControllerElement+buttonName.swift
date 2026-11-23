@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 29/09/2022.
 //
 
+#if canImport(WebKit)
 import GameController
 
 extension GCControllerElement {
@@ -55,3 +56,4 @@ extension GCControllerElement {
     }
   }
 }
+#endif

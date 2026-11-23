@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 12/10/2022.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 extension Animation {
@@ -12,3 +13,4 @@ extension Animation {
     .interpolatingSpring(stiffness: 300, damping: 23)
   }
 }
+#endif

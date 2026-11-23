@@ -5,6 +5,7 @@
 //  Created by Superwall on 2024.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Status of a permission request.
@@ -14,3 +15,4 @@ enum PermissionStatus: String, Decodable {
   case denied
   case unsupported
 }
+#endif

@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 struct RestoreOverlay: View {
@@ -61,3 +62,4 @@ struct RestoreOverlay: View {
       : "customer_center_restore_none_message"
   }
 }
+#endif

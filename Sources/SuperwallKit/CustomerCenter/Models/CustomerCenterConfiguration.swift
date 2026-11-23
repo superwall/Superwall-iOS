@@ -6,7 +6,11 @@
 //
 
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// Configures the screens, actions, support options and appearance of the Customer Center.
 ///

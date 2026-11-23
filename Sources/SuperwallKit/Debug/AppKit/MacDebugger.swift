@@ -1,0 +1,234 @@
+#if canImport(WebKit)
+#if os(macOS)
+import AppKit
+import Combine
+import SwiftUI
+
+/// Native preview controls for dashboard and local-development deep links.
+@MainActor
+final class MacDebugger: NSObject, ObservableObject, NSWindowDelegate {
+  struct Choice: Identifiable, Equatable {
+    let id: String
+    let name: String
+    let identifier: String
+  }
+
+  @Published var choices: [Choice] = []
+  @Published var selection = ""
+  @Published var locale = ""
+  @Published var freeTrial = false
+  @Published var message = "Loading paywalls…"
+  @Published var isLoading = false
+  private var window: NSWindow?
+  private var cancellable: AnyCancellable?
+  private let initialLocale: String?
+  private unowned let manager: DebugManager
+
+  init(manager: DebugManager) {
+    self.manager = manager
+    initialLocale = Superwall.shared.options.localeIdentifier
+    super.init()
+    locale = initialLocale ?? ""
+  }
+
+  func show(paywallId: String?, surfaceId: String?) async {
+    let controller = MacDebugViewController(rootView: MacDebuggerView(model: self))
+    let window = NSWindow(contentViewController: controller)
+    window.isReleasedWhenClosed = false
+    window.title = "Superwall Preview"
+    window.styleMask = [.titled, .closable, .miniaturizable]
+    window.setContentSize(NSSize(width: 480, height: 280))
+    window.delegate = self
+    self.window = window
+    window.center()
+    window.makeKeyAndOrderFront(nil)
+    NSApp.activate(ignoringOtherApps: true)
+    await locateDevServer(linkedSurfaceId: surfaceId)
+    let surfaces = manager.devServer?.surfaces ?? []
+    choices = surfaces.map(Self.localChoice)
+    let network: Network = Superwall.shared.dependencyContainer.network
+    var listMessage: String?
+    do {
+      let published = try await network.listPreviewPaywalls()
+      choices += published.data.map { Choice(id: $0.id, name: $0.name, identifier: $0.identifier) }
+    } catch {
+      let configPaywalls = (Superwall.shared.dependencyContainer.configManager?.config?.paywalls ?? []).map {
+        PaywallSummary(id: $0.databaseId, identifier: $0.identifier, name: $0.name)
+      }
+      choices = Self.fallbackChoices(local: choices, configPaywalls: configPaywalls)
+      listMessage = choices.isEmpty
+        ? error.localizedDescription
+        : "Couldn't load the other published paywalls."
+    }
+    // The published list can leave out the linked paywall (archived, or past
+    // the first page), so it's looked up on its own.
+    if let paywallId = Self.linkedPaywallToLookUp(paywallId, in: choices),
+      let linked = try? await network.resolvePaywallIdentifier(forDatabaseId: paywallId) {
+      choices.append(Choice(id: linked.id, name: linked.name, identifier: linked.identifier))
+    }
+    let linkedSurface = surfaces.first { $0.id == surfaceId }
+    selection = Self.initialSelection(
+      in: choices,
+      linkedSurface: linkedSurface?.previewIdentifier,
+      linkedPaywallId: paywallId
+    )
+    message = [
+      listMessage ?? (choices.isEmpty ? "No paywalls available." : nil),
+      Self.missingLinkMessage(
+        surfaceId: surfaceId,
+        in: surfaces,
+        paywallId: paywallId,
+        in: choices
+      )
+    ]
+      .compactMap { $0 }
+      .joined(separator: " ")
+  }
+
+  /// A local surface's choice. Its ID is the surface's preview identifier, so it
+  /// can't clash with a published paywall's database ID.
+  nonisolated static func localChoice(_ surface: DevServerSurface) -> Choice {
+    return Choice(
+      id: surface.previewIdentifier,
+      name: "Local: \(surface.id)",
+      identifier: surface.previewIdentifier
+    )
+  }
+
+  /// Says which linked surface or paywall can't be offered, so the debugger
+  /// doesn't quietly preview a different one instead.
+  nonisolated static func missingLinkMessage(
+    surfaceId: String?,
+    in surfaces: [DevServerSurface],
+    paywallId: String?,
+    in choices: [Choice]
+  ) -> String? {
+    if let surfaceId = surfaceId,
+      !surfaces.contains(where: { $0.id == surfaceId }) {
+      return "The local surface \"\(surfaceId)\" isn't on the running dev server."
+    }
+    if let paywallId = paywallId,
+      !choices.contains(where: { $0.id == paywallId }) {
+      return "Couldn't find the linked paywall (\(paywallId))."
+    }
+    return nil
+  }
+
+  /// The choice to select first: the linked local surface (by its preview
+  /// identifier), else the linked published paywall, else the first one.
+  nonisolated static func initialSelection(
+    in choices: [Choice],
+    linkedSurface: String?,
+    linkedPaywallId: String?
+  ) -> String {
+    let linked = linkedSurface ?? linkedPaywallId
+    return choices.first { $0.id == linked }?.id ?? choices.first?.id ?? ""
+  }
+
+  /// The choices when the preview list can't load: the local surfaces, then
+  /// the paywalls in the downloaded config, as the UIKit debugger offers.
+  nonisolated static func fallbackChoices(local: [Choice], configPaywalls: [PaywallSummary]) -> [Choice] {
+    return local + configPaywalls.map {
+      Choice(id: $0.id, name: $0.name, identifier: $0.identifier)
+    }
+  }
+
+  /// The linked paywall's database ID, if it isn't already one of `choices`.
+  nonisolated static func linkedPaywallToLookUp(_ paywallId: String?, in choices: [Choice]) -> String? {
+    guard let paywallId = paywallId,
+      !choices.contains(where: { $0.id == paywallId })
+    else {
+      return nil
+    }
+    return paywallId
+  }
+
+  /// Finds a running dev server in dev mode, as the UIKit debugger does, so a dashboard link
+  /// lists local surfaces too. A local deep link has already set the debug manager's copy
+  /// to the server it came from, which is kept: the located one could be a different server.
+  private func locateDevServer(linkedSurfaceId: String?) async {
+    if linkedSurfaceId != nil,
+      manager.devServer != nil {
+      return
+    }
+    let options = Superwall.shared.options
+    guard
+      DevMode.isActive(options),
+      let location = await DevServerLocator.shared.locate(devServerURL: options.devServerURL)
+    else {
+      return
+    }
+    manager.devServer = (base: location.base, surfaces: location.manifest.surfaces)
+  }
+
+  func preview() {
+    guard let choice = choices.first(where: { $0.id == selection }),
+      let presenter = window?.contentViewController else { return }
+    Superwall.shared.options.localeIdentifier = locale.isEmpty ? nil : locale
+    let request = Superwall.shared.dependencyContainer.makePresentationRequest(
+      .fromIdentifier(choice.identifier, freeTrialOverride: freeTrial),
+      presenter: presenter,
+      isDebuggerLaunched: true,
+      isPaywallPresented: Superwall.shared.isPaywallPresented,
+      type: .presentation
+    )
+    let publisher = PassthroughSubject<PaywallState, Never>()
+    isLoading = true
+    message = ""
+    cancellable = publisher.receive(on: DispatchQueue.main).sink { [weak self] state in
+      self?.isLoading = false
+      switch state {
+      case .presentationError(let error): self?.message = error.localizedDescription
+      case .skipped(let reason): self?.message = "Paywall skipped: \(reason)"
+      default: break
+      }
+    }
+    Task { await Superwall.shared.internallyPresent(request, publisher) }
+  }
+
+  func close() {
+    window?.delegate = nil
+    window?.close()
+    window = nil
+    cancellable = nil
+    Superwall.shared.options.localeIdentifier = initialLocale
+    manager.isDebuggerLaunched = false
+  }
+
+  func windowShouldClose(_ sender: NSWindow) -> Bool {
+    Task {
+      await Superwall.shared.dismiss()
+      await manager.closeDebugger(animated: false)
+    }
+    return false
+  }
+}
+
+final class MacDebugViewController: NSHostingController<MacDebuggerView> {}
+
+struct MacDebuggerView: View {
+  @ObservedObject var model: MacDebugger
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 16) {
+      Picker("Paywall", selection: $model.selection) {
+        ForEach(model.choices) { choice in Text(choice.name).tag(choice.id) }
+      }
+      TextField("Locale override (e.g. en_US)", text: $model.locale)
+      Toggle("Free trial available", isOn: $model.freeTrial)
+      if !model.message.isEmpty {
+        Text(model.message).font(.callout).foregroundStyle(.secondary)
+      }
+      HStack {
+        Spacer()
+        Button("Preview") { model.preview() }
+          .keyboardShortcut(.defaultAction)
+          .disabled(model.selection.isEmpty || model.isLoading)
+      }
+    }
+    .padding(24)
+    .frame(width: 480)
+  }
+}
+#endif
+#endif

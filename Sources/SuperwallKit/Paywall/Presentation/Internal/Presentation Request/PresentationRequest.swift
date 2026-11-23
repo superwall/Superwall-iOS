@@ -5,16 +5,25 @@
 //  Created by Yusuf Tör on 23/09/2022.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Combine
 
 enum PresentationRequestType: Equatable, CustomStringConvertible {
   /// Presenting via ``Superwall/register(placement:params:handler:feature:)``.
   case presentation
 
+  #if canImport(WebKit)
   /// Get the paywall view controller via
   /// ``Superwall/getPaywall(forPlacement:params:paywallOverrides:delegate:)``.
   case getPaywall(PaywallViewControllerDelegateAdapter)
+  #else
+  /// Never made on watchOS and tvOS, which have no paywall view controllers.
+  case getPaywall(Never)
+  #endif
 
   /// Get the presentation result via ``Superwall/getPresentationResult(forPlacement:)``
   case getPresentationResult
@@ -71,6 +80,7 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
     }
   }
 
+  #if canImport(WebKit)
   func getPaywallVcDelegateAdapter() -> PaywallViewControllerDelegateAdapter? {
     switch self {
     case .getPaywall(let adapter):
@@ -88,6 +98,7 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
       return false
     }
   }
+  #endif
 
   static func == (lhs: PresentationRequestType, rhs: PresentationRequestType) -> Bool {
     switch (lhs, rhs) {
@@ -110,7 +121,7 @@ struct PresentationRequest {
   let presentationInfo: PresentationInfo
 
   /// The view controller to present the paywall on, if any.
-  var presenter: UIViewController?
+  var presenter: PlatformViewController?
 
   /// Overrides the default behavior and products of a paywall.
   var paywallOverrides: PaywallOverrides?

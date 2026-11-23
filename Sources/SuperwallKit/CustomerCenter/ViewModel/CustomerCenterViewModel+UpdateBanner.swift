@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 26/08/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 // MARK: - Update banner
@@ -51,3 +52,4 @@ extension CustomerCenterViewModel {
     showsUpdateBanner = false
   }
 }
+#endif

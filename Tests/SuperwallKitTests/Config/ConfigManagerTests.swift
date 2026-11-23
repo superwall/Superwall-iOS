@@ -36,7 +36,7 @@ struct ConfigManagerTests {
 
     let oldConfig: Config = .stub()
       .setting(\.buildId, to: "abc")
-    configManager.configState.send(.retrieved(oldConfig))
+    configManager.store.update(ConfigUpdate.retrieved(oldConfig))
 
     await configManager.refreshConfiguration()
 
@@ -224,7 +224,7 @@ struct ConfigManagerTests {
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
-    configManager.configState.send(.retrieved(.stub()
+    configManager.store.update(ConfigUpdate.retrieved(.stub()
       .setting(\.triggers, to: [])))
 
     try? await configManager.getAssignments()
@@ -262,7 +262,7 @@ struct ConfigManagerTests {
 
     let variantOption: VariantOption = .stub()
       .setting(\.id, to: variantId)
-    configManager.configState.send(.retrieved(.stub()
+    configManager.store.update(ConfigUpdate.retrieved(.stub()
       .setting(\.triggers, to: [
         .stub()
         .setting(\.audiences, to: [

@@ -9,10 +9,19 @@
 import Foundation
 import Combine
 
+extension Notification.Name {
+  /// A Superwall return link (`scheme://superwall/return`) opened the app.
+  static let superwallReturnLinkOpened = Notification.Name("SuperwallReturnLinkOpened")
+}
+
 final class DeepLinkRouter {
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
+  #if canImport(WebKit)
   private unowned let debugManager: DebugManager
-  private unowned let configManager: ConfigManager
+  #endif
+  unowned let configManager: ConfigManager
+  unowned let storage: Storage
+  unowned let identityManager: IdentityManager
   private static var pendingDeepLink: URL?
 
   /// Tracks an event. Replaced in tests to observe what's tracked.
@@ -20,22 +29,52 @@ final class DeepLinkRouter {
     _ = await Superwall.shared.track(event)
   }
 
-  /// The ``PaywallInfo`` of the presented paywall, if one is presented. Replaced in tests.
-  var presentedPaywallInfo: () async -> PaywallInfo? = {
-    await Superwall.shared.paywallViewController?.info
+  /// Fetches enrichment, which looks up the custom product page of the first
+  /// deep link. Replaced in tests.
+  var fetchEnrichment: () async -> Void = {
+    try? await Superwall.shared.dependencyContainer.deviceHelper?.getEnrichment()
   }
 
+  /// The ``PaywallInfo`` of the presented paywall, if one is presented. Replaced in tests.
+  var presentedPaywallInfo: () async -> PaywallInfo? = {
+    #if canImport(WebKit)
+    return await Superwall.shared.paywallViewController?.info
+    #else
+    return nil
+    #endif
+  }
+
+  #if canImport(WebKit)
   init(
     webEntitlementRedeemer: WebEntitlementRedeemer,
     debugManager: DebugManager,
-    configManager: ConfigManager
+    configManager: ConfigManager,
+    storage: Storage,
+    identityManager: IdentityManager
   ) {
     self.webEntitlementRedeemer = webEntitlementRedeemer
     self.debugManager = debugManager
     self.configManager = configManager
+    self.storage = storage
+    self.identityManager = identityManager
 
     listenToConfig()
   }
+  #else
+  init(
+    webEntitlementRedeemer: WebEntitlementRedeemer,
+    configManager: ConfigManager,
+    storage: Storage,
+    identityManager: IdentityManager
+  ) {
+    self.webEntitlementRedeemer = webEntitlementRedeemer
+    self.configManager = configManager
+    self.storage = storage
+    self.identityManager = identityManager
+
+    listenToConfig()
+  }
+  #endif
 
   @discardableResult
   func route(url: URL) -> Bool {
@@ -72,11 +111,14 @@ final class DeepLinkRouter {
       deepLinkUrl = url
     }
 
+    captureFirstSessionDeepLink(original: url, resolved: deepLinkUrl)
+
     let trackEvent = self.trackEvent
     Task {
       await trackEvent(InternalSuperwallEvent.DeepLink(url: deepLinkUrl))
     }
 
+    #if canImport(WebKit)
     // Check if this is a debug URL
     if debugManager.handle(deepLinkUrl: deepLinkUrl) {
       return true
@@ -85,6 +127,7 @@ final class DeepLinkRouter {
     if DevServerPreview.handle(url: deepLinkUrl) {
       return true
     }
+    #endif
 
     // Return true for Superwall deep links (we handled it above)
     if isSuperwallDeepLink {
@@ -190,6 +233,7 @@ final class DeepLinkRouter {
       return true
     }
 
+    #if canImport(WebKit)
     // Debug/preview URLs
     if DebugManager.outcomeForDeepLink(url: url) != nil {
       return true
@@ -203,6 +247,7 @@ final class DeepLinkRouter {
       DevServerPreview.canHandle(url: url, options: Superwall.shared.options) {
       return true
     }
+    #endif
 
     // Check cached config for deepLink_open trigger
     let cache = Cache()
@@ -292,7 +337,7 @@ extension URL {
   /// Formats the URL for the deep link event, handling both Universal Link and URL Scheme.
   ///
   /// - Note: Assumes the `URL` is already verified to match the expected Superwall deep link format.
-  fileprivate var superwallDeepLinkMappedURL: URL {
+  var superwallDeepLinkMappedURL: URL {
     guard let appLinkRange = absoluteString.range(of: "/app-link/") else {
       return self
     }

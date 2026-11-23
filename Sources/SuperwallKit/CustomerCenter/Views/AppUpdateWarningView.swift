@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 struct AppUpdateWarningView: View {
@@ -17,7 +18,9 @@ struct AppUpdateWarningView: View {
     Section {
       VStack(alignment: .leading, spacing: 8) {
         Text(strings.string("customer_center_update_title")).font(.headline)
-        Text(strings.string("customer_center_update_message")).font(.subheadline).foregroundStyle(.secondary)
+        Text(strings.string("customer_center_update_message"))
+          .font(.subheadline)
+          .foregroundStyle(Color.customerCenterSecondaryText)
         HStack {
           if let url = viewModel.appStoreURL {
             Button(strings.string("customer_center_update_action")) { openURL(url) }
@@ -40,3 +43,4 @@ struct AppUpdateWarningView: View {
     }
   }
 }
+#endif
