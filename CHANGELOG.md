@@ -23,6 +23,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.
 - Fixes the "Occurrences in the last month" audience filter counting the last 30 weeks instead of the last month.
 - Fixes paywalls showing the status bar in apps that hide it, such as Unity games.
+- Fixes only the first StoreKit 2 purchase of a session being tracked when observing purchases.
+- Fixes a failed purchase sometimes being tracked after the events that follow it.
+- Fixes the product missing from the event tracked when a purchase is waiting for approval, such as with Ask to Buy.
 - Fixes a crash when a paywall is presented from a view controller that takes its orientations from whatever it presents.
 - Improves the contrast of text and icons in the Customer Center.
 - Fixes the Customer Center's purchase cards breaking words mid-word at the largest text sizes.
