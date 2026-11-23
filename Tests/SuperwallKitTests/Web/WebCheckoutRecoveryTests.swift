@@ -762,6 +762,8 @@ struct WebCheckoutRecoveryTests {
     let storage = StorageMock(internalRedeemResponse: nil)
     storage.save(stored, forType: PendingTeleportStorage.self)
     let network = makeNetwork()
+    // The teleport's checkout is read to make sure the link is for it.
+    network.teleportStatusResponses = [status("claimed", checkoutContextId: "ctx_1")]
     network.pollRedemptionResultResponses = [.failure(NetworkError.unknown)]
     let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
     await redeemer.handlePurchasedReturn(
@@ -771,6 +773,52 @@ struct WebCheckoutRecoveryTests {
     let pending = storage.get(PendingStripeCheckoutPollStorage.self)
     #expect(pending?.completion == asPurchase)
     #expect(pending?.productId == "prod_basic")
+    #expect(storage.get(PendingTeleportStorage.self)?.checkoutContextId == "ctx_1")
+  }
+
+  @Test("A link for another checkout doesn't take the teleport left open's product or dismissal")
+  func linkForAnotherCheckout_keepsItsRestore() async {
+    let superwall = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    // Teleport B is stored, and started checkout B.
+    storage.save(
+      PendingTeleportState(teleportId: "tp_b", productId: "prod_b", shouldDismiss: false),
+      forType: PendingTeleportStorage.self
+    )
+    let network = makeNetwork()
+    network.teleportStatusResponses = [status("claimed", checkoutContextId: "ctx_b")]
+    network.pollRedemptionResultResponses = [.failure(NetworkError.unknown)]
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    // A late return for an older checkout A, naming no product or dismissal.
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(checkoutContextId: "ctx_a", productId: "", completion: .restore)
+    )
+
+    let pending = storage.get(PendingStripeCheckoutPollStorage.self)
+    #expect(pending?.checkoutContextId == "ctx_a")
+    #expect(pending?.completion == .restore)
+    #expect(pending?.productId == "")
+    // Teleport B is left to be checked on its own.
+    #expect(storage.get(PendingTeleportStorage.self)?.teleportId == "tp_b")
+  }
+
+  @Test("A link borrows nothing from a teleport whose checkout couldn't be read")
+  func linkWithUnreadTeleport_keepsItsRestore() async {
+    let superwall = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    storage.save(
+      PendingTeleportState(teleportId: "tp_b", productId: "prod_b"),
+      forType: PendingTeleportStorage.self
+    )
+    let network = makeNetwork()
+    network.teleportStatusResponses = [.failure(NetworkError.unknown)]
+    network.pollRedemptionResultResponses = [.failure(NetworkError.unknown)]
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(checkoutContextId: "ctx_a", productId: "", completion: .restore)
+    )
+    #expect(storage.get(PendingStripeCheckoutPollStorage.self)?.completion == .restore)
   }
 
   // MARK: - Stored teleports
@@ -788,7 +836,7 @@ struct WebCheckoutRecoveryTests {
     network.teleportStatusResponses = [status("completed")]
     let launch = makeRedeemer(storage: storage, network: network, superwall: superwall)
     #expect(await launch.recoverPendingTeleport() == true)
-    #expect(storage.get(PendingTeleportStorage.self) == teleport)
+    #expect(storage.get(PendingTeleportStorage.self)?.teleportId == teleport.teleportId)
 
     // The pending checkout runs out of time before the app is opened again.
     storage.delete(PendingStripeCheckoutPollStorage.self)

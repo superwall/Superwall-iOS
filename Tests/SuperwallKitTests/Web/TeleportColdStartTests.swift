@@ -625,7 +625,7 @@ struct TeleportColdStartTests {
     // The first look and one for each recheck delay, then it waits for the next foreground.
     #expect(network.teleportStatusRequests.count == 3)
     #expect(network.checkoutStatusRequests.count == 3)
-    #expect(storage.get(PendingTeleportStorage.self) == teleport)
+    #expect(storage.get(PendingTeleportStorage.self)?.teleportId == teleport.teleportId)
     #expect(network.pollRedemptionResultCallCount == 0)
     #expect(await fresh.shouldShowStripeRecoveryLoadingOnPaywallOpen() == false)
   }
@@ -651,7 +651,7 @@ struct TeleportColdStartTests {
 
     #expect(network.teleportStatusRequests.count == 4)
     #expect(network.checkoutStatusRequests.count == 4)
-    #expect(storage.get(PendingTeleportStorage.self) == teleport)
+    #expect(storage.get(PendingTeleportStorage.self)?.teleportId == teleport.teleportId)
   }
 
   @Test("A second look while the rechecks run makes no request")

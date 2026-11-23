@@ -21,17 +21,32 @@ struct PendingTeleportState: Codable, Equatable {
   /// case it does, as paywalls do unless they say otherwise.
   let shouldDismiss: Bool?
   let openedAt: Date
+  /// The checkout the teleport started, once a status read names it. Nil until then.
+  let checkoutContextId: String?
 
   init(
     teleportId: String,
     productId: String,
     shouldDismiss: Bool? = nil,
-    openedAt: Date = Date()
+    openedAt: Date = Date(),
+    checkoutContextId: String? = nil
   ) {
     self.teleportId = teleportId
     self.productId = productId
     self.shouldDismiss = shouldDismiss
     self.openedAt = openedAt
+    self.checkoutContextId = checkoutContextId
+  }
+
+  /// The same teleport, now known to have started this checkout.
+  func startedCheckout(_ checkoutContextId: String) -> PendingTeleportState {
+    PendingTeleportState(
+      teleportId: teleportId,
+      productId: productId,
+      shouldDismiss: shouldDismiss,
+      openedAt: openedAt,
+      checkoutContextId: checkoutContextId
+    )
   }
 
   func hasExpired(at date: Date = Date()) -> Bool {

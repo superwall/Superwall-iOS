@@ -387,6 +387,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     guard storage.get(PendingTeleportStorage.self)?.teleportId == teleport.teleportId else {
       return .settled
     }
+    rememberCheckout(checkoutContextId, startedBy: teleport)
     if isPaid, let checkoutContextId {
       paidTeleportCheckouts[checkoutContextId] = teleport.teleportId
       return .paid(
@@ -1521,7 +1522,8 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         return
       }
     }
-    savePaidCheckout(purchase)
+    let fromTeleport = await teleportPurchase(for: purchase)
+    savePaidCheckout(purchase, fromTeleport: fromTeleport)
 
     // An older checkout's poll stops for this one, as it does for one the page reports
     // complete, so this one doesn't wait behind a poll that can't redeem it.
@@ -1547,9 +1549,8 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   }
 
   /// Keeps a checkout something said was paid for as the pending one.
-  private func savePaidCheckout(_ purchase: PurchasedReturn) {
+  private func savePaidCheckout(_ purchase: PurchasedReturn, fromTeleport: PurchasedReturn?) {
     let contextId = purchase.checkoutContextId
-    let fromTeleport = teleportPurchase(for: purchase)
     if let existing = pendingStripeCheckoutState, existing.checkoutContextId == contextId {
       // Already pending, as after an embedded submit, which can't say how to finish. A link that
       // says so wins; one that doesn't keeps what's stored, as does one that names no product.
@@ -1590,10 +1591,12 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     }
   }
 
-  /// How the teleport left open finishes this purchase, when the link doesn't say how to. A
-  /// link that comes back while a teleport is stored is taken to be that teleport's, so both
-  /// finish it the same way whichever is handled first.
-  private func teleportPurchase(for purchase: PurchasedReturn) -> PurchasedReturn? {
+  /// How the teleport left open finishes this purchase, when the link doesn't say how to. Only
+  /// a link for the checkout that teleport started borrows how it finishes, so both finish it the
+  /// same way whichever is handled first. A link for any other checkout, such as an older one
+  /// that came back late, keeps its own restore. When the teleport's checkout isn't known yet,
+  /// it's read once; a failed read borrows nothing.
+  private func teleportPurchase(for purchase: PurchasedReturn) async -> PurchasedReturn? {
     guard
       purchase.completion == .restore,
       let teleport = storage.get(PendingTeleportStorage.self),
@@ -1601,10 +1604,33 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     else {
       return nil
     }
+    var checkoutContextId = teleport.checkoutContextId
+    if checkoutContextId == nil,
+      let status = try? await network.getTeleportStatus(teleportId: teleport.teleportId) {
+      checkoutContextId = status.checkoutContextId.flatMap { $0.isEmpty ? nil : $0 }
+      rememberCheckout(checkoutContextId, startedBy: teleport)
+    }
+    guard checkoutContextId == purchase.checkoutContextId else {
+      return nil
+    }
     return teleport.purchase(
       checkoutContextId: purchase.checkoutContextId,
       productId: purchase.productId
     )
+  }
+
+  /// Keeps the checkout a status read says the stored teleport started, while it's still the
+  /// one stored.
+  private func rememberCheckout(_ checkoutContextId: String?, startedBy teleport: PendingTeleportState) {
+    guard
+      let checkoutContextId,
+      let stored = storage.get(PendingTeleportStorage.self),
+      stored.teleportId == teleport.teleportId,
+      stored.checkoutContextId != checkoutContextId
+    else {
+      return
+    }
+    storage.save(stored.startedCheckout(checkoutContextId), forType: PendingTeleportStorage.self)
   }
 
   /// Waits for the paywall page to report the checkout, while its teleport is still the page's
