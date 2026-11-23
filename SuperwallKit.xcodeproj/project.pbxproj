@@ -162,7 +162,6 @@
 		1EE2A1A81086FC41B34A38E7 /* DevServerSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E37562E243AE6632134D94A /* DevServerSurface.swift */; };
 		1F19354FCEB5B883C50D1097 /* SuperwallKit_Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = EC51351CA716C5C3B71E2FA1 /* SuperwallKit_Model.xcdatamodeld */; };
 		1F20D775BC035F8A75B79323 /* PaywallMessageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF61DCA9CF170E0AFC507BAE /* PaywallMessageHandler.swift */; };
-		1F561FF656AAED36D2792237 /* SDKEnvironmentReportState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2AD1E5C65C17EF42403971E /* SDKEnvironmentReportState.swift */; };
 		1F982A82AAC4D109D842814C /* Storage+FirstDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = E46F598A47D6E3E84AECF1DF /* Storage+FirstDeepLink.swift */; };
 		1FA8E5456D32FC9993E6807A /* GetExperiment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE5DAD3AB51C8C6B5AB88D2 /* GetExperiment.swift */; };
 		1FB66F276E4FD5AEC37EC14A /* ContactStoreProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F35F68AF572F7CDF174320C /* ContactStoreProxy.swift */; };
@@ -1136,7 +1135,6 @@
 		D691F08F66D2BB75FEFC3869 /* ExperimentTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC52CA0CE82A5605AFF7A075 /* ExperimentTemplate.swift */; };
 		D6CA719D79BAA6369D1C01C3 /* AudienceLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71CF4BE5D2A6CEA9F8993C81 /* AudienceLogic.swift */; };
 		D70A7E86AC42841860391527 /* DebugManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5383FA48A6E9EF8F30683C9B /* DebugManager.swift */; };
-		D75BBB648EC8AA2906A8304C /* SDKEnvironmentReportState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2AD1E5C65C17EF42403971E /* SDKEnvironmentReportState.swift */; };
 		D77DB3187C62B91E3D55DF80 /* ArchiveRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4300EBF7463A42D2FB89371 /* ArchiveRequest.swift */; };
 		D79F176AFFF911E4CDA25418 /* LinkedCodeLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95959EB17D36487655848C40 /* LinkedCodeLogicTests.swift */; };
 		D7F5A91A1E37E6BFB84E5609 /* StoreProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10310294FD27EB6A0621341 /* StoreProduct.swift */; };
@@ -2183,7 +2181,6 @@
 		F13CC9902419E7D68B47C184 /* PopupTransitionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupTransitionDelegate.swift; sourceTree = "<group>"; };
 		F16AFE9C93A441CFB6A95F10 /* String+CamelCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+CamelCase.swift"; sourceTree = "<group>"; };
 		F29BF6DAC3FD5F643EDCE074 /* TaskRetryingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRetryingTests.swift; sourceTree = "<group>"; };
-		F2AD1E5C65C17EF42403971E /* SDKEnvironmentReportState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKEnvironmentReportState.swift; sourceTree = "<group>"; };
 		F34468E3988E779132CE101A /* BundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleHelper.swift; sourceTree = "<group>"; };
 		F36CB341B28F250F5252A8DF /* Transaction+LatestSince.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Transaction+LatestSince.swift"; sourceTree = "<group>"; };
 		F42F7C8A8E2A6D39914A0AB1 /* CoreDataStackMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStackMock.swift; sourceTree = "<group>"; };
@@ -4330,7 +4327,6 @@
 				EE7459C60281FF6790A23822 /* SDKEnvironmentCollector.swift */,
 				9BFF005C4C4D176B73EFCC9D /* SDKEnvironmentInfo.swift */,
 				620F969DF19027ECA5F3E54F /* SDKEnvironmentReporter.swift */,
-				F2AD1E5C65C17EF42403971E /* SDKEnvironmentReportState.swift */,
 			);
 			path = "SDK Environment";
 			sourceTree = "<group>";
@@ -5420,7 +5416,6 @@
 				76984544B2AEED280390BFB0 /* RotationAnimation.swift in Sources */,
 				7F765B0150A381B68D58AD87 /* SDKEnvironmentCollector.swift in Sources */,
 				821336A83A664CF56B789319 /* SDKEnvironmentInfo.swift in Sources */,
-				D75BBB648EC8AA2906A8304C /* SDKEnvironmentReportState.swift in Sources */,
 				CC9398C6F479AF31EDCD063C /* SDKEnvironmentReporter.swift in Sources */,
 				79E35504745555BC5CA14360 /* SK1ReceiptManager.swift in Sources */,
 				3B6322A7C3392F4729E00B70 /* SK1StoreProductDiscount.swift in Sources */,
@@ -5996,7 +5991,6 @@
 				5B45DF4BE7A9D598104105C6 /* RotationAnimation.swift in Sources */,
 				C148A58C14E18002B6641272 /* SDKEnvironmentCollector.swift in Sources */,
 				2FCE0F227ED605B77BE285D8 /* SDKEnvironmentInfo.swift in Sources */,
-				1F561FF656AAED36D2792237 /* SDKEnvironmentReportState.swift in Sources */,
 				22B9BFFA73DB7A8935305C55 /* SDKEnvironmentReporter.swift in Sources */,
 				CDB326E97C624F21033052C4 /* SK1ReceiptManager.swift in Sources */,
 				8E8C06FF95485AE98AA7438C /* SK1StoreProductDiscount.swift in Sources */,

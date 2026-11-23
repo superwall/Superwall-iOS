@@ -36,7 +36,9 @@ class AppSessionManager {
     },
     notificationCenter: NotificationCenter = .default,
     trackSDKEnvironment: @escaping () async -> Void = {
-      await SDKEnvironmentReporter.shared.reportIfChanged()
+      await SDKEnvironmentReportOnce.shared.run {
+        SDKEnvironmentReporter.live(storage: Superwall.shared.dependencyContainer.storage)
+      }
     }
   ) {
     self.republishIfAdConsentChanged = republishIfAdConsentChanged

@@ -11,86 +11,74 @@ import Foundation
 ///
 /// It goes up once per change, with no retry: the hash is saved as soon as the event
 /// is queued, so an upload that fails isn't sent again until the SDKs change.
-///
-/// One report runs per app open. Configuring and the app becoming active can both
-/// start the app launch check at once, and reports that overlapped would each read
-/// the old hash and send the same SDKs twice. So they run one at a time on a
-/// ``SerialTaskCoordinator``, and all but the first find the report already done.
-/// Everything a report causes goes through its ``SDKEnvironmentReportContext``.
-final class SDKEnvironmentReporter: Sendable {
-  static let shared = SDKEnvironmentReporter(context: LiveSDKEnvironmentReportContext())
+struct SDKEnvironmentReporter {
+  var environment: () async -> SDKEnvironmentInfo
+  var savedHash: () -> String?
+  var saveHash: (String) -> Void
+  /// Tracks the event, and returns whether it was queued for sending.
+  var send: (SDKEnvironmentInfo) async -> Bool
 
-  private let context: SDKEnvironmentReportContext
-  private let queue = SerialTaskCoordinator()
-
-  init(context: SDKEnvironmentReportContext) {
-    self.context = context
-  }
-
-  /// Returns whether this app open's report sent the event. Later callers wait for
-  /// the first report and get its result.
+  /// Returns whether it sent the event.
   @discardableResult
   func reportIfChanged() async -> Bool {
-    return await withCheckedContinuation { continuation in
-      queue.enqueue { [context] in
-        let didSend = await Self.report(in: context)
-        continuation.resume(returning: didSend)
-      }
-    }
-  }
-
-  private static func report(in context: SDKEnvironmentReportContext) async -> Bool {
-    let store = context.store
-    if case .finished(let outcome) = store.read({ $0.phase }) {
-      return outcome == .sent
-    }
-    let info = await context.collectEnvironment()
-    if info.sdkHash == context.savedHash() {
-      return store.dispatch(SDKEnvironmentReportAction.finishUnchanged, in: context)
+    let info = await environment()
+    guard info.sdkHash != savedHash() else {
+      return false
     }
     // Saved only once it's queued, so a launch with `eventTrackingBehavior` set to
     // `.none` doesn't use up the change.
-    if await context.send(info) {
-      return store.dispatch(
-        SDKEnvironmentReportAction.finishSent(sdkHash: info.sdkHash),
-        in: context
-      )
+    guard await send(info) else {
+      return false
     }
-    return store.dispatch(SDKEnvironmentReportAction.finishNotQueued, in: context)
+    saveHash(info.sdkHash)
+    return true
+  }
+
+  static func live(storage: Storage) -> SDKEnvironmentReporter {
+    return SDKEnvironmentReporter(
+      environment: {
+        await SDKEnvironmentCollector.shared.environment()
+      },
+      savedHash: {
+        storage.get(SDKEnvironmentHash.self)
+      },
+      saveHash: { hash in
+        storage.save(hash, forType: SDKEnvironmentHash.self)
+      },
+      send: { info in
+        let superwall = Superwall.shared
+        let result = await superwall.track(PrivateSuperwallEvent.SDKEnvironment(info: info))
+        guard result.isQueuedForSending else {
+          return false
+        }
+        // The queue lives in memory and flushes every 20 seconds. Send now, since
+        // the hash is about to be saved and stopping the app first, as rerunning
+        // it from Xcode does, would lose the change.
+        await superwall.dependencyContainer.placementsQueue.flushInternal()
+        return true
+      }
+    )
   }
 }
 
-/// Reports on the running app through the shared ``Superwall`` instance.
-final class LiveSDKEnvironmentReportContext: SDKEnvironmentReportContext {
-  let store = SDKEnvironmentReportStore(initial: SDKEnvironmentReportState())
+/// Runs the report once per process. Configuring and the app becoming active can
+/// both start the app launch check at once, and reports that overlapped would each
+/// read the old hash and send the same SDKs twice.
+actor SDKEnvironmentReportOnce {
+  static let shared = SDKEnvironmentReportOnce()
+  private var report: Task<Bool, Never>?
 
-  func collectEnvironment() async -> SDKEnvironmentInfo {
-    // Reading the bundles touches the disk and hashing the class names takes a
-    // few milliseconds, so keep it off the main thread.
-    return await Task.detached(priority: .utility) {
-      SDKEnvironmentLogic.collect(from: .live)
+  /// Returns whether the report sent the event. Later callers wait for the first
+  /// report and get its result.
+  @discardableResult
+  func run(_ makeReporter: @escaping @Sendable () -> SDKEnvironmentReporter) async -> Bool {
+    if let report = report {
+      return await report.value
     }
-    .value
-  }
-
-  func savedHash() -> String? {
-    return Superwall.shared.dependencyContainer.storage.get(SDKEnvironmentHash.self)
-  }
-
-  func saveHash(_ hash: String) {
-    Superwall.shared.dependencyContainer.storage.save(hash, forType: SDKEnvironmentHash.self)
-  }
-
-  func send(_ info: SDKEnvironmentInfo) async -> Bool {
-    let superwall = Superwall.shared
-    let result = await superwall.track(PrivateSuperwallEvent.SDKEnvironment(info: info))
-    if !result.isQueuedForSending {
-      return false
+    let report = Task {
+      await makeReporter().reportIfChanged()
     }
-    // The queue lives in memory and flushes every 20 seconds. Send now, since
-    // the hash is about to be saved and stopping the app first, as rerunning
-    // it from Xcode does, would lose the change.
-    await superwall.dependencyContainer.placementsQueue.flushInternal()
-    return true
+    self.report = report
+    return await report.value
   }
 }
