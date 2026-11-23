@@ -9,16 +9,35 @@ import Foundation
 import CoreData
 
 class CoreDataManager {
-  private let coreDataStack: CoreDataStack
-  private var backgroundContext: NSManagedObjectContext?
+  let coreDataStack: CoreDataStack
+  private(set) var backgroundContext: NSManagedObjectContext?
 
-  init(coreDataStack: CoreDataStack = CoreDataStack()) {
+  /// How the manager hears about the app going to the background.
+  let lifecycle: AppLifecycle
+
+  /// Only touched on `backgroundContext`'s queue, apart from in `init`.
+  var trimState = TrimState()
+
+  init(
+    coreDataStack: CoreDataStack = CoreDataStack(),
+    lifecycle: AppLifecycle = .live
+  ) {
     self.coreDataStack = coreDataStack
+    self.lifecycle = lifecycle
     if let persistentContainer = coreDataStack.persistentContainer {
       backgroundContext = persistentContainer.newBackgroundContext()
     }
+    observeAppBackground()
+    trimSavedPlacements()
   }
 
+  deinit {
+    stopObservingAppBackground()
+  }
+
+  /// Saves when a placement happened, so audience filters can count it and tell
+  /// how long ago it last happened. Its parameters aren't saved: nothing reads
+  /// them back, and they're most of a placement's size.
   func savePlacementData(
     _ placementData: PlacementData,
     completion: ((ManagedEventData) -> Void)? = nil
@@ -26,14 +45,16 @@ class CoreDataManager {
     guard let backgroundContext = backgroundContext else {
       return
     }
+    if !Self.isSaved(placementNamed: placementData.name) {
+      return
+    }
     backgroundContext.perform {
-      let data = try? JSONEncoder().encode(placementData.parameters)
       guard let managedEventData = ManagedEventData(
         context: backgroundContext,
         id: placementData.id,
         createdAt: placementData.createdAt,
         name: placementData.name,
-        parameters: data ?? Data()
+        parameters: Data()
       ) else {
         return
       }
@@ -169,6 +190,9 @@ class CoreDataManager {
     _ placement: PlacementData?,
     request: ComputedPropertyRequest
   ) async -> Int? {
+    if !Self.isSaved(placementNamed: request.placementName) {
+      return nil
+    }
     var lastEventDate: Date?
     if let placement = placement {
       lastEventDate = placement.name == request.placementName ? placement.createdAt : nil
@@ -253,6 +277,9 @@ class CoreDataManager {
     _ placementName: String,
     since startDate: Date?
   ) async -> Int {
+    if !Self.isSaved(placementNamed: placementName) {
+      return 0
+    }
     let fetchRequest = ManagedEventData.fetchRequest()
 
     if let startDate = startDate {

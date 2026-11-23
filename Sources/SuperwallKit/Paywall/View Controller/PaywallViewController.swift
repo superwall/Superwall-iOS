@@ -44,13 +44,49 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     return .darkContent
   }
 
+  #if !os(visionOS)
+  /// A paywall hides the status bar when the screen it covers does, so it doesn't bring it
+  /// back in an app that hides it, such as a game. When it's presented from a sheet that
+  /// leaves the status bar alone, that's the screen under the sheet.
+  ///
+  /// That screen may ask the paywall in turn, as a view controller that goes by whatever it
+  /// presents does. The paywall then answers for itself, so the two don't ask each other forever.
+  override public var prefersStatusBarHidden: Bool {
+    guard
+      !isAskingAboutStatusBar,
+      let presentingViewController = presentingViewController
+    else {
+      return super.prefersStatusBarHidden
+    }
+    isAskingAboutStatusBar = true
+    defer { isAskingAboutStatusBar = false }
+    return presentingViewController.statusBarDecidingAncestor.hidesStatusBar
+  }
+
+  /// Whether the paywall is asking the screen it covers if the status bar is hidden.
+  private var isAskingAboutStatusBar = false
+  #endif
+
   /// A paywall allows the orientations of the screen it covers, so it can't rotate the app
   /// into one the app doesn't allow. When it's presented from a sheet, that's the screen
   /// under the sheet.
+  ///
+  /// That screen may ask the paywall in turn, as a view controller that goes by whatever it
+  /// presents does. The paywall then answers for itself, so the two don't ask each other forever.
   override public var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-    return presentingViewController?.orientationDecidingAncestor.supportedInterfaceOrientations
-      ?? super.supportedInterfaceOrientations
+    guard
+      !isAskingAboutOrientations,
+      let presentingViewController = presentingViewController
+    else {
+      return super.supportedInterfaceOrientations
+    }
+    isAskingAboutOrientations = true
+    defer { isAskingAboutOrientations = false }
+    return presentingViewController.orientationDecidingAncestor.supportedInterfaceOrientations
   }
+
+  /// Whether the paywall is asking the screen it covers which orientations it allows.
+  private var isAskingAboutOrientations = false
   #endif
   /// Holds the view controller's state. Change it only by dispatching a
   /// ``PaywallViewAction``: the view controller is its context.

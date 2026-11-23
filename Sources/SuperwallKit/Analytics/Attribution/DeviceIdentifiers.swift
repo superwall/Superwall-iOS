@@ -13,7 +13,7 @@ import Foundation
 ///
 /// Not to be confused with the device attributes behind
 /// `Superwall.getDeviceAttributes()`, which describe the device and the session
-/// rather than identify it.
+/// rather than identify it. Those carry the ATT status too, under the same name.
 enum DeviceIdentifiers {
   static let keys = ["idfa", "idfv", "attStatus"]
 
