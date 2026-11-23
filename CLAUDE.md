@@ -210,6 +210,16 @@ deferred cleanup (wiping storage and caches) has finished, so user changes on di
 one after another. That cleanup waits on other objects' queues, so nothing those queues run, and no
 action or observer, may call `identify` or `reset`: that would wait on the lock it's already behind.
 
+### User seeds
+
+`user.seed` is derived from the user ID when `SuperwallOptions.enableUserIdSeed` is on or, with it
+off, when the remote `enable_userid_seed` flag is. With the option on, `identify` sets the seed in
+the same update as the user ID, so the two are saved and tracked together. With it off, the seed
+waits on the config: `IdentityState.seedAwaitsConfig` is saved until the config has answered, and
+if it doesn't arrive, `configure()` asks again on the next launch (`.resumeSeed`). Keep the SHA256
+bucket algorithm and the same-user identify early return: a user identified before either switch
+was on keeps their seed. Anonymous and reset seeds stay random.
+
 ### Config store
 
 `ConfigManager` keeps the config in a `StateStore` too, changed only by `ConfigUpdate` reducers.

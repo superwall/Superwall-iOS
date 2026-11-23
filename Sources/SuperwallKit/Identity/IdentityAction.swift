@@ -19,9 +19,13 @@ protocol IdentityContext: AnyObject {
   /// ``dispatch(_:)``.
   var userChangeLock: NSRecursiveLock { get }
 
-  /// Waits for the config. Returns the seed derived from `userId` if the
-  /// config enables user id seeds, or `nil` if it doesn't or never arrives.
-  func userIdSeed(for userId: String) async -> Int?
+  /// The seed derived from `userId` if the app's options turn user id seeds
+  /// on, so it's known without the config. Doesn't wait.
+  func userIdSeedFromOptions(for userId: String) -> Int?
+
+  /// Waits for the config, unless the app's options already turn user id
+  /// seeds on, and returns what's known about the seed for `userId`.
+  func userIdSeed(for userId: String) async -> UserIdSeed
 
   /// Fetches the user's assignments once the config has arrived.
   func fetchAssignments() async
@@ -89,7 +93,10 @@ enum IdentityAction: StoreAction {
   case identify(userId: String, restoreAssignments: Bool, keptAttributes: [String: Any?]?)
   /// Applies the seed for an identify's user once the config has said
   /// whether to derive it from the user id.
-  case resolveSeed(IdentifyOperation, seed: Int?)
+  case resolveSeed(IdentifyOperation, UserIdSeed)
+  /// Asks the config again about a seed that an earlier launch left waiting
+  /// on it.
+  case resumeSeed
   /// Merges attributes into the user's attributes.
   case mergeAttributes([String: Any?], shouldTrack: Bool, shouldNotify: Bool)
   /// Replaces the user with a new anonymous one, who keeps `keptAttributes`.
@@ -103,7 +110,7 @@ enum IdentityAction: StoreAction {
     switch self {
     case .identify, .reset:
       return true
-    case .resolveSeed, .mergeAttributes, .persist:
+    case .resolveSeed, .resumeSeed, .mergeAttributes, .persist:
       return false
     }
   }
@@ -117,12 +124,14 @@ enum IdentityAction: StoreAction {
         keptAttributes: keptAttributes,
         in: context
       )
-    case let .resolveSeed(operation, seed):
+    case let .resolveSeed(operation, userIdSeed):
       let seedBefore = context.state.seed
-      context.update(.resolveSeed(operation, seed: seed))
+      context.update(.resolveSeed(operation, userIdSeed))
       if context.state.seed != seedBefore {
         context.trackUserAttributes(context.state.userAttributes)
       }
+    case .resumeSeed:
+      resumeSeed(in: context)
     case let .mergeAttributes(attributes, shouldTrack, shouldNotify):
       context.update(.mergeAttributes(attributes))
       let merged = context.state.userAttributes
@@ -152,7 +161,10 @@ enum IdentityAction: StoreAction {
     }
 
     let operation = IdentifyOperation(userId: userId)
-    context.update(.begin(.seed(operation)))
+    let seedFromOptions = context.userIdSeedFromOptions(for: userId)
+    if seedFromOptions == nil {
+      context.update(.begin(.seed(operation)))
+    }
     if restoreAssignments {
       context.update(.begin(.assignments(operation)))
     }
@@ -161,7 +173,7 @@ enum IdentityAction: StoreAction {
       replaceUser(keptAttributes: keptAttributes, in: context)
     }
 
-    context.update(.identify(operation))
+    context.update(.identify(operation, seed: seedFromOptions))
     context.persistIdentity(context.state)
     context.update(.established)
 
@@ -173,23 +185,64 @@ enum IdentityAction: StoreAction {
     context.store.deferUntilUnlocked {
       startSideEffects(
         of: operation,
+        waitsForSeed: seedFromOptions == nil,
         restoreAssignments: restoreAssignments,
         in: context
       )
     }
   }
 
-  private func startSideEffects(
+  /// Makes the seed of a user identified in an earlier launch pending again,
+  /// if the config never said whether to derive it from their id. Does
+  /// nothing while an identify in this launch is already waiting for it.
+  private func resumeSeed(in context: IdentityContext) {
+    let state = context.state
+    guard
+      state.seedAwaitsConfig,
+      let userId = state.appUserId
+    else {
+      return
+    }
+    let isAlreadyPending = state.pending.contains { item in
+      if case .seed(let operation) = item {
+        return operation.userId == userId
+      }
+      return false
+    }
+    if isAlreadyPending {
+      return
+    }
+
+    let operation = IdentifyOperation(userId: userId)
+    context.update(.begin(.seed(operation)))
+    context.store.deferUntilUnlocked {
+      resolveSeed(of: operation, in: context)
+    }
+  }
+
+  /// Waits for what the config says about the operation's seed, then
+  /// applies it.
+  private func resolveSeed(
     of operation: IdentifyOperation,
-    restoreAssignments: Bool,
     in context: IdentityContext
   ) {
     context.sideEffect { [weak context] in
       guard let context = context else {
         return
       }
-      let seed = await context.userIdSeed(for: operation.userId)
-      context.dispatch(.resolveSeed(operation, seed: seed))
+      let userIdSeed = await context.userIdSeed(for: operation.userId)
+      context.dispatch(.resolveSeed(operation, userIdSeed))
+    }
+  }
+
+  private func startSideEffects(
+    of operation: IdentifyOperation,
+    waitsForSeed: Bool,
+    restoreAssignments: Bool,
+    in context: IdentityContext
+  ) {
+    if waitsForSeed {
+      resolveSeed(of: operation, in: context)
     }
 
     context.sideEffect { [weak context] in
@@ -253,8 +306,10 @@ extension IdentityAction: CustomStringConvertible {
     case let .identify(_, restoreAssignments, keptAttributes):
       return "identify(restoreAssignments: \(restoreAssignments), "
         + "keptAttributes: \(keptAttributes?.keys.sorted().description ?? "nil"))"
-    case let .resolveSeed(_, seed):
-      return "resolveSeed(seed: \(seed.map(String.init) ?? "nil"))"
+    case let .resolveSeed(_, userIdSeed):
+      return "resolveSeed(\(userIdSeed))"
+    case .resumeSeed:
+      return "resumeSeed"
     case let .mergeAttributes(attributes, shouldTrack, shouldNotify):
       return "mergeAttributes(keys: \(attributes.keys.sorted()), "
         + "shouldTrack: \(shouldTrack), shouldNotify: \(shouldNotify))"
