@@ -21,10 +21,29 @@ struct CustomerCenterContrastTests {
     let blue: Double
   }
 
-  private func rgb(_ color: UIColor, _ style: UIUserInterfaceStyle, over background: RGB? = nil) -> RGB {
+  private static let styles: [UIUserInterfaceStyle] = [.light, .dark]
+  private static let badges: [(Color, UIColor)] = [
+    (Color.customerCenterGreenText, UIColor.systemGreen),
+    (Color.customerCenterOrangeText, UIColor.systemOrange),
+    (Color.customerCenterRedText, UIColor.systemRed),
+    (Color.customerCenterGrayText, UIColor.systemGray)
+  ]
+
+  private func traits(
+    _ style: UIUserInterfaceStyle,
+    elevated: Bool = false,
+    highContrast: Bool = false
+  ) -> UITraitCollection {
+    UITraitCollection(traitsFrom: [
+      UITraitCollection(userInterfaceStyle: style),
+      UITraitCollection(userInterfaceLevel: elevated ? .elevated : .base),
+      UITraitCollection(accessibilityContrast: highContrast ? .high : .normal)
+    ])
+  }
+
+  private func rgb(_ color: UIColor, _ traits: UITraitCollection, over background: RGB? = nil) -> RGB {
     var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
-    color.resolvedColor(with: UITraitCollection(userInterfaceStyle: style))
-      .getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+    color.resolvedColor(with: traits).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
     guard let background else { return RGB(red: red, green: green, blue: blue) }
     return RGB(
       red: red * alpha + background.red * (1 - alpha),
@@ -47,33 +66,31 @@ struct CustomerCenterContrastTests {
 
   /// The cards behind the text: the grouped cell colour, and in dark mode the lighter one a sheet
   /// uses.
-  private func cards(_ style: UIUserInterfaceStyle) -> [RGB] {
-    let card = rgb(.secondarySystemGroupedBackground, style)
+  private func cards(_ style: UIUserInterfaceStyle, highContrast: Bool = false) -> [RGB] {
+    let card = rgb(.secondarySystemGroupedBackground, traits(style, highContrast: highContrast))
     guard style == .dark else { return [card] }
-    let sheet = UITraitCollection(traitsFrom: [
-      UITraitCollection(userInterfaceStyle: .dark),
-      UITraitCollection(userInterfaceLevel: .elevated)
-    ])
-    var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
-    UIColor.secondarySystemGroupedBackground.resolvedColor(with: sheet)
-      .getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-    return [card, RGB(red: red, green: green, blue: blue)]
+    let sheet = rgb(
+      .secondarySystemGroupedBackground,
+      traits(style, elevated: true, highContrast: highContrast)
+    )
+    return [card, sheet]
+  }
+
+  /// Everything the secondary text and close icon sit on: the cards and the grouped background.
+  private func backgrounds(_ style: UIUserInterfaceStyle, highContrast: Bool = false) -> [RGB] {
+    cards(style, highContrast: highContrast)
+      + [rgb(.systemGroupedBackground, traits(style, highContrast: highContrast))]
   }
 
   @Test(
     "badge text keeps 4.5:1 on its tint and on the card",
-    arguments: [
-      (Color.customerCenterGreenText, UIColor.systemGreen),
-      (Color.customerCenterOrangeText, UIColor.systemOrange),
-      (Color.customerCenterRedText, UIColor.systemRed),
-      (Color.customerCenterGrayText, UIColor.systemGray)
-    ]
+    arguments: badges
   )
   func badgeText(text: Color, tint: UIColor) {
-    for style in [UIUserInterfaceStyle.light, .dark] {
+    for style in Self.styles {
       for card in cards(style) {
-        let foreground = rgb(UIColor(text), style)
-        let background = rgb(tint.withAlphaComponent(0.15), style, over: card)
+        let foreground = rgb(UIColor(text), traits(style))
+        let background = rgb(tint.withAlphaComponent(0.15), traits(style), over: card)
         #expect(ratio(foreground, background) >= 4.5, "\(style == .dark ? "dark" : "light") tint")
         #expect(ratio(foreground, card) >= 4.5, "\(style == .dark ? "dark" : "light") card")
       }
@@ -82,10 +99,68 @@ struct CustomerCenterContrastTests {
 
   @Test("secondary text keeps 4.5:1 on the card and the grouped background")
   func secondaryText() {
-    for style in [UIUserInterfaceStyle.light, .dark] {
-      for background in cards(style) + [rgb(.systemGroupedBackground, style)] {
-        let foreground = rgb(UIColor(Color.customerCenterSecondaryText), style, over: background)
+    for style in Self.styles {
+      for background in backgrounds(style) {
+        let foreground = rgb(UIColor(Color.customerCenterSecondaryText), traits(style), over: background)
         #expect(ratio(foreground, background) >= 4.5)
+      }
+    }
+  }
+
+  /// What the close button sits on: the page behind the list, in a sheet or not.
+  private func pageBackgrounds(_ style: UIUserInterfaceStyle, highContrast: Bool = false) -> [RGB] {
+    [false, true].map { elevated in
+      rgb(.systemGroupedBackground, traits(style, elevated: elevated, highContrast: highContrast))
+    }
+  }
+
+  @Test("close icon keeps 4.5:1 on the page")
+  func closeIcon() {
+    for style in Self.styles {
+      for background in pageBackgrounds(style) {
+        let foreground = rgb(UIColor(Color.customerCenterCloseIcon), traits(style), over: background)
+        #expect(ratio(foreground, background) >= 4.5)
+      }
+    }
+  }
+
+  /// Turning on Increase Contrast must never make a colour stand out less than the system colour
+  /// it replaces does with the setting on, nor less than it does itself with the setting off.
+  @Test(
+    "Increase Contrast never lowers contrast",
+    arguments: badges + [
+      (Color.customerCenterSecondaryText, UIColor.secondaryLabel)
+    ]
+  )
+  func increaseContrast(color: Color, system: UIColor) {
+    expectIncreaseContrastHelps(color, over: system) { style, _ in backgrounds(style, highContrast: true) }
+  }
+
+  @Test("Increase Contrast never lowers the close icon's contrast")
+  func increaseContrastCloseIcon() {
+    expectIncreaseContrastHelps(.customerCenterCloseIcon, over: .secondaryLabel) { style, elevated in
+      [rgb(.systemGroupedBackground, traits(style, elevated: elevated, highContrast: true))]
+    }
+  }
+
+  /// Checks `color` on each background, resolved for the same appearance as the background, in
+  /// a sheet (`elevated`) or not.
+  private func expectIncreaseContrastHelps(
+    _ color: Color,
+    over system: UIColor,
+    on backgrounds: (UIUserInterfaceStyle, _ elevated: Bool) -> [RGB]
+  ) {
+    for style in Self.styles {
+      for elevated in [false, true] {
+        let highTraits = traits(style, elevated: elevated, highContrast: true)
+        let normalTraits = traits(style, elevated: elevated)
+        for background in backgrounds(style, elevated) {
+          let high = ratio(rgb(UIColor(color), highTraits, over: background), background)
+          let normal = ratio(rgb(UIColor(color), normalTraits, over: background), background)
+          let systemHigh = ratio(rgb(system, highTraits, over: background), background)
+          #expect(high >= normal - 0.01, "\(style == .dark ? "dark" : "light") against itself")
+          #expect(high >= systemHigh - 0.01, "\(style == .dark ? "dark" : "light") against the system colour")
+        }
       }
     }
   }

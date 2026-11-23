@@ -126,26 +126,4 @@ struct BadgeView: View {
       .accessibilityIdentifier(rowId.map { "customer_center.badge.\(key).\($0)" } ?? "customer_center.badge.\(key)")
   }
 }
-
-extension Color {
-  // Text versions of the badge colours, each at least 4.5:1 on its badge's 15% tint and on the
-  // card, in both appearances, including the lighter card of a sheet in dark mode. Dark mode keeps
-  // the system green and orange, which already pass.
-  static let customerCenterGreenText = customerCenterDynamic(
-    light: PlatformColor(hexString: "#207B37"),
-    dark: .systemGreen
-  )
-  static let customerCenterOrangeText = customerCenterDynamic(
-    light: PlatformColor(hexString: "#A15919"),
-    dark: .systemOrange
-  )
-  static let customerCenterRedText = customerCenterDynamic(
-    light: PlatformColor(hexString: "#C22B2E"),
-    dark: PlatformColor(hexString: "#FF7779")
-  )
-  static let customerCenterGrayText = customerCenterDynamic(
-    light: PlatformColor(hexString: "#6A6A6E"),
-    dark: PlatformColor(hexString: "#A6A6AA")
-  )
-}
 #endif

@@ -225,17 +225,9 @@ public struct CustomerCenterView: View {
       Button {
         if let onClose = navigationOptions.onClose { onClose() } else { dismiss() }
       } label: {
-        // A fixed grey rather than `.secondary`, which renders as the tint at reduced opacity on
-        // iOS 26's glass button and can fall under the 3:1 an icon needs (1.6:1 with a light
-        // accent). This is 4.9:1 light and 5.1:1 dark on the glass, and more on an opaque bar.
         Image(systemName: "xmark")
           .font(.subheadline.weight(.semibold))
-          .foregroundStyle(
-            Color.customerCenterDynamic(
-              light: PlatformColor(hexString: "#6C6C70"),
-              dark: PlatformColor(hexString: "#AEAEB2")
-            )
-          )
+          .foregroundStyle(Color.customerCenterCloseIcon)
       }
       .accessibilityLabel(viewModel.strings.string("customer_center_close"))
       .accessibilityIdentifier("customer_center.close")
