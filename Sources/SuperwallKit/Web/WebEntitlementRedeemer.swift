@@ -881,10 +881,11 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     )
 
     #if canImport(WebKit)
-    // A code redeemed with no paywall on screen has no paywall to finish on. One that was let
-    // through before it, and is still on its way, closes as restored when it opens.
+    // A paywall let through before the code was redeemed, and still on its way, closes as
+    // restored when it opens. Recorded even when a paywall is on screen now: it may have
+    // appeared after the redemption looked for one, so nothing finished it. One that the
+    // redemption did finish is closing, and the check on open leaves it alone.
     if case .code = type,
-      await MainActor.run(body: { superwall.paywallViewController == nil }),
       let arrival = WebEntitlementsArrival(
         previousWebEntitlements: previousWebEntitlements,
         webEntitlements: Set(latestWebCustomerInfo.entitlements)
@@ -1884,12 +1885,22 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     )
     await superwall.track(trackedEvent)
 
+    // Tracking can wait, and the presentation may have ended or been replaced meanwhile:
+    // its restore must not reach a newer presentation's page or close its checkout.
+    if let presentationId,
+      await Self.presentedPresentationId(of: paywallVc) != presentationId {
+      return false
+    }
     await paywallVc.webView.messageHandler.handle(PaywallMessage.restoreComplete)
 
     let superwallOptions = factory.makeSuperwallOptions()
     if superwallOptions.paywalls.automaticallyDismiss {
       if let presentationId {
         await MainActor.run {
+          // Checked again in the same step as closing its browser.
+          guard Self.presentedPresentationId(of: paywallVc) == presentationId else {
+            return
+          }
           paywallVc.closeSafari {
             // Checked again as the dismissal is asked for, in the same step.
             paywallVc.dismiss(

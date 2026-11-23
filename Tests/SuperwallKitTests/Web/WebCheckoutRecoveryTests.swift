@@ -292,6 +292,38 @@ struct WebCheckoutRecoveryTests {
     #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == true)
   }
 
+  @Test("A paywall still appearing when a recovered checkout is redeemed closes once it opens")
+  func redemptionWhilePaywallAppears_closesItOnOpen() async {
+    let superwall = makeSuperwall()
+    mapProductToPro()
+    let network = makeNetwork()
+    network.pollRedemptionResultResponses = [redeemedResponse(entitlements: [pro])]
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+
+    let evaluatedAt = Date()
+    try? await Task.sleep(nanoseconds: 5_000_000)
+    // The launch paywall is the SDK's paywall, but not on screen yet, so nothing finishes on it.
+    let paywallVc = await makePaywall(
+      redeemer: redeemer,
+      evaluatedAt: evaluatedAt,
+      presented: false,
+      onScreenAs: "launch"
+    )
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(
+        checkoutContextId: "ctx_1",
+        productId: "prod_pro",
+        completion: .purchase(productId: "prod_pro", shouldDismiss: true)
+      )
+    )
+    #expect(network.pollRedemptionResultCallCount == 1)
+    #expect(await redeemer.lastWebEntitlementsArrival != nil)
+    superwall.subscriptionStatus = .active([pro])
+
+    await present(paywallVc)
+    #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == true)
+  }
+
   @Test("New entitlements that the paywall doesn't sell don't close a paywall shown to a subscriber")
   func unrelatedArrival_leavesPaywallShownToSubscriber() async {
     let superwall = makeSuperwall()
