@@ -38,6 +38,11 @@ final class NetworkMock: Network {
   var pollRedemptionResultCallCount = 0
   var onRedeemEntitlements: (() -> Void)?
   var onPollRedemptionResult: (() -> Void)?
+  var getEnrichmentCallCount = 0
+  var onGetEnrichment: (() -> Void)?
+  var enrichmentRequests: [EnrichmentRequest] = []
+  var enrichmentResponse = Enrichment(user: JSON([:]), device: JSON(["demandScore": 42]))
+  var enrichmentError: Error?
 
   var sendEventsResult: EventsDelivery = .delivered(rejectedIndexes: [])
 
@@ -145,6 +150,21 @@ final class NetworkMock: Network {
       throw redeemError
     }
     throw NetworkError.unknown
+  }
+
+  override func getEnrichment(
+    request: EnrichmentRequest,
+    injectedApplicationStatePublisher: (AnyPublisher<ApplicationState, Never>)? = nil,
+    maxRetry: Int?,
+    timeout: Seconds?
+  ) async throws -> Enrichment {
+    getEnrichmentCallCount += 1
+    enrichmentRequests.append(request)
+    onGetEnrichment?()
+    if let enrichmentError {
+      throw enrichmentError
+    }
+    return enrichmentResponse
   }
 
   override func getIntroOfferToken(

@@ -19,12 +19,20 @@ final class DeepLinkRouter {
   #if canImport(WebKit)
   private unowned let debugManager: DebugManager
   #endif
-  private unowned let configManager: ConfigManager
+  unowned let configManager: ConfigManager
+  unowned let storage: Storage
+  unowned let identityManager: IdentityManager
   private static var pendingDeepLink: URL?
 
   /// Tracks an event. Replaced in tests to observe what's tracked.
   var trackEvent: (Trackable) async -> Void = { event in
     _ = await Superwall.shared.track(event)
+  }
+
+  /// Fetches enrichment, which looks up the custom product page of the first
+  /// deep link. Replaced in tests.
+  var fetchEnrichment: () async -> Void = {
+    try? await Superwall.shared.dependencyContainer.deviceHelper?.getEnrichment()
   }
 
   /// The ``PaywallInfo`` of the presented paywall, if one is presented. Replaced in tests.
@@ -40,21 +48,29 @@ final class DeepLinkRouter {
   init(
     webEntitlementRedeemer: WebEntitlementRedeemer,
     debugManager: DebugManager,
-    configManager: ConfigManager
+    configManager: ConfigManager,
+    storage: Storage,
+    identityManager: IdentityManager
   ) {
     self.webEntitlementRedeemer = webEntitlementRedeemer
     self.debugManager = debugManager
     self.configManager = configManager
+    self.storage = storage
+    self.identityManager = identityManager
 
     listenToConfig()
   }
   #else
   init(
     webEntitlementRedeemer: WebEntitlementRedeemer,
-    configManager: ConfigManager
+    configManager: ConfigManager,
+    storage: Storage,
+    identityManager: IdentityManager
   ) {
     self.webEntitlementRedeemer = webEntitlementRedeemer
     self.configManager = configManager
+    self.storage = storage
+    self.identityManager = identityManager
 
     listenToConfig()
   }
@@ -94,6 +110,8 @@ final class DeepLinkRouter {
     } else {
       deepLinkUrl = url
     }
+
+    captureFirstSessionDeepLink(original: url, resolved: deepLinkUrl)
 
     let trackEvent = self.trackEvent
     Task {
@@ -319,7 +337,7 @@ extension URL {
   /// Formats the URL for the deep link event, handling both Universal Link and URL Scheme.
   ///
   /// - Note: Assumes the `URL` is already verified to match the expected Superwall deep link format.
-  fileprivate var superwallDeepLinkMappedURL: URL {
+  var superwallDeepLinkMappedURL: URL {
     guard let appLinkRange = absoluteString.range(of: "/app-link/") else {
       return self
     }

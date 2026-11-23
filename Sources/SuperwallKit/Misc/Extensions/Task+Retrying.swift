@@ -39,6 +39,8 @@ extension Task where Failure == Error {
                 throw URLError(.badServerResponse)
               }
               return result
+            } catch NetworkError.trackingDisabled {
+              throw NetworkError.trackingDisabled
             } catch {
               isRetryingCallback?(attempt + 1)
               if let retryInterval = retryInterval {
@@ -98,6 +100,8 @@ extension Task where Success == Void, Failure == Error {
             do {
               try await operation()
               return
+            } catch NetworkError.trackingDisabled {
+              throw NetworkError.trackingDisabled
             } catch {
               isRetryingCallback?(attempt + 1)
               if let retryInterval = retryInterval {

@@ -3216,7 +3216,7 @@ struct WebEntitlementRedeemerTests {
     } else {
       Issue.record("Expected a purchased result, got \(String(describing: results.first))")
     }
-    #expect(await harness.paywallVc.completedPurchaseProduct?.productIdentifier == "stripe|price_1")
+    #expect(await harness.paywallVc.store.read { $0.completedPurchase }?.productIdentifier == "stripe|price_1")
   }
 
   @Test("A web purchase that should not dismiss keeps the paywall so its actions run")
@@ -3288,7 +3288,7 @@ struct WebEntitlementRedeemerTests {
 
     #expect(harness.network.pollRedemptionResultCallCount == 1)
     #expect(await waitForEvent("transaction_complete", in: harness.webView) == false)
-    #expect(await harness.paywallVc.completedPurchaseProduct == nil)
+    #expect(await harness.paywallVc.store.read { $0.completedPurchase } == nil)
   }
 
   @Test("A failed redemption finishes nothing, even for a web purchase")
@@ -3336,13 +3336,13 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
 
-    let before = paywallVc.resolvedDismissal(result: .declined, closeReason: .manualClose)
+    let before = paywallVc.store.read { $0.resolvedDismissal(result: .declined, closeReason: .manualClose) }
     #expect(before.result == .declined)
     #expect(before.closeReason == .manualClose)
 
     paywallVc.markPurchaseCompleted(StoreProduct.blank(productIdentifier: "stripe|price_1"))
 
-    let after = paywallVc.resolvedDismissal(result: .declined, closeReason: .manualClose)
+    let after = paywallVc.store.read { $0.resolvedDismissal(result: .declined, closeReason: .manualClose) }
     if case let .purchased(product) = after.result {
       #expect(product.productIdentifier == "stripe|price_1")
     } else {
@@ -3350,14 +3350,14 @@ struct WebEntitlementRedeemerTests {
     }
     #expect(after.closeReason == .systemLogic)
 
-    let restored = paywallVc.resolvedDismissal(result: .restored, closeReason: .systemLogic)
+    let restored = paywallVc.store.read { $0.resolvedDismissal(result: .restored, closeReason: .systemLogic) }
     #expect(restored.result == .restored)
 
     // A close to show the next paywall keeps its reason, so that paywall keeps the state.
-    let forNextPaywall = paywallVc.resolvedDismissal(
+    let forNextPaywall = paywallVc.store.read { $0.resolvedDismissal(
       result: .declined,
       closeReason: .forNextPaywall
-    )
+    ) }
     #expect(forNextPaywall.result == .declined)
     #expect(forNextPaywall.closeReason == .forNextPaywall)
   }
@@ -3393,15 +3393,15 @@ struct WebEntitlementRedeemerTests {
     // A sheet swiped away disappears before its close is reported, so the purchase is still
     // there for that close.
     paywallVc.viewDidDisappear(false)
-    let swiped = paywallVc.resolvedDismissal(result: .declined, closeReason: .manualClose)
+    let swiped = paywallVc.store.read { $0.resolvedDismissal(result: .declined, closeReason: .manualClose) }
     #expect(swiped.result != .declined)
 
     paywallVc.viewWillAppear(false)
 
-    let later = paywallVc.resolvedDismissal(result: .declined, closeReason: .manualClose)
+    let later = paywallVc.store.read { $0.resolvedDismissal(result: .declined, closeReason: .manualClose) }
     #expect(later.result == .declined)
     #expect(later.closeReason == .manualClose)
-    #expect(paywallVc.completedPurchaseProduct == nil)
+    #expect(paywallVc.store.read { $0.completedPurchase } == nil)
   }
 
   /// A paywall offering two tiers with different entitlements. A web purchase of one tier

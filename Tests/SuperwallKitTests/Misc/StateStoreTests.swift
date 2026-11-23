@@ -61,6 +61,17 @@ private struct Run: StoreAction {
   }
 }
 
+/// Adds to the counter and returns the value it saw before, in one locked step.
+private struct AddReturningPrevious: StoreAction {
+  let amount: Int
+
+  func execute(in context: TestContext) -> Int {
+    let previous = context.store.state.value
+    context.store.update(Add(amount: amount))
+    return previous
+  }
+}
+
 /// A value shared with other threads.
 private final class Box<Value>: @unchecked Sendable {
   private let lock = NSLock()
@@ -567,5 +578,98 @@ struct StateStoreTests {
     secondDone.wait()
 
     #expect(deferredThread.value === firstThread.value)
+  }
+
+  // MARK: - dispatch results and read
+
+  @Test("dispatch returns what the action returned")
+  func dispatchReturnsResult() {
+    let context = TestContext()
+    context.store.update(SetValue(value: 4))
+
+    let previous = context.store.dispatch(AddReturningPrevious(amount: 3), in: context)
+
+    #expect(previous == 4)
+    #expect(context.store.state.value == 7)
+  }
+
+  @Test("Results from many threads each see a different state, so no two read the same")
+  func dispatchResultsAreAtomic() async {
+    let context = TestContext()
+
+    let previous = await withTaskGroup(of: Int.self) { group in
+      for _ in 0..<200 {
+        group.addTask {
+          context.store.dispatch(AddReturningPrevious(amount: 1), in: context)
+        }
+      }
+      var values: [Int] = []
+      for await value in group {
+        values.append(value)
+      }
+      return values
+    }
+
+    #expect(Set(previous) == Set(0..<200))
+    #expect(context.store.state.value == 200)
+  }
+
+  @Test("read returns part of the state")
+  func readReturnsPart() {
+    let context = TestContext()
+    context.store.update(SetValue(value: 9))
+
+    #expect(context.store.read { $0.value } == 9)
+  }
+
+  @Test("An update on another thread waits for a read in progress")
+  func updateWaitsForRead() {
+    let context = TestContext()
+    let reading = DispatchSemaphore(value: 0)
+    let proceed = DispatchSemaphore(value: 0)
+    let updated = DispatchSemaphore(value: 0)
+    let seenDuringRead = Box<Int?>(nil)
+
+    onThread {
+      context.store.read { state in
+        reading.signal()
+        _ = proceed.wait(timeout: .now() + 5)
+        seenDuringRead.value = state.value
+      }
+    }
+    reading.wait()
+    onThread {
+      context.store.update(SetValue(value: 1))
+      updated.signal()
+    }
+
+    #expect(updated.wait(timeout: .now() + 0.2) == .timedOut)
+    proceed.signal()
+    #expect(updated.wait(timeout: .now() + 5) == .success)
+    #expect(seenDuringRead.value == 0)
+    #expect(context.store.state.value == 1)
+  }
+
+  @Test("Work deferred inside a read runs once the store is unlocked")
+  func readDefersUntilUnlocked() {
+    let context = TestContext()
+    let otherThreadRead = DispatchSemaphore(value: 0)
+    let readerGotLock = Box(false)
+
+    context.store.read { _ in
+      context.store.update(Add(amount: 1))
+      context.store.deferUntilUnlocked {
+        // Another thread can only read the state if this thread no longer
+        // holds the lock.
+        onThread {
+          _ = context.store.state
+          otherThreadRead.signal()
+        }
+        readerGotLock.value = otherThreadRead.wait(timeout: .now() + 2) == .success
+      }
+    }
+
+    #expect(readerGotLock.value)
+    #expect(context.store.state.value == 1)
   }
 }

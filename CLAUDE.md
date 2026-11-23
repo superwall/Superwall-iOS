@@ -69,6 +69,7 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 - Neither has WebKit, so `#if canImport(WebKit)` marks everything that needs a paywall on screen: the paywall view controller and presentation, debugger, Test Mode, Customer Center, permissions and the SDK's alerts. Build both after any change (`build-platforms.yml` shows the commands); the iOS build won't catch a paywall type leaking into shared code.
 - `register` evaluates audience filters, then `finishWithoutPaywallUI` unlocks the feature as iOS does when a paywall fails to load: skipped, or the paywall is fetched and a non-gated feature runs while a gated one gets error 106. No present or dismiss state is sent, so `register` passes the feature block down. Implicit triggers and paywall preloading do nothing.
 - When a shared `@available`/`#available` names iOS, also name the matching watchOS and tvOS versions, or the `*` lets them through.
+- `TrackingManagerProxy` also builds on tvOS, which has App Tracking Transparency, so the ad consent rule can read the status there. watchOS has none.
 
 ### Code Conventions
 
@@ -116,7 +117,11 @@ When bumping the version, update all three files:
 
 ### Pull Requests
 
-When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPLATE.md`:
+Before opening a PR, run a code review of the change and fix the bugs it finds. Once it's open, fix
+the bugs the review bots report as they come in, or reply to say why not.
+
+When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPLATE.md`, and only
+tick a box for something that was done:
 
 - [ ] All unit tests pass.
 - [ ] All UI tests pass.
@@ -126,6 +131,8 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 - [ ] I added/updated tests or detailed why my change isn't tested.
 - [ ] I added an entry to the `CHANGELOG.md` for any breaking changes, enhancements, or bug fixes.
 - [ ] I have run `swiftlint` in the main directory and fixed any issues.
+- [ ] I ran a code review of this pull request in my coding agent (such as `/code-review` in Claude Code) and fixed the bugs it found.
+- [ ] I fixed the bugs the review bots reported on this pull request, or replied to say why not, and will do the same for any that come in later.
 - [ ] I have updated the SDK documentation as well as the online docs.
 - [ ] I have reviewed the [contributing guide](https://github.com/superwall-me/paywall-ios/tree/master/.github/CONTRIBUTING.md)
 
@@ -178,6 +185,31 @@ persisted in app-specific storage (surviving `reset()`) and flushed when the fla
 turns on. The state is re-sent when it or the identity changes, otherwise once a
 day.
 
+### State stores
+
+Stateful parts of the SDK follow the same shape as Android's `misc/primitives` (compare with the
+matching Android `*State.kt` when changing one):
+
+- **State** is a struct, apart from the class that owns it. Use enums with associated values so
+  impossible combinations can't be built (a completion can't exist without a purchase, a
+  dismissal result can't exist outside a dismissal). Compute derived values instead of storing
+  them twice.
+- **Updates** are the only way the state changes: a `Reducer` enum whose cases are named events
+  (`checkoutClosed`, not `setCheckoutOpen(false)`), pure, each one tested, plus the combinations
+  that matter.
+- **Actions** are a closed `StoreAction` enum. They're the only place side effects start. An action
+  that needs to report back returns a value from `dispatch`, read in the same locked step, so
+  callers never update and then read the state in a second call.
+- **Side effects** are methods on the action's Context protocol: storage, tracking, publishing,
+  delegate calls, main-thread hops. The protocol is the full list, and tests use a fake that
+  records the calls. Anything that may wait runs through `deferUntilUnlocked`.
+- **Ordering:** synchronous work goes through the store's lock. Async work that must not overlap or
+  must keep its order (StoreKit, the network, the paywall page) runs on a `SerialTaskCoordinator`
+  owned by the same object, so one async action finishes before the next starts, like Android's
+  `SequentialActor`. Don't use a Swift `actor` for this: it lets other calls in at every `await`.
+- Read part of the state with `store.read { }` when a copy of the whole state could outlive a
+  removal and become the last owner of something that must be released in a certain place.
+
 ### Identity store
 
 `IdentityManager` keeps its state in a `StateStore`, guarded by one recursive lock. Identity
@@ -203,6 +235,81 @@ subscribe to it to hear about changes, but read `configManager.config` (or the f
 `SerialTaskCoordinator`. An operation on it must never `await` the coordinator's `run` or `flush`,
 directly or through `fetchConfiguration()`/`refreshConfiguration()`: it would wait on work queued
 behind itself. Use `enqueue` for follow-up work, as the fetch does for its refreshes.
+
+### Paywall view controller cache store
+
+`PaywallViewControllerCache` keeps its controllers and the key of the one on screen in a `StateStore`,
+changed only by `PaywallViewControllerCacheUpdate` reducers, applied by
+`PaywallViewControllerCacheAction`s (save, remove, `removeAll`, presented, dismissed). The reducers
+keep the on-screen key pointing at a cached controller: removing or replacing that controller clears
+it, and marking an uncached key as presented sets nothing. Otherwise a controller saved later under
+the key would be taken for the one on screen and survive `removeAll`. An action that drops a
+controller hands it to `release` with `deferUntilUnlocked`, which lets go of it on the main thread.
+Never let a controller's last reference go with the store locked or off the main thread, since that
+tears down its views. Read the cache through `store.read`, never `store.state`: a copy of the
+controllers can outlive a removal on main and become a controller's last owner on another thread.
+
+### Purchase and restore stores
+
+`PurchasingCoordinator` keeps the purchase flow in a `StateStore<PurchaseContext, PurchaseState>`.
+`PurchasePhase` is `idle`, `awaitingResult(completion)` (a StoreKit 1 purchase with no purchase begun)
+or `inFlight(purchase, completion?)`, and `PurchaseMethod` says whether it's a StoreKit/purchase
+controller purchase or a custom store checkout. Each `InFlightPurchase` has an id: whoever handles a
+purchase ends it with `finish(purchase)`, which does nothing once another purchase has begun. Read
+`coordinator.purchase` once and pass it on, never `source` then `product`. A `PurchaseAction` that
+drops a waiting StoreKit 1 completion resumes it as cancelled, so a purchase can't wait forever.
+Results and StoreKit lookups go through the `PurchaseContext` protocol. `TransactionManager.purchase`
+and `RestoreFlow.restore` each run on their own `SerialTaskCoordinator`. A call made from inside one
+(the app's purchase controller calling `Superwall.purchase` or `restorePurchases` from its own
+purchase or restore) runs straight away, through a task-local flag and the "purchase function with a
+purchase controller" check. Don't make that inner call wait on the queue, or it deadlocks.
+`RestoreFlow` has no state; everything it causes goes through `RestoreContext`. Observer-mode
+tracking stays in `TransactionManager`.
+
+### Paywall view store
+
+`PaywallViewController` is the `PaywallViewContext` of a `PaywallViewStore`. Its state
+(`PaywallViewState`) holds the paywall, the claims (`currentClaim` and `HandedOut`), the
+presentation `Phase` (idle, requested, appearing, presented, dismissing), the `Browser` (with the
+`CheckoutSheet` and what settled it) and the loading state. Request and occurrence are read from the
+claim; `isPresented`, `isBrowserOpen`, macOS `isClosing` and friends are computed from the phase.
+Publishers, dismiss completions, views, timers and tasks stay on the view controller. Safari doesn't
+always report it closed (never on visionOS), so a link or checkout is only refused while a browser
+is really on screen (`isBrowserOnScreen`); a browser the state has open that isn't is forgotten.
+
+- Change the state only by dispatching a `PaywallViewAction`: `.event(update)` for a plain
+  `PaywallViewUpdate`, or a named action for anything with side effects. A store observer
+  publishes every loading state write (even an unchanged one, as `@Published` always did) through
+  `publishLoadingState`, which delivers on the main thread through `OrderedDelivery` once the
+  store is unlocked.
+- Side effects are `PaywallViewContext` methods, run through `effect` once the store is unlocked.
+  Add a method there (and to the test fake) rather than calling UIKit, the delegate, storage or
+  tracking from an action.
+- Use what `dispatch` returns (`Outcome`) instead of reading the state again after an action.
+  Read with `store.read` rather than copying the whole state when you need one field.
+- Each presentation has an id. A dismissal finishes on the `dismissalCoordinator` and reports to its
+  own presentation only: if the paywall is shown again before it finishes, the old presentation
+  moves to `supersededDismissals` and the new one is left alone.
+- The public `loadingState` mirrors the store and can briefly lag it; SDK code changes it with
+  `updateLoading(_:)` and a named `PaywallLoadingChange`, and reads the store to decide things.
+
+### Saved placements
+
+`CoreDataManager` saves when each placement happened, so audience filters can count it or tell how
+long ago it last happened. Only the name and time are saved. The `parameters` column stays in the
+model but is written empty, so the store needs no model migration. Preloading and loading placements
+(`CoreDataManager.unsavedPlacementNames`) aren't saved or counted, and the dashboard doesn't offer
+them in audience filters; keep the two lists in step. `trimSavedPlacements` cleans up a store written
+by earlier versions once, then saves `savedPlacementsTrimVersion` in the store's metadata; raise that
+number when adding to the unsaved names, so stores are cleaned again. The trim works in small steps
+on the context that saves placements, each queued behind whatever is waiting, because the whole of it
+takes seconds on a large store. Don't turn it into one long block: placements saved at launch and
+`reset()` would wait for it. Giving the freed space back means rewriting the whole store, which can't
+be split up, so it waits until the app goes to the background (`reclaimSpaceIfNeeded`) and asks the
+system to keep the app awake for it. It counts as done once SQLite has moved the rewrite into the
+main file (an empty -wal file), never by the file getting smaller: a new install has nothing to give
+back. Something reading the store at that moment makes it fail without an error, so it's tried again
+the next time, up to `spaceReclaimAttempts` times.
 
 ### Native macOS
 

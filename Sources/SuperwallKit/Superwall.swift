@@ -83,6 +83,15 @@ public final class Superwall: NSObject, ObservableObject {
         dependencyContainer.mmpAttributionManager.startMatchIfEnabled()
       }
 
+      // Enrichment is skipped while opted out, so fetch it now rather than at the
+      // next config refresh.
+      if oldValue == .none && newValue != .none {
+        let deviceHelper = dependencyContainer.deviceHelper
+        Task {
+          try? await deviceHelper?.getEnrichment()
+        }
+      }
+
       Task {
         await dependencyContainer.placementsQueue.setTrackingBehavior(newValue)
         // Re-send the device attributes once the queue has the new behavior. Leaving
@@ -131,8 +140,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// consent flow. Where the values came from is reported in the `adConsentSource`
   /// device attribute (`developer`, `tcf` or `default`).
   ///
-  /// On iOS, personalization is reported as denied when the user hasn't allowed
-  /// tracking, unless you set `adConsent` yourself.
+  /// Both are reported as denied when the user has denied App Tracking Transparency
+  /// or it's restricted, whatever `adConsent` is set to.
   ///
   /// You can also set the initial value via ``SuperwallOptions/adConsent``
   /// before calling `configure`.
@@ -1069,9 +1078,9 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Re-sends device attributes if the ad consent they report, or its source, has
-  /// changed since they were last sent, such as after the user answers the ATT
-  /// prompt or a consent banner mid-session. Never prompts. Returns whether it sent them.
+  /// Re-sends device attributes if the ad consent they report, its source or the ATT
+  /// status has changed since they were last sent, such as after the user answers the
+  /// ATT prompt or a consent banner mid-session. Never prompts. Returns whether it sent them.
   ///
   /// Goes through the same queue as ``adConsent`` assignments, so it can't overtake
   /// one. If an assignment is made while it waits, it defers to that.
@@ -1081,8 +1090,8 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// Re-sends device attributes through the same queue as ``adConsent`` assignments.
-  /// With `onlyIfAdConsentChanged`, it does so only when the reported ad consent or
-  /// its source differs from what was last sent. Returns whether it sent them.
+  /// With `onlyIfAdConsentChanged`, it does so only when the reported ad consent, its
+  /// source or the ATT status differs from what was last sent. Returns whether it sent them.
   @discardableResult
   func republishDeviceAttributes(onlyIfAdConsentChanged: Bool) async -> Bool {
     return await withCheckedContinuation { continuation in
@@ -1094,7 +1103,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Queues a republish-if-changed without waiting for it. Called after every
   /// device attributes send, so consent that changed while that send was being
-  /// built is sent too. Does nothing when the consent is unchanged.
+  /// built is sent too. Does nothing when the consent and the ATT status are unchanged.
   func reconcileAdConsentAfterPublish() {
     enqueueDeviceAttributesRepublish(onlyIfAdConsentChanged: true) { _ in }
   }
@@ -1208,6 +1217,13 @@ public final class Superwall: NSObject, ObservableObject {
   /// [In-App Previews](https://docs.superwall.com/docs/in-app-paywall-previews) for
   /// more.
   ///
+  /// The first deep link received during the first app session after install is
+  /// also saved as the `firstDeepLinkUrl` user attribute. If you assign deep links
+  /// to your App Store custom product pages, you can use this attribute to break
+  /// down results and filter audiences by the product page that drove the install.
+  /// If you've connected App Store Connect, the page's ID and name are saved as the
+  /// `customProductPageId` and `customProductPageName` user attributes too.
+  ///
   /// - Parameters:
   ///   - url: The URL of the deep link.
   /// - Returns: A `Bool` that is `true` if the deep link was handled.
@@ -1227,6 +1243,13 @@ public final class Superwall: NSObject, ObservableObject {
   /// - **`deepLink_open` trigger**: Any deep link can trigger a paywall if you've configured
   ///   a `deepLink_open` trigger in your Superwall dashboard.
   ///
+  /// The first deep link received during the first app session after install is
+  /// also saved as the `firstDeepLinkUrl` user attribute. If you assign deep links
+  /// to your App Store custom product pages, you can use this attribute to break
+  /// down results and filter audiences by the product page that drove the install.
+  /// If you've connected App Store Connect, the page's ID and name are saved as the
+  /// `customProductPageId` and `customProductPageName` user attributes too.
+  ///
   /// This method is designed to work in a handler chain pattern where multiple handlers
   /// process deep links. It returns `true` only for URLs that Superwall will handle,
   /// allowing other handlers to process non-Superwall URLs.
@@ -1238,9 +1261,12 @@ public final class Superwall: NSObject, ObservableObject {
   ///   config contains a `deepLink_open` trigger.
   @discardableResult
   public static func handleDeepLink(_ url: URL) -> Bool {
-    if Superwall.isInitialized,
-      Superwall.shared.configurationStatus == .configured {
-      return Superwall.shared.dependencyContainer.deepLinkRouter.route(url: url)
+    if Superwall.isInitialized {
+      let dependencyContainer = Superwall.shared.dependencyContainer
+      if Superwall.shared.configurationStatus == .configured {
+        return dependencyContainer.deepLinkRouter.route(url: url)
+      }
+      dependencyContainer.deepLinkRouter.captureFirstSessionDeepLink(beforeRouting: url)
     }
     return DeepLinkRouter.storeDeepLink(url)
   }
@@ -1743,7 +1769,8 @@ extension Superwall: IdentityResetHandling {
     Self.attributesKeptAcrossReset(
       adServicesAttribution: dependencyContainer.attributionPoster.cachedAttribution(),
       acquisitionAttributes: dependencyContainer.mmpAttributionManager.cachedAcquisitionAttributes(),
-      integrationAttributes: dependencyContainer.attributionFetcher.integrationAttributesKeptAcrossReset()
+      integrationAttributes: dependencyContainer.attributionFetcher.integrationAttributesKeptAcrossReset(),
+      firstDeepLinkAttributes: dependencyContainer.deepLinkRouter.firstDeepLinkAttributesKeptAcrossReset()
     )
   }
 
@@ -1760,10 +1787,13 @@ extension Superwall: IdentityResetHandling {
   ///   - integrationAttributes: The install-scoped half of the integration
   ///     attributes and the device identifiers. The other half describes the
   ///     person signing out.
+  ///   - firstDeepLinkAttributes: The first deep link of the first app session
+  ///     and the custom product page it belongs to. Install-scoped.
   static func attributesKeptAcrossReset(
     adServicesAttribution: [String: Any],
     acquisitionAttributes: [String: Any],
-    integrationAttributes: [String: Any?]
+    integrationAttributes: [String: Any?],
+    firstDeepLinkAttributes: [String: Any]
   ) -> [String: Any?] {
     var kept: [String: Any?] = [:]
     for (key, value) in adServicesAttribution {
@@ -1773,6 +1803,9 @@ extension Superwall: IdentityResetHandling {
       kept[key] = value
     }
     for (key, value) in integrationAttributes {
+      kept[key] = value
+    }
+    for (key, value) in firstDeepLinkAttributes {
       kept[key] = value
     }
     return sanitizedUserAttributes(kept)

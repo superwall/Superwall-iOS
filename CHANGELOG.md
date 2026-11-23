@@ -2,6 +2,32 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.19.2
+
+### Enhancements
+
+- Saves the first deep link received during the first app session as the `firstDeepLinkUrl` user attribute. If you assign deep links to your App Store custom product pages, you can use this attribute to break down results and filter audiences by the product page that drove the install. If you've connected App Store Connect, the page's ID and name are saved too, as `customProductPageId` and `customProductPageName`. Requires `Superwall.handleDeepLink(_:)` to be set up.
+- Adds the user's App Tracking Transparency status as the `attStatus` device attribute.
+- Reports ad user data consent as denied, as well as personalization, when the user has denied App Tracking Transparency or it's restricted, even if you set `adConsent` yourself. If you use the MMP, conversions from these users are no longer sent to Meta or your other ad networks.
+
+### Fixes
+
+- Fixes a paywall appearing in the wrong window on iPad and Mac Catalyst when several of the app's windows are on screen.
+- Fixes cached paywalls sometimes being torn down off the main thread when they're cleared, such as on `reset()`.
+- Fixes the SDK's on-device database growing very large over time. Ones that have already grown shrink the next time the app opens.
+- Audience filters no longer count paywall preloading and loading events.
+- Fixes `presentedViewController` sometimes returning a paywall that isn't on screen, which `reset()` then kept instead of clearing.
+- Fixes a paywall shown again while it was still closing being marked as closed, so its next close wasn't reported.
+- Fixes a StoreKit 1 purchase that ended straight away, such as one the device refused, sometimes never returning its result.
+- Fixes a purchase never finishing, with its loading spinner left up, when another purchase started before it returned.
+- Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.
+- Fixes the "Occurrences in the last month" audience filter counting the last 30 weeks instead of the last month.
+- Fixes paywalls showing the status bar in apps that hide it, such as Unity games.
+- Fixes a crash when a paywall is presented from a view controller that takes its orientations from whatever it presents.
+- Improves the contrast of text and icons in the Customer Center.
+- Fixes the Customer Center's purchase cards breaking words mid-word at the largest text sizes.
+- Makes the Customer Center's Copy button easier to tap.
+
 ## 4.19.1
 
 ### Enhancements
@@ -24,7 +50,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes `getCustomerInfo()` never returning when the SDK can't load its configuration, such as on a first launch without a connection.
 - Fixes `refreshCustomerInfo()` returning empty customer info when the fetch fails, instead of the device's purchases.
 - Fixes the Mac preview window sometimes selecting a different paywall than the one linked, without saying why.
+- Stops sending user and device attributes for enrichment, such as the demand score, while `eventTrackingBehavior` is `.none`.
 - Fixes a paywall showing and charging the wrong billing plan when the same App Store product is sold on both the up-front and monthly plans, on one paywall or across paywalls. Each paywall slot now keeps its own plan. Product identifiers are unchanged.
+- Fixes paywalls letting the app rotate into orientations it doesn't allow. A paywall now allows the same orientations as the screen it covers, which matters for apps that lock orientation in a view controller rather than in their Info.plist, such as Unity games. Previously, a landscape-only game could be rotated to portrait while a paywall was showing and stayed in portrait after it closed.
 
 ## 4.19.0
 

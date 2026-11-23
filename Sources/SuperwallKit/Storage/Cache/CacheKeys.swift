@@ -113,6 +113,16 @@ enum DidTrackFirstSession: Storable {
   typealias Value = Bool
 }
 
+/// The first deep link of the first app session, for custom product page
+/// attribution. Install-scoped: a new user keeps it across a reset.
+enum FirstSessionDeepLinkURL: Storable {
+  static var key: String {
+    "store.firstSessionDeepLinkUrl"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = String
+}
+
 enum DidCleanUserAttributes: Storable {
   static var key: String {
     "store.didCleanUserAttributes"

@@ -1080,11 +1080,11 @@ class DeviceHelper {
     registerForTraitChanges()
   }
 
-  /// The ATT authorization status, or `nil` where the OS has no such concept.
-  /// Returns `notDetermined` when AppTrackingTransparency isn't linked.
+  /// The ATT authorization status, or `nil` where there is none to read: the OS has
+  /// no such concept, or AppTrackingTransparency isn't in the app.
   static var attStatus: Int? {
-    #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS) || os(visionOS)
-    return TrackingManagerProxy().trackingAuthorizationStatus()
+    #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS) || os(visionOS) || os(tvOS)
+    return TrackingManagerProxy().trackingAuthorizationStatusIfAvailable()
     #else
     return nil
     #endif
@@ -1093,9 +1093,8 @@ class DeviceHelper {
   /// The ad consent device attributes would report right now.
   ///
   /// The app's own ``SuperwallOptions/adConsent`` wins once it's been set, then a
-  /// consent banner's stored answer, then the granted default. The `.none` rule then
-  /// applies to all of them, and the ATT rule to all but the app's own setting,
-  /// which is always trusted.
+  /// consent banner's stored answer, then the granted default. The `.none` and ATT
+  /// rules then apply to all of them.
   var reportedAdConsent: ReportedAdConsent {
     let options = factory.makeSuperwallOptions()
     let consent: AdConsent
@@ -1110,14 +1109,16 @@ class DeviceHelper {
       consent = AdConsent()
       source = .default
     }
+    let attStatus = attStatusProvider()
     let reported = consent.reported(
       for: options.eventTrackingBehavior,
-      attStatus: source == .developer ? nil : attStatusProvider()
+      attStatus: attStatus
     )
     return ReportedAdConsent(
       adUserData: reported.adUserData.description,
       adPersonalization: reported.adPersonalization.description,
-      source: source.rawValue
+      source: source.rawValue,
+      attStatus: attStatus.map { String($0) }
     )
   }
 
@@ -1131,9 +1132,9 @@ class DeviceHelper {
     adConsentLock.unlock()
   }
 
-  /// Whether the ad consent or its source has changed since device attributes were
-  /// last sent, for example because the user answered the ATT prompt or a consent
-  /// banner.
+  /// Whether the ad consent, its source or the ATT status has changed since device
+  /// attributes were last sent, for example because the user answered the ATT prompt
+  /// or a consent banner.
   ///
   /// Returns `false` before the first send, which reports the current value anyway,
   /// and while `eventTrackingBehavior` is ``EventTrackingBehavior/none``, when nothing
@@ -1224,38 +1225,83 @@ class DeviceHelper {
     return false
   }
 
+  private var isEventTrackingOff: Bool {
+    return factory.makeSuperwallOptions().eventTrackingBehavior == .none
+  }
+
+  private func isEnrichmentBlockedByTracking() -> Bool {
+    if isEventTrackingOff {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .network,
+        message: "Skipped: /enrich",
+        info: ["reason": "Event tracking turned off"]
+      )
+      return true
+    }
+    return false
+  }
+
   /// Starts the IP lookups with the current config, for when an AppsFlyer ID is set.
   @discardableResult
   func startIPCollectionIfEnabled() -> Task<Void, Never>? {
     return startIPCollectionIfEnabled(for: factory.currentConfig())
   }
 
+  /// Fetches enrichment, such as the demand score, for the user and device.
+  ///
+  /// Skipped while `eventTrackingBehavior` is ``EventTrackingBehavior/none``,
+  /// because the request posts the user and device attributes, and the request
+  /// isn't sent if the app opts out while it waits or retries. It runs again on
+  /// the next config refresh or when the app opts back in.
   func getEnrichment(
     maxRetry: Int? = nil,
     timeout: Seconds? = nil
   ) async throws {
+    if isEnrichmentBlockedByTracking() {
+      return
+    }
     let identityManager = factory.makeIdentityManager()
     let deviceAttributes = await getTemplateDevice()
+    // The app can opt out of tracking while the attributes are built.
+    if isEnrichmentBlockedByTracking() {
+      return
+    }
+    // Sent with every request until the server has answered it.
+    let deepLink = storage.get(FirstSessionDeepLinkLookup.self)
     let request = EnrichmentRequest(
       user: JSON(identityManager.userAttributes),
-      device: JSON(deviceAttributes)
+      device: JSON(deviceAttributes),
+      deepLink: deepLink
     )
-    enrichment = try await network.getEnrichment(
-      request: request,
-      maxRetry: maxRetry,
-      timeout: timeout
-    )
-
-    $enrichment.withSnapshot { enrichment in
-      if let enrichment = enrichment {
-        storage.save(enrichment, forType: LatestEnrichment.self)
-      }
+    let response: Enrichment
+    do {
+      response = try await network.getEnrichment(
+        request: request,
+        maxRetry: maxRetry,
+        timeout: timeout
+      )
+    } catch NetworkError.trackingDisabled {
+      return
     }
+    // A reply that arrives after the app opts out isn't used.
+    if isEnrichmentBlockedByTracking() {
+      return
+    }
+    if deepLink != nil,
+      response.deepLink != nil {
+      // The page's attributes are set with the response's other user attributes below.
+      storage.finishFirstSessionDeepLinkLookup(
+        page: CustomProductPage(userAttributes: response.user)
+      )
+    }
+    enrichment = response
 
-    $enrichment.withSnapshot { enrichment in
-      if let attributes = enrichment?.user.dictionaryObject {
-        Superwall.shared.setUserAttributes(attributes)
-      }
+    // This call's own response, not the shared one: another request can finish
+    // in between and replace it, and its response may not carry the page.
+    storage.save(response, forType: LatestEnrichment.self)
+    if let attributes = response.user.dictionaryObject {
+      Superwall.shared.setUserAttributes(attributes)
     }
   }
 
@@ -1338,7 +1384,8 @@ class DeviceHelper {
       deviceId: factory.makeDeviceId(),
       adUserDataConsent: adConsent.adUserData,
       adPersonalizationConsent: adConsent.adPersonalization,
-      adConsentSource: adConsent.source
+      adConsentSource: adConsent.source,
+      attStatus: adConsent.attStatus
     )
 
     var deviceDictionary = template.toDictionary(
@@ -1347,9 +1394,13 @@ class DeviceHelper {
         : JSONEncoder()
     )
 
-    let enrichmentDict: [String: Any] = $enrichment.withSnapshot { enrichment in
-      enrichment?.device.dictionaryObject ?? [:]
-    }
+    // Enrichment fetched before the app opted out, or restored from disk, isn't
+    // used while tracking is off.
+    let enrichmentDict: [String: Any] = isEventTrackingOff
+      ? [:]
+      : $enrichment.withSnapshot { enrichment in
+        enrichment?.device.dictionaryObject ?? [:]
+      }
     // Merge in enrichment dictionary, giving priority to
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }

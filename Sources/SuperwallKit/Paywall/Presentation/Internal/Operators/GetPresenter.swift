@@ -153,14 +153,18 @@ extension Superwall {
       presentingWindow = UIWindow(windowScene: windowScene)
     }
 
-    presentingWindow?.rootViewController = UIViewController()
+    presentingWindow?.rootViewController = PresentingWindowRootViewController(hostWindow: activeWindow)
     presentationItems.window = presentingWindow
   }
 
   @MainActor
   func destroyPresentingWindow() {
+    let rootViewController = presentationItems.window?.rootViewController
     presentationItems.window?.windowScene = nil
     presentationItems.window = nil
+    let presentingWindowRoot = rootViewController as? PresentingWindowRootViewController
+    presentingWindowRoot?.updateHostOrientations()
+    presentingWindowRoot?.updateHostSystemUI()
   }
   #endif
 }

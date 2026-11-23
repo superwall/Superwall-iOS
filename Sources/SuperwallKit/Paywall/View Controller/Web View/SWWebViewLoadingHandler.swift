@@ -103,7 +103,7 @@ final class SWWebViewLoadingHandler {
     urls: [URL],
     at failAt: Date = Date()
   ) async {
-    webViewDelegate?.paywall.webviewLoadingInfo.failAt = failAt
+    webViewDelegate?.webViewLoadFailed(at: failAt)
 
     guard let paywallInfo = webViewDelegate?.info else {
       return

@@ -27,6 +27,9 @@ struct Endpoint<Kind: EndpointKind, Response: Decodable> {
   var components: Components?
   var url: URL?
   var method: HttpMethod = .get
+  /// Checked before every attempt, including retries. When it returns `false`
+  /// the request isn't sent and fails with ``NetworkError/trackingDisabled``.
+  var canSend: (@Sendable () -> Bool)?
 
   func makeRequest(
     with data: Kind.RequestData,
@@ -313,7 +316,8 @@ extension Endpoint where
   static func enrichment(
     request: EnrichmentRequest,
     maxRetry: Int,
-    timeout: Seconds?
+    timeout: Seconds?,
+    canSend: @escaping @Sendable () -> Bool
   ) -> Self {
     let bodyData = try? Kind.jsonEncoder.encode(request)
 
@@ -325,7 +329,8 @@ extension Endpoint where
         path: "enrich",
         bodyData: bodyData
       ),
-      method: .post
+      method: .post,
+      canSend: canSend
     )
   }
 }
