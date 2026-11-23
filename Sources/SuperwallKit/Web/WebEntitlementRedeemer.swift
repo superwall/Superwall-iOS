@@ -1994,8 +1994,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       paywallEntitlementIds.formUnion(entitlements.map { $0.id })
     }
 
-    guard !paywallEntitlementIds.isEmpty,
-      paywallEntitlementIds.subtracting(activeEntitlementIds).isEmpty else {
+    if paywallEntitlementIds.isEmpty || !paywallEntitlementIds.isSubset(of: activeEntitlementIds) {
       return false
     }
     if let newlyActiveIds,
