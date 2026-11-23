@@ -15,7 +15,9 @@ struct DuplicateSubscriptionBanner: View {
       VStack(alignment: .leading, spacing: 6) {
         Label(strings.string("customer_center_duplicate_title"), systemImage: "exclamationmark.triangle.fill")
           .font(.headline)
-        Text(strings.string("customer_center_duplicate_message")).font(.subheadline).foregroundStyle(.secondary)
+        Text(strings.string("customer_center_duplicate_message"))
+          .font(.subheadline)
+          .foregroundStyle(Color.customerCenterSecondaryText)
       }
       .padding(.vertical, 4)
       .accessibilityIdentifier("customer_center.duplicate_warning")
