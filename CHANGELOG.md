@@ -26,6 +26,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes the "Occurrences in the last month" audience filter counting the last 30 weeks instead of the last month.
 - Fixes paywalls showing the status bar in apps that hide it, such as Unity games.
 - Fixes a crash when a paywall is presented from a view controller that takes its orientations from whatever it presents.
+- Improves the contrast of text and icons in the Customer Center.
+- Fixes the Customer Center's purchase cards breaking words mid-word at the largest text sizes.
+- Makes the Customer Center's Copy button easier to tap.
 
 ## 4.19.1
 
