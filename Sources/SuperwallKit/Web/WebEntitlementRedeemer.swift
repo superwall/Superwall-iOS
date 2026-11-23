@@ -261,7 +261,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     guard let teleport = storage.get(PendingTeleportStorage.self) else {
       return false
     }
-    guard !teleport.hasExpired() else {
+    if teleport.hasExpired() {
       clearPendingTeleport(teleport.teleportId)
       return false
     }
@@ -269,7 +269,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     if await isStoredTeleportWithItsPage() {
       return false
     }
-    guard !isCheckingPendingTeleport else {
+    if isCheckingPendingTeleport {
       return false
     }
     if onForeground {
@@ -1905,7 +1905,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// - Returns: Whether the paywall was found covered and closed.
   @discardableResult
   func dismissPaywallCoveredWhileLoading(_ paywallVc: PaywallViewController) async -> Bool {
-    guard !webEntitlementsArrivals.isEmpty else {
+    if webEntitlementsArrivals.isEmpty {
       return false
     }
     let (request, presentationId) = await MainActor.run {
@@ -1926,7 +1926,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       .filter { $0.cameAfter(evaluatedAt) }
       .reduce(into: Set<String>()) { $0.formUnion($1.newlyActiveIds) }
       .subtracting(request?.entitlementIdsSeenByAudience ?? [])
-    guard !arrivedSinceEvaluation.isEmpty else {
+    if arrivedSinceEvaluation.isEmpty {
       return false
     }
     guard factory.makePurchasingCoordinator().purchase == nil else {
@@ -2068,7 +2068,7 @@ struct WebEntitlementsArrival: Equatable {
     let previouslyActive = Set(previousWebEntitlements.filter { $0.isActive }.map { $0.id })
     let active = Set(webEntitlements.filter { $0.isActive }.map { $0.id })
     let newlyActiveIds = active.subtracting(previouslyActive)
-    guard !newlyActiveIds.isEmpty else {
+    if newlyActiveIds.isEmpty {
       return nil
     }
     self.arrivedAt = arrivedAt

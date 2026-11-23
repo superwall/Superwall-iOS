@@ -552,7 +552,7 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
   /// the purchase was set to keep open.
   nonisolated func settleWebCheckoutOnPaywallOpen() async {
     let redeemed = await maybeRecoverPendingStripeCheckoutOnPaywallOpen()
-    guard !redeemed else {
+    if redeemed {
       return
     }
     await webEntitlementRedeemer.dismissPaywallCoveredWhileLoading(self)
