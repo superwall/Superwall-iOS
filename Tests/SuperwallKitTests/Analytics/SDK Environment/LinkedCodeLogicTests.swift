@@ -29,14 +29,17 @@ struct LinkedCodeLogicTests {
     #expect(LinkedCodeLogic.swiftModule(ofClassName: name) == module)
   }
 
-  @Test(arguments: ["FIRApp", "AppsFlyerLib", "_TtC99Short", "_TtC", ".Leading", "_Tt"])
+  @Test(arguments: [
+    "FIRApp", "AppsFlyerLib", "_TtC99Short", "_TtC", ".Leading", "_Tt",
+    // More digits than an `Int` holds.
+    "_TtC99999999999999999999Foo", "_TtC" + String(repeating: "9", count: 400)
+  ])
   func swiftModule_isNilForObjectiveCAndMalformedNames(name: String) {
     #expect(LinkedCodeLogic.swiftModule(ofClassName: name) == nil)
   }
 
   // MARK: - Objective-C prefixes
 
-  // Only used to recognise Apple's and SuperwallKit's classes.
   @Test(arguments: [
     ("FIRApp", "FIR"),
     ("GULAppDelegateSwizzler", "GUL"),
@@ -89,21 +92,40 @@ struct LinkedCodeLogicTests {
       "_Concurrency.Thing", "_StringProcessing.Thing", "_SwiftUI_Private.Thing",
       "_TtCs12_SwiftObject", "_TtCSo6UIView5Inner"
     ]
-    let appleObjCClasses = [
-      "NS", "UI", "CA", "CK", "SK", "WK", "AV", "MK", "CL", "PK", "GK", "MTL", "NSURL", "UIKB"
-    ].map { "\($0)Thing" }
     let underscored = (0..<3).map { "_UIPrivateThing\($0)" }
 
     let thirdParty = ["Adjust.Tracker", "ADJThing", "ADJOther", "Adjust"]
 
     let linked = LinkedCodeLogic.modulesAndObjCClassNames(
-      in: appleSwiftClasses + appleObjCClasses + underscored + thirdParty,
+      in: appleSwiftClasses + underscored + thirdParty,
       excludedModules: [],
       systemModules: systemModules
     )
 
     #expect(linked.modules == ["Adjust"])
     #expect(linked.objcClassNames == ["ADJOther", "ADJThing", "Adjust"])
+  }
+
+  // Apple's own classes aren't in the app's images, so a class there with one of
+  // Apple's prefixes is an SDK's. Each of these is a real one.
+  @Test func modulesAndObjCClassNames_keepSDKClassesThatShareApplesPrefixes() {
+    let classNames = ["MTLModel", "AVUser", "CKComponent", "UICKeyChainStore", "WKWebViewJavascriptBridge"]
+
+    let linked = LinkedCodeLogic.modulesAndObjCClassNames(
+      in: classNames,
+      excludedModules: [],
+      systemModules: []
+    )
+
+    #expect(linked.objcClassNames == LinkedCodeLogic.sortedByUTF8(classNames))
+  }
+
+  @Test func objcPrefixesAndUnprefixedNames_groupClassesByPrefix() {
+    let keys = LinkedCodeLogic.objcPrefixesAndUnprefixedNames(
+      in: ["FIRApp", "FIRMessaging", "GULAppDelegateSwizzler", "Branch", "PodsDummy_Adjust", "FIRCLS"]
+    )
+
+    #expect(keys == ["Branch", "FIR", "FIRCLS", "GUL", "PodsDummy_Adjust"])
   }
 
   @Test(arguments: [
@@ -142,7 +164,8 @@ struct LinkedCodeLogicTests {
 
     let names = LinkedCodeLogic.appClassNames(bundleURL: testBundle)
 
-    #expect(names.contains("SuperwallKitTests.AppSessionManagerTests"))
+    #expect(names.executable.contains("SuperwallKitTests.AppSessionManagerTests"))
+    #expect(!names.embedded.contains("SuperwallKitTests.AppSessionManagerTests"))
   }
 
   @Test func appClassNames_readImagesNestedInTheBundle() {
@@ -151,7 +174,22 @@ struct LinkedCodeLogicTests {
     // The test bundle sits inside its parent like an embedded framework.
     let names = LinkedCodeLogic.appClassNames(bundleURL: testBundle.deletingLastPathComponent())
 
-    #expect(names.contains("SuperwallKitTests.AppSessionManagerTests"))
+    #expect(names.embedded.contains("SuperwallKitTests.AppSessionManagerTests"))
+    #expect(!names.executable.contains("SuperwallKitTests.AppSessionManagerTests"))
+  }
+
+  @Test(arguments: [
+    ("MyApp", true),
+    ("MyApp.debug.dylib", true),
+    ("Contents/MacOS/MyApp", true),
+    ("Contents/MacOS/MyApp.debug.dylib", true),
+    ("Frameworks/Features.framework/Features", false),
+    ("Frameworks/libFeatures.dylib", false),
+    ("Contents/Frameworks/Features.framework/Versions/A/Features", false),
+    ("PlugIns/Widget.appex/Widget", false)
+  ])
+  func isExecutableImage_isTheAppsOwnBinaryOnly(path: String, isExecutable: Bool) {
+    #expect(LinkedCodeLogic.isExecutableImage(atRelativePath: path) == isExecutable)
   }
 
   @Test(arguments: [
@@ -170,5 +208,29 @@ struct LinkedCodeLogicTests {
   @Test(arguments: [("Tapes Dev", "Tapes_Dev"), ("blank-app", "blank_app"), ("1Up", "_1Up"), ("Kanna", "Kanna")])
   func mainModuleName_isTheExecutableAsAnIdentifier(executable: String, module: String) {
     #expect(LinkedCodeLogic.mainModuleName(executableName: executable) == module)
+  }
+
+  // A white-label app can build executables `BrandA` and `BrandB` from one module.
+  @Test func mainModuleNames_coverARenamedExecutableProductOrModule() {
+    let modules = LinkedCodeLogic.mainModuleNames(
+      infoDictionary: [
+        "CFBundleExecutable": "Brand A",
+        "CFBundleName": "Storefront",
+        "NSPrincipalClass": "NSApplication",
+        "UIApplicationSceneManifest": [
+          "UISceneConfigurations": [
+            "UIWindowSceneSessionRoleApplication": [
+              [
+                "UISceneClassName": "UIWindowScene",
+                "UISceneDelegateClassName": "App.SceneDelegate"
+              ]
+            ]
+          ]
+        ]
+      ]
+    )
+
+    #expect(modules == ["Brand_A", "Storefront", "App"])
+    #expect(LinkedCodeLogic.mainModuleNames(infoDictionary: [:]).isEmpty)
   }
 }

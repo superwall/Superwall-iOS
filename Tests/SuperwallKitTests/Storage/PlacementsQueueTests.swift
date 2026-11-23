@@ -240,6 +240,43 @@ struct PlacementsQueueTests {
     #expect(setup.network.sentEvents.isEmpty)
   }
 
+  // MARK: - Events sent in a request of their own
+
+  @Test
+  func ownRequestEvent_isSentWithoutTheQueuedEvents() async throws {
+    let setup = makeQueue(behavior: .all)
+
+    await setup.queue.enqueue(data: JSON(["event_name": "app_open"]), from: InternalSuperwallEvent.AppOpen())
+    let wasAllowed = await setup.queue.enqueue(
+      data: JSON(["event_name": "sdk_environment"]),
+      from: PrivateSuperwallEvent.SDKEnvironment(info: .stub())
+    )
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(wasAllowed)
+    #expect(setup.network.sentEvents.map { $0.events.map { $0["event_name"].string } } == [["sdk_environment"]])
+    #expect(await setup.queue.queuedEventNames == ["app_open"])
+
+    // Nothing is left queued for a flush after the test's network has gone.
+    await setup.queue.flushInternal()
+    try await Task.sleep(nanoseconds: 100_000_000)
+    #expect(setup.network.sentEvents.count == 2)
+  }
+
+  @Test
+  func ownRequestEvent_whenTrackingIsOff_isNotSent() async throws {
+    let setup = makeQueue(behavior: .none)
+
+    let wasAllowed = await setup.queue.enqueue(
+      data: JSON(["event_name": "sdk_environment"]),
+      from: PrivateSuperwallEvent.SDKEnvironment(info: .stub())
+    )
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(!wasAllowed)
+    #expect(setup.network.sentEvents.isEmpty)
+  }
+
   // MARK: - Deprecated isExternalDataCollectionEnabled backwards compatibility
 
   @Test

@@ -73,7 +73,8 @@ actor PlacementsQueue {
       }
   }
 
-  /// Queues `data` for sending. Returns whether the tracking behavior allowed it.
+  /// Queues `data` for sending, or sends it now if the placement goes in a request
+  /// of its own. Returns whether the tracking behavior allowed it.
   @discardableResult
   func enqueue(
     data: JSON,
@@ -81,6 +82,13 @@ actor PlacementsQueue {
   ) -> Bool {
     guard trackingAllowed(from: placement) else {
       return false
+    }
+    if placement.isSentInOwnRequest {
+      let events = EventsRequest(events: [data])
+      // Holds the network until the request is done: nothing is left in the queue
+      // to say there's still something to send.
+      Task { [network] in await network.sendEvents(events: events) }
+      return true
     }
     elements.append(data)
     return true

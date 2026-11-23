@@ -17,7 +17,7 @@ struct SDKEnvironmentSources {
   var infoDictionary: [String: Any]
   /// The Objective-C runtime names of the classes in the app's own code and
   /// embedded frameworks.
-  var classNames: () -> [String]
+  var classNames: () -> LinkedCodeLogic.AppClassNames
   /// The modules of Apple's frameworks and Swift libraries, to leave out.
   var systemModules: () -> Set<String>
 
@@ -37,27 +37,78 @@ struct SDKEnvironmentSources {
   }
 }
 
-/// Collects the ``SDKEnvironmentInfo`` once per process. A running app can't gain or
-/// lose an SDK, so every later call reuses the first result.
+/// What was found in the app, before any name is hashed for sending.
+///
+/// Most app opens only need ``sdkHash``, to see that nothing has changed. Hashing
+/// every name is left to ``info()``, for when the event is going up.
+struct SDKEnvironmentScan: Equatable {
+  /// The third-party Swift modules with classes in the app's images.
+  let swiftModules: [String]
+  /// The third-party Objective-C class names in the app's images.
+  let objcClassNames: [String]
+  /// Every embedded `.framework`, sorted by name.
+  let frameworks: [SDKEnvironmentInfo.EmbeddedBundle]
+  /// Every `.bundle` resource bundle, sorted by name.
+  let resourceBundles: [SDKEnvironmentInfo.EmbeddedBundle]
+  let xcodeVersion: String?
+  let buildSDKName: String?
+  let minimumOSVersion: String?
+  let hasTrackingUsageDescription: Bool
+  let skAdNetworkItemCount: Int
+  /// See `SDKEnvironmentLogic.sdkHash`.
+  let sdkHash: String
+
+  /// The event to send. The three lists of name hashes share one size limit: the
+  /// modules and resource bundles, which are short, go first, and the class names
+  /// get what's left.
+  func info() -> SDKEnvironmentInfo {
+    var remainingLength = SDKEnvironmentLogic.maxEncodedNameHashesLength
+    let moduleHashes = SDKEnvironmentLogic.nameHashes(swiftModules, maxEncodedLength: remainingLength)
+    remainingLength -= moduleHashes.encoded.count
+    let resourceBundleHashes = SDKEnvironmentLogic.nameHashes(
+      resourceBundles.map(\.name),
+      maxEncodedLength: remainingLength
+    )
+    remainingLength -= resourceBundleHashes.encoded.count
+    let classNameHashes = SDKEnvironmentLogic.nameHashes(objcClassNames, maxEncodedLength: remainingLength)
+
+    return SDKEnvironmentInfo(
+      swiftModules: moduleHashes,
+      objcClassNames: classNameHashes,
+      frameworks: Array(frameworks.prefix(SDKEnvironmentLogic.maxBundleCount)),
+      frameworkCount: frameworks.count,
+      resourceBundles: resourceBundleHashes,
+      xcodeVersion: xcodeVersion,
+      buildSDKName: buildSDKName,
+      minimumOSVersion: minimumOSVersion,
+      hasTrackingUsageDescription: hasTrackingUsageDescription,
+      skAdNetworkItemCount: skAdNetworkItemCount,
+      sdkHash: sdkHash
+    )
+  }
+}
+
+/// Scans the app once per process. A running app can't gain or lose an SDK, so
+/// every later call reuses the first result.
 actor SDKEnvironmentCollector {
   static let shared = SDKEnvironmentCollector(sources: .live)
 
   private let sources: SDKEnvironmentSources
-  private var collection: Task<SDKEnvironmentInfo, Never>?
+  private var collection: Task<SDKEnvironmentScan, Never>?
 
   init(sources: SDKEnvironmentSources) {
     self.sources = sources
   }
 
-  func environment() async -> SDKEnvironmentInfo {
+  func scan() async -> SDKEnvironmentScan {
     if let collection = collection {
       return await collection.value
     }
     let sources = sources
-    // Reading the bundles touches the disk and compressing the class names takes a
+    // Reading the bundles touches the disk and reading the class names takes a
     // few milliseconds, so keep it off the main thread.
     let collection = Task.detached(priority: .utility) {
-      SDKEnvironmentLogic.collect(from: sources)
+      SDKEnvironmentLogic.scan(from: sources)
     }
     self.collection = collection
     return await collection.value
@@ -68,10 +119,10 @@ enum SDKEnvironmentLogic {
   /// Bounds the event's size: apps with more embedded bundles than this are rare.
   static let maxBundleCount = 100
   static let maxStringLength = 100
-  /// The most characters an encoded list of name hashes can take: 24,576 hashes.
-  /// Events go up 50 to a request as uncompressed JSON, and the collector's limits
-  /// aren't documented, so this stays well below anything a request or a single
-  /// event might be held to.
+  /// The most characters the event's encoded lists of name hashes can take between
+  /// them: 24,576 hashes. The event goes up in a request of its own as
+  /// uncompressed JSON, and the collector's limits aren't documented, so this
+  /// stays well below anything a request might be held to.
   static let maxEncodedNameHashesLength = 256 * 1024
   /// How many bytes of each name's SHA-256 are kept.
   static let nameHashLength = 8
@@ -80,48 +131,63 @@ enum SDKEnvironmentLogic {
   /// here as well as in `PermissionHandler`, which isn't built on watchOS or tvOS.
   static let trackingUsageDescriptionKey = "AFHfreGenpxvatHfntrQrfpevcgvba".rot13()
 
+  /// The event for the app at `sources`.
   static func collect(from sources: SDKEnvironmentSources) -> SDKEnvironmentInfo {
+    return scan(from: sources).info()
+  }
+
+  static func scan(from sources: SDKEnvironmentSources) -> SDKEnvironmentScan {
     let frameworks = embeddedBundles(in: sources.frameworksDirectory, withExtension: "framework")
     let resourceBundles = embeddedBundles(in: sources.resourcesDirectory, withExtension: "bundle")
     let info = sources.infoDictionary
-    let mainModule = (info["CFBundleExecutable"] as? String)
-      .map(LinkedCodeLogic.mainModuleName(executableName:))
+    let mainModules = LinkedCodeLogic.mainModuleNames(infoDictionary: info)
+    let classNames = sources.classNames()
     let linked = LinkedCodeLogic.modulesAndObjCClassNames(
-      in: sources.classNames(),
-      excludedModules: Set([mainModule].compactMap { $0 }),
+      in: classNames.all,
+      excludedModules: mainModules,
       systemModules: sources.systemModules()
     )
+    // The hash only looks at what a build always gives. Which embedded frameworks
+    // and system frameworks are loaded can differ from one launch to the next.
+    let alwaysLinked = LinkedCodeLogic.modulesAndObjCClassNames(
+      in: classNames.executable,
+      excludedModules: mainModules,
+      systemModules: []
+    )
 
-    return SDKEnvironmentInfo(
-      swiftModules: nameHashes(linked.modules),
-      objcClassNames: nameHashes(linked.objcClassNames),
-      frameworks: Array(frameworks.prefix(maxBundleCount)),
-      frameworkCount: frameworks.count,
-      resourceBundles: nameHashes(resourceBundles.map(\.name)),
+    return SDKEnvironmentScan(
+      swiftModules: linked.modules,
+      objcClassNames: linked.objcClassNames,
+      frameworks: frameworks,
+      resourceBundles: resourceBundles,
       xcodeVersion: string(info["DTXcode"]),
       buildSDKName: string(info["DTSDKName"]),
       minimumOSVersion: string(info["MinimumOSVersion"] ?? info["LSMinimumSystemVersion"]),
       hasTrackingUsageDescription: info[trackingUsageDescriptionKey] != nil,
       skAdNetworkItemCount: (info["SKAdNetworkItems"] as? [Any])?.count ?? 0,
       sdkHash: sdkHash(
-        modules: linked.modules,
-        objcClassNames: linked.objcClassNames,
+        modules: alwaysLinked.modules,
+        objcClassPrefixes: LinkedCodeLogic.objcPrefixesAndUnprefixedNames(in: alwaysLinked.objcClassNames),
         frameworks: frameworks,
         resourceBundles: resourceBundles
       )
     )
   }
 
-  /// The SHA-256 of the SDK data alone, over the full lists before any cap.
+  /// The SHA-256 of what tells the app's SDKs apart, over the full lists before any
+  /// cap: the Swift modules and Objective-C class prefixes in the app's executable,
+  /// and the embedded frameworks and resource bundles on disk.
   ///
-  /// It changes when an SDK is added, removed or upgraded, since an upgrade changes
-  /// a framework's version or the classes linked in. Nothing else goes in: no app
-  /// version or build, none of the build settings, and no paths, since the
-  /// Simulator moves the app on every install. Each list is deduplicated and sorted
-  /// by UTF-8 bytes, so the hash doesn't depend on the order things were found in.
+  /// It changes when an SDK is added or removed, or when an embedded framework's
+  /// version changes. It doesn't change when the app only gains classes of its
+  /// own, which it does in most releases, or with which frameworks happen to be
+  /// loaded. Nothing else goes in: no app version or build, none of the build
+  /// settings, and no paths, since the Simulator moves the app on every install.
+  /// Each list is deduplicated and sorted by UTF-8 bytes, so the hash doesn't
+  /// depend on the order things were found in.
   static func sdkHash(
     modules: [String],
-    objcClassNames: [String],
+    objcClassPrefixes: [String],
     frameworks: [SDKEnvironmentInfo.EmbeddedBundle],
     resourceBundles: [SDKEnvironmentInfo.EmbeddedBundle]
   ) -> String {
@@ -130,7 +196,7 @@ enum SDKEnvironmentLogic {
     }
     let sections = [
       ("swift_modules", modules),
-      ("objc_class_names", objcClassNames),
+      ("objc_class_prefixes", objcClassPrefixes),
       ("embedded_frameworks", lines(frameworks)),
       ("resource_bundles", lines(resourceBundles))
     ]
@@ -168,7 +234,7 @@ enum SDKEnvironmentLogic {
     let hashes = Set(distinctNames.map(nameHash))
       .sorted { $0.lexicographicallyPrecedes($1) }
     // Base64 turns every 3 bytes into 4 characters.
-    let maxHashCount = maxEncodedLength / 4 * 3 / nameHashLength
+    let maxHashCount = max(0, maxEncodedLength) / 4 * 3 / nameHashLength
     let kept = hashes.prefix(maxHashCount)
     return SDKEnvironmentInfo.NameHashes(
       encoded: Data(kept.joined()).base64EncodedString(),

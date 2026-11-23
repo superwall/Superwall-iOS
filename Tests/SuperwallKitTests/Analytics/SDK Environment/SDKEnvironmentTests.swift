@@ -174,6 +174,23 @@ struct SDKEnvironmentTests {
     #expect(SDKEnvironmentLogic.maxEncodedNameHashesLength == 256 * 1024)
   }
 
+  @Test func nameHashes_shareOneLimitAcrossTheEvent() {
+    let maxHashCount = SDKEnvironmentLogic.maxEncodedNameHashesLength / 4 * 3 / SDKEnvironmentLogic.nameHashLength
+    let scan = SDKEnvironmentScan.stub(
+      swiftModules: (0..<1_000).map { "Module\($0)" },
+      objcClassNames: (0..<maxHashCount).map { "SDKClass\($0)" }
+    )
+
+    let info = scan.info()
+
+    let lists = [info.swiftModules, info.resourceBundles, info.objcClassNames]
+    #expect(lists.map(\.encoded.count).reduce(0, +) <= SDKEnvironmentLogic.maxEncodedNameHashesLength)
+    #expect(!info.swiftModules.isTruncated)
+    #expect(!info.resourceBundles.isTruncated)
+    #expect(info.objcClassNames.isTruncated)
+    #expect(info.objcClassNames.count == maxHashCount)
+  }
+
   @Test func nameHashes_whenThereAreNone() {
     let encoded = SDKEnvironmentLogic.nameHashes([])
 
@@ -238,13 +255,13 @@ struct SDKEnvironmentTests {
 
     let first = SDKEnvironmentLogic.sdkHash(
       modules: ["Mixpanel", "RevenueCat"],
-      objcClassNames: ["FIRApp", "Branch"],
+      objcClassPrefixes: ["FIR", "Branch"],
       frameworks: frameworks,
       resourceBundles: []
     )
     let second = SDKEnvironmentLogic.sdkHash(
       modules: ["RevenueCat", "Mixpanel"],
-      objcClassNames: ["Branch", "FIRApp", "Branch"],
+      objcClassPrefixes: ["Branch", "FIR", "Branch"],
       frameworks: frameworks.reversed(),
       resourceBundles: []
     )
@@ -261,13 +278,13 @@ struct SDKEnvironmentTests {
     ]
     func hash(
       modules: [String] = ["Mixpanel"],
-      objcClassNames: [String] = ["FIRApp"],
+      objcClassPrefixes: [String] = ["FIR"],
       frameworks: [SDKEnvironmentInfo.EmbeddedBundle] = frameworks,
       resourceBundles: [SDKEnvironmentInfo.EmbeddedBundle] = []
     ) -> String {
       return SDKEnvironmentLogic.sdkHash(
         modules: modules,
-        objcClassNames: objcClassNames,
+        objcClassPrefixes: objcClassPrefixes,
         frameworks: frameworks,
         resourceBundles: resourceBundles
       )
@@ -275,12 +292,64 @@ struct SDKEnvironmentTests {
     let original = hash()
 
     #expect(hash(modules: ["Mixpanel", "RevenueCat"]) != original)
-    #expect(hash(objcClassNames: ["FIRApp", "RCPurchases"]) != original)
+    #expect(hash(objcClassPrefixes: ["FIR", "RC"]) != original)
     #expect(hash(frameworks: frameworks + [.init(name: "Sentry", bundleId: "io.sentry.Sentry", version: "8.58.4")]) != original)
     #expect(hash(resourceBundles: [.init(name: "Adjust_Adjust", bundleId: nil, version: nil)]) != original)
     #expect(hash(frameworks: [.init(name: "AppsFlyerLib", bundleId: "com.appsflyer.sdk.lib", version: "6.16.0")]) != original)
     // A list moving from one field to another is a different app too.
-    #expect(hash(modules: [], objcClassNames: ["FIRApp", "Mixpanel"]) != original)
+    #expect(hash(modules: [], objcClassPrefixes: ["FIR", "Mixpanel"]) != original)
+  }
+
+  @Test func sdkHash_changesWhenAnSDKsClassesAppear() {
+    let info: [String: Any] = ["CFBundleExecutable": "MyApp"]
+    let classNames = ["MyApp.AppDelegate", "Mixpanel.MixpanelInstance", "FIRApp"]
+    func hash(adding added: [String]) -> String {
+      return SDKEnvironmentLogic.scan(from: sources(info: info, classNames: classNames + added)).sdkHash
+    }
+    let original = hash(adding: [])
+
+    #expect(hash(adding: ["RevenueCat.Purchases"]) != original)
+    #expect(hash(adding: ["GADBannerView"]) != original)
+    #expect(hash(adding: ["Branch"]) != original)
+    #expect(hash(adding: ["PodsDummy_Adjust"]) != original)
+  }
+
+  // Most releases add classes to the app. Sending every class's hash again from
+  // every install each time would be a few hundred kilobytes apiece.
+  @Test func sdkHash_staysTheSameWhenTheAppOnlyAddsItsOwnClasses() {
+    let info: [String: Any] = ["CFBundleExecutable": "MyApp"]
+    let classNames = ["MyApp.AppDelegate", "XYZHomeViewController", "Mixpanel.MixpanelInstance", "FIRApp"]
+    let firstRelease = SDKEnvironmentLogic.scan(from: sources(info: info, classNames: classNames))
+    let nextRelease = SDKEnvironmentLogic.scan(
+      from: sources(
+        info: info,
+        classNames: classNames + ["MyApp.SettingsModel", "XYZSettingsViewController", "FIRMessaging"]
+      )
+    )
+
+    #expect(firstRelease.sdkHash == nextRelease.sdkHash)
+    // What's sent when something does change is still every class.
+    #expect(firstRelease.objcClassNames.count == 2)
+    #expect(nextRelease.objcClassNames.count == 4)
+  }
+
+  // An app can load an embedded framework later on, so whether its classes are
+  // there on app open depends on how the app was opened.
+  @Test func sdkHash_ignoresWhichEmbeddedFrameworksAreLoaded() {
+    let classNames = ["Mixpanel.MixpanelInstance", "FIRApp"]
+    let notLoaded = SDKEnvironmentLogic.scan(from: sources(classNames: classNames))
+    let loaded = SDKEnvironmentLogic.scan(
+      from: sources(classNames: classNames, embeddedClassNames: ["Checkout.Session", "CKOCardView"])
+    )
+    var loadedSystemFramework = sources(classNames: classNames + ["Charts.Renderer"])
+    loadedSystemFramework.systemModules = { ["Charts"] }
+    let withoutSystemFramework = SDKEnvironmentLogic.scan(from: sources(classNames: classNames + ["Charts.Renderer"]))
+
+    #expect(notLoaded.sdkHash == loaded.sdkHash)
+    #expect(SDKEnvironmentLogic.scan(from: loadedSystemFramework).sdkHash == withoutSystemFramework.sdkHash)
+    // The classes that were loaded are still sent.
+    #expect(loaded.swiftModules == ["Checkout", "Mixpanel"])
+    #expect(loaded.objcClassNames == ["CKOCardView", "FIRApp"])
   }
 
   @Test func sdkHash_ignoresTheAppVersionAndBuildSettings() {
@@ -434,6 +503,38 @@ struct SDKEnvironmentTests {
     withExtendedLifetime((superwall, dependencyContainer)) {}
   }
 
+  // With every class's hash in it, the event is big. A request the server turned
+  // away for its size would take the app launch events with it.
+  @Test func event_goesUpInARequestOfItsOwn() async {
+    let dependencyContainer = DependencyContainer(cache: CacheMock())
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    await superwall.track(InternalSuperwallEvent.AppOpen())
+    let result = await superwall.track(PrivateSuperwallEvent.SDKEnvironment(info: .stub()))
+
+    let queued = await dependencyContainer.placementsQueue.queuedEventNames
+    #expect(PrivateSuperwallEvent.SDKEnvironment(info: .stub()).isSentInOwnRequest)
+    #expect(!InternalSuperwallEvent.AppOpen().isSentInOwnRequest)
+    #expect(result.isQueuedForSending)
+    #expect(queued.contains("app_open"))
+    #expect(!queued.contains("sdk_environment"))
+    withExtendedLifetime((superwall, dependencyContainer)) {}
+  }
+
+  // The queue hears of a tracking change a moment after the options do.
+  @Test func liveReporter_whenTrackingWasJustTurnedOff_sendsNothing() async {
+    let dependencyContainer = DependencyContainer(cache: CacheMock())
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let reporter = SDKEnvironmentReporter.live(superwall: superwall)
+    dependencyContainer.configManager.options.eventTrackingBehavior = .none
+
+    let didSend = await reporter.send(.stub())
+
+    #expect(!didSend)
+    #expect(await dependencyContainer.placementsQueue.queuedEventNames.isEmpty)
+    withExtendedLifetime((superwall, dependencyContainer)) {}
+  }
+
   // MARK: - Collector
 
   @Test func collector_collectsOncePerProcess() async {
@@ -441,25 +542,24 @@ struct SDKEnvironmentTests {
     var sources = sources()
     sources.classNames = {
       lookups.increment()
-      return ["RevenueCat.PurchasesOrchestrator"]
+      return LinkedCodeLogic.AppClassNames(executable: ["RevenueCat.PurchasesOrchestrator"])
     }
     let collector = SDKEnvironmentCollector(sources: sources)
 
-    async let first = collector.environment()
-    async let second = collector.environment()
+    async let first = collector.scan()
+    async let second = collector.scan()
     let results = await [first, second]
-    let third = await collector.environment()
+    let third = await collector.scan()
 
-    let revenueCat = SDKEnvironmentLogic.nameHashes(["RevenueCat"])
-    #expect(results.allSatisfy { $0.swiftModules == revenueCat })
-    #expect(third.swiftModules == revenueCat)
+    #expect(results.allSatisfy { $0.swiftModules == ["RevenueCat"] })
+    #expect(third.swiftModules == ["RevenueCat"])
     #expect(lookups.value == 1)
   }
 
   // MARK: - Sending only when the SDKs change
 
   @Test func reporter_withNoSavedHash_sendsAndSaves() async {
-    let reporter = ReporterHarness(info: .stub(), savedHash: nil)
+    let reporter = ReporterHarness(scan: .stub(), savedHash: nil)
 
     let didSend = await reporter.reporter.reportIfChanged()
 
@@ -469,7 +569,7 @@ struct SDKEnvironmentTests {
   }
 
   @Test func reporter_withTheSameHash_sendsNothing() async {
-    let reporter = ReporterHarness(info: .stub(), savedHash: SDKEnvironmentInfo.stub().sdkHash)
+    let reporter = ReporterHarness(scan: .stub(), savedHash: SDKEnvironmentInfo.stub().sdkHash)
 
     let didSend = await reporter.reporter.reportIfChanged()
 
@@ -479,7 +579,7 @@ struct SDKEnvironmentTests {
   }
 
   @Test func reporter_withADifferentHash_sendsAndSavesTheNewOne() async {
-    let reporter = ReporterHarness(info: .stub(), savedHash: "the hash of an older build's SDKs")
+    let reporter = ReporterHarness(scan: .stub(), savedHash: "the hash of an older build's SDKs")
 
     let firstOpen = await reporter.reporter.reportIfChanged()
     let nextOpen = await reporter.reporter.reportIfChanged()
@@ -493,7 +593,7 @@ struct SDKEnvironmentTests {
 
   @Test func reporter_whenTheEventIsNotQueued_keepsTheOldHash() async {
     // As with `eventTrackingBehavior` set to `.none`.
-    let reporter = ReporterHarness(info: .stub(), savedHash: "old", isQueued: false)
+    let reporter = ReporterHarness(scan: .stub(), savedHash: "old", isQueued: false)
 
     let didSend = await reporter.reporter.reportIfChanged()
 
@@ -503,7 +603,7 @@ struct SDKEnvironmentTests {
   }
 
   @Test func reportOnce_withOverlappingCalls_sendsOnce() async {
-    let reporter = ReporterHarness(info: .stub(), savedHash: nil, sendDelay: 50_000_000)
+    let reporter = ReporterHarness(scan: .stub(), savedHash: nil, sendDelay: 50_000_000)
     let once = SDKEnvironmentReportOnce()
 
     async let first = once.run { reporter.reporter }
@@ -568,13 +668,14 @@ struct SDKEnvironmentTests {
   private func sources(
     frameworks: URL? = nil,
     info: [String: Any] = [:],
-    classNames: [String] = []
+    classNames: [String] = [],
+    embeddedClassNames: [String] = []
   ) -> SDKEnvironmentSources {
     return SDKEnvironmentSources(
       frameworksDirectory: frameworks,
       resourcesDirectory: nil,
       infoDictionary: info,
-      classNames: { classNames },
+      classNames: { LinkedCodeLogic.AppClassNames(executable: classNames, embedded: embeddedClassNames) },
       systemModules: { [] }
     )
   }
@@ -614,7 +715,7 @@ private struct ReporterHarness {
   let reporter: SDKEnvironmentReporter
 
   init(
-    info: SDKEnvironmentInfo,
+    scan: SDKEnvironmentScan,
     savedHash: String?,
     isQueued: Bool = true,
     sendDelay: UInt64 = 0
@@ -624,7 +725,7 @@ private struct ReporterHarness {
     self.sent = sent
     self.storedHash = storedHash
     self.reporter = SDKEnvironmentReporter(
-      environment: { info },
+      scan: { scan },
       savedHash: { storedHash.value },
       saveHash: { storedHash.value = $0 },
       send: { _ in
@@ -676,28 +777,40 @@ private final class Counter: @unchecked Sendable {
   }
 }
 
-extension SDKEnvironmentInfo {
-  static func stub() -> SDKEnvironmentInfo {
-    return SDKEnvironmentInfo(
-      swiftModules: SDKEnvironmentLogic.nameHashes(["Mixpanel", "RevenueCat"]),
-      objcClassNames: SDKEnvironmentLogic.nameHashes(["FIRApp", "Branch"]),
-      frameworks: [
-        .init(name: "AppsFlyerLib", bundleId: "com.appsflyer.sdk.lib", version: "6.15.0"),
-        .init(name: "Firestore", bundleId: nil, version: nil)
-      ],
-      frameworkCount: 2,
-      resourceBundles: SDKEnvironmentLogic.nameHashes(["Mixpanel_Mixpanel"]),
+extension SDKEnvironmentScan {
+  static func stub(
+    swiftModules: [String] = ["Mixpanel", "RevenueCat"],
+    objcClassNames: [String] = ["FIRApp", "Branch"]
+  ) -> SDKEnvironmentScan {
+    let frameworks: [SDKEnvironmentInfo.EmbeddedBundle] = [
+      .init(name: "AppsFlyerLib", bundleId: "com.appsflyer.sdk.lib", version: "6.15.0"),
+      .init(name: "Firestore", bundleId: nil, version: nil)
+    ]
+    let resourceBundles: [SDKEnvironmentInfo.EmbeddedBundle] = [
+      .init(name: "Mixpanel_Mixpanel", bundleId: nil, version: nil)
+    ]
+    return SDKEnvironmentScan(
+      swiftModules: swiftModules,
+      objcClassNames: objcClassNames,
+      frameworks: frameworks,
+      resourceBundles: resourceBundles,
       xcodeVersion: "2601",
       buildSDKName: "iphoneos26.0",
       minimumOSVersion: nil,
       hasTrackingUsageDescription: true,
       skAdNetworkItemCount: 3,
       sdkHash: SDKEnvironmentLogic.sdkHash(
-        modules: ["Mixpanel", "RevenueCat"],
-        objcClassNames: ["Branch", "FIRApp"],
-        frameworks: [.init(name: "AppsFlyerLib", bundleId: "com.appsflyer.sdk.lib", version: "6.15.0")],
-        resourceBundles: []
+        modules: swiftModules,
+        objcClassPrefixes: LinkedCodeLogic.objcPrefixesAndUnprefixedNames(in: objcClassNames),
+        frameworks: frameworks,
+        resourceBundles: resourceBundles
       )
     )
+  }
+}
+
+extension SDKEnvironmentInfo {
+  static func stub() -> SDKEnvironmentInfo {
+    return SDKEnvironmentScan.stub().info()
   }
 }

@@ -17,7 +17,17 @@ protocol Trackable {
   var audienceFilterParams: [String: Any] { get }
   /// Determines whether the placement has the potential to trigger a paywall. Defaults to true.
   var canImplicitlyTriggerPaywall: Bool { get }
+  /// Whether the event goes up as soon as it's tracked, in a request of its own,
+  /// instead of with the next batch. For an event big enough that a request the
+  /// server turns away shouldn't take other events with it. Defaults to false.
+  var isSentInOwnRequest: Bool { get }
 
   /// Parameters that are marked with a $ when sent back to the server to be recognised as Superwall parameters.
   func getSuperwallParameters() async -> [String: Any]
+}
+
+extension Trackable {
+  var isSentInOwnRequest: Bool {
+    return false
+  }
 }

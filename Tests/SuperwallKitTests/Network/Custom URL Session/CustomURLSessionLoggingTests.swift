@@ -27,6 +27,26 @@ struct CustomURLSessionLoggingTests {
     #expect(logged.contains("2026-09-15T20:43:00Z"))
   }
 
+  /// The SDK list is only for Superwall, so its hashes stay out of the logs, both
+  /// when the request starts and when it fails.
+  @Test func redactsPrivateEventsFromLoggedBodies() throws {
+    let events = EventsRequest(events: [
+      JSON(["event_name": "app_open", "parameters": ["$app_session_id": "session"]]),
+      JSON(["event_name": "sdk_environment", "parameters": ["$objc_class_name_hashes": "7SCsMOVdeDg="]])
+    ])
+    let body = try JSONEncoder().encode(events)
+
+    let logged = CustomURLSession.loggableBody(body)
+    let failureLog = String(describing: events.redactedForLogs)
+
+    for log in [logged, failureLog] {
+      #expect(!log.contains("7SCsMOVdeDg="))
+      #expect(log.contains("sdk_environment"))
+      #expect(log.contains("session"))
+    }
+    #expect(events.redactedForLogs.events[0] == events.events[0])
+  }
+
   @Test func logsOtherBodiesUnchanged() {
     let body = Data(#"{"b":1,"a":"x"}"#.utf8)
     #expect(CustomURLSession.loggableBody(body) == #"{"b":1,"a":"x"}"#)

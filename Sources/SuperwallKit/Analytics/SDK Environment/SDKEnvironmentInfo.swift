@@ -68,9 +68,9 @@ struct SDKEnvironmentInfo: Equatable {
   let hasTrackingUsageDescription: Bool
   /// How many ad networks the app lists in `SKAdNetworkItems`.
   let skAdNetworkItemCount: Int
-  /// The SHA-256 of the SDK data alone: the modules, class names, frameworks and
-  /// resource bundles. The event is sent when this changes. See
-  /// `SDKEnvironmentLogic.sdkHash`.
+  /// The SHA-256 of what tells the app's SDKs apart: the modules and class
+  /// prefixes in its executable, and its frameworks and resource bundles. The
+  /// event is sent when this changes. See `SDKEnvironmentLogic.sdkHash`.
   let sdkHash: String
 
   // Lists go out as a string or a dictionary because event parameters drop arrays

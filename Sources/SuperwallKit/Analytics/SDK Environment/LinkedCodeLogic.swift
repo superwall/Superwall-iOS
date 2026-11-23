@@ -16,9 +16,25 @@ import ObjectiveC
 /// an embedded framework. Their classes do: Swift classes by module, and
 /// Objective-C classes by name. Objective-C class names are unique in a process, so
 /// each one belongs to exactly one SDK, which the server looks up by its hash.
-/// Apple's modules and classes are left out: only third-party SDKs can have an
-/// integration or conflict with Superwall.
+/// Apple's modules are left out: only third-party SDKs can have an integration or
+/// conflict with Superwall. Apple's Objective-C classes live outside the app, so
+/// they're never in the images that are read.
 enum LinkedCodeLogic {
+  /// The class names in the app's images, by where they were found.
+  struct AppClassNames: Equatable {
+    /// From the app's executable and, in a debug build, the `<App>.debug.dylib`
+    /// that holds the app's code. They're loaded before the app runs, so a build
+    /// gives the same names every time.
+    var executable: [String] = []
+    /// From the embedded frameworks and other images that were loaded when the
+    /// names were read. One the app loads later on isn't in it.
+    var embedded: [String] = []
+
+    var all: [String] {
+      return executable + embedded
+    }
+  }
+
   /// SuperwallKit and the modules it brings in.
   static let superwallModules: Set<String> = [
     String(String(reflecting: LinkedCodeLogic.self).prefix { $0 != "." }),
@@ -29,15 +45,6 @@ enum LinkedCodeLogic {
   /// What the mangling uses for the standard library and imported C and
   /// Objective-C types.
   private static let runtimeModules: Set<String> = ["Swift", "__C"]
-  /// Apple's Objective-C class prefixes. Matched exactly against a class's prefix,
-  /// since SDKs reuse their letters: CIFilterFactory's `CIFF` isn't Core Image,
-  /// PostHog's `PHG` isn't Photos. Cocoa reserves `NS` and `UI` outright, so
-  /// anything starting with those is Apple's too.
-  static let applePrefixes: Set<String> = [
-    "AV", "CA", "CG", "CI", "CK", "CL", "CN", "EK", "GK", "HK", "LA", "MK",
-    "MTL", "PK", "SK", "UN", "WK"
-  ]
-  private static let reservedApplePrefixes = ["NS", "UI"]
 
   // MARK: - Class names
 
@@ -51,10 +58,10 @@ enum LinkedCodeLogic {
   /// `objc_copyClassNamesForImage` reads the names without realizing the classes,
   /// unlike `objc_getClassList`. Swift classes that don't inherit from `NSObject`
   /// aren't Objective-C runtime classes, so a module made only of those isn't seen.
-  static func appClassNames(bundleURL: URL) -> [String] {
+  static func appClassNames(bundleURL: URL) -> AppClassNames {
     let bundlePrefixes = pathPrefixes(of: bundleURL)
 
-    var names: [String] = []
+    var names = AppClassNames()
     for index in 0..<_dyld_image_count() {
       guard let imageName = _dyld_get_image_name(index) else {
         continue
@@ -74,11 +81,23 @@ enum LinkedCodeLogic {
         continue
       }
       defer { free(classNames) }
-      for classIndex in 0..<Int(count) {
-        names.append(String(cString: classNames[classIndex]))
+      let imageNames = (0..<Int(count)).map { String(cString: classNames[$0]) }
+      if isExecutableImage(atRelativePath: path) {
+        names.executable += imageNames
+      } else {
+        names.embedded += imageNames
       }
     }
     return names
+  }
+
+  /// Whether the image at `path`, relative to the app bundle, is the app's
+  /// executable or the `<App>.debug.dylib` beside it: at the top of the bundle on
+  /// iOS, and in `Contents/MacOS` on a Mac.
+  static func isExecutableImage(atRelativePath path: String) -> Bool {
+    let components = path.split(separator: "/")
+    return components.count == 1
+      || (components.count == 3 && components.starts(with: ["Contents", "MacOS"]))
   }
 
   /// Whether to read the classes of the image at `path`, relative to the app bundle.
@@ -155,9 +174,9 @@ enum LinkedCodeLogic {
   /// each deduplicated and sorted by UTF-8 bytes.
   ///
   /// Leaves out `excludedModules`, `systemModules`, any module starting with `_`,
-  /// SuperwallKit and its dependencies, and Apple's and SuperwallKit's Objective-C
-  /// classes. The app's own Objective-C classes stay in: nothing in the class list
-  /// reliably tells them apart from a dependency's.
+  /// SuperwallKit and its dependencies, and SuperwallKit's Objective-C classes.
+  /// The app's own Objective-C classes stay in: nothing in the class list reliably
+  /// tells them apart from a dependency's.
   static func modulesAndObjCClassNames(
     in classNames: [String],
     excludedModules: Set<String>,
@@ -184,8 +203,12 @@ enum LinkedCodeLogic {
     return (sortedByUTF8(modules), sortedByUTF8(objcClassNames))
   }
 
-  /// Leaves out underscored names, which are private to Apple or the toolchain,
-  /// and classes with Apple's or SuperwallKit's prefix.
+  /// Leaves out underscored names, which are private to the toolchain, and classes
+  /// with SuperwallKit's prefix.
+  ///
+  /// A prefix Apple also uses doesn't rule a class out. Only images inside the app
+  /// are read, and plenty of SDKs share Apple's letters: Mantle's `MTLModel`,
+  /// LeanCloud's `AVUser`, ComponentKit's `CKComponent`.
   static func isThirdPartyObjCClass(_ name: String) -> Bool {
     if name.hasPrefix("_") {
       return false
@@ -193,12 +216,18 @@ enum LinkedCodeLogic {
     guard let prefix = objcPrefix(ofClassName: name) else {
       return true
     }
-    return !superwallPrefixes.contains(prefix) && !isApplePrefix(prefix)
+    return !superwallPrefixes.contains(prefix)
   }
 
-  static func isApplePrefix(_ prefix: String) -> Bool {
-    return applePrefixes.contains(prefix)
-      || reservedApplePrefixes.contains { prefix.hasPrefix($0) }
+  /// What the Objective-C classes in `names` come down to in the SDK hash: each
+  /// class's prefix, or its whole name when it has none, deduplicated and sorted
+  /// by UTF-8 bytes.
+  ///
+  /// An SDK's classes share a prefix, so a new SDK brings a new one. A class added
+  /// under a prefix that's already there, as the app's own usually are, changes
+  /// nothing.
+  static func objcPrefixesAndUnprefixedNames(in names: [String]) -> [String] {
+    return sortedByUTF8(Set(names.map { objcPrefix(ofClassName: $0) ?? $0 }))
   }
 
   /// Sorted by UTF-8 bytes rather than `String`'s order, which follows Unicode rules
@@ -242,6 +271,11 @@ enum LinkedCodeLogic {
     var length = 0
     while index < utf8.count, isDigit(utf8[index]) {
       length = length * 10 + Int(utf8[index] - UInt8(ascii: "0"))
+      // A module's name can't be longer than the class name it's part of. Checked
+      // on every digit, so a long run of them can't overflow.
+      if length > utf8.count {
+        return nil
+      }
       index += 1
     }
     guard
@@ -254,8 +288,7 @@ enum LinkedCodeLogic {
   }
 
   /// The capitals before the one that starts an Objective-C class's first word:
-  /// `GUL` for `GULAppDelegateSwizzler`, `NS` for `NSURLSessionTask`. Only used to
-  /// recognise Apple's and SuperwallKit's classes.
+  /// `GUL` for `GULAppDelegateSwizzler`, `NS` for `NSURLSessionTask`.
   ///
   /// Names with fewer than two leading capitals, such as `Branch`, have none.
   static func objcPrefix(ofClassName name: String) -> String? {
@@ -272,6 +305,47 @@ enum LinkedCodeLogic {
       return nil
     }
     return String(bytes: utf8[0..<count - 1], encoding: .utf8)
+  }
+
+  /// The modules the app's own code could be in, from its Info.plist.
+  ///
+  /// Xcode names the module after the product, which is usually the executable's
+  /// name and the bundle's name too. A project can rename any of the three, so
+  /// both names count, along with the module of any class the Info.plist names,
+  /// such as the scene delegate's `MyApp.SceneDelegate`.
+  static func mainModuleNames(infoDictionary: [String: Any]) -> Set<String> {
+    var modules = Set(
+      ["CFBundleExecutable", "CFBundleName"]
+        .compactMap { infoDictionary[$0] as? String }
+        .map(mainModuleName(executableName:))
+    )
+    modules.formUnion(modulesOfClassNames(in: infoDictionary))
+    return modules
+  }
+
+  /// The modules of the Swift classes named under keys such as
+  /// `UISceneDelegateClassName` and `NSExtensionPrincipalClass`.
+  private static func modulesOfClassNames(in value: Any) -> Set<String> {
+    if let array = value as? [Any] {
+      return array.reduce(into: []) { $0.formUnion(modulesOfClassNames(in: $1)) }
+    }
+    guard let dictionary = value as? [String: Any] else {
+      return []
+    }
+    var modules: Set<String> = []
+    for (key, child) in dictionary {
+      if let className = child as? String {
+        let isClassKey = key.hasSuffix("ClassName") || key.hasSuffix("PrincipalClass")
+        if isClassKey,
+          let dot = className.firstIndex(of: "."),
+          dot != className.startIndex {
+          modules.insert(String(className[..<dot]))
+        }
+      } else {
+        modules.formUnion(modulesOfClassNames(in: child))
+      }
+    }
+    return modules
   }
 
   /// The module Xcode gives the app's own code: the executable's name, made a valid
