@@ -45,10 +45,12 @@ extension IdentityState {
       shouldSaveAttributes = true
     }
 
+    let appUserId = storage.get(AppUserId.self)
     var state = IdentityState(
-      appUserId: storage.get(AppUserId.self),
+      appUserId: appUserId,
       aliasId: aliasId,
       seed: seed,
+      seedAwaitsConfig: appUserId != nil && storage.get(SeedAwaitsConfig.self) == true,
       userAttributes: userAttributes,
       appInstalledAtString: appInstalledAtString
     )
