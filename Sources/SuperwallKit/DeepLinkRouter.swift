@@ -37,11 +37,7 @@ final class DeepLinkRouter {
 
   /// Hands a checkout that a return link says was paid for to the redeemer, which keeps it
   /// pending until its code is redeemed. Replaced in tests.
-  lazy var recordPurchasedReturn: (PurchasedReturn) -> Void = { [webEntitlementRedeemer] purchase in
-    Task {
-      await webEntitlementRedeemer.handlePurchasedReturn(purchase)
-    }
-  }
+  var recordPurchasedReturn: (PurchasedReturn) -> Void
 
   /// The ``PaywallInfo`` of the presented paywall, if one is presented. Replaced in tests.
   var presentedPaywallInfo: () async -> PaywallInfo? = {
@@ -65,6 +61,11 @@ final class DeepLinkRouter {
     self.configManager = configManager
     self.storage = storage
     self.identityManager = identityManager
+    recordPurchasedReturn = { purchase in
+      Task {
+        await webEntitlementRedeemer.handlePurchasedReturn(purchase)
+      }
+    }
 
     listenToConfig()
   }
@@ -79,6 +80,11 @@ final class DeepLinkRouter {
     self.configManager = configManager
     self.storage = storage
     self.identityManager = identityManager
+    recordPurchasedReturn = { purchase in
+      Task {
+        await webEntitlementRedeemer.handlePurchasedReturn(purchase)
+      }
+    }
 
     listenToConfig()
   }
