@@ -533,8 +533,7 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     }
     await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
-    await maybeRecoverPendingStripeCheckoutOnPaywallOpen()
-    await webEntitlementRedeemer.dismissPaywallCoveredWhileLoading(self)
+    await settleWebCheckoutOnPaywallOpen()
 
     let demandScore = await deviceHelper.enrichment?.device["demandScore"].int
     let demandTier = await deviceHelper.enrichment?.device["demandTier"].string
@@ -547,11 +546,24 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     await Superwall.shared.track(paywallOpen)
   }
 
-  nonisolated private func maybeRecoverPendingStripeCheckoutOnPaywallOpen() async {
+  /// Runs as the paywall opens: recovers a pending web checkout, then closes the paywall if web
+  /// entitlements covered it while it loaded. A checkout recovered here has already finished the
+  /// paywall the way the purchase asked, so the covered check is skipped: it would close a paywall
+  /// the purchase was set to keep open.
+  nonisolated func settleWebCheckoutOnPaywallOpen() async {
+    let redeemed = await maybeRecoverPendingStripeCheckoutOnPaywallOpen()
+    guard !redeemed else {
+      return
+    }
+    await webEntitlementRedeemer.dismissPaywallCoveredWhileLoading(self)
+  }
+
+  /// - Returns: Whether a pending checkout was redeemed.
+  nonisolated private func maybeRecoverPendingStripeCheckoutOnPaywallOpen() async -> Bool {
     let shouldShowLoading =
       await webEntitlementRedeemer.shouldShowStripeRecoveryLoadingOnPaywallOpen()
     guard shouldShowLoading else {
-      return
+      return false
     }
 
     await MainActor.run {
@@ -568,6 +580,7 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
         self.updateLoading(.manualLoadingEnded)
       }
     }
+    return redeemed
   }
 
   nonisolated private func trackPaywallClose() async {

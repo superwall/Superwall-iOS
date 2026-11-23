@@ -307,6 +307,37 @@ struct WebCheckoutRecoveryTests {
     #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == true)
   }
 
+  @Test("A purchase recovered as a paywall opens, set to keep it open, isn't closed as restored")
+  func recoveryOnOpen_keepOpen_isntClosedAsRestored() async {
+    let superwall = makeSuperwall()
+    mapProductToPro()
+    let network = makeNetwork()
+    // The link's first poll fails, so the checkout waits for the paywall to open.
+    network.pollRedemptionResultResponses = [
+      .failure(NetworkError.unknown),
+      redeemedResponse(entitlements: [pro])
+    ]
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+    let evaluatedAt = Date()
+    try? await Task.sleep(nanoseconds: 5_000_000)
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(
+        checkoutContextId: "ctx_1",
+        productId: "prod_pro",
+        completion: .purchase(productId: "prod_pro", shouldDismiss: false)
+      )
+    )
+    #expect(network.pollRedemptionResultCallCount == 1)
+
+    let paywallVc = await makePaywall(redeemer: redeemer, evaluatedAt: evaluatedAt, onScreenAs: "launch")
+    superwall.subscriptionStatus = .active([pro])
+    await paywallVc.settleWebCheckoutOnPaywallOpen()
+
+    #expect(network.pollRedemptionResultCallCount == 2)
+    #expect(await completedPurchase(on: paywallVc) == "prod_pro")
+    #expect(await dismissal(of: paywallVc) == nil)
+  }
+
   @Test("A paywall still appearing when a recovered checkout is redeemed closes once it opens")
   func redemptionWhilePaywallAppears_closesItOnOpen() async {
     let superwall = makeSuperwall()
