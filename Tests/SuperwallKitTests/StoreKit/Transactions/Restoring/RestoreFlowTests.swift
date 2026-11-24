@@ -213,7 +213,7 @@ struct RestoreFlowTests {
     #expect(context.alertTitles.isEmpty)
   }
 
-  @Test("a successful restore that leaves the paywall open hides its spinner")
+  @Test("a successful restore that leaves the paywall open keeps its spinner up")
   @MainActor
   func successfulPaywallRestoreWithoutDismiss() async {
     let (flow, context) = makeFlow()
@@ -228,15 +228,14 @@ struct RestoreFlowTests {
       "updateLoading:purchaseStarted",
       "notify:restoreStart",
       "notify:transactionRestore",
-      "updateLoading:spinnerDismissed",
       "notify:restoreComplete"
     ])
     #expect(context.dismissals == 0)
   }
 
-  @Test("a real paywall left open by a successful restore is ready again")
+  @Test("a real paywall left open by a successful restore shows its spinner until the app hides it")
   @MainActor
-  func realPaywallIsReadyAfterRestoreWithoutDismiss() async {
+  func realPaywallKeepsSpinnerAfterRestoreWithoutDismiss() async {
     let (flow, context) = makeFlow()
     context.activeEntitlementIds = ["pro"]
     context.paywallOptions.automaticallyDismiss = false
@@ -247,6 +246,9 @@ struct RestoreFlowTests {
 
     #expect(result == .restored)
     #expect(context.dismissals == 0)
+    #expect(paywall.store.read { $0.loadingState } == .loadingPurchase)
+
+    paywall.togglePaywallSpinner(isHidden: true)
     #expect(paywall.store.read { $0.loadingState } == .ready)
   }
 

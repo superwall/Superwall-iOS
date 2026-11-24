@@ -28,7 +28,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes only the first StoreKit 2 purchase of a session being tracked when observing purchases.
 - Fixes a failed purchase sometimes being tracked after the events that follow it.
 - Fixes the product missing from the event tracked when a purchase is waiting for approval, such as with Ask to Buy.
-- Fixes a paywall's loading spinner staying up after a successful restore when `automaticallyDismiss` is off.
 - Fixes a paywall's loading spinner staying up when a purchase or restore fails while something else is showing over the paywall.
 - Fixes a crash when a paywall is presented from a view controller that takes its orientations from whatever it presents.
 - Improves the contrast of text and icons in the Customer Center.
