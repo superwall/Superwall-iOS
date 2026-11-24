@@ -48,7 +48,7 @@ private struct Harness {
     self.identityManager = IdentityManager(
       deviceHelper: dependencyContainer.deviceHelper,
       storage: storage,
-      configManager: configManager,
+      sdkContext: AppSdkContext(configManager: configManager),
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer
     ) { _ in
       // Tracks nothing: the default would track to the shared instance.

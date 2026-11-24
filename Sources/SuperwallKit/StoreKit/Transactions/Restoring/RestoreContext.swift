@@ -69,8 +69,7 @@ final class AppRestoreContext: RestoreContext {
   private let purchaseManager: PurchaseManager
   private let factory: TransactionManager.Factory
 
-  /// Tracks an event. ``TransactionManager`` points this at its own
-  /// `trackEvent`, so replacing that in a test covers restores too.
+  /// Tracks an event. Replaced in tests to observe what's tracked.
   var trackEvent: (Trackable) async -> Void = { event in
     _ = await Superwall.shared.track(event)
   }
