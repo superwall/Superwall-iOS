@@ -17,6 +17,12 @@ final class FakePurchasingPaywall: PurchasingPaywall {
   var introOfferToken: IntroOfferToken?
   var referenceName: String?
   private(set) var calls: [String] = []
+  /// What the calls were given, in order.
+  private(set) var introOfferTokenProductIds: [String] = []
+  private(set) var referenceNameCacheKeys: [String] = []
+  private(set) var messages: [PaywallMessage] = []
+  private(set) var completedProductIds: [String] = []
+  private(set) var alertTitles: [String] = []
   /// Also told of each call, to record it in order with a context's calls.
   private let log: ((String) -> Void)?
 
@@ -35,16 +41,19 @@ final class FakePurchasingPaywall: PurchasingPaywall {
   }
 
   func introOfferToken(forProductId productId: String) -> IntroOfferToken? {
+    introOfferTokenProductIds.append(productId)
     record("introOfferToken")
     return introOfferToken
   }
 
   func referenceName(forCacheKey cacheKey: String) -> String? {
+    referenceNameCacheKeys.append(cacheKey)
     record("referenceName")
     return referenceName
   }
 
   func notify(of message: PaywallMessage) {
+    messages.append(message)
     record("notify:\(name(of: message))")
   }
 
@@ -53,6 +62,7 @@ final class FakePurchasingPaywall: PurchasingPaywall {
   }
 
   func markPurchaseCompleted(_ product: StoreProduct) {
+    completedProductIds.append(product.productIdentifier)
     record("markPurchaseCompleted")
   }
 
@@ -67,6 +77,7 @@ final class FakePurchasingPaywall: PurchasingPaywall {
     closeActionTitle: String,
     action: (() -> Void)?
   ) {
+    alertTitles.append(title)
     record("showAlert")
   }
 }

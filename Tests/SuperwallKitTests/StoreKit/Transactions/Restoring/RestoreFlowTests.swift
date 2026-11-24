@@ -207,6 +207,7 @@ struct RestoreFlowTests {
       "notify:restoreFail",
       "showAlert"
     ])
+    #expect(paywall.alertTitles == [context.paywallOptions.restoreFailed.title])
     #expect(context.dismissals == 0)
     #expect(context.alertTitles.isEmpty)
   }

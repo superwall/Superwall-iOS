@@ -17,6 +17,7 @@ private final class FakeTransactionContext: TransactionContext, @unchecked Senda
   private var _calls: [String] = []
   private var _events: [Trackable] = []
   private var _alertTitles: [String] = []
+  private var _purchaseControllerIntroOfferTokens: [String?] = []
 
   var isUsingStoreKit2 = false
   var hasExternalPurchaseController = false
@@ -46,6 +47,14 @@ private final class FakeTransactionContext: TransactionContext, @unchecked Senda
     lock.lock()
     defer { lock.unlock() }
     return _alertTitles
+  }
+
+  /// The intro offer token on each product the purchase controller was asked
+  /// to buy.
+  var purchaseControllerIntroOfferTokens: [String?] {
+    lock.lock()
+    defer { lock.unlock() }
+    return _purchaseControllerIntroOfferTokens
   }
 
   func record(_ call: String) {
@@ -91,6 +100,9 @@ private final class FakeTransactionContext: TransactionContext, @unchecked Senda
   }
 
   func purchaseWithPurchaseController(_ product: StoreProduct) async -> PurchaseResult {
+    lock.lock()
+    _purchaseControllerIntroOfferTokens.append(product.introOfferToken?.token)
+    lock.unlock()
     record("purchaseWithPurchaseController")
     return purchaseControllerResult
   }
@@ -600,6 +612,8 @@ struct TransactionContextTests {
       "paywall.notify:transactionAbandon",
       "paywall.updateLoading:finished"
     ])
+    #expect(paywall.introOfferTokenProductIds == ["product"])
+    #expect(context.purchaseControllerIntroOfferTokens == [nil])
     #expect(!coordinator.hasPurchaseInProgress)
   }
 
@@ -612,6 +626,11 @@ struct TransactionContextTests {
     context.purchaseControllerResult = .purchased
     context.loadedProducts = ["slot": makeCustomProduct()]
     let paywall = FakePurchasingPaywall { context.record($0) }
+    paywall.introOfferToken = IntroOfferToken(
+      token: "token",
+      expiry: Date().addingTimeInterval(60)
+    )
+    paywall.referenceName = "primary"
     let transactionManager = makeTransactionManager(in: dependencyContainer, context: context)
     let coordinator = dependencyContainer.makePurchasingCoordinator()
     coordinator.reset()
@@ -639,6 +658,19 @@ struct TransactionContextTests {
       "track:NonRecurringProductPurchase",
       "dismiss"
     ])
+    // The token is asked for by product id and the name by slot, and both
+    // reach where they're used.
+    #expect(paywall.introOfferTokenProductIds == ["custom"])
+    #expect(context.purchaseControllerIntroOfferTokens == ["token"])
+    #expect(paywall.completedProductIds == ["custom"])
+    #expect(paywall.referenceNameCacheKeys == ["slot"])
+    if case let .transactionComplete(_, productIdentifier, didStartFreeTrial, product) = paywall.messages.last {
+      #expect(productIdentifier == "custom")
+      #expect(!didStartFreeTrial)
+      #expect(product == "primary")
+    } else {
+      Issue.record("Expected the paywall to hear that the purchase completed")
+    }
     #expect(!coordinator.hasPurchaseInProgress)
   }
 
