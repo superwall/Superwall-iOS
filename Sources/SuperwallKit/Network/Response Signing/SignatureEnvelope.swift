@@ -8,23 +8,20 @@
 import Foundation
 
 /// The parsed `X-Superwall-Signature` header:
-/// `v=1, t=<unix seconds>, kind=x509|raw, cred=:<base64>:, sig=:<base64>:`.
+/// `v=1, t=<unix seconds>, kind=raw, cred=:<base64>:, sig=:<base64>:`.
+///
+/// `raw` is the only credential kind; anything else, `x509` included, is malformed.
 ///
 /// A subset of an RFC 8941 dictionary. Members may come in any order and unknown members are
 /// ignored. The format is specified in superwall/paywall-next `packages/response-signing`.
 struct SignatureEnvelope: Equatable {
-  enum CredentialKind: String {
-    case x509
-    case raw
-  }
-
   static let signatureHeader = "X-Superwall-Signature"
   static let nonceHeader = "X-Superwall-Nonce"
   static let currentVersion = 1
+  static let rawKind = "raw"
 
   let version: Int
   let signedAt: Int64
-  let kind: CredentialKind
   let credential: Data
   let signature: Data
 
@@ -76,7 +73,7 @@ struct SignatureEnvelope: Equatable {
     }
 
     guard
-      let kind = members["kind"].flatMap(CredentialKind.init(rawValue:)),
+      members["kind"] == Self.rawKind,
       let version = integer("v").flatMap({ Int(exactly: $0) }),
       let signedAt = integer("t"),
       let credential = bytes("cred"),
@@ -86,7 +83,6 @@ struct SignatureEnvelope: Equatable {
     }
     self.version = version
     self.signedAt = signedAt
-    self.kind = kind
     self.credential = credential
     self.signature = signature
   }

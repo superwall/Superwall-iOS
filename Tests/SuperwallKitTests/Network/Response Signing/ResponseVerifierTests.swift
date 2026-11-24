@@ -12,7 +12,6 @@ import Testing
 private struct Vectors: Decodable {
   struct Root: Decodable {
     let publicKey: String
-    let certificate: String
   }
 
   struct Case: Decodable {
@@ -35,7 +34,6 @@ private struct Vectors: Decodable {
     let body: String
     let header: String?
     let expected: Expected
-    let reasonIsPortable: Bool
   }
 
   let roots: [Root]
@@ -48,10 +46,7 @@ private struct Vectors: Decodable {
 
   var trustedRoots: [ResponseVerifier.TrustedRoot] {
     roots.map {
-      ResponseVerifier.TrustedRoot(
-        publicKey: Data(base64Encoded: $0.publicKey) ?? Data(),
-        certificate: Data(base64Encoded: $0.certificate) ?? Data()
-      )
+      ResponseVerifier.TrustedRoot(publicKey: Data(base64Encoded: $0.publicKey) ?? Data())
     }
   }
 }
@@ -71,12 +66,12 @@ private extension Vectors.Case {
 }
 
 struct ResponseVerifierTests {
-  @Test("there are vectors for both credential kinds")
+  @Test("the shared vectors are loaded")
   func vectorsAreLoaded() {
     let names = Vectors.shared.cases.map(\.name)
-    #expect(names.count >= 39)
-    #expect(names.contains("x509_entitlements_verified"))
+    #expect(names.count >= 22)
     #expect(names.contains("raw_entitlements_verified"))
+    #expect(names.contains("x509_kind_rejected"))
   }
 
   @Test(
@@ -105,15 +100,13 @@ struct ResponseVerifierTests {
         Issue.record("Expected a failure, got \(result)")
         return
       }
-      if vector.reasonIsPortable {
-        #expect(failure.rawValue == vector.expected.reason)
-      }
+      #expect(failure.rawValue == vector.expected.reason)
     }
   }
 
   @Test("a credential that verified once is reused, and still binds the subject")
   func credentialCache() throws {
-    let vector = try #require(Vectors.shared.cases.first { $0.name == "x509_entitlements_verified" })
+    let vector = try #require(Vectors.shared.cases.first { $0.name == "raw_entitlements_verified" })
     let context = try #require(vector.verifierContext)
     let body = Data(base64Encoded: vector.body) ?? Data()
     let verifier = ResponseVerifier(roots: Vectors.shared.trustedRoots)
@@ -154,30 +147,11 @@ struct ResponseVerifierTests {
     )
     #expect(envelope.version == 1)
     #expect(envelope.signedAt == 12)
-    #expect(envelope.kind == .raw)
     #expect(envelope.credential == Data([2, 3]))
     #expect(SignatureEnvelope(header: "v=1, v=1, t=1, kind=raw, cred=:AA==:, sig=:AA==:") == nil)
     #expect(SignatureEnvelope(header: "v=1, t=-1, kind=raw, cred=:AA==:, sig=:AA==:") == nil)
     #expect(SignatureEnvelope(header: "v=1, t=1, kind=raw, cred=:AQI:, sig=:AA==:") == nil)
-  }
-
-  @Test("malformed DER is rejected without trapping, on 32-bit platforms too")
-  func malformedDER() {
-    let inputs: [[UInt8]] = [
-      [0x30, 0x84, 0x80, 0x00, 0x00, 0x00], // length wraps negative in a 32-bit Int
-      [0x30, 0x84, 0x7f, 0xff, 0xff, 0xff], // length overflows position + length
-      [0x30, 0x85, 0x01, 0x00, 0x00, 0x00, 0x00], // five length bytes
-      [0x30, 0x80], // indefinite length
-      [0x30, 0x82, 0x01], // truncated length
-      [0x30, 0x05, 0x01], // value shorter than its length
-      [0x30],
-      []
-    ]
-    for input in inputs {
-      var reader = DERReader(input)
-      #expect(reader.read(tag: 0x30) == nil)
-      #expect(CertificateFields(der: Data(input)) == nil)
-    }
+    #expect(SignatureEnvelope(header: "v=1, t=1, kind=x509, cred=:AA==:, sig=:AA==:") == nil)
   }
 
   @Test("a version too large for Int is malformed, not a trap")
@@ -198,14 +172,17 @@ struct ResponseVerifierTests {
     #expect(result == .failed(.unsupportedVersion) || result == .failed(.malformedHeader))
   }
 
-  @Test("certificate validity is read in UTC from both time formats")
-  func certificateTimes() {
-    // UTCTime 261119100000Z and GeneralizedTime 20500101000000Z.
-    var reader = DERReader(
-      [0x17, 0x0d] + Array("261119100000Z".utf8) + [0x18, 0x0f] + Array("20500101000000Z".utf8)
-    )
-    #expect(reader.readTime() == 1_795_082_400)
-    #expect(reader.readTime() == 2_524_608_000)
-    #expect(reader.isAtEnd)
+  @Test("embedded roots are P-256 points, and a bad one is left out")
+  func embeddedRoots() {
+    for encoded in [ResponseSigningRoots.active, ResponseSigningRoots.standby].compactMap({ $0 }) {
+      #expect(ResponseSigningRoots.decode([encoded]).count == 1)
+    }
+    if let active = ResponseSigningRoots.active {
+      #expect(active != ResponseSigningRoots.standby)
+    }
+    let vectorRoots = Vectors.shared.roots.map(\.publicKey)
+    #expect(ResponseSigningRoots.decode(vectorRoots).count == 2)
+    let truncated = String(vectorRoots[0].dropFirst(4))
+    #expect(ResponseSigningRoots.decode(["AQID", "not base64", truncated]).isEmpty)
   }
 }

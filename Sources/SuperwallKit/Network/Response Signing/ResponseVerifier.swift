@@ -7,19 +7,17 @@
 
 import CryptoKit
 import Foundation
-import Security
 
 /// Verifies `X-Superwall-Signature` on SDK responses. The format and the shared test vectors live
 /// in superwall/paywall-next `packages/response-signing`; Android implements the same steps.
 ///
-/// The signing key is authorised by an embedded root, either through an X.509 certificate or a
-/// raw key statement (`kind`). Both give a ``VerifiedKey``; checking the response signature is the
-/// same for both, so the backend can move between them without an SDK release.
+/// The response is signed by a short-lived signing key, which an embedded root authorises with a
+/// raw key statement (`kind=raw`, the only kind): a fixed layout the root signs directly. There is
+/// no X.509 and no intermediate, so there's nothing to parse but that layout.
 final class ResponseVerifier: @unchecked Sendable {
-  /// A root the SDK trusts: its 65-byte uncompressed P-256 public key and self-signed certificate.
+  /// A root the SDK trusts: its 65-byte uncompressed P-256 public key (see ``ResponseSigningRoots``).
   struct TrustedRoot {
     let publicKey: Data
-    let certificate: Data
 
     var keyId: Data {
       Data(SHA256.hash(data: publicKey))
@@ -82,25 +80,19 @@ final class ResponseVerifier: @unchecked Sendable {
   private static let responsePrefix = Data("superwall-response-v1\u{0}".utf8)
 
   private let roots: [TrustedRoot]
-  private let anchors: [SecCertificate]
   private let lock = NSLock()
-  /// Verified credentials, keyed by kind and SHA-256, so a reused credential is checked once.
+  /// Verified credentials, keyed by SHA-256, so a reused credential is checked once.
   private var credentialCache: [String: VerifiedKey] = [:]
   private static let maxCachedCredentials = 8
 
-  init(roots: [TrustedRoot]) {
+  init(roots: [TrustedRoot] = ResponseSigningRoots.all) {
     self.roots = roots
-    self.anchors = roots.compactMap {
-      SecCertificateCreateWithData(nil, $0.certificate as CFData)
-    }
   }
 
   /// - Parameters:
   ///   - header: The response's `X-Superwall-Signature`, or `nil`.
   ///   - body: The response body exactly as received, after decompression.
   ///   - now: The device's current Unix time in seconds.
-  ///
-  /// Certificate validation can take a few milliseconds, so don't call this on the main thread.
   func verify(
     header: String?,
     context: Context,
@@ -118,19 +110,12 @@ final class ResponseVerifier: @unchecked Sendable {
     }
 
     let credentialHash = Data(SHA256.hash(data: envelope.credential))
-    let cacheKey = "\(envelope.kind.rawValue):\(credentialHash.base64EncodedString())"
+    let cacheKey = credentialHash.base64EncodedString()
     let key: VerifiedKey
     if let cached = lock.withLock({ credentialCache[cacheKey] }) {
       key = cached
     } else {
-      let verified: Swift.Result<VerifiedKey, Failure>
-      switch envelope.kind {
-      case .raw:
-        verified = verifyRawCredential(envelope.credential)
-      case .x509:
-        verified = verifyX509Credential(envelope.credential)
-      }
-      switch verified {
+      switch verifyRawCredential(envelope.credential) {
       case .success(let verifiedKey):
         key = verifiedKey
       case .failure(let failure):
@@ -229,69 +214,6 @@ final class ResponseVerifier: @unchecked Sendable {
       value = value << 8 | UInt64(byte)
     }
     return Int64(bitPattern: value)
-  }
-
-  // MARK: - X.509
-
-  /// Validates the chain against the embedded roots only, with network fetches off: there's no CRL
-  /// or OCSP for these certificates, and a lookup could hang. The chain is checked at the
-  /// certificate's own start, so it covers signatures and structure; the signing time and the
-  /// device clock are checked against the validity in `verify`, the same way for both kinds.
-  private func verifyX509Credential(
-    _ credential: Data
-  ) -> Swift.Result<VerifiedKey, Failure> {
-    guard
-      let fields = CertificateFields(der: credential),
-      let certificate = SecCertificateCreateWithData(nil, credential as CFData)
-    else {
-      return .failure(.malformedCredential)
-    }
-    // A CA certificate never signs responses, a trusted root included.
-    guard
-      !fields.isCA,
-      !roots.contains(where: { $0.certificate == credential })
-    else {
-      return .failure(.malformedCredential)
-    }
-    guard !anchors.isEmpty else {
-      return .failure(.unknownRoot)
-    }
-
-    var trust: SecTrust?
-    guard
-      SecTrustCreateWithCertificates(certificate, SecPolicyCreateBasicX509(), &trust) == errSecSuccess,
-      let trust = trust,
-      SecTrustSetAnchorCertificates(trust, anchors as CFArray) == errSecSuccess,
-      SecTrustSetAnchorCertificatesOnly(trust, true) == errSecSuccess,
-      SecTrustSetNetworkFetchAllowed(trust, false) == errSecSuccess,
-      SecTrustSetVerifyDate(
-        trust,
-        Date(timeIntervalSince1970: TimeInterval(fields.notBefore)) as CFDate
-      ) == errSecSuccess
-    else {
-      return .failure(.malformedCredential)
-    }
-    // The root issues signing certificates directly: the chain is the certificate and a root.
-    guard
-      SecTrustEvaluateWithError(trust, nil),
-      (SecTrustCopyCertificateChain(trust) as? [SecCertificate])?.count == 2
-    else {
-      return .failure(.invalidCredentialSignature)
-    }
-    guard
-      let secKey = SecTrustCopyKey(trust),
-      let external = SecKeyCopyExternalRepresentation(secKey, nil) as Data?,
-      let publicKey = try? P256.Signing.PublicKey(x963Representation: external)
-    else {
-      return .failure(.malformedCredential)
-    }
-    return .success(
-      VerifiedKey(
-        publicKey: publicKey,
-        notBefore: fields.notBefore,
-        notAfter: fields.notAfter
-      )
-    )
   }
 
   // MARK: - Signed message
