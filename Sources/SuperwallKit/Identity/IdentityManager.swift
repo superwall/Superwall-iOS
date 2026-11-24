@@ -160,6 +160,7 @@ class IdentityManager: IdentityContext {
   /// Checks for static config upgrade before setting identity.
   func configure() async {
     store.update(IdentityUpdate.begin(.configuration))
+    dispatch(.resumeSeed)
     let neverCalledStaticConfig = storage?.neverCalledStaticConfig ?? false
     let isFirstAppOpen = !(storage?.get(DidTrackFirstSeen.self) ?? false)
 
@@ -251,12 +252,27 @@ extension IdentityManager {
 
 // MARK: - IdentityContext
 extension IdentityManager {
-  func userIdSeed(for userId: String) async -> Int? {
-    let config = await sdkContext.awaitConfig()
-    guard config?.featureFlags.enableUserIdSeed == true else {
+  func userIdSeedFromOptions(for userId: String) -> Int? {
+    guard sdkContext.isUserIdSeedEnabledInOptions else {
       return nil
     }
     return userId.sha256MappedToRange()
+  }
+
+  func userIdSeed(for userId: String) async -> UserIdSeed {
+    if let seed = userIdSeedFromOptions(for: userId) {
+      return .derived(seed)
+    }
+    guard let config = await sdkContext.awaitConfig() else {
+      return .unknown
+    }
+    guard
+      config.featureFlags.enableUserIdSeed,
+      let seed = userId.sha256MappedToRange()
+    else {
+      return .off
+    }
+    return .derived(seed)
   }
 
   func fetchAssignments() async {
@@ -306,6 +322,11 @@ extension IdentityManager {
     }
     storage.save(state.aliasId, forType: AliasId.self)
     storage.save(state.seed, forType: Seed.self)
+    if state.seedAwaitsConfig {
+      storage.save(true, forType: SeedAwaitsConfig.self)
+    } else {
+      storage.delete(SeedAwaitsConfig.self)
+    }
     storage.save(state.userAttributes, forType: UserAttributes.self)
   }
 
@@ -333,6 +354,13 @@ extension IdentityManager {
     }
     if after.seed != before.seed {
       storage.save(after.seed, forType: Seed.self)
+    }
+    if after.seedAwaitsConfig != before.seedAwaitsConfig {
+      if after.seedAwaitsConfig {
+        storage.save(true, forType: SeedAwaitsConfig.self)
+      } else {
+        storage.delete(SeedAwaitsConfig.self)
+      }
     }
     if !NSDictionary(dictionary: after.userAttributes).isEqual(to: before.userAttributes) {
       storage.save(after.userAttributes, forType: UserAttributes.self)

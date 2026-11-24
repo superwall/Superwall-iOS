@@ -15,6 +15,7 @@ private final class FakeSdkContext: SdkContext, @unchecked Sendable {
   private let lock = NSLock()
   private var _assignmentFetches = 0
   var config: Config?
+  var isUserIdSeedEnabledInOptions = false
 
   var assignmentFetches: Int {
     lock.lock()
@@ -59,10 +60,32 @@ struct SdkContextTests {
 
     let seed = await identityManager.userIdSeed(for: "user")
 
-    #expect(seed == "user".sha256MappedToRange())
+    #expect(seed == "user".sha256MappedToRange().map { .derived($0) })
   }
 
-  @Test("there's no user id seed when the config turns it off")
+  @Test("the user id seed comes from the options without waiting for the config")
+  func userIdSeedUsesContextOptions() async {
+    let dependencyContainer = DependencyContainer()
+    let sdkContext = FakeSdkContext()
+    sdkContext.isUserIdSeedEnabledInOptions = true
+    let identityManager = makeIdentityManager(in: dependencyContainer, sdkContext: sdkContext)
+
+    let expected = "user".sha256MappedToRange()
+    #expect(expected != nil)
+    #expect(identityManager.userIdSeedFromOptions(for: "user") == expected)
+    #expect(await identityManager.userIdSeed(for: "user") == expected.map { .derived($0) })
+  }
+
+  @Test("the options give no user id seed when they leave it off")
+  func noSeedFromOptionsWhenOff() {
+    let dependencyContainer = DependencyContainer()
+    let sdkContext = FakeSdkContext()
+    let identityManager = makeIdentityManager(in: dependencyContainer, sdkContext: sdkContext)
+
+    #expect(identityManager.userIdSeedFromOptions(for: "user") == nil)
+  }
+
+  @Test("the user keeps their seed when the config turns user id seeds off")
   func noSeedWhenFlagOff() async {
     let dependencyContainer = DependencyContainer()
     let sdkContext = FakeSdkContext()
@@ -71,16 +94,16 @@ struct SdkContextTests {
     sdkContext.config = config
     let identityManager = makeIdentityManager(in: dependencyContainer, sdkContext: sdkContext)
 
-    #expect(await identityManager.userIdSeed(for: "user") == nil)
+    #expect(await identityManager.userIdSeed(for: "user") == .off)
   }
 
-  @Test("there's no user id seed when the config never arrives")
+  @Test("the user id seed isn't known when the config never arrives")
   func noSeedWithoutConfig() async {
     let dependencyContainer = DependencyContainer()
     let sdkContext = FakeSdkContext()
     let identityManager = makeIdentityManager(in: dependencyContainer, sdkContext: sdkContext)
 
-    #expect(await identityManager.userIdSeed(for: "user") == nil)
+    #expect(await identityManager.userIdSeed(for: "user") == .unknown)
   }
 
   @Test("fetching assignments goes to the context")

@@ -23,6 +23,7 @@ struct IdentityStateTests {
     appUserId: String? = nil,
     aliasId: String = "$SuperwallAlias:alias-1",
     seed: Int = 42,
+    seedAwaitsConfig: Bool = false,
     userAttributes: [String: Any] = [:],
     pending: Set<IdentityState.Pending> = [],
     hasResolved: Bool = true
@@ -31,6 +32,7 @@ struct IdentityStateTests {
       appUserId: appUserId,
       aliasId: aliasId,
       seed: seed,
+      seedAwaitsConfig: seedAwaitsConfig,
       userAttributes: userAttributes,
       pending: pending,
       hasResolved: hasResolved,
@@ -90,10 +92,11 @@ struct IdentityStateTests {
 
   @Test("identify logs in, keeps the alias and seed, and makes the seed pending")
   func identify() {
-    let result = IdentityUpdate.identify(op1).reduce(state(userAttributes: ["custom": 1]))
+    let result = IdentityUpdate.identify(op1, seed: nil).reduce(state(userAttributes: ["custom": 1]))
     #expect(result.appUserId == "user-1")
     #expect(result.aliasId == "$SuperwallAlias:alias-1")
     #expect(result.seed == 42)
+    #expect(result.seedAwaitsConfig)
     #expect(result.pending == [.seed(op1)])
     #expect(result.userAttributes["appUserId"] as? String == "user-1")
     #expect(result.userAttributes["aliasId"] as? String == "$SuperwallAlias:alias-1")
@@ -102,9 +105,21 @@ struct IdentityStateTests {
     #expect(result.userAttributes["applicationInstalledAt"] as? String == "2026-01-01")
   }
 
+  @Test("identify with a seed logs in with it, and leaves nothing waiting on the config")
+  func identifyWithSeed() {
+    let result = IdentityUpdate.identify(op1, seed: 7)
+      .reduce(state(seedAwaitsConfig: true, pending: [.assignments(op1)]))
+    #expect(result.appUserId == "user-1")
+    #expect(result.seed == 7)
+    #expect(result.seedAwaitsConfig == false)
+    #expect(result.pending == [.assignments(op1)])
+    #expect(result.userAttributes["appUserId"] as? String == "user-1")
+    #expect(result.userAttributes["seed"] as? Int == 7)
+  }
+
   @Test("identify keeps work that was already pending")
   func identifyKeepsPending() {
-    let result = IdentityUpdate.identify(op1)
+    let result = IdentityUpdate.identify(op1, seed: nil)
       .reduce(state(pending: [.configuration, .assignments(op1)]))
     #expect(result.pending == [.configuration, .assignments(op1), .seed(op1)])
   }
@@ -112,8 +127,10 @@ struct IdentityStateTests {
   @Test("identify with the current user id changes nothing")
   func identifySameUser() {
     let start = state(appUserId: "user-1", userAttributes: ["custom": 1])
-    let result = IdentityUpdate.identify(op1).reduce(start)
+    let result = IdentityUpdate.identify(op1, seed: 7).reduce(start)
     #expect(result.pending.isEmpty)
+    #expect(result.seed == 42)
+    #expect(result.seedAwaitsConfig == false)
     #expect(result.userAttributes.count == 1)
   }
 
@@ -121,31 +138,52 @@ struct IdentityStateTests {
 
   @Test("resolveSeed sets the seed, adds it to the attributes and resolves it")
   func seedResolved() {
-    let result = IdentityUpdate.resolveSeed(op1, seed: 7)
-      .reduce(state(appUserId: "user-1", pending: [.seed(op1), .assignments(op1)]))
+    let result = IdentityUpdate.resolveSeed(op1, .derived(7))
+      .reduce(state(appUserId: "user-1", seedAwaitsConfig: true, pending: [.seed(op1), .assignments(op1)]))
     #expect(result.seed == 7)
+    #expect(result.seedAwaitsConfig == false)
     #expect(result.userAttributes["seed"] as? Int == 7)
     #expect(result.userAttributes["appUserId"] as? String == "user-1")
     #expect(result.pending == [.assignments(op1)])
   }
 
-  @Test("resolveSeed without a seed resolves it and keeps the current seed")
+  @Test("resolveSeed with user id seeds off resolves it and keeps the current seed")
   func seedSkipped() {
-    let result = IdentityUpdate.resolveSeed(op1, seed: nil)
-      .reduce(state(appUserId: "user-1", pending: [.seed(op1)]))
+    let result = IdentityUpdate.resolveSeed(op1, .off)
+      .reduce(state(appUserId: "user-1", seedAwaitsConfig: true, pending: [.seed(op1)]))
     #expect(result.seed == 42)
+    #expect(result.seedAwaitsConfig == false)
     #expect(result.pending.isEmpty)
     #expect(result.userAttributes.isEmpty)
   }
 
+  @Test("resolveSeed with the seed's own value stops it waiting on the config")
+  func seedAlreadyDerived() {
+    let result = IdentityUpdate.resolveSeed(op1, .derived(42))
+      .reduce(state(appUserId: "user-1", seedAwaitsConfig: true, pending: [.seed(op1)]))
+    #expect(result.seed == 42)
+    #expect(result.seedAwaitsConfig == false)
+    #expect(result.pending.isEmpty)
+  }
+
+  @Test("resolveSeed without the config resolves it, and the seed keeps waiting on the config")
+  func seedStillUnknown() {
+    let result = IdentityUpdate.resolveSeed(op1, .unknown)
+      .reduce(state(appUserId: "user-1", seedAwaitsConfig: true, pending: [.seed(op1)]))
+    #expect(result.seed == 42)
+    #expect(result.seedAwaitsConfig)
+    #expect(result.isReady)
+  }
+
   @Test("resolveSeed for a user who is no longer logged in only resolves it")
   func seedForStaleUser() {
-    let switched = IdentityUpdate.resolveSeed(op1, seed: 7)
-      .reduce(state(appUserId: "user-2", pending: [.seed(op1), .seed(op2)]))
+    let switched = IdentityUpdate.resolveSeed(op1, .off)
+      .reduce(state(appUserId: "user-2", seedAwaitsConfig: true, pending: [.seed(op1), .seed(op2)]))
     #expect(switched.seed == 42)
+    #expect(switched.seedAwaitsConfig)
     #expect(switched.pending == [.seed(op2)])
 
-    let reset = IdentityUpdate.resolveSeed(op1, seed: 7)
+    let reset = IdentityUpdate.resolveSeed(op1, .derived(7))
       .reduce(state(pending: [.seed(op1)]))
     #expect(reset.seed == 42)
     #expect(reset.isReady)
@@ -157,7 +195,7 @@ struct IdentityStateTests {
     let second = IdentifyOperation(userId: "user-1")
     let start = state(appUserId: "user-1", pending: [.seed(first), .seed(second)])
 
-    let result = IdentityUpdate.resolveSeed(first, seed: 7).reduce(start)
+    let result = IdentityUpdate.resolveSeed(first, .derived(7)).reduce(start)
 
     #expect(result.pending == [.seed(second)])
     #expect(result.isReady == false)
@@ -200,12 +238,14 @@ struct IdentityStateTests {
   func reset() {
     let start = state(
       appUserId: "user-1",
+      seedAwaitsConfig: true,
       userAttributes: ["custom": 1, "appUserId": "user-1"],
       pending: [.assignments(op1), .configuration]
     )
     let result = IdentityUpdate.reset(aliasId: "$SuperwallAlias:new", seed: 3).reduce(start)
 
     #expect(result.appUserId == nil)
+    #expect(result.seedAwaitsConfig == false)
     #expect(result.aliasId == "$SuperwallAlias:new")
     #expect(result.seed == 3)
     #expect(result.pending == [.assignments(op1), .configuration])
