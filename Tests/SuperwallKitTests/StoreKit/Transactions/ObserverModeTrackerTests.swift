@@ -133,7 +133,6 @@ private func makeTracker(
   let container = DependencyContainer(options: options, cache: CacheMock())
   let tracker = ObserverModeTracker(
     storage: storage,
-    productsManager: container.productsManager,
     allTransactionsProvider: provider,
     factory: container
   )
@@ -635,6 +634,31 @@ private final class TrackedEvents: @unchecked Sendable {
   }
 }
 
+/// Makes the container's transaction manager load its products from
+/// `fetcher`, and sends what it tracks to `tracked`.
+private func loadProducts(
+  from fetcher: FakeProductsFetcher,
+  storeKitVersion: SuperwallOptions.StoreKitVersion,
+  tracking tracked: TrackedEvents,
+  in container: DependencyContainer
+) {
+  container.transactionManager = TransactionManager(
+    storeKitManager: container.storeKitManager,
+    receiptManager: container.receiptManager,
+    purchaseController: container.purchaseController,
+    placementsQueue: container.placementsQueue,
+    purchaseManager: container.purchaseManager,
+    productsManager: ProductsManager(
+      entitlementsInfo: container.entitlementsInfo,
+      storeKitVersion: storeKitVersion,
+      productsFetcher: fetcher
+    ),
+    postPurchaseRedeemer: container.webEntitlementRedeemer,
+    factory: container
+  )
+  container.transactionManager.trackEvents { tracked.add($0) }
+}
+
 @Suite("ObserverModeTracker StoreKit 1 purchases")
 struct ObserverModeSK1PurchaseTests {
   private func makeSK1Tracker(
@@ -645,15 +669,10 @@ struct ObserverModeSK1PurchaseTests {
     options.storeKitVersion = .storeKit1
     let container = DependencyContainer(options: options, cache: CacheMock())
     let tracked = TrackedEvents()
-    container.transactionManager.trackEvent = { tracked.add($0) }
     let fetcher = FakeProductsFetcher(products: products)
+    loadProducts(from: fetcher, storeKitVersion: .storeKit1, tracking: tracked, in: container)
     let tracker = ObserverModeTracker(
       storage: ObserverModeStorage(),
-      productsManager: ProductsManager(
-        entitlementsInfo: container.entitlementsInfo,
-        storeKitVersion: .storeKit1,
-        productsFetcher: fetcher
-      ),
       factory: container
     )
     return (tracker, container, fetcher, tracked)
@@ -734,18 +753,18 @@ struct ObserverModeSK2PurchaseTests {
     options.shouldObservePurchases = true
     let container = DependencyContainer(options: options, cache: CacheMock())
     let tracked = TrackedEvents()
-    container.transactionManager.trackEvent = { tracked.add($0) }
     let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "monthly"))
     // So tracking doesn't ask StoreKit for the transaction, which never
     // answers in a unit test.
     product.isCustomProduct = true
+    loadProducts(
+      from: FakeProductsFetcher(products: [product]),
+      storeKitVersion: .storeKit2,
+      tracking: tracked,
+      in: container
+    )
     let tracker = ObserverModeTracker(
       storage: ObserverModeStorage(),
-      productsManager: ProductsManager(
-        entitlementsInfo: container.entitlementsInfo,
-        storeKitVersion: .storeKit2,
-        productsFetcher: FakeProductsFetcher(products: [product])
-      ),
       factory: container
     )
     let coordinator = container.makePurchasingCoordinator()

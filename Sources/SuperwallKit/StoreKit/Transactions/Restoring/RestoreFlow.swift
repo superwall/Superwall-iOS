@@ -86,7 +86,7 @@ final class RestoreFlow {
     }
 
     #if canImport(WebKit)
-    typealias RestoringPaywall = PaywallViewController
+    typealias RestoringPaywall = PurchasingPaywall
     #else
     typealias RestoringPaywall = Never
     #endif
@@ -150,8 +150,7 @@ final class RestoreFlow {
           )
 
           let context = context
-          context.presentAlert(
-            on: paywallViewController,
+          paywallViewController.showAlert(
             title: title,
             message: message,
             actionTitle: actionTitle,
@@ -194,7 +193,7 @@ final class RestoreFlow {
         )
         #if canImport(WebKit)
         if let paywallViewController = paywallViewController {
-          context.notify(paywallViewController, of: .restoreFail(message))
+          paywallViewController.notify(of: .restoreFail(message))
         }
         #endif
         return .failure
@@ -211,8 +210,7 @@ final class RestoreFlow {
         await didRestore(restoreSource: restoreSource)
       case .failed:
         if case .internal(let paywallViewController) = restoreSource {
-          context.presentAlert(
-            on: paywallViewController,
+          paywallViewController.showAlert(
             title: restoreFailed.title,
             message: restoreFailed.message,
             actionTitle: nil,
@@ -228,14 +226,14 @@ final class RestoreFlow {
     switch restoreSource {
     #if canImport(WebKit)
     case .internal(let paywallViewController):
-      context.showLoading(on: paywallViewController)
+      paywallViewController.updateLoading(.purchaseStarted)
 
       await logAndTrack(
         state: .start,
         message: "Attempting Restore",
         paywallInfo: paywallViewController.info
       )
-      context.notify(paywallViewController, of: .restoreStart)
+      paywallViewController.notify(of: .restoreStart)
 
       let restorationResult = await context.restoreWithPurchaseController()
 
@@ -247,10 +245,9 @@ final class RestoreFlow {
 
       switch outcome {
       case .success:
-        context.notify(paywallViewController, of: .restoreComplete)
+        paywallViewController.notify(of: .restoreComplete)
       case .failure:
-        context.presentAlert(
-          on: paywallViewController,
+        paywallViewController.showAlert(
           title: restoreFailed.title,
           message: restoreFailed.message,
           actionTitle: nil,
@@ -349,8 +346,10 @@ final class RestoreFlow {
         storeKitVersion: storeKitVersion
       )
       await context.track(transactionRestore)
-      await context.notify(paywallViewController, of: .transactionRestore)
+      await paywallViewController.notify(of: .transactionRestore)
 
+      // A paywall the options keep open stays on its spinner until the app
+      // dismisses it or hides the spinner itself.
       if context.paywallOptions.automaticallyDismiss {
         await context.dismiss(paywallViewController, result: .restored)
       }

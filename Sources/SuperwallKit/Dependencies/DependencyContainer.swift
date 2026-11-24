@@ -195,7 +195,7 @@ final class DependencyContainer {
     identityManager = IdentityManager(
       deviceHelper: deviceHelper,
       storage: storage,
-      configManager: configManager,
+      sdkContext: AppSdkContext(configManager: configManager),
       webEntitlementRedeemer: webEntitlementRedeemer
     ) { [weak self] newAttributes in
       Task { @MainActor in
@@ -254,7 +254,6 @@ final class DependencyContainer {
       storeKitManager: storeKitManager,
       receiptManager: receiptManager,
       identityManager: identityManager,
-      productsManager: productsManager,
       storage: storage,
       factory: self
     )

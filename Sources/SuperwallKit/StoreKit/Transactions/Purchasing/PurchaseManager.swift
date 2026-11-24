@@ -39,7 +39,6 @@ final class PurchaseManager: Purchasing {
     storeKitManager: StoreKitManager,
     receiptManager: ReceiptManager,
     identityManager: IdentityManager,
-    productsManager: ProductsManager,
     storage: Storage,
     factory: Factory
   ) {
@@ -47,7 +46,6 @@ final class PurchaseManager: Purchasing {
     coordinator = PurchasingCoordinator(factory: factory)
     observerModeTracker = ObserverModeTracker(
       storage: storage,
-      productsManager: productsManager,
       factory: factory
     )
 

@@ -227,7 +227,7 @@ public struct CustomerCenterView: View {
       } label: {
         Image(systemName: "xmark")
           .font(.subheadline.weight(.semibold))
-          .foregroundStyle(.secondary)
+          .foregroundStyle(Color.customerCenterCloseIcon)
       }
       .accessibilityLabel(viewModel.strings.string("customer_center_close"))
       .accessibilityIdentifier("customer_center.close")

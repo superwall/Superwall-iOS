@@ -23,18 +23,15 @@ final class ObserverModeTracker: ObserverModeContext, @unchecked Sendable {
   /// Runs the async steps one at a time, in order.
   let operations = SerialTaskCoordinator()
   let allTransactionsProvider: AllTransactionsProviderType
-  let productsManager: ProductsManager
   let factory: Factory
   private let storage: Storage
 
   init(
     storage: Storage,
-    productsManager: ProductsManager,
     allTransactionsProvider: AllTransactionsProviderType = SK2AllTransactionsProvider(),
     factory: Factory
   ) {
     self.storage = storage
-    self.productsManager = productsManager
     self.allTransactionsProvider = allTransactionsProvider
     self.factory = factory
     let didRecordLegacy = storage.get(DidCacheLegacyTransactions.self) ?? false
@@ -112,72 +109,16 @@ final class ObserverModeTracker: ObserverModeContext, @unchecked Sendable {
 
   func startObserving(productId: String) {
     operations.enqueue { [weak self] in
-      await self?.followSK1Purchase(ofProductId: productId)
+      await self?.factory.makeTransactionManager().observeSK1Transaction(for: productId)
     }
   }
 
   func trackObservedPurchase(_ transaction: ObservedTransaction) {
     operations.enqueue { [weak self] in
-      await self?.trackSK2Purchase(transaction)
-    }
-  }
-
-  // MARK: - Lane steps
-
-  private func product(withId productId: String) async -> StoreProduct? {
-    return try? await productsManager.products(
-      identifiers: [productId],
-      forPaywall: nil,
-      placement: nil
-    ).first
-  }
-
-  private func followSK1Purchase(ofProductId productId: String) async {
-    guard let storeProduct = await product(withId: productId) else {
-      Logger.debug(
-        logLevel: .debug,
-        scope: .superwallCore,
-        message: "There's a purchase happening of a product with id \(productId), "
-          + "but we couldn't retrieve it to observe its purchase."
+      await self?.factory.makeTransactionManager().logObservedPurchase(
+        ofProductId: transaction.productId,
+        startedOffer: transaction.startedOffer
       )
-      return
-    }
-    let transactionManager = factory.makeTransactionManager()
-    let purchase = await transactionManager.prepareToPurchase(
-      product: storeProduct,
-      purchaseSource: .observeFunc(storeProduct)
-    )
-    // The result is handled for this purchase, even if a later one has begun
-    // when it arrives.
-    factory.makePurchasingCoordinator().awaitResult(
-      forProductId: storeProduct.productIdentifier
-    ) { [weak transactionManager] result in
-      Task {
-        await transactionManager?.handle(
-          result: result,
-          state: .observing,
-          purchase: purchase
-        )
-      }
-    }
-  }
-
-  private func trackSK2Purchase(_ transaction: ObservedTransaction) async {
-    guard let product = await product(withId: transaction.productId) else {
-      return
-    }
-    let transactionManager = factory.makeTransactionManager()
-    let coordinator = factory.makePurchasingCoordinator()
-    let purchase = await transactionManager.prepareToPurchase(
-      product: product,
-      purchaseSource: .observeFunc(product)
-    )
-    coordinator.observeOffer(transaction.startedOffer)
-    await transactionManager.didPurchase()
-    // Ends the observed purchase, so the next one isn't taken for a purchase
-    // still in progress.
-    if let purchase {
-      coordinator.finish(purchase)
     }
   }
 }

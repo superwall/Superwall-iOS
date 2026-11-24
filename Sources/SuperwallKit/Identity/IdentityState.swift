@@ -25,6 +25,16 @@ struct IdentifyOperation: Hashable {
   }
 }
 
+/// What's known about deriving a user's seed from their id.
+enum UserIdSeed: Equatable {
+  /// User id seeds are on, and this is the user's.
+  case derived(Int)
+  /// User id seeds are off, so the user keeps the seed they have.
+  case off
+  /// The config didn't arrive, so it isn't known yet.
+  case unknown
+}
+
 struct IdentityState {
   /// Work that has to finish before the identity is ready.
   enum Pending: Hashable {
@@ -48,6 +58,10 @@ struct IdentityState {
   var appUserId: String?
   var aliasId: String
   var seed: Int
+  /// Whether the logged in user's seed is still waiting on the config to say
+  /// if it's derived from their id. Saved, so that if the config doesn't
+  /// arrive in this launch, the next one asks again.
+  var seedAwaitsConfig: Bool
   var userAttributes: [String: Any]
   var pending: Set<Pending>
   /// Whether `configure()`, `identify(userId:)` or `reset()` has finished at
@@ -59,6 +73,7 @@ struct IdentityState {
     appUserId: String? = nil,
     aliasId: String,
     seed: Int,
+    seedAwaitsConfig: Bool = false,
     userAttributes: [String: Any] = [:],
     pending: Set<Pending> = [],
     hasResolved: Bool = false,
@@ -67,6 +82,7 @@ struct IdentityState {
     self.appUserId = appUserId
     self.aliasId = aliasId
     self.seed = seed
+    self.seedAwaitsConfig = seedAwaitsConfig
     self.userAttributes = userAttributes
     self.pending = pending
     self.hasResolved = hasResolved
@@ -122,12 +138,15 @@ enum IdentityUpdate: Reducer {
   /// A configure, identify or reset has finished, so the identity is
   /// established.
   case established
-  /// Logs in as the operation's user, keeping the alias and seed. The seed
-  /// is pending until the config says whether to derive it from the user id.
-  case identify(IdentifyOperation)
-  /// Resolves the operation's pending seed. Sets `seed` if the operation's
-  /// user is still the logged in user, otherwise only resolves it.
-  case resolveSeed(IdentifyOperation, seed: Int?)
+  /// Logs in as the operation's user, keeping the alias. They take `seed`
+  /// if the app's options derive seeds from user ids. Without one they keep
+  /// the current seed, which is pending until the config says whether to
+  /// derive it.
+  case identify(IdentifyOperation, seed: Int?)
+  /// Resolves the operation's pending seed. Applies what the config said if
+  /// the operation's user is still the logged in user, otherwise only
+  /// resolves it. A seed that's still unknown keeps waiting on the config.
+  case resolveSeed(IdentifyOperation, UserIdSeed)
   /// Merges attributes into the user's attributes.
   case mergeAttributes([String: Any?])
   /// Replaces the user with a new anonymous one. Keeps any pending work.
@@ -148,24 +167,36 @@ enum IdentityUpdate: Reducer {
     case .established:
       state.hasResolved = true
       return state
-    case .identify(let operation):
+    case let .identify(operation, seed):
       guard operation.userId != state.appUserId else {
         return state
       }
       state.appUserId = operation.userId
-      state.pending.insert(.seed(operation))
+      if let seed = seed {
+        state.seed = seed
+      } else {
+        state.pending.insert(.seed(operation))
+      }
+      state.seedAwaitsConfig = seed == nil
       return state.mergingIds()
-    case let .resolveSeed(operation, seed):
+    case let .resolveSeed(operation, userIdSeed):
       state.pending.remove(.seed(operation))
-      guard
-        let seed = seed,
-        operation.userId == state.appUserId,
-        seed != state.seed
-      else {
+      guard operation.userId == state.appUserId else {
         return state
       }
-      state.seed = seed
-      return state.mergingIds()
+      switch userIdSeed {
+      case .derived(let seed):
+        state.seedAwaitsConfig = false
+        if seed != state.seed {
+          state.seed = seed
+          return state.mergingIds()
+        }
+      case .off:
+        state.seedAwaitsConfig = false
+      case .unknown:
+        break
+      }
+      return state
     case .mergeAttributes(let attributes):
       return state.merging(attributes)
     case let .reset(aliasId, seed):
