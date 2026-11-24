@@ -229,7 +229,7 @@ struct MacPaywallEmbeddingAndAlertTests {
   }
 
   @Test
-  func alertThatCantShowStillReportsItsClose() async throws {
+  func alertThatCantShowStillReportsItsCloseAndHidesTheSpinner() async throws {
     _ = NSApplication.shared
     let window = NSWindow(contentViewController: NSViewController.blank())
     window.isReleasedWhenClosed = false
@@ -245,9 +245,13 @@ struct MacPaywallEmbeddingAndAlertTests {
     paywall.presentAsSheet(checkout)
     try await Task.sleep(nanoseconds: 300_000_000)
 
+    paywall.updateLoading(.purchaseStarted)
+    #expect(paywall.store.read { $0.loadingState } == .loadingPurchase)
+
     var closes = 0
     paywall.presentAlert(title: "Notifications are off", onClose: { closes += 1 })
     #expect(closes == 1)
+    #expect(paywall.store.read { $0.loadingState } == .ready)
 
     paywall.dismiss(checkout)
     window.contentViewController?.dismiss(paywall)

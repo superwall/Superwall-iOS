@@ -299,7 +299,8 @@ final class RestoreFlow {
     }
   }
 
-  /// Tracks a successful restore, dismissing its paywall if the options say so.
+  /// Tracks a successful restore, then dismisses its paywall if the options
+  /// say so, or hides its spinner if they don't.
   ///
   /// A restore that comes from a purchase, of a product the user already
   /// owns, is tracked with that purchase's transaction.
@@ -350,6 +351,8 @@ final class RestoreFlow {
 
       if context.paywallOptions.automaticallyDismiss {
         await context.dismiss(paywallViewController, result: .restored)
+      } else {
+        await paywallViewController.updateLoading(.spinnerDismissed)
       }
     #endif
     case .external:
