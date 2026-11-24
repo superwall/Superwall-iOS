@@ -51,7 +51,7 @@ struct TransactionManagerPurchaseTests {
     coordinator.beginPurchase(of: first, source: .purchaseFunc(first), isFreeTrialAvailable: false)
 
     let abandonedProducts = AbandonedProducts()
-    transactionManager.trackEvent = { event in
+    transactionManager.trackEvents { event in
       guard
         let transaction = event as? InternalSuperwallEvent.Transaction,
         case .abandon(let product) = transaction.state
@@ -80,7 +80,7 @@ struct TransactionManagerPurchaseTests {
     let first = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "first"))
     let second = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "second"))
     let abandonedProducts = AbandonedProducts()
-    transactionManager.trackEvent = { event in
+    transactionManager.trackEvents { event in
       guard
         let transaction = event as? InternalSuperwallEvent.Transaction,
         case .abandon(let product) = transaction.state

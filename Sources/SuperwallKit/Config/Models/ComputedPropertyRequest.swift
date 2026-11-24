@@ -119,17 +119,6 @@ public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, 
     }
   }
 
-  /// Indicates whether we should be counting placements
-  var isPlacementCount: Bool {
-    return [
-      .placementsInHour,
-      .placementsInDay,
-      .placementsInWeek,
-      .placementsInMonth,
-      .placementsSinceInstall
-    ].contains(self)
-  }
-
   var calendarComponent: Calendar.Component {
     switch self {
     case .minutesSince:

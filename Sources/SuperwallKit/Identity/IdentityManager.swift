@@ -117,15 +117,16 @@ class IdentityManager: IdentityContext {
   // Weak rather than unowned: side effects and queued actions can outlive
   // these, and then they should do nothing rather than crash.
   private weak var storage: Storage?
-  private weak var configManager: ConfigManager?
   private weak var webEntitlementRedeemer: WebEntitlementRedeemer?
+  /// How the identity reaches the rest of the SDK, such as the config.
+  private let sdkContext: SdkContext
   private let notifyUserChangeHandler: (([String: Any]) -> Void)?
   private let trackHandler: (Trackable) async -> Void
 
   init(
     deviceHelper: DeviceHelper,
     storage: Storage,
-    configManager: ConfigManager,
+    sdkContext: SdkContext,
     webEntitlementRedeemer: WebEntitlementRedeemer,
     notifyUserChange: (([String: Any]) -> Void)? = nil,
     track: @escaping (Trackable) async -> Void = {
@@ -133,7 +134,7 @@ class IdentityManager: IdentityContext {
     }
   ) {
     self.storage = storage
-    self.configManager = configManager
+    self.sdkContext = sdkContext
     self.webEntitlementRedeemer = webEntitlementRedeemer
     self.notifyUserChangeHandler = notifyUserChange
     self.trackHandler = track
@@ -159,6 +160,7 @@ class IdentityManager: IdentityContext {
   /// Checks for static config upgrade before setting identity.
   func configure() async {
     store.update(IdentityUpdate.begin(.configuration))
+    dispatch(.resumeSeed)
     let neverCalledStaticConfig = storage?.neverCalledStaticConfig ?? false
     let isFirstAppOpen = !(storage?.get(DidTrackFirstSeen.self) ?? false)
 
@@ -167,7 +169,7 @@ class IdentityManager: IdentityContext {
       neverCalledStaticConfig: neverCalledStaticConfig,
       isFirstAppOpen: isFirstAppOpen
     ) {
-      try? await configManager?.getAssignments()
+      await sdkContext.fetchAssignments()
     }
 
     store.update(IdentityUpdate.end(.configuration))
@@ -250,21 +252,31 @@ extension IdentityManager {
 
 // MARK: - IdentityContext
 extension IdentityManager {
-  func userIdSeed(for userId: String) async -> Int? {
-    guard let configManager = configManager else {
-      return nil
-    }
-    let config = try? await configManager.configState
-      .compactMap { $0.getConfig() }
-      .throwableAsync()
-    guard config?.featureFlags.enableUserIdSeed == true else {
+  func userIdSeedFromOptions(for userId: String) -> Int? {
+    guard sdkContext.isUserIdSeedEnabledInOptions else {
       return nil
     }
     return userId.sha256MappedToRange()
   }
 
+  func userIdSeed(for userId: String) async -> UserIdSeed {
+    if let seed = userIdSeedFromOptions(for: userId) {
+      return .derived(seed)
+    }
+    guard let config = await sdkContext.awaitConfig() else {
+      return .unknown
+    }
+    guard
+      config.featureFlags.enableUserIdSeed,
+      let seed = userId.sha256MappedToRange()
+    else {
+      return .off
+    }
+    return .derived(seed)
+  }
+
   func fetchAssignments() async {
-    try? await configManager?.getAssignments()
+    await sdkContext.fetchAssignments()
   }
 
   func redeemExistingWebEntitlements() async {
@@ -310,6 +322,11 @@ extension IdentityManager {
     }
     storage.save(state.aliasId, forType: AliasId.self)
     storage.save(state.seed, forType: Seed.self)
+    if state.seedAwaitsConfig {
+      storage.save(true, forType: SeedAwaitsConfig.self)
+    } else {
+      storage.delete(SeedAwaitsConfig.self)
+    }
     storage.save(state.userAttributes, forType: UserAttributes.self)
   }
 
@@ -337,6 +354,13 @@ extension IdentityManager {
     }
     if after.seed != before.seed {
       storage.save(after.seed, forType: Seed.self)
+    }
+    if after.seedAwaitsConfig != before.seedAwaitsConfig {
+      if after.seedAwaitsConfig {
+        storage.save(true, forType: SeedAwaitsConfig.self)
+      } else {
+        storage.delete(SeedAwaitsConfig.self)
+      }
     }
     if !NSDictionary(dictionary: after.userAttributes).isEqual(to: before.userAttributes) {
       storage.save(after.userAttributes, forType: UserAttributes.self)
