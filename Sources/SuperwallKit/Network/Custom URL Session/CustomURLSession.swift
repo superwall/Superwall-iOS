@@ -76,17 +76,22 @@ class CustomURLSession {
   /// but never logged, since logs reach the app's logging delegate.
   private static let ipAddressKeys: Set<String> = ["ipV4", "ipV6", "$ipV4", "$ipV6"]
 
-  /// The request body as text for the logs, with IP addresses redacted.
+  /// What stands in the logs for a value that's sent but never logged.
+  static let redactedValue = "<redacted>"
+
+  /// The request body as text for the logs, with IP addresses and the parameters
+  /// of events that are only for Superwall redacted.
   static func loggableBody(_ body: Data?) -> String {
     guard let body = body else {
       return "none"
     }
-    // Most bodies carry no address, so only those that might are parsed.
+    // Most bodies carry neither, so only those that might are parsed.
+    let unloggedMarkers = ["ipV"] + PrivateSuperwallEvent.names
     guard
-      body.range(of: Data("ipV".utf8)) != nil,
+      unloggedMarkers.contains(where: { body.range(of: Data($0.utf8)) != nil }),
       let json = try? JSONSerialization.jsonObject(with: body),
       let redacted = try? JSONSerialization.data(
-        withJSONObject: redactingIPAddresses(in: json),
+        withJSONObject: redacting(in: json),
         options: [.sortedKeys]
       )
     else {
@@ -95,16 +100,19 @@ class CustomURLSession {
     return String(data: redacted, encoding: .utf8) ?? "none"
   }
 
-  private static func redactingIPAddresses(in value: Any) -> Any {
+  private static func redacting(in value: Any) -> Any {
     if let dictionary = value as? [String: Any] {
+      let eventName = dictionary["event_name"] as? String
+      let isPrivateEvent = eventName.map { PrivateSuperwallEvent.names.contains($0) } ?? false
       var result: [String: Any] = [:]
       for (key, child) in dictionary {
-        result[key] = ipAddressKeys.contains(key) ? "<redacted>" : redactingIPAddresses(in: child)
+        let isRedacted = ipAddressKeys.contains(key) || (isPrivateEvent && key == "parameters")
+        result[key] = isRedacted ? redactedValue : redacting(in: child)
       }
       return result
     }
     if let array = value as? [Any] {
-      return array.map { redactingIPAddresses(in: $0) }
+      return array.map { redacting(in: $0) }
     }
     return value
   }

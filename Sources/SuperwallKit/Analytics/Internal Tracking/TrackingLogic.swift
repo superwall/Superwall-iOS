@@ -36,6 +36,7 @@ enum TrackingLogic {
 
     // Add a special property if it's a superwall placement
     let isSuperwallEvent = trackablePlacement is TrackableSuperwallEvent
+      || trackablePlacement is TrackablePrivateEvent
 
     var audienceFilterParams: [String: Any] = [
       "$is_standard_event": isSuperwallEvent,
