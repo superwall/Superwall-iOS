@@ -17,6 +17,9 @@ import Foundation
 /// so an implementation holds its managers weakly and does nothing once
 /// they're gone.
 protocol SdkContext: AnyObject {
+  /// Whether the app's options turn user ID seeds on. Doesn't wait.
+  var isUserIdSeedEnabledInOptions: Bool { get }
+
   /// Waits for the config. Returns `nil` if it never arrives.
   func awaitConfig() async -> Config?
 
@@ -30,6 +33,10 @@ final class AppSdkContext: SdkContext {
 
   init(configManager: ConfigManager) {
     self.configManager = configManager
+  }
+
+  var isUserIdSeedEnabledInOptions: Bool {
+    return configManager?.options.enableUserIdSeed == true
   }
 
   func awaitConfig() async -> Config? {
