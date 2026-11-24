@@ -8,8 +8,8 @@
 import Foundation
 
 /// Everything a purchase reads from and causes in the rest of the SDK:
-/// looking up and buying the product, tracking, alerts, redeeming and what
-/// the paywall shows.
+/// looking up and buying the product, tracking, alerts and redeeming. What
+/// the paywall shows goes through the purchase's ``PurchasingPaywall``.
 /// ``AppTransactionContext`` provides the real one, and tests a fake that
 /// records the calls.
 protocol TransactionContext: AnyObject {
@@ -69,25 +69,7 @@ protocol TransactionContext: AnyObject {
   ) async
 
   #if canImport(WebKit)
-  @MainActor
-  func info(of paywall: PaywallViewController) -> PaywallInfo
-  @MainActor
-  func introOfferToken(
-    forProductId productId: String,
-    on paywall: PaywallViewController
-  ) -> IntroOfferToken?
-  @MainActor
-  func referenceName(
-    forCacheKey cacheKey: String,
-    on paywall: PaywallViewController
-  ) -> String?
-  @MainActor
-  func notify(_ paywall: PaywallViewController, of message: PaywallMessage)
-  @MainActor
-  func updateLoading(_ change: PaywallLoadingChange, on paywall: PaywallViewController)
-  @MainActor
-  func markPurchaseCompleted(_ product: StoreProduct, on paywall: PaywallViewController)
-  func dismiss(_ paywall: PaywallViewController, result: PaywallResult) async
+  func dismiss(_ paywall: PurchasingPaywall, result: PaywallResult) async
   #endif
 }
 
@@ -258,44 +240,11 @@ final class AppTransactionContext: TransactionContext {
   }
 
   #if canImport(WebKit)
-  @MainActor
-  func info(of paywall: PaywallViewController) -> PaywallInfo {
-    return paywall.info
-  }
-
-  @MainActor
-  func introOfferToken(
-    forProductId productId: String,
-    on paywall: PaywallViewController
-  ) -> IntroOfferToken? {
-    return paywall.introOfferTokenManager.getValidToken(for: productId)
-  }
-
-  @MainActor
-  func referenceName(
-    forCacheKey cacheKey: String,
-    on paywall: PaywallViewController
-  ) -> String? {
-    return paywall.paywall.referenceName(forCacheKey: cacheKey)
-  }
-
-  @MainActor
-  func notify(_ paywall: PaywallViewController, of message: PaywallMessage) {
-    paywall.webView.messageHandler.handle(message)
-  }
-
-  @MainActor
-  func updateLoading(_ change: PaywallLoadingChange, on paywall: PaywallViewController) {
-    paywall.updateLoading(change)
-  }
-
-  @MainActor
-  func markPurchaseCompleted(_ product: StoreProduct, on paywall: PaywallViewController) {
-    paywall.markPurchaseCompleted(product)
-  }
-
-  func dismiss(_ paywall: PaywallViewController, result: PaywallResult) async {
-    await Superwall.shared.dismiss(paywall, result: result)
+  func dismiss(_ paywall: PurchasingPaywall, result: PaywallResult) async {
+    guard let paywallViewController = paywall as? PaywallViewController else {
+      return
+    }
+    await Superwall.shared.dismiss(paywallViewController, result: result)
   }
   #endif
 }

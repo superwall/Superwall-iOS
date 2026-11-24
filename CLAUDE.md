@@ -284,12 +284,16 @@ purchase or restore) runs straight away, through a task-local flag and the "purc
 purchase controller" check. Don't make that inner call wait on the queue, or it deadlocks.
 `RestoreFlow` has no state; everything it causes goes through `RestoreContext`. Everything
 `TransactionManager` reads from or causes in the rest of the SDK (product lookups, trial checks,
-buying, tracking, alerts, redeeming, the paywall's loading state and messages) goes through
-`TransactionContext`; add a method there rather than calling the paywall, `Superwall.shared` or a
-manager from `TransactionManager`. The one thing it reaches directly is the `PurchasingCoordinator`,
-which is the purchase store itself. `TransactionManager.init(context:restoreContext:factory:)` takes
-both contexts; the other init builds the real ones. Tests watch what the real ones track by
-replacing their `trackEvent`.
+buying, tracking, alerts, redeeming) goes through `TransactionContext`; add a method there rather
+than calling `Superwall.shared` or a manager from `TransactionManager`. The paywall a purchase or
+restore came from is a `PurchasingPaywall`, the short list of what both flows ask of it (loading
+state, page messages, alerts, marking a purchase complete). `PurchaseSource.internal` and
+`RestoreSource.internal` carry it, so tests pass a fake; add to that protocol rather than casting
+to `PaywallViewController`. Dismissing stays on the contexts, since it goes through the SDK. The one
+thing `TransactionManager` reaches directly is the `PurchasingCoordinator`, which is the purchase
+store itself. `TransactionManager.init(context:restoreContext:factory:)` takes both contexts; the
+other init builds the real ones. Tests watch what the real ones track by replacing their
+`trackEvent`.
 
 ### Paywall view store
 

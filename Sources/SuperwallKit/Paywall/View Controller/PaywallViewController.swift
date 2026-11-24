@@ -1340,8 +1340,9 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     onClose: (() -> Void)? = nil
   ) {
     // Callers can be waiting on `onClose`, so report the alert done when it
-    // can't show.
+    // can't show. A shown alert ends the spinner, so this does too.
     guard presentedViewController == nil else {
+      updateLoading(.spinnerDismissed)
       onClose?()
       return
     }
@@ -2462,11 +2463,13 @@ extension PaywallViewController {
     onClose: (() -> Void)? = nil
   ) {
     // A window shows one sheet at a time. Callers can be waiting on
-    // `onClose`, so report the alert done when it can't show.
+    // `onClose`, so report the alert done when it can't show. A shown alert
+    // ends the spinner, so this does too.
     guard
       presentedViewControllers?.isEmpty != false,
       view.window?.attachedSheet == nil
     else {
+      updateLoading(.spinnerDismissed)
       onClose?()
       return
     }

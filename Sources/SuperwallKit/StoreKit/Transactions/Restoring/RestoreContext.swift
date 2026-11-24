@@ -44,22 +44,8 @@ protocol RestoreContext: AnyObject {
 
   #if canImport(WebKit)
   @MainActor
-  func showLoading(on paywall: PaywallViewController)
-  @MainActor
-  func notify(_ paywall: PaywallViewController, of message: PaywallMessage)
-  @MainActor
-  // swiftlint:disable:next function_parameter_count
-  func presentAlert(
-    on paywall: PaywallViewController,
-    title: String,
-    message: String,
-    actionTitle: String?,
-    closeActionTitle: String,
-    action: (() -> Void)?
-  )
-  @MainActor
   func open(_ url: URL)
-  func dismiss(_ paywall: PaywallViewController, result: PaywallResult) async
+  func dismiss(_ paywall: PurchasingPaywall, result: PaywallResult) async
   #endif
 }
 
@@ -163,41 +149,15 @@ final class AppRestoreContext: RestoreContext {
 
   #if canImport(WebKit)
   @MainActor
-  func showLoading(on paywall: PaywallViewController) {
-    paywall.updateLoading(.purchaseStarted)
-  }
-
-  @MainActor
-  func notify(_ paywall: PaywallViewController, of message: PaywallMessage) {
-    paywall.webView.messageHandler.handle(message)
-  }
-
-  @MainActor
-  // swiftlint:disable:next function_parameter_count
-  func presentAlert(
-    on paywall: PaywallViewController,
-    title: String,
-    message: String,
-    actionTitle: String?,
-    closeActionTitle: String,
-    action: (() -> Void)?
-  ) {
-    paywall.presentAlert(
-      title: title,
-      message: message,
-      actionTitle: actionTitle,
-      closeActionTitle: closeActionTitle,
-      action: action
-    )
-  }
-
-  @MainActor
   func open(_ url: URL) {
     PlatformApplication.sharedApplication?.open(url)
   }
 
-  func dismiss(_ paywall: PaywallViewController, result: PaywallResult) async {
-    await Superwall.shared.dismiss(paywall, result: result)
+  func dismiss(_ paywall: PurchasingPaywall, result: PaywallResult) async {
+    guard let paywallViewController = paywall as? PaywallViewController else {
+      return
+    }
+    await Superwall.shared.dismiss(paywallViewController, result: result)
   }
   #endif
 }
