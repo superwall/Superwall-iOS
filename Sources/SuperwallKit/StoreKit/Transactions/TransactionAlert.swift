@@ -27,10 +27,12 @@ enum TransactionAlert {
     switch source {
     #if canImport(WebKit)
     case .internal(let paywallViewController):
-      await paywallViewController.presentAlert(
+      await paywallViewController.showAlert(
         title: title,
         message: message,
-        closeActionTitle: resolvedCloseTitle
+        actionTitle: nil,
+        closeActionTitle: resolvedCloseTitle,
+        action: nil
       )
     #endif
     case .external:

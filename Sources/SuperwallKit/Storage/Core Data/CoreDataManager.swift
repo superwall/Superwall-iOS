@@ -9,16 +9,35 @@ import Foundation
 import CoreData
 
 class CoreDataManager {
-  private let coreDataStack: CoreDataStack
-  private var backgroundContext: NSManagedObjectContext?
+  let coreDataStack: CoreDataStack
+  private(set) var backgroundContext: NSManagedObjectContext?
 
-  init(coreDataStack: CoreDataStack = CoreDataStack()) {
+  /// How the manager hears about the app going to the background.
+  let lifecycle: AppLifecycle
+
+  /// Only touched on `backgroundContext`'s queue, apart from in `init`.
+  var trimState = TrimState()
+
+  init(
+    coreDataStack: CoreDataStack = CoreDataStack(),
+    lifecycle: AppLifecycle = .live
+  ) {
     self.coreDataStack = coreDataStack
+    self.lifecycle = lifecycle
     if let persistentContainer = coreDataStack.persistentContainer {
       backgroundContext = persistentContainer.newBackgroundContext()
     }
+    observeAppBackground()
+    trimSavedPlacements()
   }
 
+  deinit {
+    stopObservingAppBackground()
+  }
+
+  /// Saves when a placement happened, so audience filters can count it and tell
+  /// how long ago it last happened. Its parameters aren't saved: nothing reads
+  /// them back, and they're most of a placement's size.
   func savePlacementData(
     _ placementData: PlacementData,
     completion: ((ManagedEventData) -> Void)? = nil
@@ -26,14 +45,16 @@ class CoreDataManager {
     guard let backgroundContext = backgroundContext else {
       return
     }
+    if !Self.isSaved(placementNamed: placementData.name) {
+      return
+    }
     backgroundContext.perform {
-      let data = try? JSONEncoder().encode(placementData.parameters)
       guard let managedEventData = ManagedEventData(
         context: backgroundContext,
         id: placementData.id,
         createdAt: placementData.createdAt,
         name: placementData.name,
-        parameters: data ?? Data()
+        parameters: Data()
       ) else {
         return
       }
@@ -169,6 +190,9 @@ class CoreDataManager {
     _ placement: PlacementData?,
     request: ComputedPropertyRequest
   ) async -> Int? {
+    if !Self.isSaved(placementNamed: request.placementName) {
+      return nil
+    }
     var lastEventDate: Date?
     if let placement = placement {
       lastEventDate = placement.name == request.placementName ? placement.createdAt : nil
@@ -226,8 +250,6 @@ class CoreDataManager {
     _ placementName: String,
     interval: TriggerAudienceOccurrence.Interval
   ) async -> Int {
-    let fetchRequest = ManagedEventData.fetchRequest()
-
     switch interval {
     case .minutes(let minutes):
       guard let date = Calendar.current.date(
@@ -243,16 +265,33 @@ class CoreDataManager {
         // Return maxCount so that it won't fire the trigger.
         return 0
       }
+      return await countPlacement(placementName, since: date)
+    case .infinity:
+      return await countPlacement(placementName, since: nil)
+    }
+  }
+
+  /// Counts the placements with the given name saved on or after `startDate`,
+  /// or all of them when `startDate` is `nil`.
+  func countPlacement(
+    _ placementName: String,
+    since startDate: Date?
+  ) async -> Int {
+    if !Self.isSaved(placementNamed: placementName) {
+      return 0
+    }
+    let fetchRequest = ManagedEventData.fetchRequest()
+
+    if let startDate = startDate {
       fetchRequest.predicate = NSPredicate(
         format: "createdAt >= %@ AND name == %@",
-        date as NSDate,
+        startDate as NSDate,
         placementName
       )
-
-      return await coreDataStack.count(for: fetchRequest)
-    case .infinity:
+    } else {
       fetchRequest.predicate = NSPredicate(format: "name == %@", placementName)
-      return await coreDataStack.count(for: fetchRequest)
     }
+
+    return await coreDataStack.count(for: fetchRequest)
   }
 }

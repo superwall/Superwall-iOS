@@ -69,6 +69,7 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 - Neither has WebKit, so `#if canImport(WebKit)` marks everything that needs a paywall on screen: the paywall view controller and presentation, debugger, Test Mode, Customer Center, permissions and the SDK's alerts. Build both after any change (`build-platforms.yml` shows the commands); the iOS build won't catch a paywall type leaking into shared code.
 - `register` evaluates audience filters, then `finishWithoutPaywallUI` unlocks the feature as iOS does when a paywall fails to load: skipped, or the paywall is fetched and a non-gated feature runs while a gated one gets error 106. No present or dismiss state is sent, so `register` passes the feature block down. Implicit triggers and paywall preloading do nothing.
 - When a shared `@available`/`#available` names iOS, also name the matching watchOS and tvOS versions, or the `*` lets them through.
+- `TrackingManagerProxy` also builds on tvOS, which has App Tracking Transparency, so the ad consent rule can read the status there. watchOS has none.
 
 ### Code Conventions
 
@@ -116,7 +117,11 @@ When bumping the version, update all three files:
 
 ### Pull Requests
 
-When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPLATE.md`:
+Before opening a PR, run a code review of the change and fix the bugs it finds. Once it's open, fix
+the bugs the review bots report as they come in, or reply to say why not.
+
+When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPLATE.md`, and only
+tick a box for something that was done:
 
 - [ ] All unit tests pass.
 - [ ] All UI tests pass.
@@ -126,6 +131,8 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 - [ ] I added/updated tests or detailed why my change isn't tested.
 - [ ] I added an entry to the `CHANGELOG.md` for any breaking changes, enhancements, or bug fixes.
 - [ ] I have run `swiftlint` in the main directory and fixed any issues.
+- [ ] I ran a code review of this pull request in my coding agent (such as `/code-review` in Claude Code) and fixed the bugs it found.
+- [ ] I fixed the bugs the review bots reported on this pull request, or replied to say why not, and will do the same for any that come in later.
 - [ ] I have updated the SDK documentation as well as the online docs.
 - [ ] I have reviewed the [contributing guide](https://github.com/superwall-me/paywall-ios/tree/master/.github/CONTRIBUTING.md)
 
@@ -186,6 +193,31 @@ matching Android `*State.kt` when changing one):
   `SequentialActor`. Don't use a Swift `actor` for this: it lets other calls in at every `await`.
 - Read part of the state with `store.read { }` when a copy of the whole state could outlive a
   removal and become the last owner of something that must be released in a certain place.
+- **Other parts of the SDK** are reached through the Context too, reads included, so a test can
+  answer for them. A flow with a separate real context (`AppTransactionContext`,
+  `AppRestoreContext`) keeps its managers there. An owner that is its own context, as
+  `IdentityManager` is, asks other managers through `SdkContext`, whose real implementation holds
+  them weakly; add a method there as more parts need each other. Give each method one meaning
+  ("wait for the config", not "the config manager") and expose only what's read (`paywallOptions`,
+  not all the options). Not everything has moved yet: `IdentityManager` still holds storage and the
+  web entitlement redeemer, and `TransactionManager` the factory it gets the purchase store from.
+
+### Moving a part of the SDK onto a store
+
+Go one part at a time, and keep the public API the same so the change can be undone on its own.
+
+1. Before changing anything, write tests for that part's current behavior through its public
+   methods, and get them passing against the old code.
+2. Gather its state into one struct, its changes into `Reducer` cases, its side effects into a
+   Context protocol, and hook the old public methods up to the store.
+3. Run the tests from step 1 without changing what they check, then add tests for each reducer,
+   each action and the context fake. A test may only change where the move forces it to, such as
+   a test hook that moved onto the context.
+4. Don't fix bugs in the same pull request. A bug the move turns up goes in a pull request of its
+   own, before or after, so undoing the move doesn't bring the bug back. A test from step 1 that
+   only passes because of a bug is marked with `withKnownIssue` and fixed in that pull request.
+5. Leave the parts that drive UI (paywall views, alerts, presentation) until the parts they depend
+   on have moved.
 
 ### Identity store
 
@@ -202,6 +234,16 @@ the SDK, goes in `deferUntilUnlocked`; async work starts in a `Task` through `si
 deferred cleanup (wiping storage and caches) has finished, so user changes on different threads run
 one after another. That cleanup waits on other objects' queues, so nothing those queues run, and no
 action or observer, may call `identify` or `reset`: that would wait on the lock it's already behind.
+
+### User seeds
+
+`user.seed` is derived from the user ID when `SuperwallOptions.enableUserIdSeed` is on or, with it
+off, when the remote `enable_userid_seed` flag is. With the option on, `identify` sets the seed in
+the same update as the user ID, so the two are saved and tracked together. With it off, the seed
+waits on the config: `IdentityState.seedAwaitsConfig` is saved until the config has answered, and
+if it doesn't arrive, `configure()` asks again on the next launch (`.resumeSeed`). Keep the SHA256
+bucket algorithm and the same-user identify early return: a user identified before either switch
+was on keeps their seed. Anonymous and reset seeds stay random.
 
 ### Config store
 
@@ -260,8 +302,18 @@ and `RestoreFlow.restore` each run on their own `SerialTaskCoordinator`. A call 
 (the app's purchase controller calling `Superwall.purchase` or `restorePurchases` from its own
 purchase or restore) runs straight away, through a task-local flag and the "purchase function with a
 purchase controller" check. Don't make that inner call wait on the queue, or it deadlocks.
-`RestoreFlow` has no state; everything it causes goes through `RestoreContext`. Observer-mode
-tracking stays in `TransactionManager`.
+`RestoreFlow` has no state; everything it causes goes through `RestoreContext`. Everything
+`TransactionManager` reads from or causes in the rest of the SDK (product lookups, trial checks,
+buying, tracking, alerts, redeeming) goes through `TransactionContext`; add a method there rather
+than calling `Superwall.shared` or a manager from `TransactionManager`. The paywall a purchase or
+restore came from is a `PurchasingPaywall`, the short list of what both flows ask of it (loading
+state, page messages, alerts, marking a purchase complete). `PurchaseSource.internal` and
+`RestoreSource.internal` carry it, so tests pass a fake; add to that protocol rather than casting
+to `PaywallViewController`. Dismissing stays on the contexts, since it goes through the SDK. The one
+thing `TransactionManager` reaches directly is the `PurchasingCoordinator`, which is the purchase
+store itself. `TransactionManager.init(context:restoreContext:factory:)` takes both contexts; the
+other init builds the real ones. Tests watch what the real ones track by replacing their
+`trackEvent`.
 
 ### Paywall view store
 
@@ -289,6 +341,24 @@ is really on screen (`isBrowserOnScreen`); a browser the state has open that isn
   moves to `supersededDismissals` and the new one is left alone.
 - The public `loadingState` mirrors the store and can briefly lag it; SDK code changes it with
   `updateLoading(_:)` and a named `PaywallLoadingChange`, and reads the store to decide things.
+
+### Saved placements
+
+`CoreDataManager` saves when each placement happened, so audience filters can count it or tell how
+long ago it last happened. Only the name and time are saved. The `parameters` column stays in the
+model but is written empty, so the store needs no model migration. Preloading and loading placements
+(`CoreDataManager.unsavedPlacementNames`) aren't saved or counted, and the dashboard doesn't offer
+them in audience filters; keep the two lists in step. `trimSavedPlacements` cleans up a store written
+by earlier versions once, then saves `savedPlacementsTrimVersion` in the store's metadata; raise that
+number when adding to the unsaved names, so stores are cleaned again. The trim works in small steps
+on the context that saves placements, each queued behind whatever is waiting, because the whole of it
+takes seconds on a large store. Don't turn it into one long block: placements saved at launch and
+`reset()` would wait for it. Giving the freed space back means rewriting the whole store, which can't
+be split up, so it waits until the app goes to the background (`reclaimSpaceIfNeeded`) and asks the
+system to keep the app awake for it. It counts as done once SQLite has moved the rewrite into the
+main file (an empty -wal file), never by the file getting smaller: a new install has nothing to give
+back. Something reading the store at that moment makes it fail without an error, so it's tried again
+the next time, up to `spaceReclaimAttempts` times.
 
 ### Native macOS
 

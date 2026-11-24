@@ -9,6 +9,7 @@
 import Foundation
 import StoreKit
 import Testing
+import UIKit
 @testable import SuperwallKit
 
 /// Records what restores cause, and restores with a result it's given.
@@ -99,18 +100,13 @@ private final class FakeRestoreContext: RestoreContext, @unchecked Sendable {
   }
 
   #if canImport(WebKit)
-  func showLoading(on paywall: PaywallViewController) {}
-  func notify(_ paywall: PaywallViewController, of message: PaywallMessage) {}
-  func presentAlert(
-    on paywall: PaywallViewController,
-    title: String,
-    message: String,
-    actionTitle: String?,
-    closeActionTitle: String,
-    action: (() -> Void)?
-  ) {}
+  private(set) var dismissals = 0
   func open(_ url: URL) {}
-  func dismiss(_ paywall: PaywallViewController, result: PaywallResult) async {}
+  func dismiss(_ paywall: PurchasingPaywall, result: PaywallResult) async {
+    lock.lock()
+    dismissals += 1
+    lock.unlock()
+  }
   #endif
 }
 
@@ -176,6 +172,98 @@ struct RestoreFlowTests {
     #expect(context.redeemCount == 1)
     #expect(context.alertTitles.isEmpty)
   }
+
+  #if canImport(WebKit)
+  @Test("a successful restore from a paywall tells the paywall and dismisses it")
+  @MainActor
+  func successfulPaywallRestore() async {
+    let (flow, context) = makeFlow()
+    context.activeEntitlementIds = ["pro"]
+    let paywall = FakePurchasingPaywall()
+
+    let result = await flow.restore(.internal(paywall))
+
+    #expect(result == .restored)
+    #expect(paywall.calls == [
+      "updateLoading:purchaseStarted",
+      "notify:restoreStart",
+      "notify:transactionRestore",
+      "notify:restoreComplete"
+    ])
+    #expect(context.dismissals == 1)
+    #expect(context.alertTitles.isEmpty)
+  }
+
+  @Test("a failed restore from a paywall tells the paywall and shows the alert on it")
+  @MainActor
+  func failedPaywallRestore() async {
+    let (flow, context) = makeFlow()
+    let paywall = FakePurchasingPaywall()
+
+    await flow.restore(.internal(paywall))
+
+    #expect(paywall.calls == [
+      "updateLoading:purchaseStarted",
+      "notify:restoreStart",
+      "notify:restoreFail",
+      "showAlert"
+    ])
+    #expect(paywall.alertTitles == [context.paywallOptions.restoreFailed.title])
+    #expect(context.dismissals == 0)
+    #expect(context.alertTitles.isEmpty)
+  }
+
+  @Test("a successful restore that leaves the paywall open keeps its spinner up")
+  @MainActor
+  func successfulPaywallRestoreWithoutDismiss() async {
+    let (flow, context) = makeFlow()
+    context.activeEntitlementIds = ["pro"]
+    context.paywallOptions.automaticallyDismiss = false
+    let paywall = FakePurchasingPaywall()
+
+    let result = await flow.restore(.internal(paywall))
+
+    #expect(result == .restored)
+    #expect(paywall.calls == [
+      "updateLoading:purchaseStarted",
+      "notify:restoreStart",
+      "notify:transactionRestore",
+      "notify:restoreComplete"
+    ])
+    #expect(context.dismissals == 0)
+  }
+
+  @Test("a real paywall left open by a successful restore shows its spinner until the app hides it")
+  @MainActor
+  func realPaywallKeepsSpinnerAfterRestoreWithoutDismiss() async {
+    let (flow, context) = makeFlow()
+    context.activeEntitlementIds = ["pro"]
+    context.paywallOptions.automaticallyDismiss = false
+    let paywall = PresentingPaywallViewControllerMock.make()
+    #expect(paywall.store.read { $0.loadingState } == .ready)
+
+    let result = await flow.restore(.internal(paywall))
+
+    #expect(result == .restored)
+    #expect(context.dismissals == 0)
+    #expect(paywall.store.read { $0.loadingState } == .loadingPurchase)
+
+    paywall.togglePaywallSpinner(isHidden: true)
+    #expect(paywall.store.read { $0.loadingState } == .ready)
+  }
+
+  @Test("a real paywall whose restore failure alert can't show is ready again")
+  @MainActor
+  func realPaywallIsReadyAfterFailedRestoreWithoutAlert() async {
+    let (flow, _) = makeFlow()
+    let paywall = PresentingPaywallViewControllerMock.make()
+    paywall.stubbedPresentedViewController = UIViewController()
+
+    await flow.restore(.internal(paywall))
+
+    #expect(paywall.store.read { $0.loadingState } == .ready)
+  }
+  #endif
 
   @Test("a restore that leaves no active entitlements fails and shows the failure alert")
   @MainActor

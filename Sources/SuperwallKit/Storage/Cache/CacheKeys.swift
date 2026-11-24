@@ -49,6 +49,16 @@ enum Seed: Storable {
   typealias Value = Int
 }
 
+/// Whether the identified user's seed is still waiting on the config to say
+/// if it's derived from their id.
+enum SeedAwaitsConfig: Storable {
+  static var key: String {
+    "store.seedAwaitsConfig"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = Bool
+}
+
 enum DidTrackAppInstall: Storable {
   static var key: String {
     "store.didTrackAppInstall"

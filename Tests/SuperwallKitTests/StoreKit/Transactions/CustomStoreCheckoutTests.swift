@@ -212,7 +212,7 @@ struct CustomStoreCheckoutTests {
       factory: dependencyContainer
     )
     let tracked = tracked
-    transactionManager.trackEvent = { event in
+    transactionManager.trackEvents { event in
       await tracked.record(event)
     }
     let checkoutHandler = CustomStoreCheckoutHandler(
@@ -656,7 +656,7 @@ struct CustomStoreCheckoutTests {
       factory: dependencyContainer
     )
     let tracked = tracked
-    transactionManager.trackEvent = { event in
+    transactionManager.trackEvents { event in
       await tracked.record(event)
     }
     let (firstPaywall, _) = makePaywall()
@@ -722,7 +722,7 @@ struct CustomStoreCheckoutTests {
     let product = makeCustomStoreProduct()
     await dependencyContainer.storeKitManager.setProduct(product, forIdentifier: productId)
     let tracked = TrackedTransactions()
-    dependencyContainer.transactionManager.trackEvent = { event in
+    dependencyContainer.transactionManager.trackEvents { event in
       await tracked.record(event)
     }
     let (paywallVc, _) = makePaywall(in: dependencyContainer)
@@ -778,7 +778,7 @@ struct CustomStoreCheckoutTests {
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     await dependencyContainer.storeKitManager.setProduct(makeCustomStoreProduct(), forIdentifier: productId)
     let tracked = tracked
-    dependencyContainer.transactionManager.trackEvent = { event in
+    dependencyContainer.transactionManager.trackEvents { event in
       await tracked.record(event)
     }
     let (paywallVc, finishes) = makePaywall(in: dependencyContainer, eventDelegate: superwall)
