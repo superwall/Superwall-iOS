@@ -279,10 +279,11 @@ than calling `Superwall.shared` or a manager from `TransactionManager`. The payw
 restore came from is a `PurchasingPaywall`, the short list of what both flows ask of it (loading
 state, page messages, alerts, marking a purchase complete). `PurchaseSource.internal` and
 `RestoreSource.internal` carry it, so tests pass a fake; add to that protocol rather than casting
-to `PaywallViewController`. Dismissing stays on the contexts, since it goes through the SDK. The one thing it reaches directly is the `PurchasingCoordinator`,
-which is the purchase store itself. `TransactionManager.init(context:restoreContext:factory:)` takes
-both contexts; the other init builds the real ones. Tests watch what the real ones track by
-replacing their `trackEvent`.
+to `PaywallViewController`. Dismissing stays on the contexts, since it goes through the SDK. The one
+thing `TransactionManager` reaches directly is the `PurchasingCoordinator`, which is the purchase
+store itself. `TransactionManager.init(context:restoreContext:factory:)` takes both contexts; the
+other init builds the real ones. Tests watch what the real ones track by replacing their
+`trackEvent`.
 
 ### Paywall view store
 

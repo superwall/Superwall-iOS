@@ -6,6 +6,7 @@
 //
 // swiftlint:disable all
 
+#if canImport(WebKit)
 import Foundation
 @testable import SuperwallKit
 
@@ -69,3 +70,4 @@ final class FakePurchasingPaywall: PurchasingPaywall {
     record("showAlert")
   }
 }
+#endif

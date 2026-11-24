@@ -12,7 +12,7 @@ import Foundation
 /// restore came from. ``PaywallViewController`` is the real one, and tests
 /// use a fake that records the calls.
 @MainActor
-protocol PurchasingPaywall: AnyObject {
+protocol PurchasingPaywall: AnyObject, Sendable {
   var info: PaywallInfo { get }
 
   /// The paywall's intro offer token for the product, if it has one that
