@@ -7,9 +7,11 @@
 
 import Foundation
 
-/// What one part of the SDK asks of another. A store's context reaches the
-/// rest of the SDK through this rather than holding the managers itself, so
-/// it doesn't depend on their concrete types and tests can fake them.
+/// What one part of the SDK asks of another. An owner that is its own store
+/// context, as `IdentityManager` is, reaches the rest of the SDK through this
+/// rather than holding the managers itself, so it doesn't depend on their
+/// concrete types and tests can fake them. A flow with a separate real
+/// context, such as `AppTransactionContext`, keeps its managers there instead.
 ///
 /// Whoever uses this holds it strongly, and side effects can outlive the SDK,
 /// so an implementation holds its managers weakly and does nothing once

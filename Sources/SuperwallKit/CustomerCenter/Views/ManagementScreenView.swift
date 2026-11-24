@@ -29,7 +29,7 @@ struct ManagementScreenView: View {
         // that opens its own detail screen, one or many alike. This screen keeps the actions that
         // apply to the account; anything that only makes sense against one purchase — change
         // plan, refund, cancel, the web management page — lives where the row leads.
-        Section(strings.string("customer_center_section_subscriptions")) {
+        Section {
           ForEach(subscriptions) { purchase in
             CustomerCenterDrillDown(viewModel: viewModel) {
               PurchaseDetailScreenView(viewModel: viewModel, purchase: purchase)
@@ -37,15 +37,22 @@ struct ManagementScreenView: View {
               PurchaseCardView(purchase: purchase, refundResult: viewModel.refundResult)
             }
           }
+        } header: {
+          Text(strings.string("customer_center_section_subscriptions"))
+            .foregroundStyle(Color.customerCenterSecondaryText)
         }
       }
       if !others.isEmpty {
-        Section(strings.string("customer_center_section_purchases")) {
+        Section {
           ForEach(others) { PurchaseCardView(purchase: $0, refundResult: nil) }
+        } header: {
+          Text(strings.string("customer_center_section_purchases")).foregroundStyle(Color.customerCenterSecondaryText)
         }
       }
-      Section(strings.string("customer_center_section_actions")) {
+      Section {
         PathsListView(viewModel: viewModel, purchase: nil)
+      } header: {
+        Text(strings.string("customer_center_section_actions")).foregroundStyle(Color.customerCenterSecondaryText)
       }
       if viewModel.configuration.showsAccountDetails {
         AccountDetailsSection(viewModel: viewModel)
@@ -88,12 +95,14 @@ struct PurchaseDetailScreenView: View {
         Section {
           Text(emptyStateText(empty))
             .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color.customerCenterSecondaryText)
             .accessibilityIdentifier("customer_center.detail.nothing_to_manage")
         }
       } else {
-        Section(strings.string("customer_center_section_actions")) {
+        Section {
           PathsListView(viewModel: viewModel, purchase: purchase, isScreenLevel: false)
+        } header: {
+          Text(strings.string("customer_center_section_actions")).foregroundStyle(Color.customerCenterSecondaryText)
         }
       }
     }

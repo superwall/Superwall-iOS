@@ -248,19 +248,38 @@ final class TransactionManager {
 
   @available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
   func logSK2ObserverModeTransaction(_ transaction: SK2Transaction) async {
-    guard let product = await context.loadProduct(withId: transaction.productID) else {
+    await logObservedPurchase(
+      ofProductId: transaction.productID,
+      startedOffer: transaction.offer != nil
+    )
+  }
+
+  /// Tracks a purchase the app made itself as begun and succeeded, then ends
+  /// it, so the next one can be observed.
+  ///
+  /// - Parameters:
+  ///   - productId: The id of the product that was bought.
+  ///   - startedOffer: Whether the purchase's transaction started an offer.
+  func logObservedPurchase(
+    ofProductId productId: String,
+    startedOffer: Bool
+  ) async {
+    guard let product = await context.loadProduct(withId: productId) else {
       return
     }
-    await prepareToPurchase(
+    guard var purchase = await prepareToPurchase(
       product: product,
       purchaseSource: .observeFunc(product)
-    )
+    ) else {
+      return
+    }
 
-    let hasOffer = transaction.offer != nil
     let coordinator = factory.makePurchasingCoordinator()
-    coordinator.observeOffer(hasOffer)
+    coordinator.observeOffer(startedOffer)
+    purchase.isFreeTrialAvailable = startedOffer
 
-    await didPurchase()
+    await didPurchase(purchase)
+    coordinator.finish(purchase)
   }
 
   /// Restores purchases. See ``RestoreFlow/restore(_:presentsFailureAlert:)``.
@@ -358,19 +377,17 @@ final class TransactionManager {
       )
 
       let paywallInfo = await paywallViewController.info
-      Task { [isObserved] in
-        let trackedEvent = InternalSuperwallEvent.Transaction(
-          state: .fail(.failure(error.safeLocalizedDescription, product)),
-          paywallInfo: paywallInfo,
-          product: product,
-          transaction: nil,
-          source: .internal,
-          isObserved: isObserved,
-          storeKitVersion: context.isUsingStoreKit2 ? .storeKit2 : .storeKit1
-        )
-        await context.track(trackedEvent)
-        await paywallViewController.notify(of: .transactionFail)
-      }
+      let trackedEvent = InternalSuperwallEvent.Transaction(
+        state: .fail(.failure(error.safeLocalizedDescription, product)),
+        paywallInfo: paywallInfo,
+        product: product,
+        transaction: nil,
+        source: .internal,
+        isObserved: isObserved,
+        storeKitVersion: context.isUsingStoreKit2 ? .storeKit2 : .storeKit1
+      )
+      await context.track(trackedEvent)
+      await paywallViewController.notify(of: .transactionFail)
     #endif
     case .purchaseFunc,
       .observeFunc:
@@ -384,18 +401,16 @@ final class TransactionManager {
         error: error
       )
 
-      Task { [isObserved] in
-        let trackedEvent = InternalSuperwallEvent.Transaction(
-          state: .fail(.failure(error.safeLocalizedDescription, product)),
-          paywallInfo: .empty(),
-          product: product,
-          transaction: nil,
-          source: .external,
-          isObserved: isObserved,
-          storeKitVersion: context.isUsingStoreKit2 ? .storeKit2 : .storeKit1
-        )
-        await context.track(trackedEvent)
-      }
+      let trackedEvent = InternalSuperwallEvent.Transaction(
+        state: .fail(.failure(error.safeLocalizedDescription, product)),
+        paywallInfo: .empty(),
+        product: product,
+        transaction: nil,
+        source: .external,
+        isObserved: isObserved,
+        storeKitVersion: context.isUsingStoreKit2 ? .storeKit2 : .storeKit1
+      )
+      await context.track(trackedEvent)
     }
   }
 
@@ -774,6 +789,7 @@ final class TransactionManager {
       return
     }
     let source = purchase.source
+    let product = purchase.product
 
     var isObserved = false
     if case .observeFunc = source {
@@ -796,7 +812,7 @@ final class TransactionManager {
       let transactionFail = InternalSuperwallEvent.Transaction(
         state: .fail(.pending("Needs parental approval")),
         paywallInfo: paywallInfo,
-        product: nil,
+        product: product,
         transaction: nil,
         source: .internal,
         isObserved: isObserved,
@@ -817,7 +833,7 @@ final class TransactionManager {
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .fail(.pending("Needs parental approval")),
         paywallInfo: .empty(),
-        product: nil,
+        product: product,
         transaction: nil,
         source: .external,
         isObserved: isObserved,
