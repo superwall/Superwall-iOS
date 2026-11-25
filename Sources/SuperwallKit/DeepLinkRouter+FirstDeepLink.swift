@@ -8,6 +8,23 @@
 import Foundation
 
 extension DeepLinkRouter {
+  /// A deep link waiting for the config before it's routed. The app sets it
+  /// from its own thread while the SDK reads it from others.
+  static var pendingDeepLink: URL? {
+    get {
+      pendingDeepLinkLock.lock()
+      defer { pendingDeepLinkLock.unlock() }
+      return unsafePendingDeepLink
+    }
+    set {
+      pendingDeepLinkLock.lock()
+      unsafePendingDeepLink = newValue
+      pendingDeepLinkLock.unlock()
+    }
+  }
+  private static let pendingDeepLinkLock = NSLock()
+  private static var unsafePendingDeepLink: URL?
+
   /// The user attribute key holding the first deep link URL received
   /// during the first app session after install.
   static let firstDeepLinkUrlAttributeKey = "firstDeepLinkUrl"
