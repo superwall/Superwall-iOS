@@ -307,7 +307,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
-    cache.activePaywallVcKey = "key"
+    cache.markPresented(paywallVc, forKey: "key")
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
     // Map the product ID to its entitlement so restore tracking works
@@ -423,7 +423,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
-    cache.activePaywallVcKey = "key"
+    cache.markPresented(paywallVc, forKey: "key")
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let existingCode = "TESTCODE"
     let existingEntitlements: Set<Entitlement> = [.stub()]
@@ -1075,7 +1075,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
-    cache.activePaywallVcKey = "key"
+    cache.markPresented(paywallVc, forKey: "key")
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -1243,7 +1243,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
-    cache.activePaywallVcKey = "key"
+    cache.markPresented(paywallVc, forKey: "key")
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
     dependencyContainer.entitlementsInfo.entitlementsByProductId["test_product"] = [entitlement]
@@ -1423,7 +1423,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
-    cache.activePaywallVcKey = "key"
+    cache.markPresented(paywallVc, forKey: "key")
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
     dependencyContainer.entitlementsInfo.entitlementsByProductId["test_product"] = [entitlement]
@@ -1605,7 +1605,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
-    cache.activePaywallVcKey = "key"
+    cache.markPresented(paywallVc, forKey: "key")
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
     dependencyContainer.entitlementsInfo.entitlementsByProductId["test_product"] = [entitlement]
@@ -1781,7 +1781,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
-    cache.activePaywallVcKey = "key"
+    cache.markPresented(paywallVc, forKey: "key")
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
     dependencyContainer.entitlementsInfo.entitlementsByProductId["test_product"] = [entitlement]
@@ -1943,7 +1943,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
-    cache.activePaywallVcKey = "key"
+    cache.markPresented(paywallVc, forKey: "key")
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -3101,7 +3101,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "web-purchase")
-    cache.activePaywallVcKey = "web-purchase"
+    cache.markPresented(paywallVc, forKey: "web-purchase")
     let finishes = await PaywallFinishRecorder()
     await MainActor.run {
       messageHandler.delegate = paywallVc

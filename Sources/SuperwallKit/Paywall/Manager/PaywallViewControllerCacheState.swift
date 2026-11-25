@@ -45,18 +45,13 @@ enum PaywallViewControllerCacheUpdate: Reducer {
   /// The controllers under these keys were removed. Removing the one on
   /// screen means nothing cached is on screen.
   case removed(keys: Set<String>)
-  /// The controller under a key appeared. Nothing cached is on screen if no
-  /// controller is cached under it.
-  case presented(key: String)
   /// This controller appeared, with this key. Nothing cached is on screen if
   /// another controller is cached under the key, or none is.
-  case controllerPresented(PaywallViewController, key: String)
-  /// The controller on screen was dismissed.
-  case dismissed
+  case presented(PaywallViewController, key: String)
   /// This controller was dismissed. Does nothing if another controller is the
   /// one on screen, as when one paywall is shown while another finishes
   /// closing.
-  case controllerDismissed(PaywallViewController)
+  case dismissed(PaywallViewController)
 
   func reduce(_ state: PaywallViewControllerCacheState) -> PaywallViewControllerCacheState {
     state.applying(self)
@@ -82,13 +77,9 @@ extension PaywallViewControllerCacheState {
         keys.contains(presentedKey) {
         state.presentedKey = nil
       }
-    case .presented(let key):
-      state.presentedKey = state.controllers[key] == nil ? nil : key
-    case let .controllerPresented(controller, key):
+    case let .presented(controller, key):
       state.presentedKey = state.controllers[key] === controller ? key : nil
-    case .dismissed:
-      state.presentedKey = nil
-    case .controllerDismissed(let controller):
+    case .dismissed(let controller):
       if state.presentedController === controller {
         state.presentedKey = nil
       }
@@ -135,14 +126,10 @@ enum PaywallViewControllerCacheAction: StoreAction {
   case remove(key: String)
   /// Removes every view controller but the one on screen.
   case removeAllExceptPresented
-  /// The view controller under a key appeared.
-  case presented(key: String)
   /// This view controller appeared, with this key.
-  case controllerPresented(PaywallViewController, key: String)
-  /// The view controller on screen was dismissed.
-  case dismissed
+  case presented(PaywallViewController, key: String)
   /// This view controller was dismissed.
-  case controllerDismissed(PaywallViewController)
+  case dismissed(PaywallViewController)
 
   func execute(in context: PaywallViewControllerCacheContext) {
     let update: PaywallViewControllerCacheUpdate
@@ -164,14 +151,10 @@ enum PaywallViewControllerCacheAction: StoreAction {
       }
       update = .removed(keys: Set(removed.keys))
       dropped = Array(removed.values)
-    case .presented(let key):
-      update = .presented(key: key)
-    case let .controllerPresented(controller, key):
-      update = .controllerPresented(controller, key: key)
-    case .dismissed:
-      update = .dismissed
-    case .controllerDismissed(let controller):
-      update = .controllerDismissed(controller)
+    case let .presented(controller, key):
+      update = .presented(controller, key: key)
+    case .dismissed(let controller):
+      update = .dismissed(controller)
     }
 
     context.store.update(update)
