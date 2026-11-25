@@ -92,7 +92,7 @@ body="> [!WARNING]
 | Model | Effort | Share of the session |
 |---|---|---|
 $table
-Don't you be token-keeping now, switch to $BAR or above and at least give this a code review.
+Don't you be token-keeping now, switch to $BAR or above and run a code review.
 
 $MARKER"
 
