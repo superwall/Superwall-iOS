@@ -312,7 +312,10 @@ Publishers, dismiss completions, views, timers and tasks stay on the view contro
 always report it closed (never on visionOS), so a link or checkout is only refused while a browser
 is really on screen (`isBrowserOnScreen`); a browser the state has open that isn't is forgotten.
 The same check decides whether the paywall's view going away is a browser covering it or a
-dismissal to report.
+dismissal to report. When the paywall or a view controller it's inside is being dismissed
+(`isLeavingScreen`), it's a dismissal even with the browser still presented: UIKit keeps Safari as
+the presented view controller while both go, and an embedded paywall isn't itself the one being
+dismissed.
 
 - Change the state only by dispatching a `PaywallViewAction`: `.event(update)` for a plain
   `PaywallViewUpdate`, or a named action for anything with side effects. A store observer

@@ -211,6 +211,16 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     #endif
   }
 
+  var isLeavingScreen: Bool {
+    #if os(macOS)
+      return false
+    #else
+      // An embedded paywall isn't itself the one being dismissed.
+      return sequence(first: self as UIViewController) { $0.parent }
+        .contains { $0.isBeingDismissed }
+    #endif
+  }
+
   /// Work item for tracking transaction abandon, can be cancelled if redeem succeeds.
   private var transactionAbandonWorkItem: DispatchWorkItem?
 

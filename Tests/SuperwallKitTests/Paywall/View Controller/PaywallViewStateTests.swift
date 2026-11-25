@@ -611,6 +611,8 @@ private final class FakePaywallViewContext: PaywallViewContext {
   )
   /// Whether an open browser is still on screen.
   var isBrowserOnScreen = true
+  /// Whether the paywall, or a view controller it's inside, is being dismissed.
+  var isLeavingScreen = false
   var calls: [Call] = []
   /// The info each `.dismissed` state and dismiss notification was sent with.
   var dismissedInfos: [PaywallInfo] = []
@@ -1199,6 +1201,53 @@ struct PaywallViewActionTests {
       .notifyWillDismiss,
       .trackClose
     ])
+  }
+
+  @Test("A paywall dismissed together with the Safari over it reports its dismissal, and Safari is forgotten")
+  func dismissedWithSafariOverIt() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.present(claim)
+    let id = try! #require(context.state.activePresentation?.id)
+    #expect(context.dispatch(.openSafari) == .browserOpened(true))
+
+    // Safari covers the paywall.
+    context.dispatch(.willDisappear)
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(nil))
+    #expect(context.calls.isEmpty)
+
+    // The app dismisses both. Safari is still presented while they go.
+    context.isLeavingScreen = true
+    context.dispatch(.willDisappear)
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(id))
+    #expect(context.state.browser == .none)
+    #expect(context.calls == [
+      .sendState(.willDismiss(.declined), claim: claim.id),
+      .notifyWillDismiss,
+      .trackClose
+    ])
+  }
+
+  @Test("A paywall dismissed together with its checkout sheet reports its dismissal once")
+  func dismissedWithCheckoutSheetOverIt() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.present(claim)
+    let id = try! #require(context.state.activePresentation?.id)
+    let sheet = UUID()
+    #expect(context.dispatch(.openCheckout(sheet)) == .browserOpened(true))
+    context.calls.removeAll()
+
+    context.isLeavingScreen = true
+    context.dispatch(.willDisappear)
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(id))
+    #expect(context.calls == [
+      .sendState(.willDismiss(.declined), claim: claim.id),
+      .notifyWillDismiss,
+      .trackClose
+    ])
+    // The sheet reports its own close.
+    #expect(context.state.checkoutSheet(sheet) != nil)
   }
 
   @Test("A checkout sheet that never showed doesn't stop the next one, and its late close does nothing")

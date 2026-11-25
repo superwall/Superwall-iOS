@@ -27,6 +27,10 @@ protocol PaywallViewContext: AnyObject {
   /// doesn't always report it closed, so the state alone can say one is open
   /// after it has gone.
   var isBrowserOnScreen: Bool { get }
+  /// Whether the paywall, or a view controller it's inside, is being
+  /// dismissed. Its view going away then is the paywall leaving, even with a
+  /// browser over it.
+  var isLeavingScreen: Bool { get }
 
   /// Publishes a loading state write. Called with the store locked, in the
   /// order the writes were made, and publishes them on the main thread once
@@ -310,9 +314,10 @@ enum PaywallViewAction: StoreAction {
       guard case .presented(let presentation) = context.state.phase else {
         return .dismissalStarted(nil)
       }
-      // A browser still open here was on screen at `willDisappear`, which
-      // took the view going away for the browser covering it.
-      let didSkipWillDismiss = context.state.isBrowserOpen
+      // A browser still open here, with the paywall staying, was on screen at
+      // `willDisappear`, which took the view going away for the browser
+      // covering it.
+      let didSkipWillDismiss = context.state.isBrowserOpen && !context.isLeavingScreen
       if Self.isCoveredByBrowser(in: context) {
         return .dismissalStarted(nil)
       }
@@ -472,7 +477,19 @@ enum PaywallViewAction: StoreAction {
   /// dismissal. A checkout sheet the SDK is closing doesn't count: the paywall
   /// can be dismissed while it animates away.
   private static func isCoveredByBrowser(in context: PaywallViewContext) -> Bool {
-    return context.state.isBrowserOpen && isBrowserInTheWay(in: context)
+    if !context.state.isBrowserOpen {
+      return false
+    }
+    if context.isLeavingScreen {
+      // The paywall is dismissed together with its browser. Safari goes
+      // without reporting it, so it's forgotten here. A checkout sheet reports
+      // its own close.
+      if context.state.browser == .safari {
+        context.update(.browserWentUnreported)
+      }
+      return false
+    }
+    return isBrowserInTheWay(in: context)
   }
 
   private static func reportWillDismiss(
