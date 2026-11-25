@@ -224,7 +224,7 @@ struct CustomStoreEntitlementRefreshTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
-    cache.activePaywallVcKey = "key"
+    cache.markPresented(paywallVc, forKey: "key")
     dependencyContainer.entitlementsInfo.entitlementsByProductId["custom_prod_1"] = [entitlement]
 
     let delegate = MockSuperwallDelegate()
@@ -236,7 +236,10 @@ struct CustomStoreEntitlementRefreshTests {
   }
 
   private func clearPresentedPaywall() {
-    dependencyContainer.paywallManager.cache.activePaywallVcKey = nil
+    let cache = dependencyContainer.paywallManager.cache
+    if let presented = cache.activePaywallViewController {
+      cache.markDismissed(presented)
+    }
     dependencyContainer.entitlementsInfo.entitlementsByProductId["custom_prod_1"] = nil
   }
 

@@ -77,7 +77,7 @@ struct PaywallViewControllerCacheUpdateTests {
     let onScreen = makeController(dependencyContainer)
     let replacement = makeController(dependencyContainer)
 
-    let result = state(.saved(onScreen, key: "a"), .presented(key: "a"), .saved(replacement, key: "a"))
+    let result = state(.saved(onScreen, key: "a"), .presented(onScreen, key: "a"), .saved(replacement, key: "a"))
 
     #expect(result.controllers["a"] === replacement)
     #expect(result.presentedKey == nil)
@@ -90,7 +90,7 @@ struct PaywallViewControllerCacheUpdateTests {
     let dependencyContainer = DependencyContainer()
     let onScreen = makeController(dependencyContainer)
 
-    let result = state(.saved(onScreen, key: "a"), .presented(key: "a"), .saved(onScreen, key: "a"))
+    let result = state(.saved(onScreen, key: "a"), .presented(onScreen, key: "a"), .saved(onScreen, key: "a"))
 
     #expect(result.presentedController === onScreen)
   }
@@ -103,7 +103,7 @@ struct PaywallViewControllerCacheUpdateTests {
 
     let result = state(
       .saved(onScreen, key: "a"),
-      .presented(key: "a"),
+      .presented(onScreen, key: "a"),
       .saved(makeController(dependencyContainer), key: "b")
     )
 
@@ -131,10 +131,11 @@ struct PaywallViewControllerCacheUpdateTests {
   @MainActor
   func removedPresented() {
     let dependencyContainer = DependencyContainer()
+    let onScreen = makeController(dependencyContainer)
 
     let result = state(
-      .saved(makeController(dependencyContainer), key: "a"),
-      .presented(key: "a"),
+      .saved(onScreen, key: "a"),
+      .presented(onScreen, key: "a"),
       .removed(keys: ["a"])
     )
 
@@ -151,7 +152,7 @@ struct PaywallViewControllerCacheUpdateTests {
     let result = state(
       .saved(onScreen, key: "a"),
       .saved(makeController(dependencyContainer), key: "b"),
-      .presented(key: "a"),
+      .presented(onScreen, key: "a"),
       .removed(keys: ["b"])
     )
 
@@ -164,38 +165,45 @@ struct PaywallViewControllerCacheUpdateTests {
     let dependencyContainer = DependencyContainer()
     let controller = makeController(dependencyContainer)
 
-    let result = state(.saved(controller, key: "a"), .presented(key: "a"))
+    let result = state(.saved(controller, key: "a"), .presented(controller, key: "a"))
 
     #expect(result.presentedKey == "a")
     #expect(result.presentedController === controller)
   }
 
-  @Test("presented with a key that isn't cached means nothing cached is on screen")
+  @Test("presented with a controller that isn't cached means nothing cached is on screen")
   @MainActor
   func presentedUncached() {
     let dependencyContainer = DependencyContainer()
+    let cached = makeController(dependencyContainer)
+    let uncached = makeController(dependencyContainer)
 
-    #expect(state(.presented(key: "a")).presentedKey == nil)
+    #expect(state(.presented(uncached, key: "a")).presentedKey == nil)
 
     let replacingPrevious = state(
-      .saved(makeController(dependencyContainer), key: "a"),
-      .presented(key: "a"),
-      .presented(key: "missing")
+      .saved(cached, key: "a"),
+      .presented(cached, key: "a"),
+      .presented(uncached, key: "missing")
     )
     #expect(replacingPrevious.presentedKey == nil)
+
+    // The app still holds a controller that a newer one replaced in the cache.
+    let shownReplaced = state(.saved(cached, key: "a"), .presented(uncached, key: "a"))
+    #expect(shownReplaced.presentedKey == nil)
   }
 
   @Test("presented moves from one cached controller to another")
   @MainActor
   func presentedAnother() {
     let dependencyContainer = DependencyContainer()
+    let first = makeController(dependencyContainer)
     let second = makeController(dependencyContainer)
 
     let result = state(
-      .saved(makeController(dependencyContainer), key: "a"),
+      .saved(first, key: "a"),
       .saved(second, key: "b"),
-      .presented(key: "a"),
-      .presented(key: "b")
+      .presented(first, key: "a"),
+      .presented(second, key: "b")
     )
 
     #expect(result.presentedController === second)
@@ -207,11 +215,35 @@ struct PaywallViewControllerCacheUpdateTests {
     let dependencyContainer = DependencyContainer()
     let controller = makeController(dependencyContainer)
 
-    let result = state(.saved(controller, key: "a"), .presented(key: "a"), .dismissed)
+    let result = state(
+      .saved(controller, key: "a"),
+      .presented(controller, key: "a"),
+      .dismissed(controller)
+    )
 
     #expect(result.presentedKey == nil)
     #expect(result.controllers["a"] === controller)
-    #expect(state(.dismissed).presentedKey == nil)
+    #expect(state(.dismissed(controller)).presentedKey == nil)
+  }
+
+  @Test("dismissed leaves another controller on screen")
+  @MainActor
+  func dismissedAnother() {
+    let dependencyContainer = DependencyContainer()
+    let first = makeController(dependencyContainer)
+    let second = makeController(dependencyContainer)
+
+    // The second paywall appeared while the first was still closing.
+    let result = state(
+      .saved(first, key: "a"),
+      .saved(second, key: "b"),
+      .presented(first, key: "a"),
+      .presented(second, key: "b"),
+      .dismissed(first)
+    )
+
+    #expect(result.presentedController === second)
+    #expect(result.controllers.count == 2)
   }
 }
 
@@ -226,7 +258,7 @@ struct PaywallViewControllerCacheActionTests {
     let context = FakeCacheContext()
     context.dispatch(.save(active, key: "active"))
     context.dispatch(.save(other, key: "other"))
-    context.dispatch(.presented(key: "active"))
+    context.dispatch(.presented(active, key: "active"))
 
     context.dispatch(.removeAllExceptPresented)
 
@@ -256,9 +288,10 @@ struct PaywallViewControllerCacheActionTests {
   func removeAllAfterDismissal() {
     let dependencyContainer = DependencyContainer()
     let context = FakeCacheContext()
-    context.dispatch(.save(makeController(dependencyContainer), key: "a"))
-    context.dispatch(.presented(key: "a"))
-    context.dispatch(.dismissed)
+    let controller = makeController(dependencyContainer)
+    context.dispatch(.save(controller, key: "a"))
+    context.dispatch(.presented(controller, key: "a"))
+    context.dispatch(.dismissed(controller))
 
     context.dispatch(.removeAllExceptPresented)
 
@@ -274,7 +307,7 @@ struct PaywallViewControllerCacheActionTests {
     let later = makeController(dependencyContainer)
     let context = FakeCacheContext()
     context.dispatch(.save(onScreen, key: "a"))
-    context.dispatch(.presented(key: "a"))
+    context.dispatch(.presented(onScreen, key: "a"))
 
     context.dispatch(.remove(key: "a"))
     #expect(context.store.state.presentedKey == nil)
@@ -295,7 +328,7 @@ struct PaywallViewControllerCacheActionTests {
     let replacement = makeController(dependencyContainer)
     let context = FakeCacheContext()
     context.dispatch(.save(onScreen, key: "a"))
-    context.dispatch(.presented(key: "a"))
+    context.dispatch(.presented(onScreen, key: "a"))
 
     context.dispatch(.save(replacement, key: "a"))
     #expect(context.store.state.presentedKey == nil)
@@ -332,12 +365,12 @@ struct PaywallViewControllerCacheActionTests {
     let context = FakeCacheContext()
     context.dispatch(.save(controller, key: "a"))
 
-    context.dispatch(.presented(key: "a"))
+    context.dispatch(.presented(controller, key: "a"))
     #expect(context.store.state.presentedController === controller)
-    context.dispatch(.presented(key: "missing"))
+    context.dispatch(.presented(controller, key: "missing"))
     #expect(context.store.state.presentedKey == nil)
-    context.dispatch(.presented(key: "a"))
-    context.dispatch(.dismissed)
+    context.dispatch(.presented(controller, key: "a"))
+    context.dispatch(.dismissed(controller))
     #expect(context.store.state.presentedKey == nil)
 
     #expect(context.released.isEmpty)
@@ -416,7 +449,7 @@ struct PaywallViewControllerCacheStoreTests {
       }
     }
     #expect(cache.store.state.controllers.count == 200)
-    cache.activePaywallVcKey = "key-0"
+    cache.markPresented(controller, forKey: "key-0")
 
     await withTaskGroup(of: Void.self) { group in
       for index in 0..<200 where index.isMultiple(of: 2) {
@@ -452,7 +485,7 @@ struct PaywallViewControllerCacheStoreTests {
     await withTaskGroup(of: Void.self) { group in
       for index in 0..<200 {
         group.addTask {
-          cache.activePaywallVcKey = "key-\(index)"
+          cache.markPresented(controller, forKey: "key-\(index)")
         }
       }
     }
@@ -472,7 +505,7 @@ struct PaywallViewControllerCacheStoreTests {
     let cache = PaywallViewControllerCache(deviceLocaleString: "en")
     let active = makeController(dependencyContainer, cache: cache)
     cache.save(active, forKey: "active")
-    cache.activePaywallVcKey = "active"
+    cache.markPresented(active, forKey: "active")
     let offMainReleases = Box(0)
     let lock = NSLock()
     let stop = Box(false)
@@ -516,8 +549,10 @@ struct PaywallViewControllerCacheStoreTests {
   func removedActiveKeyDoesNotDangle() {
     let dependencyContainer = DependencyContainer()
     let cache = PaywallViewControllerCache(deviceLocaleString: "en")
-    cache.save(makeController(dependencyContainer, cache: cache), forKey: "a")
-    cache.activePaywallVcKey = "a"
+    let onScreen = makeController(dependencyContainer, cache: cache)
+    cache.save(onScreen, forKey: "a")
+    cache.markPresented(onScreen, forKey: "a")
+    #expect(cache.activePaywallVcKey == "a")
 
     cache.removePaywallViewController(forKey: "a")
     #expect(cache.activePaywallVcKey == nil)
@@ -535,14 +570,54 @@ struct PaywallViewControllerCacheStoreTests {
   func uncachedActiveKeyDoesNotDangle() {
     let dependencyContainer = DependencyContainer()
     let cache = PaywallViewControllerCache(deviceLocaleString: "en")
-    cache.activePaywallVcKey = "a"
+    let controller = makeController(dependencyContainer, cache: cache)
+    cache.markPresented(controller, forKey: "a")
     #expect(cache.activePaywallVcKey == nil)
 
-    cache.save(makeController(dependencyContainer, cache: cache), forKey: "a")
+    cache.save(controller, forKey: "a")
     #expect(cache.activePaywallViewController == nil)
 
     cache.removeAll()
     #expect(cache.getPaywallViewController(forKey: "a") == nil)
+  }
+
+  @Test("a paywall that finishes closing after another appeared leaves the other one on screen")
+  @MainActor
+  func dismissalOfAnEarlierPaywallKeepsTheNewOne() {
+    let dependencyContainer = DependencyContainer()
+    let cache = PaywallViewControllerCache(deviceLocaleString: "en")
+    let first = makeController(dependencyContainer, cache: cache)
+    let second = makeController(dependencyContainer, cache: cache)
+    cache.save(first, forKey: "first")
+    cache.save(second, forKey: "second")
+
+    cache.markPresented(first, forKey: "first")
+    cache.markPresented(second, forKey: "second")
+    cache.markDismissed(first)
+
+    #expect(cache.activePaywallViewController === second)
+
+    // A reset keeps the one on screen.
+    cache.removeAll()
+    #expect(cache.getPaywallViewController(forKey: "second") === second)
+
+    cache.markDismissed(second)
+    #expect(cache.activePaywallViewController == nil)
+  }
+
+  @Test("showing a controller that was replaced in the cache doesn't mark the new one on screen")
+  @MainActor
+  func replacedControllerIsNotMistakenForTheCachedOne() {
+    let dependencyContainer = DependencyContainer()
+    let cache = PaywallViewControllerCache(deviceLocaleString: "en")
+    let heldByApp = makeController(dependencyContainer, cache: cache)
+    let replacement = makeController(dependencyContainer, cache: cache)
+    cache.save(heldByApp, forKey: "a")
+    cache.save(replacement, forKey: "a")
+
+    cache.markPresented(heldByApp, forKey: "a")
+
+    #expect(cache.activePaywallViewController == nil)
   }
 
   @Test("resetting the cache keeps the paywall on screen")
@@ -554,7 +629,7 @@ struct PaywallViewControllerCacheStoreTests {
     let other = makeController(dependencyContainer, cache: cache)
     cache.save(active, forKey: "active")
     cache.save(other, forKey: "other")
-    cache.activePaywallVcKey = "active"
+    cache.markPresented(active, forKey: "active")
 
     cache.removeAll()
 

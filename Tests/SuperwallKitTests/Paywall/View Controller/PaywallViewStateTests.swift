@@ -611,6 +611,8 @@ private final class FakePaywallViewContext: PaywallViewContext {
   )
   /// Whether an open browser is still on screen.
   var isBrowserOnScreen = true
+  /// Whether the paywall, or a view controller it's inside, is being dismissed.
+  var isLeavingScreen = false
   var calls: [Call] = []
   /// The info each `.dismissed` state and dismiss notification was sent with.
   var dismissedInfos: [PaywallInfo] = []
@@ -1134,6 +1136,118 @@ struct PaywallViewActionTests {
     let id = UUID()
     #expect(context.dispatch(.openCheckout(id)) == .browserOpened(true))
     #expect(context.state.checkoutSheet(id) != nil)
+  }
+
+  @Test("A paywall closed after Safari went without reporting it still reports its dismissal")
+  func safariGoneUnreportedDoesNotHideTheDismissal() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.present(claim)
+    let id = try! #require(context.state.activePresentation?.id)
+    #expect(context.dispatch(.openSafari) == .browserOpened(true))
+
+    // Safari covers the paywall, so its view going away isn't a dismissal.
+    context.dispatch(.willDisappear)
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(nil))
+    #expect(context.calls.isEmpty)
+
+    // Safari went without reporting it, then the paywall was closed.
+    context.isBrowserOnScreen = false
+    context.dispatch(.willDisappear)
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(id))
+    #expect(context.state.browser == .none)
+    #expect(context.calls == [
+      .sendState(.willDismiss(.declined), claim: claim.id),
+      .notifyWillDismiss,
+      .trackClose
+    ])
+  }
+
+  @Test("A paywall closed while the SDK is closing its checkout sheet reports its dismissal")
+  func closingCheckoutSheetDoesNotHideTheDismissal() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.present(claim)
+    let id = try! #require(context.state.activePresentation?.id)
+    #expect(context.dispatch(.openCheckout(UUID())) == .browserOpened(true))
+    context.calls.removeAll()
+
+    // The sheet is still on screen, animating away.
+    context.dispatch(.event(.browserClosedBySDK))
+    context.dispatch(.willDisappear)
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(id))
+    #expect(context.calls == [
+      .sendState(.willDismiss(.declined), claim: claim.id),
+      .notifyWillDismiss,
+      .trackClose
+    ])
+  }
+
+  @Test("A paywall whose browser goes between its view starting and finishing going away reports both steps")
+  func browserGoneMidDisappearReportsWillDismissToo() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.present(claim)
+    let id = try! #require(context.state.activePresentation?.id)
+    #expect(context.dispatch(.openSafari) == .browserOpened(true))
+
+    // Dismissed together with Safari, which is still on screen at first.
+    context.dispatch(.willDisappear)
+    #expect(context.calls.isEmpty)
+    context.isBrowserOnScreen = false
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(id))
+    #expect(context.calls == [
+      .sendState(.willDismiss(.declined), claim: claim.id),
+      .notifyWillDismiss,
+      .trackClose
+    ])
+  }
+
+  @Test("A paywall dismissed together with the Safari over it reports its dismissal, and Safari is forgotten")
+  func dismissedWithSafariOverIt() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.present(claim)
+    let id = try! #require(context.state.activePresentation?.id)
+    #expect(context.dispatch(.openSafari) == .browserOpened(true))
+
+    // Safari covers the paywall.
+    context.dispatch(.willDisappear)
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(nil))
+    #expect(context.calls.isEmpty)
+
+    // The app dismisses both. Safari is still presented while they go.
+    context.isLeavingScreen = true
+    context.dispatch(.willDisappear)
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(id))
+    #expect(context.state.browser == .none)
+    #expect(context.calls == [
+      .sendState(.willDismiss(.declined), claim: claim.id),
+      .notifyWillDismiss,
+      .trackClose
+    ])
+  }
+
+  @Test("A paywall dismissed together with its checkout sheet reports its dismissal once")
+  func dismissedWithCheckoutSheetOverIt() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.present(claim)
+    let id = try! #require(context.state.activePresentation?.id)
+    let sheet = UUID()
+    #expect(context.dispatch(.openCheckout(sheet)) == .browserOpened(true))
+    context.calls.removeAll()
+
+    context.isLeavingScreen = true
+    context.dispatch(.willDisappear)
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(id))
+    #expect(context.calls == [
+      .sendState(.willDismiss(.declined), claim: claim.id),
+      .notifyWillDismiss,
+      .trackClose
+    ])
+    // The sheet reports its own close.
+    #expect(context.state.checkoutSheet(sheet) != nil)
   }
 
   @Test("A checkout sheet that never showed doesn't stop the next one, and its late close does nothing")

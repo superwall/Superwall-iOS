@@ -27,6 +27,10 @@ protocol PaywallViewContext: AnyObject {
   /// doesn't always report it closed, so the state alone can say one is open
   /// after it has gone.
   var isBrowserOnScreen: Bool { get }
+  /// Whether the paywall, or a view controller it's inside, is being
+  /// dismissed. Its view going away then is the paywall leaving, even with a
+  /// browser over it.
+  var isLeavingScreen: Bool { get }
 
   /// Publishes a loading state write. Called with the store locked, in the
   /// order the writes were made, and publishes them on the main thread once
@@ -298,29 +302,27 @@ enum PaywallViewAction: StoreAction {
       context.effect { context.callDidFinish(dismissal.result, shouldDismiss: true) }
       return .finishReported(toDelegate: true)
     case .willDisappear:
-      let state = context.state
       guard
-        case .presented(let presentation) = state.phase,
-        !state.isBrowserOpen
+        case .presented(let presentation) = context.state.phase,
+        !Self.isCoveredByBrowser(in: context)
       else {
         return .done
       }
-      let result = presentation.dismissal?.result ?? .declined
-      let info = state.dismissalInfo(for: presentation)
-      context.effect {
-        if let claimId = presentation.claimId {
-          context.sendState(.willDismiss(result), toClaim: claimId, info: info)
-        }
-        context.notifyWillDismiss()
-      }
+      Self.reportWillDismiss(of: presentation, in: context)
       return .done
     case .didDisappear:
-      let state = context.state
-      guard
-        case .presented(let presentation) = state.phase,
-        !state.isBrowserOpen
-      else {
+      guard case .presented(let presentation) = context.state.phase else {
         return .dismissalStarted(nil)
+      }
+      // A browser still open here, with the paywall staying, was on screen at
+      // `willDisappear`, which took the view going away for the browser
+      // covering it.
+      let didSkipWillDismiss = context.state.isBrowserOpen && !context.isLeavingScreen
+      if Self.isCoveredByBrowser(in: context) {
+        return .dismissalStarted(nil)
+      }
+      if didSkipWillDismiss {
+        Self.reportWillDismiss(of: presentation, in: context)
       }
       context.effect { context.trackClose() }
       context.update(.disappeared)
@@ -448,13 +450,6 @@ enum PaywallViewAction: StoreAction {
     return true
   }
 
-  /// Reports the end of a presentation. If a new presentation started while
-  /// this one's dismissal was finishing, only this one's subscribers,
-  /// completion and delegate hear about it: the paywall on screen is left as
-  /// it is.
-  /// Whether a browser is open, so another can't be. A browser the state has
-  /// open that isn't on screen went without reporting it, as Safari does when
-  /// the app dismisses it, and is forgotten.
   /// A presentation starting now. It takes the id of a dismissal asked for
   /// before it, and finishes with that dismissal's result. Its close reason
   /// starts over, as a presentation's does.
@@ -478,6 +473,42 @@ enum PaywallViewAction: StoreAction {
     return presentation
   }
 
+  /// Whether the paywall's view going away is a browser covering it, not a
+  /// dismissal. A checkout sheet the SDK is closing doesn't count: the paywall
+  /// can be dismissed while it animates away.
+  private static func isCoveredByBrowser(in context: PaywallViewContext) -> Bool {
+    if !context.state.isBrowserOpen {
+      return false
+    }
+    if context.isLeavingScreen {
+      // The paywall is dismissed together with its browser. Safari goes
+      // without reporting it, so it's forgotten here. A checkout sheet reports
+      // its own close.
+      if context.state.browser == .safari {
+        context.update(.browserWentUnreported)
+      }
+      return false
+    }
+    return isBrowserInTheWay(in: context)
+  }
+
+  private static func reportWillDismiss(
+    of presentation: PaywallViewState.Presentation,
+    in context: PaywallViewContext
+  ) {
+    let result = presentation.dismissal?.result ?? .declined
+    let info = context.state.dismissalInfo(for: presentation)
+    context.effect {
+      if let claimId = presentation.claimId {
+        context.sendState(.willDismiss(result), toClaim: claimId, info: info)
+      }
+      context.notifyWillDismiss()
+    }
+  }
+
+  /// Whether a browser is open, so another can't be. A browser the state has
+  /// open that isn't on screen went without reporting it, as Safari does when
+  /// the app dismisses it, and is forgotten.
   private static func isBrowserInTheWay(in context: PaywallViewContext) -> Bool {
     if context.state.browser == .none {
       return false
@@ -489,6 +520,10 @@ enum PaywallViewAction: StoreAction {
     return false
   }
 
+  /// Reports the end of a presentation. If a new presentation started while
+  /// this one's dismissal was finishing, only this one's subscribers,
+  /// completion and delegate hear about it: the paywall on screen is left as
+  /// it is.
   private static func finishDismissal(_ id: UUID, in context: PaywallViewContext) {
     let state = context.state
     guard let presentation = state.finishingDismissal(id) else {

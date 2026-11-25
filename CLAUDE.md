@@ -261,12 +261,17 @@ behind itself. Use `enqueue` for follow-up work, as the fetch does for its refre
 changed only by `PaywallViewControllerCacheUpdate` reducers, applied by
 `PaywallViewControllerCacheAction`s (save, remove, `removeAll`, presented, dismissed). The reducers
 keep the on-screen key pointing at a cached controller: removing or replacing that controller clears
-it, and marking an uncached key as presented sets nothing. Otherwise a controller saved later under
-the key would be taken for the one on screen and survive `removeAll`. An action that drops a
+it, and marking a controller that isn't the one cached under its key as presented sets nothing.
+Otherwise a controller saved later under the key would be taken for the one on screen and survive
+`removeAll`. An action that drops a
 controller hands it to `release` with `deferUntilUnlocked`, which lets go of it on the main thread.
 Never let a controller's last reference go with the store locked or off the main thread, since that
 tears down its views. Read the cache through `store.read`, never `store.state`: a copy of the
 controllers can outlive a removal on main and become a controller's last owner on another thread.
+A paywall reports its own appearing and dismissal with itself (`markPresented`, `markDismissed`);
+there's no way to mark one by key alone. One that finishes closing after another appeared leaves the
+other marked as on screen, and a controller the app still holds after a newer one replaced it in the
+cache isn't taken for the new one.
 
 ### Purchase and restore stores
 
@@ -306,6 +311,11 @@ claim; `isPresented`, `isBrowserOpen`, macOS `isClosing` and friends are compute
 Publishers, dismiss completions, views, timers and tasks stay on the view controller. Safari doesn't
 always report it closed (never on visionOS), so a link or checkout is only refused while a browser
 is really on screen (`isBrowserOnScreen`); a browser the state has open that isn't is forgotten.
+The same check decides whether the paywall's view going away is a browser covering it or a
+dismissal to report. When the paywall or a view controller it's inside is being dismissed
+(`isLeavingScreen`), it's a dismissal even with the browser still presented: UIKit keeps Safari as
+the presented view controller while both go, and an embedded paywall isn't itself the one being
+dismissed.
 
 - Change the state only by dispatching a `PaywallViewAction`: `.event(update)` for a plain
   `PaywallViewUpdate`, or a named action for anything with side effects. A store observer

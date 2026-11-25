@@ -19,24 +19,28 @@ import Foundation
 final class PaywallViewControllerCache: PaywallViewControllerCacheContext, @unchecked Sendable {
   let store = PaywallViewControllerCacheStore(initial: PaywallViewControllerCacheState())
 
-  /// The key of the cached paywall on screen. Setting a key marks the
-  /// controller cached under it as on screen, or nothing if none is cached
-  /// there. Setting `nil` marks it dismissed.
+  /// The key of the cached paywall on screen.
   var activePaywallVcKey: String? {
-    get {
-      store.read { $0.presentedKey }
-    }
-    set {
-      if let newValue {
-        store.dispatch(PaywallViewControllerCacheAction.presented(key: newValue), in: self)
-        return
-      }
-      store.dispatch(PaywallViewControllerCacheAction.dismissed, in: self)
-    }
+    store.read { $0.presentedKey }
   }
 
   var activePaywallViewController: PaywallViewController? {
     store.read { $0.presentedController }
+  }
+
+  /// `controller` appeared, with this key. It's only marked as on screen if
+  /// it's the one cached under the key.
+  func markPresented(_ controller: PaywallViewController, forKey key: String) {
+    store.dispatch(
+      PaywallViewControllerCacheAction.presented(controller, key: key),
+      in: self
+    )
+  }
+
+  /// `controller` was dismissed. Another paywall that's on screen stays
+  /// marked as on screen.
+  func markDismissed(_ controller: PaywallViewController) {
+    store.dispatch(PaywallViewControllerCacheAction.dismissed(controller), in: self)
   }
 
   private let deviceLocaleString: String

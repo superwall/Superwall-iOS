@@ -212,7 +212,7 @@ struct WebCheckoutRecoveryTests {
     if let key {
       let cache = dependencyContainer.paywallManager.cache
       cache.save(paywallVc, forKey: key)
-      cache.activePaywallVcKey = key
+      cache.markPresented(paywallVc, forKey: key)
     }
     return paywallVc
   }

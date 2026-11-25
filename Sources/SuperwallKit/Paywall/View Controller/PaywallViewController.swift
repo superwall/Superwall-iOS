@@ -211,6 +211,16 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     #endif
   }
 
+  var isLeavingScreen: Bool {
+    #if os(macOS)
+      return false
+    #else
+      // An embedded paywall isn't itself the one being dismissed.
+      return sequence(first: self as UIViewController) { $0.parent }
+        .contains { $0.isBeingDismissed }
+    #endif
+  }
+
   /// Work item for tracking transaction abandon, can be cancelled if redeem succeeds.
   private var transactionAbandonWorkItem: DispatchWorkItem?
 
@@ -1760,7 +1770,7 @@ extension PaywallViewController {
     // on an appearance that starts a presentation: `viewWillAppear` also fires
     // when the paywall is already on screen, such as after Safari closes.
     let didStartLoadForClaim = dispatch(.restoreHandedOutClaim).didStartLoad
-    cache?.activePaywallVcKey = cacheKey
+    cache?.markPresented(self, forKey: cacheKey)
 
     if isBrowserOpen {
       return
@@ -2147,7 +2157,11 @@ extension PaywallViewController: PaywallViewContext {
   }
 
   func markActive(_ isActive: Bool) {
-    cache?.activePaywallVcKey = isActive ? cacheKey : nil
+    if isActive {
+      cache?.markPresented(self, forKey: cacheKey)
+    } else {
+      cache?.markDismissed(self)
+    }
   }
 
   func destroyPresentingWindow() {
