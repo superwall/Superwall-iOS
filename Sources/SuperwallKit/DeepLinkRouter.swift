@@ -22,7 +22,22 @@ final class DeepLinkRouter {
   unowned let configManager: ConfigManager
   unowned let storage: Storage
   unowned let identityManager: IdentityManager
-  private(set) static var pendingDeepLink: URL?
+  /// A deep link waiting for the config before it's routed. The app sets it
+  /// from its own thread while the SDK reads it from others.
+  private(set) static var pendingDeepLink: URL? {
+    get {
+      pendingDeepLinkLock.lock()
+      defer { pendingDeepLinkLock.unlock() }
+      return unsafePendingDeepLink
+    }
+    set {
+      pendingDeepLinkLock.lock()
+      unsafePendingDeepLink = newValue
+      pendingDeepLinkLock.unlock()
+    }
+  }
+  private static let pendingDeepLinkLock = NSLock()
+  private static var unsafePendingDeepLink: URL?
 
   /// Tracks an event. Replaced in tests to observe what's tracked.
   var trackEvent: (Trackable) async -> Void = { event in
@@ -206,6 +221,7 @@ final class DeepLinkRouter {
                 self?.route(url: deepLink)
                 Self.pendingDeepLink = nil
               }
+              self?.fetchEnrichmentIfFirstDeepLinkIsUnanswered()
             default:
               break
             }

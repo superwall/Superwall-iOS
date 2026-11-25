@@ -108,6 +108,21 @@ extension DeepLinkRouter {
     )
   }
 
+  /// Asks again which custom product page the first deep link belongs to, if
+  /// the server hasn't answered yet. Called once the config is in.
+  ///
+  /// A link captured at startup has no fetch of its own, and the config
+  /// fetch's enrichment request is one short try that may not get through.
+  func fetchEnrichmentIfFirstDeepLinkIsUnanswered() {
+    if storage.get(FirstSessionDeepLinkLookup.self) == nil {
+      return
+    }
+    let fetchEnrichment = self.fetchEnrichment
+    Task {
+      await fetchEnrichment()
+    }
+  }
+
   /// The first deep link's user attributes, which a new user keeps across a
   /// reset because they describe the install.
   func firstDeepLinkAttributesKeptAcrossReset() -> [String: Any] {

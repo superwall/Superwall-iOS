@@ -280,6 +280,26 @@ struct FirstSessionDeepLinkRouterTests {
     #expect(enrichmentFetches.count == 0)
   }
 
+  @Test("A first deep link the server hasn't answered is asked about again once the config is in")
+  func unansweredLookup_fetchesEnrichment() async throws {
+    let url = try #require(URL(string: "myapp://home?promo=\(UUID().uuidString)"))
+
+    // Nothing to ask about yet.
+    router.fetchEnrichmentIfFirstDeepLinkIsUnanswered()
+    try await Task.sleep(nanoseconds: 100_000_000)
+    #expect(enrichmentFetches.count == 0)
+
+    router.captureFirstSessionDeepLink(receivedBeforeConfigure: url)
+    router.fetchEnrichmentIfFirstDeepLinkIsUnanswered()
+    await enrichmentFetches.waitForCount(1)
+
+    // The server answered, so it isn't asked again.
+    storage.finishFirstSessionDeepLinkLookup(page: nil)
+    router.fetchEnrichmentIfFirstDeepLinkIsUnanswered()
+    try await Task.sleep(nanoseconds: 100_000_000)
+    #expect(enrichmentFetches.count == 1)
+  }
+
   @Test(
     "Nothing is captured at startup without a deep link, or for a return or redemption link",
     arguments: [nil, "myapp://superwall/return", "myapp://superwall/redeem?code=TESTCODE"]

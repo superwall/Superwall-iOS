@@ -326,6 +326,10 @@ enum PaywallViewAction: StoreAction {
       }
       context.effect { context.trackClose() }
       context.update(.disappeared)
+      // A spinner left up goes with the presentation. Hidden here, not when
+      // the dismissal finishes: the paywall can be showing again by then, with
+      // a spinner of its own.
+      context.update(.loading(.spinnerDismissed))
       Self.leaveTeleportToBackground(in: context)
       return .dismissalStarted(presentation.id)
     case .finishDismissal(let id):
