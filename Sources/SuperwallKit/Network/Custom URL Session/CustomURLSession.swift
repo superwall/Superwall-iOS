@@ -25,6 +25,9 @@ enum NetworkError: LocalizedError, Equatable {
   /// The server responded with a status code outside the 2xx range that isn't
   /// covered by a more specific case.
   case http(statusCode: Int)
+  /// The response's `X-Superwall-Signature` didn't verify, while
+  /// ``SuperwallOptions/shouldEnforceResponseSignatures`` is on.
+  case invalidResponseSignature
 
   var errorDescription: String? {
     switch self {
@@ -35,6 +38,8 @@ enum NetworkError: LocalizedError, Equatable {
     case .invalidUrl: return NSLocalizedString("URL invalid", comment: "")
     case .noInternet: return NSLocalizedString("No Internet", comment: "")
     case .trackingDisabled: return NSLocalizedString("Event tracking turned off", comment: "")
+    case .invalidResponseSignature:
+      return NSLocalizedString("The response signature didn't verify.", comment: "")
     case .http(let statusCode):
       return String(
         format: NSLocalizedString("HTTP error %d.", comment: ""),
@@ -67,6 +72,8 @@ enum NetworkError: LocalizedError, Equatable {
 class CustomURLSession {
   private let urlSession = URLSession(configuration: .default)
   private let factory: ApiFactory
+  /// Shared so verified signing keys are cached across requests.
+  private let responseVerifier = ResponseVerifier()
 
   init(factory: ApiFactory) {
     self.factory = factory
@@ -115,12 +122,13 @@ class CustomURLSession {
     data: Kind.RequestData,
     isRetryingCallback: ((Int) -> Void)? = nil
   ) async throws -> Response {
-    guard let request = await endpoint.makeRequest(
+    guard var request = await endpoint.makeRequest(
       with: data,
       factory: factory
     ) else {
       throw NetworkError.unknown
     }
+    let nonce = endpoint.signedAs.map { ResponseSignatureCheck.prepare(&request, for: $0) } ?? ""
     let auth = request.allHTTPHeaderFields?["Authorization"]
 
     Logger.debug(
@@ -169,6 +177,16 @@ class CustomURLSession {
       ]
     )
 
+    if let signedAs = endpoint.signedAs {
+      try await checkSignature(
+        of: response,
+        data: data,
+        signedAs: signedAs,
+        request: request,
+        nonce: nonce
+      )
+    }
+
     guard let value = try? Kind.jsonDecoder.decode(
       Response.self,
       from: data
@@ -195,6 +213,57 @@ class CustomURLSession {
     }
 
     return value
+  }
+
+  /// Verifies the response's `X-Superwall-Signature`. Reports a failure; throws only when
+  /// signatures are enforced.
+  private func checkSignature(
+    of response: URLResponse,
+    data: Data,
+    signedAs: SignedResponse,
+    request: URLRequest,
+    nonce: String
+  ) async throws {
+    let enforce = factory.configManager.options.shouldEnforceResponseSignatures
+    let result: ResponseVerifier.Result
+    if let context = ResponseSignatureCheck.context(for: signedAs, request: request, nonce: nonce) {
+      // Two headers arrive comma-joined, which the parser rejects as a duplicate member.
+      let header = (response as? HTTPURLResponse)?
+        .value(forHTTPHeaderField: SignatureEnvelope.signatureHeader)
+      result = responseVerifier.verify(
+        header: header,
+        context: context,
+        body: data,
+        now: Int64(Date().timeIntervalSince1970)
+      )
+    } else {
+      result = .failed(.malformedHeader)
+    }
+
+    let reason: String
+    switch ResponseSignatureCheck.decide(result, enforce: enforce) {
+    case .accept:
+      return
+    case .report(let failure),
+      .reject(let failure):
+      reason = failure
+    }
+    Logger.debug(
+      logLevel: enforce ? .error : .warn,
+      scope: .network,
+      message: "Response signature didn't verify",
+      info: [
+        "endpoint": signedAs.endpoint.rawValue,
+        "reason": reason,
+        "enforced": enforce
+      ]
+    )
+    await Superwall.shared.track(
+      ResponseSignatureFailure(endpoint: signedAs.endpoint, reason: reason, isEnforced: enforce)
+    )
+    if enforce {
+      throw NetworkError.invalidResponseSignature
+    }
   }
 
   private func getRequestId(
