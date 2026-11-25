@@ -4,9 +4,9 @@
 # never blocks anything, and stays silent when it can't tell what was used. Only
 # members of the team's GitHub organization get the comment.
 #
-# Only the work on that pull request counts: the replies since the session last
-# opened another pull request that read or changed one of this one's files. Chat
-# and earlier pull requests in the same session are left out.
+# Only the work on that pull request counts: the replies that read or changed
+# one of its files. Work on a file from before the session opened another pull
+# request with that file in it belongs to that one, and is left out. So is chat.
 
 TEAM_ORG="superwall"
 BAR="Fable 5.2 on high effort"
@@ -23,6 +23,11 @@ tool=$(jq -r '.tool_name // empty' <<< "$input")
 
 # A shell command that opens a pull request.
 OPENS_PR='(^|[^[:alnum:]_-])gh[[:space:]]([^|;&]*[[:space:]])?pr[[:space:]]+(create|new)'
+# The same, for a line of an earlier command in the session log. Stricter, so a
+# command that only mentions one in a string isn't taken for one.
+OPENED_PR='^\s*(.*(&&|\|\||[;|(]|\$\()\s*)?([A-Za-z_][A-Za-z0-9_]*=\S*\s+)*gh\s+([^|;&]*\s)?pr\s+(create|new)(\s|$)'
+# How many of the session's earlier pull requests are looked up.
+MAX_EARLIER=8
 
 if [ "$tool" = "Bash" ]; then
   command=$(jq -r '.tool_input.command // empty' <<< "$input")
@@ -44,43 +49,90 @@ if [ ! -r "$transcript" ]; then
   exit 0
 fi
 
+# The paths the pull request at $1 changes, as a JSON array. Fails if they can't
+# be read.
+files_of() {
+  local path repo number names
+  path=${1#https://github.com/}
+  repo=${path%/pull/*}
+  number=${path##*/}
+  names=$(gh api "repos/$repo/pulls/$number/files?per_page=100" --paginate --jq '.[].filename' 2> /dev/null) || return 1
+  jq -Rn '[inputs | select(length > 0)]' <<< "$names"
+}
+
+# The other pull requests this session opened: the log line each was opened on,
+# and its link. A command only counts if it ran `gh pr create` and printed a
+# pull request's link on a line of its own, or was a pull request tool.
+earlier_pull_requests() {
+  jq -rnR --arg opened_pr "$OPENED_PR" '
+    def text:
+      if type == "string" then .
+      elif type == "array" then [.[] | objects | .text // empty] | join("\n")
+      else "" end;
+    [inputs | fromjson? | select(type == "object") | select(.isSidechain != true)] as $lines
+    | ([$lines[] | select(.type == "user") | .message.content | arrays | .[] | objects
+        | select(.type == "tool_result" and .is_error != true and (.tool_use_id | type == "string"))
+        | {key: .tool_use_id, value: (.content | text)}] | from_entries) as $results
+    | $lines | to_entries[] | select(.value.type == "assistant") | .key as $index
+    | .value.message.content | arrays | .[] | objects | select(.type == "tool_use")
+    | ($results[.id // ""] // "") as $result
+    | (if .name == "Bash" and ((.input.command // "") | split("\n") | any(test($opened_pr))) then
+        [$result | split("\n")[]
+          | select(test("^\\s*https://github\\.com/[^/\\s]+/[^/\\s]+/pull/[0-9]+\\s*$"))
+          | gsub("\\s"; "")] | last
+      elif ((.name // "") | test("pull_request_create|create_pull_request")) then
+        [$result | match("https://github\\.com/[^/\\s\"\\\\]+/[^/\\s\"\\\\]+/pull/[0-9]+"; "g").string] | first
+      else null end)
+    | select(. != null)
+    | [$index, .] | @tsv' "$transcript" 2> /dev/null
+}
+
+lowercased() {
+  tr '[:upper:]' '[:lower:]' <<< "$1"
+}
+
 # One line per model reply that worked on the pull request at $1: how many,
 # which model, which effort.
 #
-# Work on it starts after the last other pull request this session opened. Of
-# the replies since, only those that read or changed one of its files count. If
-# none of them can be tied to a file, all of them count.
+# A reply worked on it if one of its tool calls names one of the pull request's
+# files. Work on a file from before the session opened another pull request with
+# that file in it isn't counted. If no reply can be tied to a file, the replies
+# since the last other pull request count.
 tally_for() {
-  local number files
-  number=${1##*/}
-  files=$(gh pr view "$1" --json files --jq '[.files[].path]' 2> /dev/null)
-  if ! jq -e 'type == "array"' <<< "$files" > /dev/null 2>&1; then
-    files='[]'
-  fi
-  jq -rnR --arg number "$number" --arg opens_pr "$OPENS_PR" --argjson files "$files" '
-    def tool_uses: [.message.content | arrays | .[] | select(.type == "tool_use")];
-    def opens_pr:
-      (.name == "Bash" and ((.input.command // "") | test($opens_pr)))
-      or ((.name // "") | test("pull_request_create|create_pull_request"));
-    [inputs | fromjson? | select(.isSidechain != true)] as $lines
-    | [$lines[] | select(.type == "user") | .message.content | arrays | .[]
-        | select(.type == "tool_result")
-        | (tostring) as $result
-        | select(($result | test("github\\.com/[^/ ]+/[^/ ]+/pull/[0-9]+"))
-            and ($result | test("/pull/" + $number + "([^0-9]|$)") | not))
-        | .tool_use_id] as $opened_another
-    | ([$lines | to_entries[]
-        | select(.value.type == "assistant")
-        | select(any(.value | tool_uses[]; opens_pr and (.id as $id | $opened_another | index($id) != null)))
-        | .key] | max // -1) as $start
+  local files others index url other_files
+  files=$(files_of "$1") || files='[]'
+  others='[]'
+  while read -r index url; do
+    if [ -z "$url" ] || [ "$(lowercased "$url")" = "$(lowercased "$1")" ]; then
+      continue
+    fi
+    # One whose files can't be read is taken to share every file.
+    other_files=$(files_of "$url") || other_files=null
+    others=$(jq -c --argjson start "$index" --argjson files "$other_files" \
+      '. + [{start: $start, files: $files}]' <<< "$others")
+  done < <(earlier_pull_requests | tail -n "$MAX_EARLIER")
+
+  jq -rnR --argjson files "$files" --argjson others "$others" '
+    def tool_calls:
+      [.message.content | arrays | .[] | objects | select(.type == "tool_use") | .input | tostring]
+      | join("\n");
+    [inputs | fromjson? | select(type == "object") | select(.isSidechain != true)] as $lines
+    | ($others | map(.start) | max // -1) as $last_other
+    | ($files | map(. as $file | {
+        key: $file,
+        value: ([$others[] | select(.files == null or (.files | index($file) != null)) | .start] | max // -1)
+      }) | from_entries) as $work_starts
     | [$lines | to_entries[]
-        | select(.key > $start and .value.type == "assistant")
-        | .value
-        | select((.message.model // "") | startswith("claude-"))] as $replies
+        | select(.value.type == "assistant")
+        | select((.value.message.model // "") | startswith("claude-"))] as $replies
     | [$replies[]
-        | select(any(tool_uses[]; (.input | tostring) as $call | any($files[]; . as $file | $call | contains($file))))
-      ] as $on_files
-    | (if ($on_files | length) > 0 then $on_files else $replies end)
+        | .key as $index
+        | (.value | tool_calls) as $calls
+        | select(any($files[]; . as $file
+            | $index > $work_starts[$file] and ($calls | contains($file | split("/") | last))))
+        | .value] as $on_files
+    | (if ($on_files | length) > 0 then $on_files
+       else [$replies[] | select(.key > $last_other) | .value] end)
     | map([.message.id, .message.model, (.effort | if type == "string" then . else "unknown" end)])
     | unique | .[] | .[1:] | @tsv' "$transcript" 2> /dev/null | sort | uniq -c
 }
@@ -166,6 +218,7 @@ needs_warning() {
         and (.resource.comments.nodes | all(.body | contains($marker) | not))' > /dev/null 2>&1
 }
 
+posted=()
 for url in $urls; do
   if [ -n "$PR_MODEL_CHECK_DRY_RUN" ]; then
     if warning_for "$url"; then
@@ -179,12 +232,14 @@ for url in $urls; do
     continue
   fi
   if ! warning_for "$url"; then
-    exit 0
+    continue
   fi
   if gh pr comment "$url" --body "$body" > /dev/null 2>&1; then
-    jq -n --arg message "Posted a model warning on $url: part of the work on it ran below $BAR." \
-      '{systemMessage: $message}'
+    posted+=("$url")
   fi
-  exit 0
 done
+if [ "${#posted[@]}" -gt 0 ]; then
+  jq -n --arg message "Posted a model warning on ${posted[*]}: part of the work ran below $BAR." \
+    '{systemMessage: $message}'
+fi
 exit 0
