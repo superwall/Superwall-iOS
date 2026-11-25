@@ -717,7 +717,7 @@ class DeviceHelper {
   /// Set after initialization to enable test mode sandbox override.
   var testModeManager: TestModeManager?
 
-  /// Returns true if built for the simulator, using TestFlight, or in test mode.
+  /// Returns true if built for the simulator, a TestFlight or development build, or in test mode.
   var isSandbox: String {
     if testModeManager?.isTestMode == true {
       return "true"
@@ -744,11 +744,15 @@ class DeviceHelper {
       return "\(isSandbox)"
     }
 
+    #if os(macOS) || targetEnvironment(macCatalyst)
+    return "\(MacBuildSignature.isSandbox)"
+    #else
     guard let url = Bundle.main.appStoreReceiptURL else {
       return "false"
     }
 
     return "\(url.path.contains("sandboxReceipt"))"
+    #endif
     #endif
   }
 
@@ -1069,6 +1073,9 @@ class DeviceHelper {
     reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
     #endif
     self.sdkVersionPadded = Self.makePaddedVersion(using: sdkVersion)
+    #if os(macOS) || targetEnvironment(macCatalyst)
+    MacBuildSignature.readInBackground()
+    #endif
     self.appVersionPadded = Self.makePaddedVersion(using: appVersion)
     self.isUIKitReadSafe = isUIKitReadSafe
 

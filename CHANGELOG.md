@@ -38,6 +38,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Improves the contrast of text and icons in the Customer Center.
 - Fixes the Customer Center's purchase cards breaking words mid-word at the largest text sizes.
 - Makes the Customer Center's Copy button easier to tap.
+- Fixes `device.isSandbox` being `false` in TestFlight and development builds of Mac apps.
 
 ## 4.19.1
 
