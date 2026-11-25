@@ -1161,6 +1161,46 @@ struct PaywallViewActionTests {
     ])
   }
 
+  @Test("A paywall closed while the SDK is closing its checkout sheet reports its dismissal")
+  func closingCheckoutSheetDoesNotHideTheDismissal() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.present(claim)
+    let id = try! #require(context.state.activePresentation?.id)
+    #expect(context.dispatch(.openCheckout(UUID())) == .browserOpened(true))
+    context.calls.removeAll()
+
+    // The sheet is still on screen, animating away.
+    context.dispatch(.event(.browserClosedBySDK))
+    context.dispatch(.willDisappear)
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(id))
+    #expect(context.calls == [
+      .sendState(.willDismiss(.declined), claim: claim.id),
+      .notifyWillDismiss,
+      .trackClose
+    ])
+  }
+
+  @Test("A paywall whose browser goes between its view starting and finishing going away reports both steps")
+  func browserGoneMidDisappearReportsWillDismissToo() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.present(claim)
+    let id = try! #require(context.state.activePresentation?.id)
+    #expect(context.dispatch(.openSafari) == .browserOpened(true))
+
+    // Dismissed together with Safari, which is still on screen at first.
+    context.dispatch(.willDisappear)
+    #expect(context.calls.isEmpty)
+    context.isBrowserOnScreen = false
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(id))
+    #expect(context.calls == [
+      .sendState(.willDismiss(.declined), claim: claim.id),
+      .notifyWillDismiss,
+      .trackClose
+    ])
+  }
+
   @Test("A checkout sheet that never showed doesn't stop the next one, and its late close does nothing")
   func checkoutGoneUnreportedDoesNotBlockTheNextOpen() {
     let context = FakePaywallViewContext()
