@@ -69,8 +69,8 @@ struct ResponseVerifierTests {
   @Test("the shared vectors are loaded")
   func vectorsAreLoaded() {
     let names = Vectors.shared.cases.map(\.name)
-    #expect(names.count >= 22)
-    #expect(names.contains("raw_entitlements_verified"))
+    #expect(names.count >= 42)
+    #expect(names.contains("entitlements_verified"))
     #expect(names.contains("x509_kind_rejected"))
   }
 
@@ -106,7 +106,7 @@ struct ResponseVerifierTests {
 
   @Test("a credential that verified once is reused, and still binds the subject")
   func credentialCache() throws {
-    let vector = try #require(Vectors.shared.cases.first { $0.name == "raw_entitlements_verified" })
+    let vector = try #require(Vectors.shared.cases.first { $0.name == "entitlements_verified" })
     let context = try #require(vector.verifierContext)
     let body = Data(base64Encoded: vector.body) ?? Data()
     let verifier = ResponseVerifier(roots: Vectors.shared.trustedRoots)
@@ -129,7 +129,7 @@ struct ResponseVerifierTests {
 
   @Test("no embedded roots means nothing verifies")
   func noRoots() throws {
-    let vector = try #require(Vectors.shared.cases.first { $0.name == "raw_entitlements_verified" })
+    let vector = try #require(Vectors.shared.cases.first { $0.name == "entitlements_verified" })
     let context = try #require(vector.verifierContext)
     let result = ResponseVerifier(roots: []).verify(
       header: vector.header,
@@ -152,11 +152,14 @@ struct ResponseVerifierTests {
     #expect(SignatureEnvelope(header: "v=1, t=-1, kind=raw, cred=:AA==:, sig=:AA==:") == nil)
     #expect(SignatureEnvelope(header: "v=1, t=1, kind=raw, cred=:AQI:, sig=:AA==:") == nil)
     #expect(SignatureEnvelope(header: "v=1, t=1, kind=x509, cred=:AA==:, sig=:AA==:") == nil)
+    #expect(SignatureEnvelope(header: "v=1, t=01, kind=raw, cred=:AA==:, sig=:AA==:") == nil)
+    #expect(SignatureEnvelope(header: "v=01, t=1, kind=raw, cred=:AA==:, sig=:AA==:") == nil)
+    #expect(SignatureEnvelope(header: "v=1, t=0, kind=raw, cred=:AA==:, sig=:AA==:")?.signedAt == 0)
   }
 
   @Test("a version too large for Int is malformed, not a trap")
   func hugeVersion() {
-    // 64-bit: an unsupported version. 32-bit (arm64_32 watches): too large for Int, so malformed.
+    // Unsupported on every platform, 32-bit watches included (the version is an Int64).
     let result = ResponseVerifier(roots: []).verify(
       header: "v=999999999999999, t=1, kind=raw, cred=:AA==:, sig=:AA==:",
       context: ResponseVerifier.Context(
@@ -169,7 +172,7 @@ struct ResponseVerifierTests {
       body: Data(),
       now: 0
     )
-    #expect(result == .failed(.unsupportedVersion) || result == .failed(.malformedHeader))
+    #expect(result == .failed(.unsupportedVersion))
   }
 
   @Test("embedded roots are P-256 points, and a bad one is left out")
@@ -183,6 +186,9 @@ struct ResponseVerifierTests {
     let vectorRoots = Vectors.shared.roots.map(\.publicKey)
     #expect(ResponseSigningRoots.decode(vectorRoots).count == 2)
     let truncated = String(vectorRoots[0].dropFirst(4))
-    #expect(ResponseSigningRoots.decode(["AQID", "not base64", truncated]).isEmpty)
+    var offCurve = Data(base64Encoded: vectorRoots[0]) ?? Data()
+    offCurve[64] ^= 0x01
+    let rejected = ["AQID", "not base64", truncated, offCurve.base64EncodedString()]
+    #expect(ResponseSigningRoots.decode(rejected).isEmpty)
   }
 }

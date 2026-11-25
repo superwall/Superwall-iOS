@@ -15,16 +15,16 @@ let responseSigningVectorsJSON = #"""
   "roots": [
     {
       "name": "Superwall Response Signing Test Root R1",
-      "publicKey": "BCWjaEwCwSy/D/eCtyFuWTwEMzrKNWvtIs8HXL4nFrCA7PH+et3G5Wj4u9JKAkrf2Fi4MdulpM7fuzDiaCV+9dY="
+      "publicKey": "BLNzz92SowwclX1sb/Od/8aCWQsj0+CVjztqCKxqPuDaOOKeVE37Zb3Ej8sCG/293151E88rORpoFhW8Hfxkfxs="
     },
     {
       "name": "Superwall Response Signing Test Root R2",
-      "publicKey": "BF0fx6iTBDsycEzarCl4si5cFb4RprkSpUO+RcIyiiLKyYqP9sa8mZeV+4EjCawuA0Fp4ti1GfG8mHZcZDuweBs="
+      "publicKey": "BMgsTaDl64UzNyMnhkxxYNXEAnR4maMTYl5thjSbTmIXyGEf/tQyR8dKuEsnzREbWQZZWB09M7JO9MwkeYTxCVo="
     }
   ],
   "cases": [
     {
-      "name": "raw_entitlements_verified",
+      "name": "entitlements_verified",
       "description": "Signed entitlements with a nonce.",
       "now": 1795000000,
       "context": {
@@ -35,13 +35,13 @@ let responseSigningVectorsJSON = #"""
         "nonce": "q83vEjRWeJAAAAAAAAAAAA"
       },
       "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795000000, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/VyQAAAAAGsGlxAEsoZqp/atbXemDLW/d29Q0Cb1vk6GjmJn5V6nMcW54UPtt6teZol7NXuyFykofv9j2I+aa32k1Y4DKVt7b5G4rwBIMEYCIQD1hI4dXOp2GRxKVM6mcVns/bSp+hKwkLMTf1dbHmrReAIhAJcx62aK1LhD4/wTrJC4YQAgmAKBjzASa3sv7KNH2+Yf:, sig=:MEYCIQCKoMJKZdqVMff3icFqbgjimzCo/ORBDhAYAd8MJCQq3gIhAK1COA3j0tnj9sY90U1EyfTrf19kYwGS3VXBLyjSVlzX:",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
       "expected": {
         "status": "verified"
       }
     },
     {
-      "name": "raw_config_verified",
+      "name": "config_verified",
       "description": "Signed config, no nonce, signed two hours earlier (edge cache).",
       "now": 1795000000,
       "context": {
@@ -52,13 +52,13 @@ let responseSigningVectorsJSON = #"""
         "nonce": ""
       },
       "body": "eyJidWlsZF9pZCI6ImFiYyIsInRyaWdnZXJzIjpbXSwicGF5d2FsbHMiOltdLCJ0cyI6MTc5NTAwMDAwMDAwMH0=",
-      "header": "v=1, t=1794992800, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/VyQAAAAAGsGlxAEsoZqp/atbXemDLW/d29Q0Cb1vk6GjmJn5V6nMcW54UPtt6teZol7NXuyFykofv9j2I+aa32k1Y4DKVt7b5G4rwBIMEYCIQD1hI4dXOp2GRxKVM6mcVns/bSp+hKwkLMTf1dbHmrReAIhAJcx62aK1LhD4/wTrJC4YQAgmAKBjzASa3sv7KNH2+Yf:, sig=:MEYCIQDqvyKa6KCNuYoiJcZ337AArELOKec/q2Z1DDtjCoV+7QIhALCYfpaZEMhbMA7wwkmX3wa/bibYhs2XFJ70Wf8pSvae:",
+      "header": "v=1, t=1794992800, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCICtUgVGvsbcc0SCF07aOCBylBdH0uGJHeWRiJ54qyVXMAiEA5AgwhFgF4XTHC+VadJYd/5d4sZLqAiXyAeOgFjeRykg=:",
       "expected": {
         "status": "verified"
       }
     },
     {
-      "name": "raw_second_root_verified",
+      "name": "second_root_verified",
       "description": "Signed by a key the standby root issued.",
       "now": 1795000000,
       "context": {
@@ -69,157 +69,13 @@ let responseSigningVectorsJSON = #"""
         "nonce": "q83vEjRWeJAAAAAAAAAAAA"
       },
       "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795000000, kind=raw, cred=:AQGJtAR7Ca5BObJSCIXQwD0935co//sNgJ1JYpQrcfuM0QAAAABq/VyQAAAAAGsGlxAEcHVgvrStznvyG2g6mQHu6G/UjJqClPP0bANUdUsRdXBAJaeZRTvmNJ5HSHON43abEYDWIUgyPnwp/0WjJgwnVABIMEYCIQDvyh9UjeYUqaUBunv8b96nAGaaQWkNkLaNSc/SnQiaXAIhANVlDo4xPkzsnjCIIZwO8oTTSRI4JtV+VcN/kndeMwcP:, sig=:MEUCIC7KwnXY5R9jQ3vOWBfZhCFje6EJdARGdXbTQw/SPiymAiEA2GIqerV8LrIZCGM+Ha+brQL1R647hQqryvdXk8FSEJk=:",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQGpgfx8fxOVMl9FYSy534xCX4WPweaNsYRvqMAp0+ZvDAAAAABq/VyQAAAAAGsGlxAEUo/FKufE07gopXCkjF3EcAuH0q/cSRWRfelJaQFRtxXSVCy5SqCyjWjqObpIY9LNGjOYz+/VSI3iHlCeJ/9PPgBHMEUCIQDidZzgu3kGb7djbItb1fjabfMIgw05mFnnBEWdDxN0cQIgEJ9BXWrXsLojJRzYOFvBIDauju/AQcwyEsbYBQNsCIo=:, sig=:MEUCIQDlEVslk0wRrXOvjFLnwXDe9O3OqcAnSn4uzgiNSkSTYgIgOL5JX7lAWxsDeS3kdk5E3i7tFZ81wfCINlDxvaXIG44=:",
       "expected": {
         "status": "verified"
       }
     },
     {
-      "name": "raw_body_changed",
-      "description": "One byte of the body differs.",
-      "now": 1795000000,
-      "context": {
-        "endpoint": "entitlements",
-        "apiKey": "pk_test_abc",
-        "subject": "user_123",
-        "deviceId": "$SuperwallDevice:ABC-123",
-        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
-      },
-      "body": "eyJlbnRpdGxlbWVudHMiOltdfQ==",
-      "header": "v=1, t=1795000000, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/VyQAAAAAGsGlxAEsoZqp/atbXemDLW/d29Q0Cb1vk6GjmJn5V6nMcW54UPtt6teZol7NXuyFykofv9j2I+aa32k1Y4DKVt7b5G4rwBIMEYCIQD1hI4dXOp2GRxKVM6mcVns/bSp+hKwkLMTf1dbHmrReAIhAJcx62aK1LhD4/wTrJC4YQAgmAKBjzASa3sv7KNH2+Yf:, sig=:MEYCIQCKoMJKZdqVMff3icFqbgjimzCo/ORBDhAYAd8MJCQq3gIhAK1COA3j0tnj9sY90U1EyfTrf19kYwGS3VXBLyjSVlzX:",
-      "expected": {
-        "status": "failed",
-        "reason": "invalid_signature"
-      }
-    },
-    {
-      "name": "raw_subject_changed",
-      "description": "Another user's response.",
-      "now": 1795000000,
-      "context": {
-        "endpoint": "entitlements",
-        "apiKey": "pk_test_abc",
-        "subject": "user_456",
-        "deviceId": "$SuperwallDevice:ABC-123",
-        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
-      },
-      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795000000, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/VyQAAAAAGsGlxAEsoZqp/atbXemDLW/d29Q0Cb1vk6GjmJn5V6nMcW54UPtt6teZol7NXuyFykofv9j2I+aa32k1Y4DKVt7b5G4rwBIMEYCIQD1hI4dXOp2GRxKVM6mcVns/bSp+hKwkLMTf1dbHmrReAIhAJcx62aK1LhD4/wTrJC4YQAgmAKBjzASa3sv7KNH2+Yf:, sig=:MEYCIQCKoMJKZdqVMff3icFqbgjimzCo/ORBDhAYAd8MJCQq3gIhAK1COA3j0tnj9sY90U1EyfTrf19kYwGS3VXBLyjSVlzX:",
-      "expected": {
-        "status": "failed",
-        "reason": "invalid_signature"
-      }
-    },
-    {
-      "name": "raw_nonce_changed",
-      "description": "A replayed response for an earlier request.",
-      "now": 1795000000,
-      "context": {
-        "endpoint": "entitlements",
-        "apiKey": "pk_test_abc",
-        "subject": "user_123",
-        "deviceId": "$SuperwallDevice:ABC-123",
-        "nonce": "AAAAAAAAAAAAAAAAAAAAAA"
-      },
-      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795000000, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/VyQAAAAAGsGlxAEsoZqp/atbXemDLW/d29Q0Cb1vk6GjmJn5V6nMcW54UPtt6teZol7NXuyFykofv9j2I+aa32k1Y4DKVt7b5G4rwBIMEYCIQD1hI4dXOp2GRxKVM6mcVns/bSp+hKwkLMTf1dbHmrReAIhAJcx62aK1LhD4/wTrJC4YQAgmAKBjzASa3sv7KNH2+Yf:, sig=:MEYCIQCKoMJKZdqVMff3icFqbgjimzCo/ORBDhAYAd8MJCQq3gIhAK1COA3j0tnj9sY90U1EyfTrf19kYwGS3VXBLyjSVlzX:",
-      "expected": {
-        "status": "failed",
-        "reason": "invalid_signature"
-      }
-    },
-    {
-      "name": "raw_api_key_changed",
-      "description": "The same user's response from another app.",
-      "now": 1795000000,
-      "context": {
-        "endpoint": "entitlements",
-        "apiKey": "pk_other_app",
-        "subject": "user_123",
-        "deviceId": "$SuperwallDevice:ABC-123",
-        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
-      },
-      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795000000, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/VyQAAAAAGsGlxAEsoZqp/atbXemDLW/d29Q0Cb1vk6GjmJn5V6nMcW54UPtt6teZol7NXuyFykofv9j2I+aa32k1Y4DKVt7b5G4rwBIMEYCIQD1hI4dXOp2GRxKVM6mcVns/bSp+hKwkLMTf1dbHmrReAIhAJcx62aK1LhD4/wTrJC4YQAgmAKBjzASa3sv7KNH2+Yf:, sig=:MEYCIQCKoMJKZdqVMff3icFqbgjimzCo/ORBDhAYAd8MJCQq3gIhAK1COA3j0tnj9sY90U1EyfTrf19kYwGS3VXBLyjSVlzX:",
-      "expected": {
-        "status": "failed",
-        "reason": "invalid_signature"
-      }
-    },
-    {
-      "name": "raw_device_changed",
-      "description": "A response for another device.",
-      "now": 1795000000,
-      "context": {
-        "endpoint": "entitlements",
-        "apiKey": "pk_test_abc",
-        "subject": "user_123",
-        "deviceId": "$SuperwallDevice:OTHER",
-        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
-      },
-      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795000000, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/VyQAAAAAGsGlxAEsoZqp/atbXemDLW/d29Q0Cb1vk6GjmJn5V6nMcW54UPtt6teZol7NXuyFykofv9j2I+aa32k1Y4DKVt7b5G4rwBIMEYCIQD1hI4dXOp2GRxKVM6mcVns/bSp+hKwkLMTf1dbHmrReAIhAJcx62aK1LhD4/wTrJC4YQAgmAKBjzASa3sv7KNH2+Yf:, sig=:MEYCIQCKoMJKZdqVMff3icFqbgjimzCo/ORBDhAYAd8MJCQq3gIhAK1COA3j0tnj9sY90U1EyfTrf19kYwGS3VXBLyjSVlzX:",
-      "expected": {
-        "status": "failed",
-        "reason": "invalid_signature"
-      }
-    },
-    {
-      "name": "raw_endpoint_changed",
-      "description": "An entitlements signature presented for config.",
-      "now": 1795000000,
-      "context": {
-        "endpoint": "static_config",
-        "apiKey": "pk_test_abc",
-        "subject": "user_123",
-        "deviceId": "$SuperwallDevice:ABC-123",
-        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
-      },
-      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795000000, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/VyQAAAAAGsGlxAEsoZqp/atbXemDLW/d29Q0Cb1vk6GjmJn5V6nMcW54UPtt6teZol7NXuyFykofv9j2I+aa32k1Y4DKVt7b5G4rwBIMEYCIQD1hI4dXOp2GRxKVM6mcVns/bSp+hKwkLMTf1dbHmrReAIhAJcx62aK1LhD4/wTrJC4YQAgmAKBjzASa3sv7KNH2+Yf:, sig=:MEYCIQCKoMJKZdqVMff3icFqbgjimzCo/ORBDhAYAd8MJCQq3gIhAK1COA3j0tnj9sY90U1EyfTrf19kYwGS3VXBLyjSVlzX:",
-      "expected": {
-        "status": "failed",
-        "reason": "invalid_signature"
-      }
-    },
-    {
-      "name": "raw_untrusted_root",
-      "description": "Issued by a root that isn't embedded, with the same name as R1.",
-      "now": 1795000000,
-      "context": {
-        "endpoint": "entitlements",
-        "apiKey": "pk_test_abc",
-        "subject": "user_123",
-        "deviceId": "$SuperwallDevice:ABC-123",
-        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
-      },
-      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795000000, kind=raw, cred=:AQG71lgFnNtfpFiRqmdBtDZ22k4zy6kTGIjacz34Y2Cc1wAAAABq/VyQAAAAAGsGlxAEJgvngdQZah+l+oJ3nhRPf6bCoJbRscocfO4FNyIYy2R+gJqSz7W2y+ngjlOOWL0wZ7tWuQKaAibX2bqZU46QtQBHMEUCIQDOcPiW8s4I6jkU8gR9S5KfTKDN850FlKsg/EE368uaKAIgR5SaEXqSVzZ0Wd+bUs6Q41fEOgde2ugFK2WY1iYZGQk=:, sig=:MEUCIF+w5aycGDxj0qXNhCAjjNfPSs/dRUody2BqTy4abHupAiEAzErloqq/hdqTOJd+JtvClMy0EDERU/8+w6DvOGxm5l4=:",
-      "expected": {
-        "status": "failed",
-        "reason": "unknown_root"
-      }
-    },
-    {
-      "name": "raw_signed_after_key_expired",
-      "description": "The signing time is moved a second past the key's expiry.",
-      "now": 1795000000,
-      "context": {
-        "endpoint": "entitlements",
-        "apiKey": "pk_test_abc",
-        "subject": "user_123",
-        "deviceId": "$SuperwallDevice:ABC-123",
-        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
-      },
-      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1793012801, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq1fnAAAAAAGrfNEAEUgNerjondcCBuRtaijhRpt32YbIlkPIZpRc7E3wh5ODIO+7u4a4YjKgB4/S5DSbhMxwldt3YBxGZ7SY5CMspCABHMEUCIQD9BoKYu6dCiJK1HuUVIvVZukSu+zZQgpeDDG97cKGwHAIgXfhypn+UPR8sz2sR1YZHpCWo/w7VaesAbAB/dZHexsw=:, sig=:MEYCIQD4xAwFJDWPTHCnFrIeHOZWgktYaJd+IMkPWy7RLedYuQIhAIJ+f5M7734Nj/10xxCDbZL9HQTmpy5YCAGJttuTFLv4:",
-      "expected": {
-        "status": "failed",
-        "reason": "credential_not_valid_at_signing_time"
-      }
-    },
-    {
-      "name": "raw_slow_device_clock_verified",
+      "name": "slow_device_clock_verified",
       "description": "Signed an hour ahead of the device clock: within the tolerance.",
       "now": 1795000000,
       "context": {
@@ -230,14 +86,31 @@ let responseSigningVectorsJSON = #"""
         "nonce": "q83vEjRWeJAAAAAAAAAAAA"
       },
       "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795003600, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/VyQAAAAAGsGlxAEsoZqp/atbXemDLW/d29Q0Cb1vk6GjmJn5V6nMcW54UPtt6teZol7NXuyFykofv9j2I+aa32k1Y4DKVt7b5G4rwBIMEYCIQD1hI4dXOp2GRxKVM6mcVns/bSp+hKwkLMTf1dbHmrReAIhAJcx62aK1LhD4/wTrJC4YQAgmAKBjzASa3sv7KNH2+Yf:, sig=:MEYCIQCOXHqXZZ6CaOwmGblty5N6Cye3Ci8ejhvzOWrhej2q4QIhAP906tTouwN0kqvYzFpViIyhrZfqTIOjb206XdgV8GzL:",
+      "header": "v=1, t=1795003600, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIHrpZFg3jKk7xnK9NOujFsfAHBkjHLVwF2/4AQ0MWel8AiEAoiprplHz2rAyCLmgIlRQ/OYd9+sPTIXpbtt37jA0tLg=:",
       "expected": {
         "status": "verified"
       }
     },
     {
-      "name": "raw_signed_in_future",
-      "description": "Signed two days ahead of the device clock.",
+      "name": "fast_device_clock_verified",
+      "description": "The device clock is a day minus a second past the key's expiry: within the tolerance.",
+      "now": 1795680399,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
+      "expected": {
+        "status": "verified"
+      }
+    },
+    {
+      "name": "header_members_reordered_verified",
+      "description": "Members in another order, with an unknown member: both allowed.",
       "now": 1795000000,
       "context": {
         "endpoint": "entitlements",
@@ -247,50 +120,121 @@ let responseSigningVectorsJSON = #"""
         "nonce": "q83vEjRWeJAAAAAAAAAAAA"
       },
       "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795172800, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/VyQAAAAAGsGlxAEsoZqp/atbXemDLW/d29Q0Cb1vk6GjmJn5V6nMcW54UPtt6teZol7NXuyFykofv9j2I+aa32k1Y4DKVt7b5G4rwBIMEYCIQD1hI4dXOp2GRxKVM6mcVns/bSp+hKwkLMTf1dbHmrReAIhAJcx62aK1LhD4/wTrJC4YQAgmAKBjzASa3sv7KNH2+Yf:, sig=:MEYCIQDqp1O52BD9WNzTXDEL6omtfk3MNkio8hfHOhFkjk+maAIhANDSzHI3rVyUYyIQyOKfDd2QoorFmxc1gOkO7p+T2wXc:",
+      "header": "future=1, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, kind=raw, t=1795000000, v=1",
       "expected": {
-        "status": "failed",
-        "reason": "signed_in_future"
+        "status": "verified"
       }
     },
     {
-      "name": "raw_key_expired_on_device",
-      "description": "Validly signed while the key was valid, received long after it expired (a leaked key, or a replayed config).",
+      "name": "body_changed",
+      "description": "One byte of the body differs.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOltdfQ==",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
+      "expected": {
+        "status": "failed",
+        "reason": "invalid_signature"
+      }
+    },
+    {
+      "name": "subject_changed",
+      "description": "Another user's response.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_456",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
+      "expected": {
+        "status": "failed",
+        "reason": "invalid_signature"
+      }
+    },
+    {
+      "name": "nonce_changed",
+      "description": "A replayed response for an earlier request.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "AAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
+      "expected": {
+        "status": "failed",
+        "reason": "invalid_signature"
+      }
+    },
+    {
+      "name": "api_key_changed",
+      "description": "The same user's response from another app.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_other_app",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
+      "expected": {
+        "status": "failed",
+        "reason": "invalid_signature"
+      }
+    },
+    {
+      "name": "device_changed",
+      "description": "A response for another device.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:OTHER",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
+      "expected": {
+        "status": "failed",
+        "reason": "invalid_signature"
+      }
+    },
+    {
+      "name": "endpoint_changed",
+      "description": "An entitlements signature presented for config.",
       "now": 1795000000,
       "context": {
         "endpoint": "static_config",
         "apiKey": "pk_test_abc",
-        "subject": "",
-        "deviceId": "",
-        "nonce": ""
-      },
-      "body": "eyJidWlsZF9pZCI6ImFiYyIsInRyaWdnZXJzIjpbXSwicGF5d2FsbHMiOltdLCJ0cyI6MTc5NTAwMDAwMDAwMH0=",
-      "header": "v=1, t=1793012740, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq1fnAAAAAAGrfNEAEWPjoThvpS9UXHoPKGEQLwiQHOYPRWvLkR9gCWx2tucI4sA//V9BoGtYmkcGbfh5yblk1TMzw0mA8ksTVtFRBggBHMEUCIQCVNNrkGbRxc2R0LXJEeXELrne2ULakbpEmhIp8jAndQgIgLir0lK0Q5faNyFPWqh5wSak0TymZHC5uRp0l2sEgr4Y=:, sig=:MEYCIQDCoClHnuzQ6gV5542ubyq43gJoCqKgqmLauZ+3bbhx2wIhAKXAKIHEozIp42XDdp0GJb61T2HLBwPW6NNPw2ZyT4wc:",
-      "expected": {
-        "status": "failed",
-        "reason": "credential_expired"
-      }
-    },
-    {
-      "name": "raw_unsupported_version",
-      "description": "A version this verifier doesn't know.",
-      "now": 1795000000,
-      "context": {
-        "endpoint": "entitlements",
-        "apiKey": "pk_test_abc",
         "subject": "user_123",
         "deviceId": "$SuperwallDevice:ABC-123",
         "nonce": "q83vEjRWeJAAAAAAAAAAAA"
       },
       "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=2, t=1795000000, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/VyQAAAAAGsGlxAEsoZqp/atbXemDLW/d29Q0Cb1vk6GjmJn5V6nMcW54UPtt6teZol7NXuyFykofv9j2I+aa32k1Y4DKVt7b5G4rwBIMEYCIQD1hI4dXOp2GRxKVM6mcVns/bSp+hKwkLMTf1dbHmrReAIhAJcx62aK1LhD4/wTrJC4YQAgmAKBjzASa3sv7KNH2+Yf:, sig=:MEYCIQCKoMJKZdqVMff3icFqbgjimzCo/ORBDhAYAd8MJCQq3gIhAK1COA3j0tnj9sY90U1EyfTrf19kYwGS3VXBLyjSVlzX:",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
       "expected": {
         "status": "failed",
-        "reason": "unsupported_version"
+        "reason": "invalid_signature"
       }
     },
     {
-      "name": "raw_signature_not_der",
+      "name": "signature_not_der",
       "description": "The right signature, encoded as raw r‖s instead of DER.",
       "now": 1795000000,
       "context": {
@@ -301,15 +245,15 @@ let responseSigningVectorsJSON = #"""
         "nonce": "q83vEjRWeJAAAAAAAAAAAA"
       },
       "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795000000, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/VyQAAAAAGsGlxAEsoZqp/atbXemDLW/d29Q0Cb1vk6GjmJn5V6nMcW54UPtt6teZol7NXuyFykofv9j2I+aa32k1Y4DKVt7b5G4rwBIMEYCIQD1hI4dXOp2GRxKVM6mcVns/bSp+hKwkLMTf1dbHmrReAIhAJcx62aK1LhD4/wTrJC4YQAgmAKBjzASa3sv7KNH2+Yf:, sig=:iqDCSmXalTH394nBam4I4pswqPzkQQ4QGAHfDCQkKt6tQjgN49LZ4/bGPdFNRMn0639fZGMBkt1VwS8o0lZc1w==:",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:YjpV3jMY0yRlfX23W+js0t3s8/HF1BF+AqSx2LPj86vJyt5lHZuoDAPnlJciGTyq59GFZ818oEVECYLsX95XkA==:",
       "expected": {
         "status": "failed",
         "reason": "invalid_signature"
       }
     },
     {
-      "name": "x509_kind_rejected",
-      "description": "A valid raw credential and signature labelled kind=x509: only raw is accepted.",
+      "name": "signature_trailing_byte",
+      "description": "The right DER signature with a byte after it.",
       "now": 1795000000,
       "context": {
         "endpoint": "entitlements",
@@ -319,14 +263,14 @@ let responseSigningVectorsJSON = #"""
         "nonce": "q83vEjRWeJAAAAAAAAAAAA"
       },
       "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795000000, kind=x509, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/VyQAAAAAGsGlxAEsoZqp/atbXemDLW/d29Q0Cb1vk6GjmJn5V6nMcW54UPtt6teZol7NXuyFykofv9j2I+aa32k1Y4DKVt7b5G4rwBIMEYCIQD1hI4dXOp2GRxKVM6mcVns/bSp+hKwkLMTf1dbHmrReAIhAJcx62aK1LhD4/wTrJC4YQAgmAKBjzASa3sv7KNH2+Yf:, sig=:MEYCIQCKoMJKZdqVMff3icFqbgjimzCo/ORBDhAYAd8MJCQq3gIhAK1COA3j0tnj9sY90U1EyfTrf19kYwGS3VXBLyjSVlzX:",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5AA:",
       "expected": {
         "status": "failed",
-        "reason": "malformed_header"
+        "reason": "invalid_signature"
       }
     },
     {
-      "name": "raw_statement_signature_as_response_signature",
+      "name": "statement_signature_as_response_signature",
       "description": "Domain separation: the root's statement signature is not a response signature.",
       "now": 1795000000,
       "context": {
@@ -337,10 +281,297 @@ let responseSigningVectorsJSON = #"""
         "nonce": "q83vEjRWeJAAAAAAAAAAAA"
       },
       "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795000000, kind=raw, cred=:AQF9sSTIortY/orlD59YUtfwo8+4iVpP5ZOVINM4uCX2KAAAAABq/XiwAAAAAGsGszAEpQcws2OK2he3UV0Pcibt4uga4cVQ4MIE91E3JP1ELDqlUuw5psg8kd1sAJ7dbfSREoy3/3nPg8OSWPN4Ka0w/gBHMEUCIDsuDXrBHZM8pKXR14xvAL9jYSYiJRzjQ2iWhRRn3w+eAiEAr3RroDPpHQj6Taq8XFYL9y3zpKq7gPpQhDwl+z6w85U=:, sig=:MEUCIDsuDXrBHZM8pKXR14xvAL9jYSYiJRzjQ2iWhRRn3w+eAiEAr3RroDPpHQj6Taq8XFYL9y3zpKq7gPpQhDwl+z6w85U=:",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:",
       "expected": {
         "status": "failed",
         "reason": "invalid_signature"
+      }
+    },
+    {
+      "name": "crafted_statement_verified",
+      "description": "A statement built field by field, as the backend issues them.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/XiwAAAAAGsGszAElzvgyQPQY9OV2qgSzTZZfjAJVTiaNJ0Tyf6ZlnbqhTQ06k7KKwoYU0AJQI694+R07hCtw7F+8jusexc1QQ9S9wBHMEUCIQCHH2lcmUWVzfgGQdubvD0YDGd9HWAh2ju3gkwPBIj79AIgTZFnF85PTNnyLCA3pgo7QY+GYLD/+V/u8rx6AkAEaQs=:, sig=:MEYCIQD6dqNMEvKyFj84HYR2mW0IvuYdkUevx3z+/pIeSIYsHAIhAJY/2q4kT/QnyLdxwgvmVzOOyVR3qIuJOmkIBw0bN4EL:",
+      "expected": {
+        "status": "verified"
+      }
+    },
+    {
+      "name": "untrusted_root",
+      "description": "Issued by a root that isn't embedded, with the same name as R1.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQE06YhaURmHDreMTg1vEg8ybtdGDNQfpFMJLXk+NYXf/gAAAABq/VyQAAAAAGsGlxAErbQ26XPjc8VnvOgLHXmgE2DCyOd0ZsL72KcCtxG8pLi9tqPeuGzxIrk3r5MuiIebhim3NOH8ktMek22hXBBAUwBGMEQCIBZOtRKgYbSHHgPD7D3HXShjD4SdCGfoBgel/5+lctxiAiAzwhG6DaABnfObixTiPw/G3yQo6QrUnzVSdAD9qYHL5g==:, sig=:MEQCID7CV8dZ5XoLK8UdTmhHrP2y3jLS2LHA6B3YZD9Mbl3LAiALXJE+KrhLjVk3owS9bYOlNv1kHC79ZMd+mniZDIijzw==:",
+      "expected": {
+        "status": "failed",
+        "reason": "unknown_root"
+      }
+    },
+    {
+      "name": "statement_names_r1_signed_by_r2",
+      "description": "Names R1's key ID but is signed by R2: the root signature must be checked, not just the ID.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/XiwAAAAAGsGszAElzvgyQPQY9OV2qgSzTZZfjAJVTiaNJ0Tyf6ZlnbqhTQ06k7KKwoYU0AJQI694+R07hCtw7F+8jusexc1QQ9S9wBGMEQCICr1W7vsz6ux49INIveq7fLdB4qxe9T7DGhutuy3QFnoAiAuMg9QRyHLydcITRjQ/8okepBFlBYAZdMaNGSvM3iIiA==:, sig=:MEUCIQDak60ukZaVjWWsUODIrX9eMOfLfm1onzjMZBH2yNdYTQIgNy4Qk1QJyVoQRHIvT3YN0uoLvecCR+jN1DxNWVSkPNY=:",
+      "expected": {
+        "status": "failed",
+        "reason": "invalid_credential_signature"
+      }
+    },
+    {
+      "name": "statement_tampered",
+      "description": "A root-signed statement with its expiry changed afterwards.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/XiwAAAAAGsGszEElzvgyQPQY9OV2qgSzTZZfjAJVTiaNJ0Tyf6ZlnbqhTQ06k7KKwoYU0AJQI694+R07hCtw7F+8jusexc1QQ9S9wBHMEUCIQCHH2lcmUWVzfgGQdubvD0YDGd9HWAh2ju3gkwPBIj79AIgTZFnF85PTNnyLCA3pgo7QY+GYLD/+V/u8rx6AkAEaQs=:, sig=:MEUCIBLoJvUGRxoibVTwoRUoH2yoJBx6MY6XA1gUhQmov9HAAiEAgV/WDjLvuhpk0CzeO3pd2w24+u4dxlIg0+QNylCj92M=:",
+      "expected": {
+        "status": "failed",
+        "reason": "invalid_credential_signature"
+      }
+    },
+    {
+      "name": "statement_signing_key_swapped",
+      "description": "A root-signed statement with another signing key put in, signed with that key.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/XiwAAAAAGsGszAENvV8Vf9/xolUzcLkGxiMY/w0Ch//lMI17gX5gxCFaaICamV6+vRyEKrj8YlNIRlUjq5N/Xn5BRMVoWMdmoFX/QBHMEUCIQCHH2lcmUWVzfgGQdubvD0YDGd9HWAh2ju3gkwPBIj79AIgTZFnF85PTNnyLCA3pgo7QY+GYLD/+V/u8rx6AkAEaQs=:, sig=:MEYCIQDxSWePufg+ql3f4HwyOfMNcd98So8PJiix2qgvIWoSvQIhAMSiA16JlnWT2GdVeGedrZ+HmoAlJvl9VDWUjaW6cVHc:",
+      "expected": {
+        "status": "failed",
+        "reason": "invalid_credential_signature"
+      }
+    },
+    {
+      "name": "statement_lifetime_too_long",
+      "description": "Root-signed, but valid for a day longer than the cap.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/XiwAAAAAGsJVjAElzvgyQPQY9OV2qgSzTZZfjAJVTiaNJ0Tyf6ZlnbqhTQ06k7KKwoYU0AJQI694+R07hCtw7F+8jusexc1QQ9S9wBGMEQCIHKC4szD+39teWMmK3NvkuAEChT0lbn3G8bTNi9GQjbhAiB60CAm+0rqMFcNfVZbBJRv7ULusyULCsQVeEwsKBfZkA==:, sig=:MEYCIQCT8069IT/SWo8KeqzKaX0EQJucfsMbYxKqUhsD8f4NXQIhANpH89WYwTHuZVYfhfmA4C3Ztkfjkss9JXsIqg7Wfaj/:",
+      "expected": {
+        "status": "failed",
+        "reason": "malformed_credential"
+      }
+    },
+    {
+      "name": "statement_lifetime_far_future",
+      "description": "Root-signed, valid until the end of 64-bit time: over the cap, and no verifier may overflow.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/XiwAB////////8ElzvgyQPQY9OV2qgSzTZZfjAJVTiaNJ0Tyf6ZlnbqhTQ06k7KKwoYU0AJQI694+R07hCtw7F+8jusexc1QQ9S9wBIMEYCIQDs3u4zLwnYe31axXVZJ4CJunjcoVoSZVZfFQJUMKj1twIhAO3fNBxgczIpKXn0LLr244scFJlk+wnR80GkixtiG4Bx:, sig=:MEUCIQCVmqx9cJ8Q/9G06fw8csO1n8Hnt6xlvx8j+Aj5Ry7wBwIgah1dT3eVTEhjVsTJk/rUMaQUuCibX4f0SBKZmqtRaAo=:",
+      "expected": {
+        "status": "failed",
+        "reason": "malformed_credential"
+      }
+    },
+    {
+      "name": "statement_expires_before_it_starts",
+      "description": "Root-signed, with notAfter before notBefore.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/YbAAAAAAGr9hr8ElzvgyQPQY9OV2qgSzTZZfjAJVTiaNJ0Tyf6ZlnbqhTQ06k7KKwoYU0AJQI694+R07hCtw7F+8jusexc1QQ9S9wBHMEUCIQCytm/DDAp7LwD+0J8cUn4gioOSRX1k5MJ+BkpLFbvQywIgdr2OG/R0rXsDoyKDa358lf60dSEs5g2dV7aY64iJTUU=:, sig=:MEQCIHMSmwocN3OIdOWK8wQQAOWDT2hLCRnTMDZN6d7qk5j9AiAb+9vJSJOAt9QWcKCz2rrQ4IB53iloiheWp6ac+efB+A==:",
+      "expected": {
+        "status": "failed",
+        "reason": "malformed_credential"
+      }
+    },
+    {
+      "name": "statement_signing_key_off_curve",
+      "description": "Root-signed, but the signing key is not a point on P-256.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/XiwAAAAAGsGszAElzvgyQPQY9OV2qgSzTZZfjAJVTiaNJ0Tyf6ZlnbqhTQ06k7KKwoYU0AJQI694+R07hCtw7F+8jusexc1QQ9S9gBIMEYCIQDfE9cs0kSvvRUM7XcBmRKNrZOs7hVokzAPiGovv6UA8gIhALNOTuZwXKppWbXNzgBH+GOElGi7w7vPy/iawZvX9IuO:, sig=:MEUCIDSe+tEwb85Jd7cf8YkC+XxSrPQohA7KDCFZkZ72vMY5AiEAw2XDOkwax6v79WU5w2OVzu4ggSNYMWoOsjplLTCF8gY=:",
+      "expected": {
+        "status": "failed",
+        "reason": "malformed_credential"
+      }
+    },
+    {
+      "name": "statement_truncated",
+      "description": "A raw credential cut short.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQE=:, sig=:AA==:",
+      "expected": {
+        "status": "failed",
+        "reason": "malformed_credential"
+      }
+    },
+    {
+      "name": "statement_trailing_byte",
+      "description": "A valid statement with a byte after it.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HAA=:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
+      "expected": {
+        "status": "failed",
+        "reason": "malformed_credential"
+      }
+    },
+    {
+      "name": "signed_before_key_valid",
+      "description": "Signed a second before the key's notBefore.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1794996399, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/XiwAAAAAGsGszAElzvgyQPQY9OV2qgSzTZZfjAJVTiaNJ0Tyf6ZlnbqhTQ06k7KKwoYU0AJQI694+R07hCtw7F+8jusexc1QQ9S9wBHMEUCIQCHH2lcmUWVzfgGQdubvD0YDGd9HWAh2ju3gkwPBIj79AIgTZFnF85PTNnyLCA3pgo7QY+GYLD/+V/u8rx6AkAEaQs=:, sig=:MEYCIQC3uiuklAxvuDfxf4kPkx8vLpO3G8gKWnAK/4do1DYtvAIhAM6BVVDgg5zsg0dKg4mAGXgq2vhr42dKTApQJgOEtese:",
+      "expected": {
+        "status": "failed",
+        "reason": "credential_not_valid_at_signing_time"
+      }
+    },
+    {
+      "name": "signed_after_key_expired",
+      "description": "The signing time is a second past the key's expiry; the device clock is also far past it, but the signing time is checked first.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1793012801, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq1fnAAAAAAGrfNEAEdQvSi+LvN1DkfkH/PrgIAYsrQI21TIP/R8REyZGGIoJN9JLT9SDlob76qUkfLNZq5G9dlcTHFLhADNVcroMjsgBIMEYCIQC39vBkMuD7iPNYPI4alUCopedJPJ+vnm1Rpjg9Cpq9ZgIhAJOwxN+Srxge4c4JLf8cwDomcLvu61tTqHXpe2BzIIaz:, sig=:MEUCIHeBvDVnhE7ElbXUQJ3hrbZprF+vvz9qrIysdy2ZtLeWAiEA+sSXOCm5AkhBRjdWeF4iqUDTJY1ULjdZZPCzxqZjobE=:",
+      "expected": {
+        "status": "failed",
+        "reason": "credential_not_valid_at_signing_time"
+      }
+    },
+    {
+      "name": "signed_in_future",
+      "description": "Signed two days ahead of the device clock.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795172800, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIQD8qh9XlEqf+uTPsV6+jsGSId4P8O6fmP9jdxH1B37oQwIgTYKZXO0p4P/yLWWsxE4wBETjEjZuZ9dT4dpmasPuOII=:",
+      "expected": {
+        "status": "failed",
+        "reason": "signed_in_future"
+      }
+    },
+    {
+      "name": "key_expired_on_device",
+      "description": "Validly signed while the key was valid, received long after it expired (a leaked key, or a replayed config).",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "static_config",
+        "apiKey": "pk_test_abc",
+        "subject": "",
+        "deviceId": "",
+        "nonce": ""
+      },
+      "body": "eyJidWlsZF9pZCI6ImFiYyIsInRyaWdnZXJzIjpbXSwicGF5d2FsbHMiOltdLCJ0cyI6MTc5NTAwMDAwMDAwMH0=",
+      "header": "v=1, t=1793012740, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq1fnAAAAAAGrfNEAEdQvSi+LvN1DkfkH/PrgIAYsrQI21TIP/R8REyZGGIoJN9JLT9SDlob76qUkfLNZq5G9dlcTHFLhADNVcroMjsgBIMEYCIQC39vBkMuD7iPNYPI4alUCopedJPJ+vnm1Rpjg9Cpq9ZgIhAJOwxN+Srxge4c4JLf8cwDomcLvu61tTqHXpe2BzIIaz:, sig=:MEYCIQDLTt0A7ha1V5EXgam9n7HDSafBD9EkBMeUUxuFtmpxgQIhAJntQVtjUwyY9sKwcfA0mHNkk4HAv0XUNuZ4XQpjIhBB:",
+      "expected": {
+        "status": "failed",
+        "reason": "credential_expired"
+      }
+    },
+    {
+      "name": "key_expired_on_device_by_a_second",
+      "description": "The device clock is a day and a second past the key's expiry.",
+      "now": 1795680401,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
+      "expected": {
+        "status": "failed",
+        "reason": "credential_expired"
       }
     },
     {
@@ -390,15 +621,15 @@ let responseSigningVectorsJSON = #"""
         "nonce": "q83vEjRWeJAAAAAAAAAAAA"
       },
       "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795000000, kind=jwt, cred=:AA==:, sig=:AA==:",
+      "header": "v=1, t=1795000000, kind=jwt, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
       "expected": {
         "status": "failed",
         "reason": "malformed_header"
       }
     },
     {
-      "name": "raw_truncated_credential",
-      "description": "A raw credential cut short.",
+      "name": "x509_kind_rejected",
+      "description": "A valid raw credential and signature labelled kind=x509: only raw is accepted.",
       "now": 1795000000,
       "context": {
         "endpoint": "entitlements",
@@ -408,10 +639,136 @@ let responseSigningVectorsJSON = #"""
         "nonce": "q83vEjRWeJAAAAAAAAAAAA"
       },
       "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
-      "header": "v=1, t=1795000000, kind=raw, cred=:AQE=:, sig=:AA==:",
+      "header": "v=1, t=1795000000, kind=x509, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
       "expected": {
         "status": "failed",
-        "reason": "malformed_credential"
+        "reason": "malformed_header"
+      }
+    },
+    {
+      "name": "duplicate_member",
+      "description": "The signature member twice.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:, sig=:AA==:",
+      "expected": {
+        "status": "failed",
+        "reason": "malformed_header"
+      }
+    },
+    {
+      "name": "time_leading_zero",
+      "description": "A signing time with a leading zero.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=01795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
+      "expected": {
+        "status": "failed",
+        "reason": "malformed_header"
+      }
+    },
+    {
+      "name": "version_leading_zero",
+      "description": "v=01.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=01, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
+      "expected": {
+        "status": "failed",
+        "reason": "malformed_header"
+      }
+    },
+    {
+      "name": "time_too_long",
+      "description": "A signing time of 16 digits.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1000000000000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
+      "expected": {
+        "status": "failed",
+        "reason": "malformed_header"
+      }
+    },
+    {
+      "name": "credential_not_base64",
+      "description": "A credential that isn't padded base64.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=1, t=1795000000, kind=raw, cred=:AQI:, sig=:AA==:",
+      "expected": {
+        "status": "failed",
+        "reason": "malformed_header"
+      }
+    },
+    {
+      "name": "unsupported_version",
+      "description": "A version this verifier doesn't know.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=2, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
+      "expected": {
+        "status": "failed",
+        "reason": "unsupported_version"
+      }
+    },
+    {
+      "name": "unsupported_version_too_large_for_32_bits",
+      "description": "A 15-digit version: unsupported on every platform, 32-bit watches included, never malformed.",
+      "now": 1795000000,
+      "context": {
+        "endpoint": "entitlements",
+        "apiKey": "pk_test_abc",
+        "subject": "user_123",
+        "deviceId": "$SuperwallDevice:ABC-123",
+        "nonce": "q83vEjRWeJAAAAAAAAAAAA"
+      },
+      "body": "eyJlbnRpdGxlbWVudHMiOlt7ImlkZW50aWZpZXIiOiJwcm8iLCJ0eXBlIjoiU0VSVklDRV9MRVZFTCIsImlzQWN0aXZlIjp0cnVlfV19",
+      "header": "v=999999999999999, t=1795000000, kind=raw, cred=:AQFcexp8rYycqSplR5pgnWagU+GfEGPaZVUW4RZYpMHkjAAAAABq/VyQAAAAAGsGlxAE2DYx9R9oA9re00HjZlOjrC91gZuqY3ytFO8/DOD7uraQpL7K/DUIZ2YV7W8Ksua+Za7sJEBTRuiLTT7GxMogbQBGMEQCIEvx9tUF5yCljZrfNdAb36yzjuI/37Zh+jDf+6vdI/LnAiBF/isO3K091TuPpz6m8Sv7T3GQKI7nrK/YkmIZ8Bz4HA==:, sig=:MEUCIGI6Vd4zGNMkZX19t1vo7NLd7PPxxdQRfgKksdiz4/OrAiEAycreZR2bqAwD55SXIhk8qufRhWfNfKBFRAmC7F/eV5A=:",
+      "expected": {
+        "status": "failed",
+        "reason": "unsupported_version"
       }
     }
   ]

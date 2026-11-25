@@ -17,10 +17,12 @@ import Foundation
 struct SignatureEnvelope: Equatable {
   static let signatureHeader = "X-Superwall-Signature"
   static let nonceHeader = "X-Superwall-Nonce"
-  static let currentVersion = 1
+  static let currentVersion: Int64 = 1
   static let rawKind = "raw"
 
-  let version: Int
+  /// `Int64` on every platform, so a 15-digit version is unsupported rather than malformed on
+  /// 32-bit watches too.
+  let version: Int64
   let signedAt: Int64
   let credential: Data
   let signature: Data
@@ -43,41 +45,12 @@ struct SignatureEnvelope: Equatable {
       members[key] = String(member[member.index(after: equals)...])
     }
 
-    func integer(_ key: String) -> Int64? {
-      guard
-        let raw = members[key],
-        !raw.isEmpty,
-        raw.count <= 15,
-        raw.allSatisfy({ ("0"..."9").contains($0) })
-      else {
-        return nil
-      }
-      return Int64(raw)
-    }
-
-    func bytes(_ key: String) -> Data? {
-      guard
-        let raw = members[key],
-        raw.count >= 2,
-        raw.hasPrefix(":"),
-        raw.hasSuffix(":")
-      else {
-        return nil
-      }
-      let base64 = String(raw.dropFirst().dropLast())
-      // RFC 8941 byte sequences are padded base64.
-      guard base64.count % 4 == 0 else {
-        return nil
-      }
-      return Data(base64Encoded: base64)
-    }
-
     guard
       members["kind"] == Self.rawKind,
-      let version = integer("v").flatMap({ Int(exactly: $0) }),
-      let signedAt = integer("t"),
-      let credential = bytes("cred"),
-      let signature = bytes("sig")
+      let version = Self.integer(members["v"]),
+      let signedAt = Self.integer(members["t"]),
+      let credential = Self.bytes(members["cred"]),
+      let signature = Self.bytes(members["sig"])
     else {
       return nil
     }
@@ -85,5 +58,39 @@ struct SignatureEnvelope: Equatable {
     self.signedAt = signedAt
     self.credential = credential
     self.signature = signature
+  }
+
+  /// Canonical decimal: 1–15 ASCII digits, no leading zeros.
+  private static func integer(_ raw: String?) -> Int64? {
+    guard let raw = raw else {
+      return nil
+    }
+    let digits = Array(raw.utf8)
+    let isDigit: (UInt8) -> Bool = { (0x30...0x39).contains($0) }
+    guard
+      (1...15).contains(digits.count),
+      digits.allSatisfy(isDigit),
+      digits.count == 1 || digits[0] != 0x30
+    else {
+      return nil
+    }
+    return Int64(raw)
+  }
+
+  /// An RFC 8941 byte sequence: padded base64 between colons.
+  private static func bytes(_ raw: String?) -> Data? {
+    guard
+      let raw = raw,
+      raw.count >= 2,
+      raw.hasPrefix(":"),
+      raw.hasSuffix(":")
+    else {
+      return nil
+    }
+    let base64 = String(raw.dropFirst().dropLast())
+    guard base64.count % 4 == 0 else {
+      return nil
+    }
+    return Data(base64Encoded: base64)
   }
 }

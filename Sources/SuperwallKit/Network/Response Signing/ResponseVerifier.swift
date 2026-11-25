@@ -75,6 +75,10 @@ final class ResponseVerifier: @unchecked Sendable {
   /// nonce, not the clock.
   static let clockToleranceSeconds: Int64 = 24 * 60 * 60
 
+  /// The longest validity a key statement may give a signing key (7 days issued, plus a day).
+  /// Longer ones are refused, so whoever can make the root sign can't mint long-lived keys.
+  static let maxSigningKeyLifetimeSeconds: Int64 = 8 * 24 * 60 * 60
+
   private static let statementLength = 1 + 1 + 32 + 8 + 8 + 65
   private static let keyStatementPrefix = Data("superwall-signing-key-v1\u{0}".utf8)
   private static let responsePrefix = Data("superwall-response-v1\u{0}".utf8)
@@ -112,7 +116,8 @@ final class ResponseVerifier: @unchecked Sendable {
     let credentialHash = Data(SHA256.hash(data: envelope.credential))
     let cacheKey = credentialHash.base64EncodedString()
     let key: VerifiedKey
-    if let cached = lock.withLock({ credentialCache[cacheKey] }) {
+    let cached = lock.withLock { credentialCache[cacheKey] }
+    if let cached = cached {
       key = cached
     } else {
       switch verifyRawCredential(envelope.credential) {
@@ -126,12 +131,14 @@ final class ResponseVerifier: @unchecked Sendable {
     if let failure = Self.timeFailure(signedAt: envelope.signedAt, key: key, now: now) {
       return .failed(failure)
     }
-    // Only cache a credential once it's been used for a valid signing time.
-    lock.withLock {
-      if credentialCache.count >= Self.maxCachedCredentials {
-        credentialCache.removeAll()
+    // Only cache a credential once it's been used for a valid signing time, and only on a miss.
+    if cached == nil {
+      lock.withLock {
+        if credentialCache[cacheKey] == nil, credentialCache.count >= Self.maxCachedCredentials {
+          credentialCache.removeAll()
+        }
+        credentialCache[cacheKey] = key
       }
-      credentialCache[cacheKey] = key
     }
 
     let message = Self.signedMessage(
@@ -196,16 +203,20 @@ final class ResponseVerifier: @unchecked Sendable {
     ) else {
       return .failure(.invalidCredentialSignature)
     }
-    guard let signingKey = try? P256.Signing.PublicKey(x963Representation: Data(bytes[50..<115])) else {
+    // What the root signed must still make sense: a real validity no longer than the cap, and a
+    // signing key that is a point on P-256 (CryptoKit checks the curve).
+    let notBefore = Self.int64(bytes, at: 34)
+    let notAfter = Self.int64(bytes, at: 42)
+    let (lifetime, overflow) = notAfter.subtractingReportingOverflow(notBefore)
+    guard
+      !overflow,
+      lifetime >= 0,
+      lifetime <= Self.maxSigningKeyLifetimeSeconds,
+      let signingKey = try? P256.Signing.PublicKey(x963Representation: Data(bytes[50..<115]))
+    else {
       return .failure(.malformedCredential)
     }
-    return .success(
-      VerifiedKey(
-        publicKey: signingKey,
-        notBefore: Self.int64(bytes, at: 34),
-        notAfter: Self.int64(bytes, at: 42)
-      )
-    )
+    return .success(VerifiedKey(publicKey: signingKey, notBefore: notBefore, notAfter: notAfter))
   }
 
   private static func int64(_ bytes: [UInt8], at offset: Int) -> Int64 {
