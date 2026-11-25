@@ -94,6 +94,9 @@ extension CoreDataManager {
   /// How many placements one step of the trim deletes or empties.
   static let trimBatchSize = 500
 
+  /// How many placements with parameters the trim looks up at a time.
+  static let parametersSearchLimit = 20_000
+
   /// Deletes the loading placements and empties the parameters a store
   /// already holds. Runs once per store. The space this frees is given back
   /// to the device the next time the app goes to the background.
@@ -132,21 +135,25 @@ extension CoreDataManager {
         return
       }
       self.trimState.completions = [completion].compactMap { $0 }
-      self.runTrimStep(emptying: [], in: backgroundContext, store: store)
+      self.runTrimStep(emptying: [], searchedUpTo: nil, in: backgroundContext, store: store)
     }
   }
 
   /// Runs one step, then queues the next. Must be called on `context`'s queue.
   ///
-  /// - Parameter placementIds: Placements already found to have parameters,
-  ///   which are emptied a batch at a time.
+  /// - Parameters:
+  ///   - placementIds: Placements already found to have parameters, which are
+  ///     emptied a batch at a time.
+  ///   - lastSearchedId: Where the search for parameters has got to.
   private func runTrimStep(
     emptying placementIds: [NSManagedObjectID],
+    searchedUpTo lastSearchedId: NSManagedObjectID?,
     in context: NSManagedObjectContext,
     store: NSPersistentStore
   ) {
     do {
       var remainingIds = placementIds
+      var lastSearchedId = lastSearchedId
       let isFinished: Bool
 
       if !remainingIds.isEmpty {
@@ -157,13 +164,18 @@ extension CoreDataManager {
       } else if try Self.deleteUnsavedPlacements(upTo: Self.trimBatchSize, in: context) > 0 {
         isFinished = false
       } else {
-        remainingIds = try Self.idsOfPlacementsWithParameters(in: context)
+        remainingIds = try Self.idsOfPlacementsWithParameters(
+          after: lastSearchedId,
+          upTo: Self.parametersSearchLimit,
+          in: context
+        )
+        lastSearchedId = remainingIds.last ?? lastSearchedId
         isFinished = remainingIds.isEmpty
       }
 
       if !isFinished {
         context.perform {
-          self.runTrimStep(emptying: remainingIds, in: context, store: store)
+          self.runTrimStep(emptying: remainingIds, searchedUpTo: lastSearchedId, in: context, store: store)
         }
         return
       }
@@ -316,15 +328,25 @@ extension CoreDataManager {
     return result?.result as? Int ?? 0
   }
 
-  /// The placements that still have parameters, up to a number that keeps the
-  /// list small in memory. The trim asks again once it has emptied these.
-  private static func idsOfPlacementsWithParameters(
+  /// The next placements that still have parameters, in the order the store
+  /// keeps them, up to a number that keeps the list small in memory. The
+  /// search starts after `lastSearchedId`, the last one an earlier call
+  /// returned, so the store goes straight there instead of reading every
+  /// placement before it again.
+  static func idsOfPlacementsWithParameters(
+    after lastSearchedId: NSManagedObjectID?,
+    upTo limit: Int,
     in context: NSManagedObjectContext
   ) throws -> [NSManagedObjectID] {
     let fetchRequest = NSFetchRequest<NSManagedObjectID>(entityName: ManagedEventData.entityName)
     fetchRequest.resultType = .managedObjectIDResultType
-    fetchRequest.predicate = NSPredicate(format: "parameters != %@", Data() as NSData)
-    fetchRequest.fetchLimit = 20_000
+    var predicates = [NSPredicate(format: "parameters != %@", Data() as NSData)]
+    if let lastSearchedId {
+      predicates.append(NSPredicate(format: "SELF > %@", lastSearchedId))
+    }
+    fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+    fetchRequest.sortDescriptors = [NSSortDescriptor(key: "self", ascending: true)]
+    fetchRequest.fetchLimit = limit
     return try context.fetch(fetchRequest)
   }
 

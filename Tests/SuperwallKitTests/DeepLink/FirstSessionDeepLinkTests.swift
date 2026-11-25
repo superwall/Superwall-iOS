@@ -233,6 +233,32 @@ struct FirstSessionDeepLinkRouterTests {
     #expect(enrichmentFetches.count == 1)
   }
 
+  @Test("A deep link received before configure is captured before a later one")
+  func captureBeforeRouting_earlierLink_capturesEarlierLink() async throws {
+    let earlierUrl = try #require(URL(string: "myapp://home?promo=\(UUID().uuidString)"))
+    let laterUrl = try #require(URL(string: "myapp://home?promo=\(UUID().uuidString)"))
+
+    router.captureFirstSessionDeepLink(beforeRouting: laterUrl, after: earlierUrl)
+
+    #expect(storage.get(FirstSessionDeepLinkURL.self) == earlierUrl.absoluteString)
+    #expect(storage.get(FirstSessionDeepLinkLookup.self)?.originalUrl == earlierUrl.absoluteString)
+    #expect(storedAttribute == earlierUrl.absoluteString)
+    await enrichmentFetches.waitForCount(1)
+    try await Task.sleep(nanoseconds: 100_000_000)
+    #expect(enrichmentFetches.count == 1)
+  }
+
+  @Test("A later deep link is captured when the earlier one is a redemption link")
+  func captureBeforeRouting_earlierRedemptionLink_capturesLaterLink() throws {
+    let earlierUrl = try #require(URL(string: "myapp://superwall/redeem?code=TESTCODE"))
+    let laterUrl = try #require(URL(string: "myapp://home?promo=\(UUID().uuidString)"))
+
+    router.captureFirstSessionDeepLink(beforeRouting: laterUrl, after: earlierUrl)
+
+    #expect(storage.get(FirstSessionDeepLinkURL.self) == laterUrl.absoluteString)
+    #expect(storedAttribute == laterUrl.absoluteString)
+  }
+
   @Test(
     "Return and redemption links that arrive before config aren't captured",
     arguments: ["myapp://superwall/return", "myapp://superwall/redeem?code=TESTCODE"]
