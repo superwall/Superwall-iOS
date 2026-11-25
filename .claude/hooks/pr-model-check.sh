@@ -94,6 +94,8 @@ body="> [!WARNING]
 $table
 Give this one a closer review, or redo the work with $BAR or above.
 
+Don't token-keep, sharing is caring.
+
 $MARKER"
 
 # True for a pull request the signed-in user opened in the last ten minutes that
