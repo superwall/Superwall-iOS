@@ -18,8 +18,9 @@ struct PendingStripeCheckoutPollState: Codable, Equatable {
   /// How the checkout finishes once its code is redeemed. A recovery poll (on foreground or
   /// paywall open) finishes it the way the paywall asked, not as a restore.
   let completion: StripeCheckoutCompletion
-  /// Whether something said the checkout was paid for, such as a return link. One that was
-  /// only submitted may never be paid, so it's given up on sooner.
+  /// Whether something said the checkout was paid for: a return link, the paywall page
+  /// reporting it complete, or a teleport read completed. One that was only submitted may never
+  /// be paid, so it's given up on sooner.
   let isPaid: Bool
   let remainingForegroundAttempts: Int
   let updatedAt: Date

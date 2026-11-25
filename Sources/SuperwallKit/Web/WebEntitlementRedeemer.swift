@@ -421,6 +421,8 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   }
 
   /// The page heard how its teleport went, so there's nothing left to check in the background.
+  /// A teleport it reports paid is forgotten too: its checkout is kept pending as paid, which is
+  /// what's tried again until it's redeemed.
   /// Only on its first report of a checkout, and only when that checkout can be the teleport's.
   /// A report it repeats, or one about another checkout it started, may come after it opened
   /// this teleport: the teleport is kept and checked in the background, as the paywall no
@@ -593,26 +595,23 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       }
     }
 
+    // The page reports a checkout complete only once it's paid for, so it's kept as long as one
+    // a return link said was paid. It's what's left to try again if redeeming it fails: the
+    // teleport that led to it was forgotten above, and this says how the page wants it finished.
+    var remainingForegroundAttempts = PendingStripeCheckoutPollState.defaultForegroundAttempts
     if let existingState = pendingStripeCheckoutState,
       existingState.checkoutContextId == contextId {
-      savePendingStripeCheckoutState(
-        .init(
-          checkoutContextId: contextId,
-          productId: productId,
-          completion: completion,
-          isPaid: existingState.isPaid,
-          remainingForegroundAttempts: existingState.remainingForegroundAttempts
-        )
-      )
-    } else {
-      savePendingStripeCheckoutState(
-        .init(
-          checkoutContextId: contextId,
-          productId: productId,
-          completion: completion
-        )
-      )
+      remainingForegroundAttempts = existingState.remainingForegroundAttempts
     }
+    savePendingStripeCheckoutState(
+      .init(
+        checkoutContextId: contextId,
+        productId: productId,
+        completion: completion,
+        isPaid: true,
+        remainingForegroundAttempts: remainingForegroundAttempts
+      )
+    )
 
     var outcome = await pollStripeRedemptionResult(
       contextId: contextId,

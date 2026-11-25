@@ -879,6 +879,163 @@ struct WebCheckoutRecoveryTests {
     #expect(storage.get(PendingStripeCheckoutPollStorage.self) == nil)
   }
 
+  // MARK: - A checkout the page reports complete
+
+  @Test("A checkout the page said was paid is still redeemed after its first poll failed and time passed")
+  func pageCompletion_firstPollFails_isRedeemedLater() async {
+    let mockDelegate = MockSuperwallDelegate()
+    let superwall = makeSuperwall(delegate: mockDelegate)
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    network.pollRedemptionResultResponses = [.failure(NetworkError.unknown)]
+    let redeemer = makeRedeemer(
+      storage: storage,
+      network: network,
+      superwall: superwall,
+      stripePendingPollTimeoutNs: 50_000_000
+    )
+    await redeemer.handleStripeCheckoutComplete(
+      contextId: "ctx_1",
+      productId: "prod_1",
+      completion: .purchase(productId: "prod_1", shouldDismiss: false)
+    )
+    #expect(network.pollRedemptionResultCallCount == 1)
+
+    // The app is opened again once a checkout that was only submitted would have run out of time.
+    try? await Task.sleep(nanoseconds: 120_000_000)
+    #expect(await redeemer.shouldShowStripeRecoveryLoadingOnPaywallOpen() == true)
+    #expect(
+      storage.get(PendingStripeCheckoutPollStorage.self)?.completion
+        == .purchase(productId: "prod_1", shouldDismiss: false)
+    )
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+
+    #expect(network.pollRedemptionResultCallCount == 2)
+    #expect(mockDelegate.receivedResult?.code == "redemption_123")
+    #expect(storage.get(PendingStripeCheckoutPollStorage.self) == nil)
+  }
+
+  @Test("A submitted checkout the page then reports complete is kept as paid, with the attempts it had left")
+  func pageCompletion_afterSubmit_isPaidAndKeepsAttempts() async {
+    let superwall = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    storage.save(
+      PendingStripeCheckoutPollState(
+        checkoutContextId: "ctx_1",
+        productId: "prod_submitted",
+        remainingForegroundAttempts: 3
+      ),
+      forType: PendingStripeCheckoutPollStorage.self
+    )
+    let network = makeNetwork()
+    network.pollRedemptionResultResponses = [.failure(NetworkError.unknown)]
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    await redeemer.handleStripeCheckoutComplete(
+      contextId: "ctx_1",
+      productId: "prod_1",
+      completion: .purchase(productId: "prod_1", shouldDismiss: true)
+    )
+
+    let pending = storage.get(PendingStripeCheckoutPollStorage.self)
+    #expect(pending?.isPaid == true)
+    #expect(pending?.productId == "prod_1")
+    #expect(pending?.completion == .purchase(productId: "prod_1", shouldDismiss: true))
+    #expect(pending?.remainingForegroundAttempts == 3)
+  }
+
+  @Test("A teleport the page said was paid is redeemed on the next launch after its first poll failed")
+  func pageCompletedTeleport_firstPollFails_isRedeemedOnTheNextLaunch() async {
+    let mockDelegate = MockSuperwallDelegate()
+    let superwall = makeSuperwall(delegate: mockDelegate)
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    network.pollRedemptionResultResponses = [.failure(NetworkError.unknown)]
+    let redeemer = makeRedeemer(
+      storage: storage,
+      network: network,
+      superwall: superwall,
+      stripePendingPollTimeoutNs: 50_000_000
+    )
+    await redeemer.registerTeleportOpen(teleport)
+    await redeemer.handleStripeCheckoutComplete(
+      contextId: "ctx_1",
+      productId: "prod_1",
+      completion: .purchase(productId: "prod_1", shouldDismiss: false),
+      settlingTeleportId: teleport.teleportId
+    )
+    // The page said how its teleport went, so the paid checkout is what's left to redeem,
+    // finishing as the page asked.
+    #expect(storage.get(PendingTeleportStorage.self) == nil)
+    let pending = storage.get(PendingStripeCheckoutPollStorage.self)
+    #expect(pending?.isPaid == true)
+    #expect(pending?.completion == .purchase(productId: "prod_1", shouldDismiss: false))
+
+    // The app is ended, and opened again once a checkout that was only submitted would have
+    // run out of time.
+    try? await Task.sleep(nanoseconds: 120_000_000)
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    let launch = makeRedeemer(
+      storage: storage,
+      network: network,
+      superwall: superwall,
+      stripePendingPollTimeoutNs: 50_000_000
+    )
+    #expect(await launch.recoverPendingTeleport() == false)
+    #expect(network.teleportStatusRequests.isEmpty)
+    #expect(await launch.shouldShowStripeRecoveryLoadingOnPaywallOpen() == true)
+    await launch.pollPendingStripeCheckoutOnForegroundIfNeeded()
+
+    #expect(network.pollRedemptionResultCallCount == 2)
+    #expect(mockDelegate.receivedResult?.code == "redemption_123")
+    #expect(storage.get(PendingStripeCheckoutPollStorage.self) == nil)
+  }
+
+  @Test("A checkout the page said was paid that's never redeemed is given up on after its foreground attempts")
+  func pageCompletion_neverRedeemed_isGivenUpOnAfterItsAttempts() async {
+    let superwall = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    // Every poll fails.
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+    await redeemer.handleStripeCheckoutComplete(contextId: "ctx_1", productId: "prod_1")
+
+    for _ in 0..<PendingStripeCheckoutPollState.defaultForegroundAttempts {
+      #expect(await redeemer.shouldShowStripeRecoveryLoadingOnPaywallOpen() == true)
+      await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+    }
+
+    #expect(storage.get(PendingStripeCheckoutPollStorage.self) == nil)
+    #expect(await redeemer.shouldShowStripeRecoveryLoadingOnPaywallOpen() == false)
+    let polls = network.pollRedemptionResultCallCount
+    await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+    #expect(network.pollRedemptionResultCallCount == polls)
+  }
+
+  @Test("A paid checkout past its time limit holds no paywall and isn't polled")
+  func paidCheckout_pastItsTimeLimit_isForgotten() async {
+    let superwall = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let expired = PendingStripeCheckoutPollState(
+      checkoutContextId: "ctx_1",
+      productId: "prod_1",
+      isPaid: true,
+      updatedAt: Date().addingTimeInterval(-PendingStripeCheckoutPollState.paidTimeLimit - 1)
+    )
+    let network = makeNetwork()
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    storage.save(expired, forType: PendingStripeCheckoutPollStorage.self)
+    #expect(await redeemer.shouldShowStripeRecoveryLoadingOnPaywallOpen() == false)
+    #expect(storage.get(PendingStripeCheckoutPollStorage.self) == nil)
+
+    storage.save(expired, forType: PendingStripeCheckoutPollStorage.self)
+    await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+    #expect(network.pollRedemptionResultCallCount == 0)
+    #expect(storage.get(PendingStripeCheckoutPollStorage.self) == nil)
+  }
+
   // MARK: - Stored teleports
 
   @Test("A paid teleport is kept until its checkout is redeemed")
