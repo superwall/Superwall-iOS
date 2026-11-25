@@ -54,7 +54,23 @@ extension DeepLinkRouter {
   /// Capturing it now lets it go out with the enrichment request that the
   /// first config fetch waits for, so the custom product page can be known
   /// before the first paywall's audience is chosen.
-  func captureFirstSessionDeepLink(beforeRouting url: URL) {
+  ///
+  /// - Parameters:
+  ///   - url: The deep link that just arrived.
+  ///   - earlierUrl: A deep link still waiting to be routed, which arrived
+  ///     before this one, such as one received before the SDK was configured.
+  ///     It's captured first.
+  func captureFirstSessionDeepLink(
+    beforeRouting url: URL,
+    after earlierUrl: URL? = nil
+  ) {
+    if let earlierUrl {
+      captureEligibleFirstSessionDeepLink(earlierUrl)
+    }
+    captureEligibleFirstSessionDeepLink(url)
+  }
+
+  private func captureEligibleFirstSessionDeepLink(_ url: URL) {
     if url.isSuperwallReturnLink {
       return
     }

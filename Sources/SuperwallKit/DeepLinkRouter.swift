@@ -22,7 +22,7 @@ final class DeepLinkRouter {
   unowned let configManager: ConfigManager
   unowned let storage: Storage
   unowned let identityManager: IdentityManager
-  private static var pendingDeepLink: URL?
+  private(set) static var pendingDeepLink: URL?
 
   /// Tracks an event. Replaced in tests to observe what's tracked.
   var trackEvent: (Trackable) async -> Void = { event in

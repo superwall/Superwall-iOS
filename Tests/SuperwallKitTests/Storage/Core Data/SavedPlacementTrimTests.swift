@@ -390,6 +390,54 @@ struct SavedPlacementTrimTests {
   }
 
   @Test
+  func theSearchForParametersCarriesOnFromWhereItGotTo() async throws {
+    defer { try? FileManager.default.removeItem(at: rootUrl) }
+    let stack = makeStack()
+    try insert(2, named: "app_open", parameters: Data([7]), into: stack)
+    try insert(1, named: "app_open", parameters: Data(), into: stack)
+    try insert(3, named: "paywall_open", parameters: Data([7]), into: stack)
+    let context = try #require(stack.backgroundContext)
+
+    let pages: [[NSManagedObjectID]] = try context.performAndWait {
+      var pages: [[NSManagedObjectID]] = []
+      var lastSearchedId: NSManagedObjectID?
+      while true {
+        let page = try CoreDataManager.idsOfPlacementsWithParameters(
+          after: lastSearchedId,
+          upTo: 2,
+          in: context
+        )
+        if page.isEmpty {
+          break
+        }
+        pages.append(page)
+        lastSearchedId = page.last
+      }
+      return pages
+    }
+
+    // The five placements with parameters, each found once. They're not
+    // emptied here, so a search that started over would find the same two
+    // forever.
+    #expect(pages.map(\.count) == [2, 2, 1])
+    #expect(Set(pages.joined()).count == 5)
+  }
+
+  @Test
+  func parametersAreEmptiedWhenThereAreMoreThanOneSearchFinds() async throws {
+    defer { try? FileManager.default.removeItem(at: rootUrl) }
+    let stack = makeStack()
+    let count = CoreDataManager.parametersSearchLimit + CoreDataManager.trimBatchSize + 1
+    try insert(count, named: "app_open", parameters: Data([7]), into: stack)
+
+    let manager = CoreDataManager(coreDataStack: stack, lifecycle: lifecycle(NotificationCenter()))
+    await trim(manager)
+
+    #expect(await manager.countPlacement("app_open", interval: .infinity) == count)
+    #expect(try parameterBytes(in: stack) == 0)
+  }
+
+  @Test
   func spaceIsGivenBackOnALaterLaunchIfTheAppNeverWentToTheBackground() async throws {
     defer { try? FileManager.default.removeItem(at: rootUrl) }
     let stack = makeStack()
