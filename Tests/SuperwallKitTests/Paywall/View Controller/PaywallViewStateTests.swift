@@ -375,6 +375,36 @@ struct PaywallViewPresentationTests {
     #expect(forNext == .init(result: .declined, closeReason: .forNextPaywall))
   }
 
+  @Test("A dismissal that begins finishing hides a spinner left up")
+  func dismissalFinishingHidesTheSpinner() {
+    var state = reduce(presentedState(), .loading(.purchaseStarted), .disappeared)
+    let presentation = try! #require(state.latestPresentation)
+
+    // Another presentation's dismissal leaves it alone.
+    state = PaywallViewUpdate.dismissalFinishing(UUID()).reduce(state)
+    #expect(state.loadingState == .loadingPurchase)
+
+    state = PaywallViewUpdate.dismissalFinishing(presentation.id).reduce(state)
+    #expect(state.loadingState == .ready)
+  }
+
+  @Test("A dismissal that begins finishing after the paywall was shown again leaves the new spinner up")
+  func supersededDismissalFinishingKeepsTheNewSpinner() {
+    var state = reduce(presentedState(), .disappeared)
+    let first = try! #require(state.latestPresentation)
+    let second = PaywallViewState.Presentation(isPresentedBySDK: false, claimId: first.claimId)
+    state = reduce(
+      state,
+      .presentationWillBegin(second),
+      .presentationDidFinish,
+      .loading(.manualLoadingStarted)
+    )
+
+    state = PaywallViewUpdate.dismissalFinishing(first.id).reduce(state)
+
+    #expect(state.loadingState == .manualLoading)
+  }
+
   @Test("A presentation that begins while the last one's dismissal finishes leaves that one to finish by itself")
   func presentationBeginsWhileDismissing() {
     var state = reduce(presentedState(), .disappeared)

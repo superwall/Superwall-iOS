@@ -32,9 +32,12 @@ extension DeepLinkRouter {
   ///   - original: The deep link as the app received it.
   ///   - resolved: The deep link mapped from a Superwall app-link, if it was
   ///     one.
+  ///   - fetchesEnrichment: Whether to fetch enrichment for it now. `false`
+  ///     when a fetch that will carry it is about to start.
   func captureFirstSessionDeepLink(
     original: URL,
-    resolved: URL
+    resolved: URL,
+    fetchesEnrichment: Bool = true
   ) {
     if !storage.recordFirstSessionDeepLink(original: original, resolved: resolved) {
       return
@@ -42,10 +45,31 @@ extension DeepLinkRouter {
     identityManager.mergeUserAttributes(
       Self.firstDeepLinkAttributes(url: resolved.absoluteString, page: nil)
     )
+    if !fetchesEnrichment {
+      return
+    }
     let fetchEnrichment = self.fetchEnrichment
     Task {
       await fetchEnrichment()
     }
+  }
+
+  /// Captures the deep link waiting to be routed, if the app received one
+  /// before it configured the SDK, as the SDK starts up.
+  ///
+  /// Called before the first config fetch, whose enrichment request then
+  /// carries it. Left until the link is routed, it would only be looked up
+  /// after that request, and the first paywall's audience could be chosen
+  /// without its custom product page.
+  func captureFirstSessionDeepLinkReceivedBeforeConfigure() {
+    captureFirstSessionDeepLink(receivedBeforeConfigure: Self.pendingDeepLink)
+  }
+
+  func captureFirstSessionDeepLink(receivedBeforeConfigure url: URL?) {
+    guard let url else {
+      return
+    }
+    captureEligibleFirstSessionDeepLink(url, fetchesEnrichment: false)
   }
 
   /// Captures a deep link that arrived before config did, which is routed
@@ -70,7 +94,7 @@ extension DeepLinkRouter {
     captureEligibleFirstSessionDeepLink(url)
   }
 
-  private func captureEligibleFirstSessionDeepLink(_ url: URL) {
+  private func captureEligibleFirstSessionDeepLink(_ url: URL, fetchesEnrichment: Bool = true) {
     if url.isSuperwallReturnLink {
       return
     }
@@ -79,7 +103,8 @@ extension DeepLinkRouter {
     }
     captureFirstSessionDeepLink(
       original: url,
-      resolved: url.isSuperwallDeepLink ? url.superwallDeepLinkMappedURL : url
+      resolved: url.isSuperwallDeepLink ? url.superwallDeepLinkMappedURL : url,
+      fetchesEnrichment: fetchesEnrichment
     )
   }
 

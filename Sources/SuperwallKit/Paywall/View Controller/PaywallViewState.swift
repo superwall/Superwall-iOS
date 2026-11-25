@@ -421,6 +421,10 @@ enum PaywallViewUpdate: Reducer {
   case delegateCalled
   /// The paywall went off screen and its dismissal started finishing.
   case disappeared
+  /// The dismissal of the presentation with this id began finishing, which
+  /// hides a spinner left up. Not if the paywall is showing again by then:
+  /// the spinner is the new presentation's.
+  case dismissalFinishing(UUID)
   /// The dismissal of the presentation with this id finished.
   case dismissalFinished(UUID)
   /// Swiping the paywall away is blocked so its survey can show.
@@ -559,6 +563,15 @@ enum PaywallViewUpdate: Reducer {
       if case .presented(let presentation) = state.phase {
         state.phase = .dismissing(presentation)
       }
+    case .dismissalFinishing(let id):
+      guard
+        case .dismissing(let presentation) = state.phase,
+        presentation.id == id,
+        let loadingState = PaywallLoadingChange.spinnerDismissed.loadingState(after: state.loadingState)
+      else {
+        return state
+      }
+      state.writeLoadingState(loadingState)
     case .dismissalFinished(let id):
       if case .dismissing(let presentation) = state.phase,
         presentation.id == id {
