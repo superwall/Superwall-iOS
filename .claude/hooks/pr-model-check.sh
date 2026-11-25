@@ -1,8 +1,10 @@
 #!/bin/bash
 # Runs after Claude Code opens a pull request. If part of the session ran below
 # the bar set here, it posts one warning comment on the pull request. It never
-# blocks anything, and stays silent when it can't tell what was used.
+# blocks anything, and stays silent when it can't tell what was used. Only members
+# of the team's GitHub organization get the comment.
 
+TEAM_ORG="superwall"
 BAR="Fable 5.2 on high effort"
 PASSING_FAMILIES="fable|mythos"
 MIN_VERSION=502 # 5.2, as major * 100 + minor
@@ -95,10 +97,12 @@ Give this one a closer review, or redo the work with $BAR or above.
 $MARKER"
 
 # True for a pull request the signed-in user opened in the last ten minutes that
-# has no warning yet. The output can link other pull requests, so each is checked.
+# has no warning yet, when that user is in the team's organization. The output
+# can link other pull requests, so each is checked.
 needs_warning() {
-  gh api graphql -f url="$1" -f query='
-    query($url: URI!) {
+  gh api graphql -f url="$1" -f org="$TEAM_ORG" -f query='
+    query($url: URI!, $org: String!) {
+      organization(login: $org) { viewerIsAMember }
       resource(url: $url) {
         ... on PullRequest {
           createdAt
@@ -107,10 +111,11 @@ needs_warning() {
         }
       }
     }' 2> /dev/null | jq -e --arg marker "$MARKER" '
-      .data.resource
-      | .viewerDidAuthor == true
-        and (now - (.createdAt | fromdateiso8601)) < 600
-        and (.comments.nodes | all(.body | contains($marker) | not))' > /dev/null 2>&1
+      .data
+      | .organization.viewerIsAMember == true
+        and .resource.viewerDidAuthor == true
+        and (now - (.resource.createdAt | fromdateiso8601)) < 600
+        and (.resource.comments.nodes | all(.body | contains($marker) | not))' > /dev/null 2>&1
 }
 
 for url in $urls; do
