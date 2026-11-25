@@ -628,6 +628,9 @@ public final class Superwall: NSObject, ObservableObject {
         dependencyContainer.mmpAttributionManager.markMatchPending()
       }
 
+      // Before the config fetch, so its enrichment request carries the link.
+      dependencyContainer.deepLinkRouter.captureFirstSessionDeepLinkReceivedBeforeConfigure()
+
       async let fetchConfig: () = await dependencyContainer.configManager.fetchConfiguration()
       async let configureIdentity: () = await dependencyContainer.identityManager.configure()
 

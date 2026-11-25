@@ -1138,6 +1138,24 @@ struct PaywallViewActionTests {
     #expect(context.state.checkoutSheet(id) != nil)
   }
 
+  @Test("A paywall going off screen hides a spinner left up, and its dismissal finishing leaves the next one's alone")
+  func disappearingHidesTheSpinner() {
+    let context = FakePaywallViewContext()
+    context.present(makeClaim())
+    let id = try! #require(context.state.activePresentation?.id)
+    context.dispatch(.event(.loading(.purchaseStarted)))
+    #expect(context.state.loadingState == .loadingPurchase)
+
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(id))
+    #expect(context.state.loadingState == .ready)
+
+    // The paywall is shown again, with a spinner up, before the dismissal finishes.
+    context.present(makeClaim())
+    context.dispatch(.event(.loading(.manualLoadingStarted)))
+    context.dispatch(.finishDismissal(id))
+    #expect(context.state.loadingState == .manualLoading)
+  }
+
   @Test("A paywall closed after Safari went without reporting it still reports its dismissal")
   func safariGoneUnreportedDoesNotHideTheDismissal() {
     let context = FakePaywallViewContext()

@@ -1995,8 +1995,6 @@ extension PaywallViewController {
 
   /// Saves the page's state, then reports the end of the presentation.
   private func didDismiss(_ presentationId: UUID) async {
-    updateLoading(.spinnerDismissed)
-
     let pageState = await webView.messageHandler.getState()
     dispatch(.event(.pageStateSaved(pageState)))
     dispatch(.finishDismissal(presentationId))

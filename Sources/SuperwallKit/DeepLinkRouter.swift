@@ -22,7 +22,6 @@ final class DeepLinkRouter {
   unowned let configManager: ConfigManager
   unowned let storage: Storage
   unowned let identityManager: IdentityManager
-  private(set) static var pendingDeepLink: URL?
 
   /// Tracks an event. Replaced in tests to observe what's tracked.
   var trackEvent: (Trackable) async -> Void = { event in
@@ -206,6 +205,7 @@ final class DeepLinkRouter {
                 self?.route(url: deepLink)
                 Self.pendingDeepLink = nil
               }
+              self?.fetchEnrichmentIfFirstDeepLinkIsUnanswered()
             default:
               break
             }

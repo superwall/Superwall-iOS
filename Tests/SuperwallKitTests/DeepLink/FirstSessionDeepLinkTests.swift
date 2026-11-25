@@ -259,6 +259,60 @@ struct FirstSessionDeepLinkRouterTests {
     #expect(storedAttribute == laterUrl.absoluteString)
   }
 
+  @Test("A deep link received before configure is captured at startup, without a fetch of its own")
+  func captureReceivedBeforeConfigure_capturesWithoutFetching() async throws {
+    let url = try #require(
+      URL(string: "https://myapp.superwall.app/app-link/home?promo=\(UUID().uuidString)")
+    )
+
+    router.captureFirstSessionDeepLink(receivedBeforeConfigure: url)
+
+    // Saved for the enrichment request the first config fetch makes.
+    #expect(storage.get(FirstSessionDeepLinkLookup.self)?.originalUrl == url.absoluteString)
+    #expect(storedAttribute == storage.get(FirstSessionDeepLinkURL.self))
+    #expect(storedAttribute != nil)
+    try await Task.sleep(nanoseconds: 100_000_000)
+    #expect(enrichmentFetches.count == 0)
+
+    // Routing it once config arrives doesn't capture it a second time.
+    router.route(url: url)
+    try await Task.sleep(nanoseconds: 100_000_000)
+    #expect(enrichmentFetches.count == 0)
+  }
+
+  @Test("A first deep link the server hasn't answered is asked about again once the config is in")
+  func unansweredLookup_fetchesEnrichment() async throws {
+    let url = try #require(URL(string: "myapp://home?promo=\(UUID().uuidString)"))
+
+    // Nothing to ask about yet.
+    router.fetchEnrichmentIfFirstDeepLinkIsUnanswered()
+    try await Task.sleep(nanoseconds: 100_000_000)
+    #expect(enrichmentFetches.count == 0)
+
+    router.captureFirstSessionDeepLink(receivedBeforeConfigure: url)
+    router.fetchEnrichmentIfFirstDeepLinkIsUnanswered()
+    await enrichmentFetches.waitForCount(1)
+
+    // The server answered, so it isn't asked again.
+    storage.finishFirstSessionDeepLinkLookup(page: nil)
+    router.fetchEnrichmentIfFirstDeepLinkIsUnanswered()
+    try await Task.sleep(nanoseconds: 100_000_000)
+    #expect(enrichmentFetches.count == 1)
+  }
+
+  @Test(
+    "Nothing is captured at startup without a deep link, or for a return or redemption link",
+    arguments: [nil, "myapp://superwall/return", "myapp://superwall/redeem?code=TESTCODE"]
+  )
+  func captureReceivedBeforeConfigure_nothingToCapture(urlString: String?) throws {
+    let url = try urlString.map { try #require(URL(string: $0)) }
+
+    router.captureFirstSessionDeepLink(receivedBeforeConfigure: url)
+
+    #expect(storage.get(FirstSessionDeepLinkURL.self) == nil)
+    #expect(storage.get(FirstSessionDeepLinkLookup.self) == nil)
+  }
+
   @Test(
     "Return and redemption links that arrive before config aren't captured",
     arguments: ["myapp://superwall/return", "myapp://superwall/redeem?code=TESTCODE"]
