@@ -1388,6 +1388,11 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       do {
         let response = try await network.pollRedemptionResult(request: request)
 
+        // The answer is for the user the poll was started for.
+        if isNoLongerUser(request.appUserId) {
+          return .noRedemptionFound
+        }
+
         if let code = response.results.first?.code {
           let superwall = superwall ?? Superwall.shared
           clearTeleport(paidFor: contextId)
@@ -1513,8 +1518,9 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// Being paid, it's kept for longer than a checkout that was only submitted.
   func handlePurchasedReturn(_ purchase: PurchasedReturn) async {
     let contextId = purchase.checkoutContextId
-    // The user the link came back for. A reset gives the next user a new alias.
-    let aliasId = factory.makeAliasId()
+    // The identified user it came back for. An anonymous buyer's checkout belongs to the
+    // device, so it's kept across a reset or a login.
+    let appUserId = factory.makeAppUserId()
     // On a warm return the paywall page may have reported it first and redeemed it already.
     if isRedeemed(contextId) {
       return
@@ -1528,14 +1534,10 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       }
     }
     let fromTeleport = await teleportPurchase(for: purchase)
-    // The user was replaced while this waited, which clears what was pending for them. Saving
-    // the checkout now would leave it pending for the next user, and redeem it as theirs.
-    if factory.makeAliasId() != aliasId {
-      Logger.debug(
-        logLevel: .debug,
-        scope: .webEntitlements,
-        message: "Ignoring a purchased return link because the user changed while it was handled."
-      )
+    // That user logged out or was replaced while this waited, which clears what was pending
+    // for them. Saving the checkout now would leave it pending for the next user, and redeem
+    // it as theirs.
+    if isNoLongerUser(appUserId) {
       return
     }
     // The page or a recovery poll may have redeemed it while the teleport was read. Saving it
@@ -1566,6 +1568,24 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       return
     }
     await pollPendingStripeCheckoutShowingLoading()
+  }
+
+  /// Whether an identified user that a paid checkout was being finished for has since logged
+  /// out or been replaced. Always `false` for an anonymous user (`nil`): their checkout
+  /// belongs to the device.
+  private func isNoLongerUser(_ appUserId: String?) -> Bool {
+    guard let appUserId else {
+      return false
+    }
+    if factory.makeAppUserId() == appUserId {
+      return false
+    }
+    Logger.debug(
+      logLevel: .debug,
+      scope: .webEntitlements,
+      message: "Ignoring a paid web checkout because the user changed while it was handled."
+    )
+    return true
   }
 
   /// Keeps a checkout something said was paid for as the pending one.
@@ -1923,21 +1943,11 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     if webEntitlementsArrivals.isEmpty {
       return false
     }
-    let (request, presentationId, hasCompletedPurchase) = await MainActor.run {
-      (
-        paywallVc.request,
-        Self.presentedPresentationId(of: paywallVc),
-        paywallVc.store.read { $0.completedPurchase != nil }
-      )
+    let (request, presentationId) = await MainActor.run {
+      (paywallVc.request, Self.presentedPresentationId(of: paywallVc))
     }
     // A paywall already closing, such as one a recovered checkout just finished, is done.
     guard let presentationId else {
-      return false
-    }
-    // A purchase finished on this presentation, such as a checkout a return link's poll
-    // redeemed while the paywall was opening. It closed the paywall or kept it open as it
-    // asked, and the entitlements it brought aren't a restore.
-    if hasCompletedPurchase {
       return false
     }
     // A paywall with no placement, such as one the debugger opens, never counts.
@@ -2013,10 +2023,17 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     presentationId: UUID? = nil,
     superwall: Superwall
   ) async -> Bool {
-    var paywallEntitlementIds: Set<String> = []
-    for id in await paywallVc.info.productIds {
-      let entitlements = superwall.entitlements.byProductId(id)
-      paywallEntitlementIds.formUnion(entitlements.map { $0.id })
+    // A purchase finished on this presentation, such as a checkout a return link's poll
+    // redeemed while the paywall was opening. It closed the paywall or kept it open as it
+    // asked, and the entitlements it brought aren't a restore.
+    let hasCompletedPurchase = await MainActor.run {
+      paywallVc.store.read { $0.completedPurchase != nil }
+    }
+    if hasCompletedPurchase {
+      return false
+    }
+    let paywallEntitlementIds = await paywallVc.info.productIds.reduce(into: Set<String>()) { ids, id in
+      ids.formUnion(superwall.entitlements.byProductId(id).map { $0.id })
     }
 
     if paywallEntitlementIds.isEmpty || !paywallEntitlementIds.isSubset(of: activeEntitlementIds) {

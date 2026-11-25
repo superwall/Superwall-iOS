@@ -836,8 +836,11 @@ struct WebCheckoutRecoveryTests {
     #expect(storage.get(PendingTeleportStorage.self)?.checkoutContextId == "ctx_1")
   }
 
-  @Test("A return link whose user is replaced while it's handled leaves nothing for the next user")
-  func userReplacedWhileLinkIsHandled_savesNothing() async {
+  @Test("A return link whose identified user logs out while it's handled leaves nothing for the next user")
+  func userLogsOutWhileLinkIsHandled_savesNothing() async {
+    let identityManager = try! #require(dependencyContainer.identityManager)
+    identityManager.identify(userId: "buyer", options: nil)
+    defer { identityManager.reset() }
     let superwall = makeSuperwall()
     let storage = StorageMock(internalRedeemResponse: nil)
     storage.save(
@@ -848,10 +851,8 @@ struct WebCheckoutRecoveryTests {
     network.teleportStatusResponses = [status("claimed", checkoutContextId: "ctx_1")]
     network.pollRedemptionResultResponses = [redeemedResponse()]
     // The user logs out while the teleport's checkout is read.
-    let identityManager = dependencyContainer.identityManager
-    let aliasBefore = dependencyContainer.makeAliasId()
     network.whileTeleportStatusRequested = {
-      identityManager?.reset()
+      identityManager.reset()
     }
     let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
 
@@ -859,9 +860,61 @@ struct WebCheckoutRecoveryTests {
       PurchasedReturn(checkoutContextId: "ctx_1", productId: "", completion: .restore)
     )
 
-    #expect(dependencyContainer.makeAliasId() != aliasBefore)
+    #expect(dependencyContainer.makeAppUserId() == nil)
     #expect(storage.get(PendingStripeCheckoutPollStorage.self) == nil)
     #expect(network.pollRedemptionResultCallCount == 0)
+  }
+
+  @Test("An anonymous buyer's return link is still redeemed when the app resets while it's handled")
+  func anonymousResetWhileLinkIsHandled_stillRedeems() async {
+    try! #require(dependencyContainer.makeAppUserId() == nil)
+    let identityManager = try! #require(dependencyContainer.identityManager)
+    let superwall = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    storage.save(
+      PendingTeleportState(teleportId: "tp_1", productId: "prod_basic"),
+      forType: PendingTeleportStorage.self
+    )
+    let network = makeNetwork()
+    network.teleportStatusResponses = [status("claimed", checkoutContextId: "ctx_1")]
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    // The app resets a logged-out user, as some do at launch. The checkout belongs to the device.
+    network.whileTeleportStatusRequested = {
+      identityManager.reset()
+    }
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(checkoutContextId: "ctx_1", productId: "", completion: .restore)
+    )
+
+    #expect(network.pollRedemptionResultCallCount == 1)
+  }
+
+  @Test("A poll's answer isn't used once the identified user it was started for has logged out")
+  func userLogsOutWhilePolling_answerIsDropped() async {
+    let identityManager = try! #require(dependencyContainer.identityManager)
+    identityManager.identify(userId: "buyer", options: nil)
+    defer { identityManager.reset() }
+    let superwall = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    network.onPollRedemptionResult = {
+      identityManager.reset()
+    }
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(
+        checkoutContextId: "ctx_1",
+        productId: "prod_pro",
+        completion: .purchase(productId: "prod_pro", shouldDismiss: true)
+      )
+    )
+
+    #expect(network.pollRedemptionResultCallCount == 1)
+    #expect(storage.get(LatestRedeemResponse.self) == nil)
   }
 
   @Test("A link for another checkout doesn't take the teleport left open's product or dismissal")

@@ -360,6 +360,10 @@ struct PaywallViewPresentationTests {
     let shownAgain = PaywallViewUpdate.appearedWithoutBeginning(presentation).reduce(dismissing)
     #expect(shownAgain.activePresentation?.id == presentation.id)
     #expect(shownAgain.supersededDismissals.map(\.id) == [finishing.id])
+
+    // The last presentation's purchase doesn't carry over.
+    let afterPurchase = reduce(dismissing, .purchaseCompleted(.blank()), .appearedWithoutBeginning(presentation))
+    #expect(afterPurchase.completedPurchase == nil)
   }
 
   @Test("A decline after a purchase resolves to the purchase, unless it's for the next paywall")
