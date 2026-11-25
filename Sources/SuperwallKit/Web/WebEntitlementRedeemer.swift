@@ -1513,6 +1513,8 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   /// Being paid, it's kept for longer than a checkout that was only submitted.
   func handlePurchasedReturn(_ purchase: PurchasedReturn) async {
     let contextId = purchase.checkoutContextId
+    // The user the link came back for. A reset gives the next user a new alias.
+    let aliasId = factory.makeAliasId()
     // On a warm return the paywall page may have reported it first and redeemed it already.
     if isRedeemed(contextId) {
       return
@@ -1526,6 +1528,16 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       }
     }
     let fromTeleport = await teleportPurchase(for: purchase)
+    // The user was replaced while this waited, which clears what was pending for them. Saving
+    // the checkout now would leave it pending for the next user, and redeem it as theirs.
+    if factory.makeAliasId() != aliasId {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .webEntitlements,
+        message: "Ignoring a purchased return link because the user changed while it was handled."
+      )
+      return
+    }
     // The page or a recovery poll may have redeemed it while the teleport was read. Saving it
     // again would poll it again and finish the purchase a second time.
     if isRedeemed(contextId) {
@@ -1911,11 +1923,21 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     if webEntitlementsArrivals.isEmpty {
       return false
     }
-    let (request, presentationId) = await MainActor.run {
-      (paywallVc.request, Self.presentedPresentationId(of: paywallVc))
+    let (request, presentationId, hasCompletedPurchase) = await MainActor.run {
+      (
+        paywallVc.request,
+        Self.presentedPresentationId(of: paywallVc),
+        paywallVc.store.read { $0.completedPurchase != nil }
+      )
     }
     // A paywall already closing, such as one a recovered checkout just finished, is done.
     guard let presentationId else {
+      return false
+    }
+    // A purchase finished on this presentation, such as a checkout a return link's poll
+    // redeemed while the paywall was opening. It closed the paywall or kept it open as it
+    // asked, and the entitlements it brought aren't a restore.
+    if hasCompletedPurchase {
       return false
     }
     // A paywall with no placement, such as one the debugger opens, never counts.
