@@ -39,6 +39,21 @@ final class PaywallViewControllerCache: PaywallViewControllerCacheContext, @unch
     store.read { $0.presentedController }
   }
 
+  /// `controller` appeared, with this key. It's only marked as on screen if
+  /// it's the one cached under the key.
+  func markPresented(_ controller: PaywallViewController, forKey key: String) {
+    store.dispatch(
+      PaywallViewControllerCacheAction.controllerPresented(controller, key: key),
+      in: self
+    )
+  }
+
+  /// `controller` was dismissed. Another paywall that's on screen stays
+  /// marked as on screen.
+  func markDismissed(_ controller: PaywallViewController) {
+    store.dispatch(PaywallViewControllerCacheAction.controllerDismissed(controller), in: self)
+  }
+
   private let deviceLocaleString: String
 
   init(deviceLocaleString: String) {

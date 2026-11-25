@@ -310,26 +310,30 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   }
 
   private func recheckClaimedTeleport(_ teleport: PendingTeleportState) async -> Bool {
-    defer { isCheckingPendingTeleport = false }
     for delay in claimedTeleportRecheckDelays {
       try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
       // The page settled it, or a newer teleport replaced it, while this waited.
       guard storage.get(PendingTeleportStorage.self)?.teleportId == teleport.teleportId else {
+        isCheckingPendingTeleport = false
         return false
       }
       switch await readPendingTeleport(teleport) {
       case .paid(let purchase):
+        // Given up before the poll, which can take a minute, and not touched after it: another
+        // check may have taken the flag by then.
         isCheckingPendingTeleport = false
         await finishPaidTeleport(purchase)
         return true
       case .settled,
         .notStarted,
         .unknown:
+        isCheckingPendingTeleport = false
         return false
       case .checkoutStarted:
         continue
       }
     }
+    isCheckingPendingTeleport = false
     return false
   }
 

@@ -1136,6 +1136,31 @@ struct PaywallViewActionTests {
     #expect(context.state.checkoutSheet(id) != nil)
   }
 
+  @Test("A paywall closed after Safari went without reporting it still reports its dismissal")
+  func safariGoneUnreportedDoesNotHideTheDismissal() {
+    let context = FakePaywallViewContext()
+    let claim = makeClaim()
+    context.present(claim)
+    let id = try! #require(context.state.activePresentation?.id)
+    #expect(context.dispatch(.openSafari) == .browserOpened(true))
+
+    // Safari covers the paywall, so its view going away isn't a dismissal.
+    context.dispatch(.willDisappear)
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(nil))
+    #expect(context.calls.isEmpty)
+
+    // Safari went without reporting it, then the paywall was closed.
+    context.isBrowserOnScreen = false
+    context.dispatch(.willDisappear)
+    #expect(context.dispatch(.didDisappear) == .dismissalStarted(id))
+    #expect(context.state.browser == .none)
+    #expect(context.calls == [
+      .sendState(.willDismiss(.declined), claim: claim.id),
+      .notifyWillDismiss,
+      .trackClose
+    ])
+  }
+
   @Test("A checkout sheet that never showed doesn't stop the next one, and its late close does nothing")
   func checkoutGoneUnreportedDoesNotBlockTheNextOpen() {
     let context = FakePaywallViewContext()

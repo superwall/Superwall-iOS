@@ -48,8 +48,15 @@ enum PaywallViewControllerCacheUpdate: Reducer {
   /// The controller under a key appeared. Nothing cached is on screen if no
   /// controller is cached under it.
   case presented(key: String)
+  /// This controller appeared, with this key. Nothing cached is on screen if
+  /// another controller is cached under the key, or none is.
+  case controllerPresented(PaywallViewController, key: String)
   /// The controller on screen was dismissed.
   case dismissed
+  /// This controller was dismissed. Does nothing if another controller is the
+  /// one on screen, as when one paywall is shown while another finishes
+  /// closing.
+  case controllerDismissed(PaywallViewController)
 
   func reduce(_ state: PaywallViewControllerCacheState) -> PaywallViewControllerCacheState {
     state.applying(self)
@@ -77,8 +84,14 @@ extension PaywallViewControllerCacheState {
       }
     case .presented(let key):
       state.presentedKey = state.controllers[key] == nil ? nil : key
+    case let .controllerPresented(controller, key):
+      state.presentedKey = state.controllers[key] === controller ? key : nil
     case .dismissed:
       state.presentedKey = nil
+    case .controllerDismissed(let controller):
+      if state.presentedController === controller {
+        state.presentedKey = nil
+      }
     }
     return state
   }
@@ -124,32 +137,41 @@ enum PaywallViewControllerCacheAction: StoreAction {
   case removeAllExceptPresented
   /// The view controller under a key appeared.
   case presented(key: String)
+  /// This view controller appeared, with this key.
+  case controllerPresented(PaywallViewController, key: String)
   /// The view controller on screen was dismissed.
   case dismissed
+  /// This view controller was dismissed.
+  case controllerDismissed(PaywallViewController)
 
   func execute(in context: PaywallViewControllerCacheContext) {
-    let state = context.store.state
     let update: PaywallViewControllerCacheUpdate
     var dropped: [PaywallViewController] = []
 
     switch self {
     case let .save(controller, key):
       update = .saved(controller, key: key)
-      if let old = state.controllers[key],
+      if let old = context.store.read({ $0.controllers[key] }),
         old !== controller {
         dropped = [old]
       }
     case .remove(let key):
       update = .removed(keys: [key])
-      dropped = state.controllers[key].map { [$0] } ?? []
+      dropped = context.store.read { $0.controllers[key] }.map { [$0] } ?? []
     case .removeAllExceptPresented:
-      let keys = Set(state.controllers.keys.filter { $0 != state.presentedKey })
-      update = .removed(keys: keys)
-      dropped = keys.compactMap { state.controllers[$0] }
+      let removed = context.store.read { state in
+        state.controllers.filter { $0.key != state.presentedKey }
+      }
+      update = .removed(keys: Set(removed.keys))
+      dropped = Array(removed.values)
     case .presented(let key):
       update = .presented(key: key)
+    case let .controllerPresented(controller, key):
+      update = .controllerPresented(controller, key: key)
     case .dismissed:
       update = .dismissed
+    case .controllerDismissed(let controller):
+      update = .controllerDismissed(controller)
     }
 
     context.store.update(update)

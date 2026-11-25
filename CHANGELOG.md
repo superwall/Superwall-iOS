@@ -20,6 +20,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Audience filters no longer count paywall preloading and loading events.
 - Fixes `presentedViewController` sometimes returning a paywall that isn't on screen, which `reset()` then kept instead of clearing.
 - Fixes a paywall shown again while it was still closing being marked as closed, so its next close wasn't reported.
+- Fixes `presentedViewController` returning `nil` while a paywall is on screen, when it was shown as another paywall finished closing.
+- Fixes a paywall's close sometimes not being reported after it opened a link in the in-app browser.
 - Fixes a StoreKit 1 purchase that ended straight away, such as one the device refused, sometimes never returning its result.
 - Fixes a purchase never finishing, with its loading spinner left up, when another purchase started before it returned.
 - Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.

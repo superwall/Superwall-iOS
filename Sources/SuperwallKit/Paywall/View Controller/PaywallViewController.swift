@@ -1760,7 +1760,7 @@ extension PaywallViewController {
     // on an appearance that starts a presentation: `viewWillAppear` also fires
     // when the paywall is already on screen, such as after Safari closes.
     let didStartLoadForClaim = dispatch(.restoreHandedOutClaim).didStartLoad
-    cache?.activePaywallVcKey = cacheKey
+    cache?.markPresented(self, forKey: cacheKey)
 
     if isBrowserOpen {
       return
@@ -2147,7 +2147,11 @@ extension PaywallViewController: PaywallViewContext {
   }
 
   func markActive(_ isActive: Bool) {
-    cache?.activePaywallVcKey = isActive ? cacheKey : nil
+    if isActive {
+      cache?.markPresented(self, forKey: cacheKey)
+    } else {
+      cache?.markDismissed(self)
+    }
   }
 
   func destroyPresentingWindow() {

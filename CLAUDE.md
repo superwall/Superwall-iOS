@@ -267,6 +267,10 @@ controller hands it to `release` with `deferUntilUnlocked`, which lets go of it 
 Never let a controller's last reference go with the store locked or off the main thread, since that
 tears down its views. Read the cache through `store.read`, never `store.state`: a copy of the
 controllers can outlive a removal on main and become a controller's last owner on another thread.
+A paywall reports its own appearing and dismissal with itself (`markPresented`, `markDismissed`),
+not only its key. One that finishes closing after another appeared leaves the other marked as on
+screen, and a controller the app still holds after a newer one replaced it in the cache isn't taken
+for the new one.
 
 ### Purchase and restore stores
 
@@ -306,6 +310,8 @@ claim; `isPresented`, `isBrowserOpen`, macOS `isClosing` and friends are compute
 Publishers, dismiss completions, views, timers and tasks stay on the view controller. Safari doesn't
 always report it closed (never on visionOS), so a link or checkout is only refused while a browser
 is really on screen (`isBrowserOnScreen`); a browser the state has open that isn't is forgotten.
+The same check decides whether the paywall's view going away is a browser covering it or a
+dismissal to report.
 
 - Change the state only by dispatching a `PaywallViewAction`: `.event(update)` for a plain
   `PaywallViewUpdate`, or a named action for anything with side effects. A store observer

@@ -213,6 +213,50 @@ struct PaywallViewControllerCacheUpdateTests {
     #expect(result.controllers["a"] === controller)
     #expect(state(.dismissed).presentedKey == nil)
   }
+
+  @Test("controllerPresented marks the controller on screen only if it's the one cached under its key")
+  @MainActor
+  func controllerPresented() {
+    let dependencyContainer = DependencyContainer()
+    let cached = makeController(dependencyContainer)
+    let replaced = makeController(dependencyContainer)
+
+    let shown = state(.saved(cached, key: "a"), .controllerPresented(cached, key: "a"))
+    #expect(shown.presentedController === cached)
+
+    // The app still holds a controller that a newer one replaced in the cache.
+    let shownReplaced = state(.saved(cached, key: "a"), .controllerPresented(replaced, key: "a"))
+    #expect(shownReplaced.presentedKey == nil)
+
+    #expect(state(.controllerPresented(cached, key: "a")).presentedKey == nil)
+  }
+
+  @Test("controllerDismissed clears the controller on screen only if it's that controller")
+  @MainActor
+  func controllerDismissed() {
+    let dependencyContainer = DependencyContainer()
+    let first = makeController(dependencyContainer)
+    let second = makeController(dependencyContainer)
+    let bothCached: [PaywallViewControllerCacheUpdate] = [
+      .saved(first, key: "a"),
+      .saved(second, key: "b")
+    ]
+
+    // The second paywall appeared while the first was still closing.
+    let secondOnScreen = (bothCached + [
+      .controllerPresented(first, key: "a"),
+      .controllerPresented(second, key: "b"),
+      .controllerDismissed(first)
+    ]).reduce(PaywallViewControllerCacheState()) { $1.reduce($0) }
+    #expect(secondOnScreen.presentedController === second)
+
+    let noneOnScreen = (bothCached + [
+      .controllerPresented(first, key: "a"),
+      .controllerDismissed(first)
+    ]).reduce(PaywallViewControllerCacheState()) { $1.reduce($0) }
+    #expect(noneOnScreen.presentedKey == nil)
+    #expect(noneOnScreen.controllers.count == 2)
+  }
 }
 
 @Suite("PaywallViewControllerCacheAction")
@@ -543,6 +587,45 @@ struct PaywallViewControllerCacheStoreTests {
 
     cache.removeAll()
     #expect(cache.getPaywallViewController(forKey: "a") == nil)
+  }
+
+  @Test("a paywall that finishes closing after another appeared leaves the other one on screen")
+  @MainActor
+  func dismissalOfAnEarlierPaywallKeepsTheNewOne() {
+    let dependencyContainer = DependencyContainer()
+    let cache = PaywallViewControllerCache(deviceLocaleString: "en")
+    let first = makeController(dependencyContainer, cache: cache)
+    let second = makeController(dependencyContainer, cache: cache)
+    cache.save(first, forKey: "first")
+    cache.save(second, forKey: "second")
+
+    cache.markPresented(first, forKey: "first")
+    cache.markPresented(second, forKey: "second")
+    cache.markDismissed(first)
+
+    #expect(cache.activePaywallViewController === second)
+
+    // A reset keeps the one on screen.
+    cache.removeAll()
+    #expect(cache.getPaywallViewController(forKey: "second") === second)
+
+    cache.markDismissed(second)
+    #expect(cache.activePaywallViewController == nil)
+  }
+
+  @Test("showing a controller that was replaced in the cache doesn't mark the new one on screen")
+  @MainActor
+  func replacedControllerIsNotMistakenForTheCachedOne() {
+    let dependencyContainer = DependencyContainer()
+    let cache = PaywallViewControllerCache(deviceLocaleString: "en")
+    let heldByApp = makeController(dependencyContainer, cache: cache)
+    let replacement = makeController(dependencyContainer, cache: cache)
+    cache.save(heldByApp, forKey: "a")
+    cache.save(replacement, forKey: "a")
+
+    cache.markPresented(heldByApp, forKey: "a")
+
+    #expect(cache.activePaywallViewController == nil)
   }
 
   @Test("resetting the cache keeps the paywall on screen")
