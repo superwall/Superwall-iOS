@@ -11,6 +11,8 @@ struct AudienceFilterEvaluationOutcome {
   var assignment: Assignment?
   var unsavedOccurrence: TriggerAudienceOccurrence?
   var triggerResult: InternalTriggerResult
+  /// The entitlements the matched audience saw active, if its expression read them.
+  var entitlementIdsSeen: Set<String>?
 }
 
 enum RuleMatchOutcome {
@@ -96,13 +98,15 @@ struct AudienceLogic {
       return AudienceFilterEvaluationOutcome(
         assignment: assignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
-        triggerResult: .holdout(experiment)
+        triggerResult: .holdout(experiment),
+        entitlementIdsSeen: matchedRuleItem.entitlementIdsSeen
       )
     case .treatment:
       return AudienceFilterEvaluationOutcome(
         assignment: assignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
-        triggerResult: .paywall(experiment)
+        triggerResult: .paywall(experiment),
+        entitlementIdsSeen: matchedRuleItem.entitlementIdsSeen
       )
     }
   }

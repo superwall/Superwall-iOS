@@ -22,6 +22,7 @@ extension Superwall {
     _ request: PresentationRequest,
     _ publisher: PassthroughSubject<PaywallState, Never>? = nil
   ) async throws -> PaywallComponents {
+    var request = request
     try await waitForSubsStatusAndConfig(request, paywallStatePublisher: publisher)
 
     let debugInfo = log(request: request)
@@ -31,7 +32,12 @@ extension Superwall {
       paywallStatePublisher: publisher
     )
 
+    request.audienceEvaluatedAt = Date()
+    let activeBeforeEvaluation = Set(entitlements.active.map { $0.id })
     let audienceOutcome = try await evaluateAudienceFilter(from: request)
+    // What the matched audience read, which can be newer than what was active before the
+    // evaluation began. An audience with no expression read nothing.
+    request.entitlementIdsSeenByAudience = audienceOutcome.entitlementIdsSeen ?? activeBeforeEvaluation
 
     confirmHoldoutAssignment(
       request: request,
@@ -65,7 +71,8 @@ extension Superwall {
       paywall: paywall,
       presenter: presenter,
       audienceOutcome: audienceOutcome,
-      debugInfo: debugInfo
+      debugInfo: debugInfo,
+      request: request
     )
   }
   #endif

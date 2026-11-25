@@ -35,6 +35,10 @@ final class DeepLinkRouter {
     try? await Superwall.shared.dependencyContainer.deviceHelper?.getEnrichment()
   }
 
+  /// Hands a checkout that a return link says was paid for to the redeemer, which keeps it
+  /// pending until its code is redeemed. Replaced in tests.
+  var recordPurchasedReturn: (PurchasedReturn) -> Void
+
   /// The ``PaywallInfo`` of the presented paywall, if one is presented. Replaced in tests.
   var presentedPaywallInfo: () async -> PaywallInfo? = {
     #if canImport(WebKit)
@@ -57,6 +61,11 @@ final class DeepLinkRouter {
     self.configManager = configManager
     self.storage = storage
     self.identityManager = identityManager
+    recordPurchasedReturn = { purchase in
+      Task {
+        await webEntitlementRedeemer.handlePurchasedReturn(purchase)
+      }
+    }
 
     listenToConfig()
   }
@@ -71,6 +80,11 @@ final class DeepLinkRouter {
     self.configManager = configManager
     self.storage = storage
     self.identityManager = identityManager
+    recordPurchasedReturn = { purchase in
+      Task {
+        await webEntitlementRedeemer.handlePurchasedReturn(purchase)
+      }
+    }
 
     listenToConfig()
   }
@@ -143,6 +157,12 @@ final class DeepLinkRouter {
   }
 
   private func handleReturnLink(_ url: URL) {
+    // The checkout page says the user paid. The paywall that sent them there may be gone (iOS
+    // can end the app while Safari is open), so the SDK finishes the purchase from the link.
+    if let purchase = url.superwallPurchasedReturn {
+      recordPurchasedReturn(purchase)
+    }
+
     // The paywall that teleported takes its waiting screen out of sight at once.
     let userInfo = url.superwallReturnReason.map { ["reason": $0] }
     if Thread.isMainThread {

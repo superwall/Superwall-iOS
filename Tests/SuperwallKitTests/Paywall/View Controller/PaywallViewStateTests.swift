@@ -539,6 +539,19 @@ struct PaywallViewBrowserTests {
     #expect(state.loadingStateWrites == 1)
   }
 
+  @Test("An opened teleport is kept until the page reports its checkout completed or abandoned")
+  func unsettledTeleport() {
+    for settlement in [PaywallViewUpdate.stripeCheckoutCompleted, .stripeCheckoutAbandoned] {
+      var state = PaywallViewUpdate.teleportOpened("tp_1").reduce(PaywallViewState(paywall: .stub()))
+      #expect(state.unsettledTeleportId == "tp_1")
+      // A newer teleport replaces it.
+      state = PaywallViewUpdate.teleportOpened("tp_2").reduce(state)
+      #expect(state.unsettledTeleportId == "tp_2")
+      state = settlement.reduce(state)
+      #expect(state.unsettledTeleportId == nil)
+    }
+  }
+
   @Test("A custom store checkout keeps its product until it finishes, and closing its sheet isn't an abandon")
   func customStoreCheckout() {
     let id = UUID()
@@ -586,6 +599,8 @@ private final class FakePaywallViewContext: PaywallViewContext {
     case restoreSwipeAfterSurvey
     case scheduleCheckoutAbandonTracking
     case cancelCheckoutAbandonTracking
+    case registerTeleportOpen(String)
+    case teleportPageWentAway(String)
     case notifyCustomStoreCheckoutEnded
   }
 
@@ -661,6 +676,10 @@ private final class FakePaywallViewContext: PaywallViewContext {
   func restoreSwipeAfterSurvey() { calls.append(.restoreSwipeAfterSurvey) }
   func scheduleCheckoutAbandonTracking() { calls.append(.scheduleCheckoutAbandonTracking) }
   func cancelCheckoutAbandonTracking() { calls.append(.cancelCheckoutAbandonTracking) }
+  func registerTeleportOpen(_ teleport: PendingTeleportState) {
+    calls.append(.registerTeleportOpen(teleport.teleportId))
+  }
+  func teleportPageWentAway(_ teleportId: String) { calls.append(.teleportPageWentAway(teleportId)) }
   func notifyCustomStoreCheckoutEnded() { calls.append(.notifyCustomStoreCheckoutEnded) }
 
   /// Claims and shows the paywall, then forgets the calls that made.
@@ -806,6 +825,39 @@ struct PaywallViewActionTests {
     #expect(outcome == .dismissal(.init(result: .purchased(.blank()), closeReason: .systemLogic)))
     let id = try! #require(context.state.activePresentation?.id)
     #expect(context.completions[id] != nil)
+  }
+
+  @Test("A teleport opening is stored, and each checkout report returns the teleport it settled once")
+  func teleportSettlement() {
+    let context = FakePaywallViewContext()
+    context.dispatch(.teleportOpened(PendingTeleportState(teleportId: "tp_1", productId: "prod")))
+    #expect(context.calls.contains(.registerTeleportOpen("tp_1")))
+    #expect(context.dispatch(.stripeCheckoutCompleted) == .teleportSettled("tp_1"))
+    // The page reporting the same checkout again settles nothing more.
+    #expect(context.dispatch(.stripeCheckoutCompleted) == .teleportSettled(nil))
+
+    context.dispatch(.teleportOpened(PendingTeleportState(teleportId: "tp_2", productId: "prod")))
+    #expect(context.dispatch(.stripeCheckoutAbandoned) == .teleportSettled("tp_2"))
+    #expect(context.dispatch(.stripeCheckoutAbandoned) == .teleportSettled(nil))
+  }
+
+  @Test("A dismissal for one presentation is only asked for while that presentation is on screen")
+  func requestDismissalOfPresentation() {
+    let context = FakePaywallViewContext()
+    context.present()
+    let id = try! #require(context.state.activePresentation?.id)
+
+    // Another presentation's id, as one that has ended, asks for nothing.
+    #expect(
+      context.dispatch(.requestDismissalOfPresentation(UUID(), result: .restored, closeReason: .systemLogic))
+        == .done
+    )
+    #expect(context.state.activePresentation?.dismissal == nil)
+
+    #expect(
+      context.dispatch(.requestDismissalOfPresentation(id, result: .restored, closeReason: .systemLogic))
+        == .dismissal(.init(result: .restored, closeReason: .systemLogic))
+    )
   }
 
   @Test("A dismissal asked for before the paywall appears finishes the next presentation with its result and completion")
@@ -1409,5 +1461,77 @@ struct PaywallViewControllerStoreTests {
     #expect(didRead)
     #expect(loadingState == .ready)
     await MainActor.run { cancellable.cancel() }
+  }
+}
+
+@Suite("PaywallViewAction teleports left to the background")
+struct PaywallViewTeleportHandOffTests {
+  private let teleport = PendingTeleportState(teleportId: "teleport", productId: "product")
+
+  @Test("A teleport left to the background is forgotten")
+  func teleportLeftToBackground() {
+    let state = reduce(presentedState(), .teleportOpened("teleport"), .teleportLeftToBackground)
+    #expect(state.unsettledTeleportId == nil)
+  }
+
+  @Test("A paywall going off screen hands its unsettled teleport to the background check")
+  func disappearing() {
+    let context = FakePaywallViewContext()
+    context.present()
+    context.dispatch(.teleportOpened(teleport))
+    context.calls = []
+
+    context.dispatch(.didDisappear)
+    #expect(context.state.unsettledTeleportId == nil)
+    #expect(context.calls.contains(.teleportPageWentAway("teleport")))
+
+    // A checkout abandoned once the paywall is shown again settles nothing.
+    context.dispatch(.beginPresentation)
+    context.dispatch(.finishAppearing)
+    #expect(context.dispatch(.stripeCheckoutAbandoned) == .teleportSettled(nil))
+  }
+
+  @Test("A page that loads again hands its unsettled teleport to the background check")
+  func pageRestart() {
+    let context = FakePaywallViewContext()
+    context.present()
+    context.dispatch(.pageRestarted)
+    #expect(context.calls.isEmpty)
+
+    context.dispatch(.teleportOpened(teleport))
+    context.calls = []
+    context.dispatch(.pageRestarted)
+    #expect(context.state.unsettledTeleportId == nil)
+    #expect(context.calls == [.teleportPageWentAway("teleport")])
+  }
+
+  @Test("A checkout the page starts after a teleport isn't the teleport's")
+  func laterCheckout() {
+    let context = FakePaywallViewContext()
+    context.present()
+    // The checkout start that names a teleport comes before it opens, so it's kept.
+    context.dispatch(.stripeCheckoutStarted)
+    context.dispatch(.teleportOpened(teleport))
+    #expect(context.state.unsettledTeleportId == "teleport")
+    context.calls = []
+
+    // An embedded checkout started afterwards, then abandoned, settles nothing.
+    context.dispatch(.stripeCheckoutStarted)
+    #expect(context.calls == [.teleportPageWentAway("teleport")])
+    #expect(context.dispatch(.stripeCheckoutAbandoned) == .teleportSettled(nil))
+  }
+
+  @Test("A presentation already being dismissed keeps its result")
+  func dismissalOfPresentationAlreadyClosing() {
+    let context = FakePaywallViewContext()
+    context.present()
+    let id = try! #require(context.state.activePresentation?.id)
+    context.dispatch(.requestDismissal(result: .purchased(.blank()), closeReason: .systemLogic, completion: nil))
+
+    #expect(
+      context.dispatch(.requestDismissalOfPresentation(id, result: .restored, closeReason: .systemLogic))
+        == .done
+    )
+    #expect(context.state.activePresentation?.dismissal?.result == .purchased(.blank()))
   }
 }

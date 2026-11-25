@@ -51,6 +51,7 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   var stripeCheckoutCompleteShouldDismiss: Bool?
   var stripeCheckoutAbandon: (checkoutContextId: String, productId: String)?
   var customStoreCheckouts: [CustomStoreCheckout] = []
+  var openedTeleports: [PendingTeleportState] = []
 
   var request: PresentationRequest?
 
@@ -63,6 +64,8 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   var loadingState: SuperwallKit.PaywallLoadingState = .loadingURL
 
   var isActive = false
+
+  var pageRestartCount = 0
 
   init(
     paywallInfo: SuperwallKit.PaywallInfo,
@@ -91,6 +94,15 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
 
   func endTeleportWatch() {
     teleportWatch = nil
+  }
+
+  func teleportDidOpen(_ teleport: PendingTeleportState) {
+    openedTeleports.append(teleport)
+  }
+
+  var startedCheckouts: [String] = []
+  func handleStripeCheckoutStart(checkoutContextId: String) {
+    startedCheckouts.append(checkoutContextId)
   }
 
   func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool) {
@@ -148,5 +160,13 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
 
   func webViewLoadFailed(at date: Date) {
     paywall.webviewLoadingInfo.failAt = date
+  }
+}
+
+extension PaywallMessageHandlerDelegateMock: SWWebViewDelegate {
+  func webViewDidFail() {}
+
+  func webViewPageDidRestart() {
+    pageRestartCount += 1
   }
 }
