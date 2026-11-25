@@ -19,11 +19,39 @@ extension DeepLinkRouter {
     set {
       pendingDeepLinkLock.lock()
       unsafePendingDeepLink = newValue
+      if let newValue {
+        unsafeEarliestDeepLink = earliestDeepLink(keeping: unsafeEarliestDeepLink, receiving: newValue)
+      }
       pendingDeepLinkLock.unlock()
     }
   }
+
+  /// The first deep link the app handed over that could be an install's first.
+  /// Only the latest link waits to be routed, so a second one received before
+  /// the SDK was configured replaces the first there. This one is kept.
+  static var earliestDeepLink: URL? {
+    pendingDeepLinkLock.lock()
+    defer { pendingDeepLinkLock.unlock() }
+    return unsafeEarliestDeepLink
+  }
   private static let pendingDeepLinkLock = NSLock()
   private static var unsafePendingDeepLink: URL?
+  private static var unsafeEarliestDeepLink: URL?
+
+  /// The link to keep as the earliest: the one already kept, or `url` if none
+  /// is and it could be an install's first deep link.
+  static func earliestDeepLink(keeping kept: URL?, receiving url: URL) -> URL? {
+    if let kept {
+      return kept
+    }
+    return isEligibleAsFirstDeepLink(url) ? url : nil
+  }
+
+  /// Return and redemption links bring the user back from a web flow. They
+  /// aren't what brought them to the app.
+  static func isEligibleAsFirstDeepLink(_ url: URL) -> Bool {
+    return !url.isSuperwallReturnLink && url.redeemableCode == nil
+  }
 
   /// The user attribute key holding the first deep link URL received
   /// during the first app session after install.
@@ -79,7 +107,7 @@ extension DeepLinkRouter {
   /// after that request, and the first paywall's audience could be chosen
   /// without its custom product page.
   func captureFirstSessionDeepLinkReceivedBeforeConfigure() {
-    captureFirstSessionDeepLink(receivedBeforeConfigure: Self.pendingDeepLink)
+    captureFirstSessionDeepLink(receivedBeforeConfigure: Self.earliestDeepLink)
   }
 
   func captureFirstSessionDeepLink(receivedBeforeConfigure url: URL?) {
@@ -112,10 +140,7 @@ extension DeepLinkRouter {
   }
 
   private func captureEligibleFirstSessionDeepLink(_ url: URL, fetchesEnrichment: Bool = true) {
-    if url.isSuperwallReturnLink {
-      return
-    }
-    if url.redeemableCode != nil {
+    if !Self.isEligibleAsFirstDeepLink(url) {
       return
     }
     captureFirstSessionDeepLink(

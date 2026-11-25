@@ -300,6 +300,22 @@ struct FirstSessionDeepLinkRouterTests {
     #expect(enrichmentFetches.count == 1)
   }
 
+  @Test("The earliest deep link that could be an install's first is the one kept")
+  func earliestDeepLink_keepsTheFirstEligibleLink() throws {
+    let first = try #require(URL(string: "myapp://home?promo=first"))
+    let second = try #require(URL(string: "myapp://home?promo=second"))
+    let returnLink = try #require(URL(string: "myapp://superwall/return"))
+    let redemption = try #require(URL(string: "myapp://superwall/redeem?code=TESTCODE"))
+
+    #expect(DeepLinkRouter.earliestDeepLink(keeping: nil, receiving: first) == first)
+    // A second link before the SDK is configured doesn't replace it.
+    #expect(DeepLinkRouter.earliestDeepLink(keeping: first, receiving: second) == first)
+    // A return or redemption link is never the install's first.
+    #expect(DeepLinkRouter.earliestDeepLink(keeping: nil, receiving: returnLink) == nil)
+    #expect(DeepLinkRouter.earliestDeepLink(keeping: nil, receiving: redemption) == nil)
+    #expect(DeepLinkRouter.earliestDeepLink(keeping: first, receiving: returnLink) == first)
+  }
+
   @Test(
     "Nothing is captured at startup without a deep link, or for a return or redemption link",
     arguments: [nil, "myapp://superwall/return", "myapp://superwall/redeem?code=TESTCODE"]
