@@ -17,7 +17,7 @@ struct SubscriptionStatusResolutionTests {
   func subscriptionStatus_testModeOverride_appliesOverride() {
     let dependencyContainer = DependencyContainer()
     let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let testModeManager = dependencyContainer.testModeManager!
+    let testModeManager = dependencyContainer.silentTestModeManager()
 
     // Activate test mode
     let aliasId = dependencyContainer.identityManager.aliasId
@@ -30,7 +30,8 @@ struct SubscriptionStatusResolutionTests {
     // Set a test mode override
     let overrideEntitlement = Entitlement(id: "test_premium")
     let overrideStatus: SubscriptionStatus = .active(Set([overrideEntitlement]))
-    testModeManager.overriddenSubscriptionStatus = overrideStatus
+    testModeManager.dispatch(.restored([overrideEntitlement]))
+    #expect(testModeManager.overriddenSubscriptionStatus == overrideStatus)
 
     // Attempt to set a different status externally
     superwall.subscriptionStatus = .inactive
@@ -43,7 +44,7 @@ struct SubscriptionStatusResolutionTests {
   func subscriptionStatus_testModeOverride_allowsSameValue() {
     let dependencyContainer = DependencyContainer()
     let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let testModeManager = dependencyContainer.testModeManager!
+    let testModeManager = dependencyContainer.silentTestModeManager()
 
     // Activate test mode
     let aliasId = dependencyContainer.identityManager.aliasId
@@ -54,7 +55,7 @@ struct SubscriptionStatusResolutionTests {
     testModeManager.evaluateTestMode(config: config, options: SuperwallOptions())
 
     // Set override to inactive
-    testModeManager.overriddenSubscriptionStatus = .inactive
+    testModeManager.dispatch(.restored([]))
 
     // Set the same value — should not trigger re-assignment
     superwall.subscriptionStatus = .inactive
@@ -91,13 +92,14 @@ struct SubscriptionStatusResolutionTests {
   func subscriptionStatus_testModeNotActive_noOverrideApplied() {
     let dependencyContainer = DependencyContainer()
     let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let testModeManager = dependencyContainer.testModeManager!
+    let testModeManager = dependencyContainer.silentTestModeManager()
 
     // Test mode exists but is NOT active
     #expect(testModeManager.isTestMode == false)
 
     // Even if someone incorrectly sets an override, it shouldn't apply
-    testModeManager.overriddenSubscriptionStatus = .active(Set([Entitlement(id: "hack")]))
+    testModeManager.dispatch(.restored([Entitlement(id: "hack")]))
+    #expect(testModeManager.overriddenSubscriptionStatus == nil)
 
     superwall.subscriptionStatus = .inactive
 
@@ -108,7 +110,7 @@ struct SubscriptionStatusResolutionTests {
   func subscriptionStatus_testModeOverrideIsNil_passesThrough() {
     let dependencyContainer = DependencyContainer()
     let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let testModeManager = dependencyContainer.testModeManager!
+    let testModeManager = dependencyContainer.silentTestModeManager()
 
     // Activate test mode but don't set an override
     let aliasId = dependencyContainer.identityManager.aliasId
@@ -133,7 +135,7 @@ struct SubscriptionStatusResolutionTests {
   func customerInfo_testModeOverride_appliesOverride() {
     let dependencyContainer = DependencyContainer()
     let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let testModeManager = dependencyContainer.testModeManager!
+    let testModeManager = dependencyContainer.silentTestModeManager()
 
     // Activate test mode
     let aliasId = dependencyContainer.identityManager.aliasId
@@ -149,7 +151,8 @@ struct SubscriptionStatusResolutionTests {
       nonSubscriptions: [],
       entitlements: [Entitlement(id: "test_entitlement")]
     )
-    testModeManager.overriddenCustomerInfo = overrideInfo
+    testModeManager.dispatch(.restored([Entitlement(id: "test_entitlement")]))
+    #expect(testModeManager.overriddenCustomerInfo == overrideInfo)
 
     // Attempt to set different customer info
     let externalInfo = CustomerInfo(
@@ -182,16 +185,12 @@ struct SubscriptionStatusResolutionTests {
   func customerInfo_testModeNotActive_noOverrideApplied() {
     let dependencyContainer = DependencyContainer()
     let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let testModeManager = dependencyContainer.testModeManager!
+    let testModeManager = dependencyContainer.silentTestModeManager()
 
     #expect(testModeManager.isTestMode == false)
 
-    let overrideInfo = CustomerInfo(
-      subscriptions: [],
-      nonSubscriptions: [],
-      entitlements: [Entitlement(id: "should_not_apply")]
-    )
-    testModeManager.overriddenCustomerInfo = overrideInfo
+    testModeManager.dispatch(.restored([Entitlement(id: "should_not_apply")]))
+    #expect(testModeManager.overriddenCustomerInfo == nil)
 
     let externalInfo = CustomerInfo(
       subscriptions: [],

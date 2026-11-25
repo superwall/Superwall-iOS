@@ -134,6 +134,8 @@ final class TestModeModalViewController: UIViewController {
   }()
 
   private var tableViewHeightConstraint: NSLayoutConstraint?
+  /// Where the tester's choices are saved.
+  private let defaults: UserDefaults
 
   init(
     reason: TestModeReason,
@@ -143,7 +145,8 @@ final class TestModeModalViewController: UIViewController {
     availableEntitlements: [String],
     initialFreeTrialOverride: FreeTrialOverride,
     apiKey: String,
-    networkEnvironment: SuperwallOptions.NetworkEnvironment
+    networkEnvironment: SuperwallOptions.NetworkEnvironment,
+    defaults: UserDefaults = .standard
   ) {
     self.reason = reason
     self.userId = userId
@@ -153,9 +156,11 @@ final class TestModeModalViewController: UIViewController {
     self.initialFreeTrialOverride = initialFreeTrialOverride
     self.apiKey = apiKey
     self.networkEnvironment = networkEnvironment
+    self.defaults = defaults
 
     // Load saved override or use initial
     self.selectedFreeTrialOverride = TestModeSettingsStore.loadFreeTrialOverride(
+      from: defaults,
       fallback: initialFreeTrialOverride
     )
 
@@ -215,15 +220,19 @@ final class TestModeModalViewController: UIViewController {
 
 extension TestModeModalViewController {
   func saveSettings() {
-    TestModeSettingsStore.save(selectedEntitlements, freeTrialOverride: selectedFreeTrialOverride)
+    TestModeSettingsStore.save(
+      selectedEntitlements,
+      freeTrialOverride: selectedFreeTrialOverride,
+      in: defaults
+    )
   }
 
   func loadSavedSettings() -> [String: EntitlementSelection] {
-    return TestModeSettingsStore.loadSelections()
+    return TestModeSettingsStore.loadSelections(from: defaults)
   }
 
   func clearSavedSettings() {
-    TestModeSettingsStore.clear()
+    TestModeSettingsStore.clear(in: defaults)
   }
 
   func buildEntitlements() -> Set<Entitlement> {

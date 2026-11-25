@@ -15,7 +15,7 @@ struct TestModeManagerTests {
   func evaluateTestMode_activatesForMatchingUserId() {
     let dependencyContainer = DependencyContainer()
     let identityManager = dependencyContainer.identityManager!
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     // Identify with a known userId so we can match against it
     identityManager.identify(
@@ -37,7 +37,7 @@ struct TestModeManagerTests {
   @Test
   func evaluateTestMode_activatesForMatchingAliasId() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     let aliasId = dependencyContainer.identityManager.aliasId
     let config = Config.stub()
@@ -53,7 +53,7 @@ struct TestModeManagerTests {
   @Test
   func evaluateTestMode_doesNotActivateWhenNoMatch() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     let config = Config.stub()
       .setting(\.testModeUserIds, to: [
@@ -69,8 +69,16 @@ struct TestModeManagerTests {
   @Test
   func evaluateTestMode_clearsStateWhenDeactivated() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
     let storage = dependencyContainer.storage!
+    let isolated = IsolatedDefaults()
+    defer { isolated.remove() }
+    let manager = TestModeManager(
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper,
+      storage: storage,
+      defaults: isolated.defaults,
+      statusSink: SilentTestModeStatusSink()
+    )
 
     let aliasId = dependencyContainer.identityManager.aliasId
 
@@ -83,15 +91,17 @@ struct TestModeManagerTests {
     #expect(manager.isTestMode == true)
 
     // Simulate user selecting entitlements and free trial override
-    manager.setEntitlements(Set(["premium", "pro"]))
-    manager.freeTrialOverride = .forceAvailable
+    manager.dispatch(.modalClosed(
+      entitlements: [Entitlement(id: "premium"), Entitlement(id: "pro")],
+      freeTrialOverride: .forceAvailable
+    ))
 
     // Save settings to UserDefaults (as the modal would)
-    UserDefaults.standard.set(
+    isolated.defaults.set(
       ["premium": true, "pro": true],
       forKey: "com.superwall.testmode.entitlementSettings"
     )
-    UserDefaults.standard.set(
+    isolated.defaults.set(
       "forceAvailable",
       forKey: "com.superwall.testmode.freeTrialOverride"
     )
@@ -111,10 +121,10 @@ struct TestModeManagerTests {
 
     // Verify persisted settings are cleared
     #expect(
-      UserDefaults.standard.object(forKey: "com.superwall.testmode.entitlementSettings") == nil
+      isolated.defaults.object(forKey: "com.superwall.testmode.entitlementSettings") == nil
     )
     #expect(
-      UserDefaults.standard.object(forKey: "com.superwall.testmode.freeTrialOverride") == nil
+      isolated.defaults.object(forKey: "com.superwall.testmode.freeTrialOverride") == nil
     )
     #expect(
       (storage.get(IsTestModeActiveSubscription.self) ?? false) == false
@@ -124,7 +134,7 @@ struct TestModeManagerTests {
   @Test
   func evaluateTestMode_doesNotClearStateWhenStillActive() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     let aliasId = dependencyContainer.identityManager.aliasId
 
@@ -136,8 +146,10 @@ struct TestModeManagerTests {
     manager.evaluateTestMode(config: config, options: SuperwallOptions())
 
     // Set some state
-    manager.setEntitlements(Set(["premium"]))
-    manager.freeTrialOverride = .forceAvailable
+    manager.dispatch(.modalClosed(
+      entitlements: [Entitlement(id: "premium")],
+      freeTrialOverride: .forceAvailable
+    ))
 
     // Re-evaluate with the same config (still active)
     manager.evaluateTestMode(config: config, options: SuperwallOptions())
@@ -154,7 +166,7 @@ struct TestModeManagerTests {
   func testModeBehavior_never_disablesTestMode() {
     let dependencyContainer = DependencyContainer()
     let identityManager = dependencyContainer.identityManager!
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     identityManager.identify(userId: "test_user", options: nil)
 
@@ -176,7 +188,7 @@ struct TestModeManagerTests {
   @Test
   func testModeBehavior_always_enablesTestMode() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     // Config with no matching users
     let config = Config.stub()
@@ -199,7 +211,7 @@ struct TestModeManagerTests {
   func testModeBehavior_whenEnabledForUser_activatesOnConfigMatch() {
     let dependencyContainer = DependencyContainer()
     let identityManager = dependencyContainer.identityManager!
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     identityManager.identify(userId: "test_user", options: nil)
 
@@ -224,7 +236,7 @@ struct TestModeManagerTests {
   @Test
   func testModeBehavior_whenEnabledForUser_doesNotActivateOnBundleIdMismatch() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     // Config with a bundle ID that won't match (but no user match)
     let config = Config.stub()
@@ -244,7 +256,7 @@ struct TestModeManagerTests {
   func testModeBehavior_automatic_activatesOnConfigMatch() {
     let dependencyContainer = DependencyContainer()
     let identityManager = dependencyContainer.identityManager!
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     identityManager.identify(userId: "test_user", options: nil)
 
@@ -269,7 +281,7 @@ struct TestModeManagerTests {
   @Test
   func testModeBehavior_automatic_doesNotActivateWhenBundleIdIsPrefix() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     // Simulate an app extension whose bundle ID has the config bundle ID as a prefix
     let actualBundleId = Bundle.main.bundleIdentifier ?? ""
@@ -301,7 +313,7 @@ struct TestModeManagerTests {
   @Test
   func testModeBehavior_automatic_activatesOnBundleIdMismatch() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     // Config with a bundle ID that won't match and no user match
     let config = Config.stub()
@@ -326,7 +338,7 @@ struct TestModeManagerTests {
   @Test
   func reasonForTestMode_changesNothing() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     let config = Config.stub()
       .setting(\.testModeUserIds, to: [])
@@ -346,7 +358,7 @@ struct TestModeManagerTests {
   @Test
   func isPutInTestMode_byBundleIdMismatch() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     let config = Config.stub()
       .setting(\.testModeUserIds, to: [])
@@ -358,7 +370,7 @@ struct TestModeManagerTests {
   @Test
   func isPutInTestMode_byTestUser() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     let aliasId = dependencyContainer.identityManager.aliasId
     let config = Config.stub()
@@ -374,7 +386,7 @@ struct TestModeManagerTests {
     // The option turns test mode on whatever the config says, so the config
     // is safe to save and to start a launch from.
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     let options = SuperwallOptions()
     options.testModeBehavior = .always
@@ -386,7 +398,7 @@ struct TestModeManagerTests {
   @Test
   func isPutInTestMode_isFalseForAnOrdinaryConfig() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
 
     let config = Config.stub()
       .setting(\.testModeUserIds, to: [])
@@ -400,7 +412,7 @@ struct TestModeManagerTests {
   @Test
   func testModeBehavior_automatic_ignoresBundleIdMismatchInAnAppStoreBuild() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
     manager.isSandboxEnvironment = { false }
 
     let config = Config.stub()
@@ -416,7 +428,7 @@ struct TestModeManagerTests {
   @Test
   func testModeBehavior_automatic_stillActivatesForATestUserInAnAppStoreBuild() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
+    let manager = dependencyContainer.silentTestModeManager()
     manager.isSandboxEnvironment = { false }
 
     let aliasId = dependencyContainer.identityManager.aliasId

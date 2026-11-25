@@ -255,9 +255,8 @@ extension Superwall {
     assigned: SubscriptionStatus,
     activeGrants: Set<Entitlement>
   ) -> SubscriptionStatus {
-    if let testModeManager = dependencyContainer.testModeManager,
-      testModeManager.isTestMode,
-      let override = testModeManager.overriddenSubscriptionStatus {
+    // Read once: it's `nil` whenever test mode is off.
+    if let override = dependencyContainer.testModeManager?.overriddenSubscriptionStatus {
       return override
     }
     var status = assigned
