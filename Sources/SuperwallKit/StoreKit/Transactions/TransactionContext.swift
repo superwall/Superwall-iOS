@@ -211,13 +211,12 @@ final class AppTransactionContext: TransactionContext {
 
   func rememberHandledTransaction(_ transaction: StoreTransaction?) async {
     guard
-      #available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, *),
-      let purchaser = purchaseManager.purchaser as? ProductPurchaserSK2,
+      purchaseManager.isUsingSK2,
       let id = transaction?.sk2Transaction?.id
     else {
       return
     }
-    await purchaser.sk2ObserverModePurchaseDetector.insertToCachedTransactionIds([id])
+    purchaseManager.observerModeTracker.markSynced(transactionIds: [id])
   }
 
   func sessionDeviceAttributes() async -> [String: Any] {

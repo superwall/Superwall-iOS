@@ -268,6 +268,27 @@ Never let a controller's last reference go with the store locked or off the main
 tears down its views. Read the cache through `store.read`, never `store.state`: a copy of the
 controllers can outlive a removal on main and become a controller's last owner on another thread.
 
+### Observer mode store
+
+`ObserverModeTracker` keeps what observer mode remembers in an `ObserverModeState`: the StoreKit 1
+products being purchased, the StoreKit 2 transactions already handled, and `LegacyRecording`
+(whether the transactions from before observer mode were recorded; detection doesn't run until
+they are). `ObserverModeUpdate` events are the only changes, and `ObserverModeAction`s the only
+place they're applied: each checks and changes the state in one locked step and returns an
+`ObserverModeOutcome`, so two threads can't both act on one purchase. Side effects are the
+`ObserverModeContext` methods (saving, starting to observe, tracking, reading StoreKit); the tracker
+is the real context and tests use a fake. Saving runs with the lock held so saves keep their order;
+starting to observe and tracking are deferred until unlocked and queued on the tracker's
+`SerialTaskCoordinator`, which also runs legacy recording and detection one at a time. Nothing on
+that lane may `await` its `run` or `flush`, including `detectUnobservedTransactions()` and
+`observeSK1Purchase(ofProductId:)`.
+
+- An empty StoreKit read only forgets the transactions that were handled when the read started,
+  so a Superwall purchase finishing meanwhile stays handled.
+- The "purchase in progress" check is repeated inside the claim, since a purchase can start while
+  StoreKit is being read. It reads `PurchasingCoordinator.hasPurchaseInProgress`, which doesn't
+  wait.
+
 ### Purchase and restore stores
 
 `PurchasingCoordinator` keeps the purchase flow in a `StateStore<PurchaseContext, PurchaseState>`.
@@ -293,7 +314,9 @@ to `PaywallViewController`. Dismissing stays on the contexts, since it goes thro
 thing `TransactionManager` reaches directly is the `PurchasingCoordinator`, which is the purchase
 store itself. `TransactionManager.init(context:restoreContext:factory:)` takes both contexts; the
 other init builds the real ones. Tests watch what the real ones track by replacing their
-`trackEvent`.
+`trackEvent`. `ObserverModeTracker` decides which of the app's own purchases to track, then hands
+each to `observeSK1Transaction` or `logObservedPurchase`. The second ends the purchase it tracks
+with `finish`, or later purchases the app makes are skipped.
 
 ### Paywall view store
 

@@ -15,6 +15,7 @@ protocol Purchasing {
 final class PurchaseManager: Purchasing {
   let coordinator: PurchasingCoordinator
   let purchaser: Purchasing
+  let observerModeTracker: ObserverModeTracker
   private unowned let factory: Factory
   typealias Factory = HasExternalPurchaseControllerFactory
     & StoreTransactionFactory
@@ -43,6 +44,10 @@ final class PurchaseManager: Purchasing {
   ) {
     self.factory = factory
     coordinator = PurchasingCoordinator(factory: factory)
+    observerModeTracker = ObserverModeTracker(
+      storage: storage,
+      factory: factory
+    )
 
     let hasPurchaseController = factory.makeHasExternalPurchaseController()
     let options = factory.makeSuperwallOptions()
@@ -52,7 +57,7 @@ final class PurchaseManager: Purchasing {
       purchaser = ProductPurchaserSK2(
         identityManager: identityManager,
         receiptManager: receiptManager,
-        storage: storage,
+        observerModeTracker: observerModeTracker,
         coordinator: coordinator,
         factory: factory
       )
@@ -71,7 +76,7 @@ final class PurchaseManager: Purchasing {
         receiptManager: receiptManager,
         identityManager: identityManager,
         coordinator: coordinator,
-        storage: storage,
+        observerModeTracker: observerModeTracker,
         factory: factory
       )
     }

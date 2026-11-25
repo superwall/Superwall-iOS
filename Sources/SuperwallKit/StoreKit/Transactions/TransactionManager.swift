@@ -246,14 +246,6 @@ final class TransactionManager {
     }
   }
 
-  @available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
-  func logSK2ObserverModeTransaction(_ transaction: SK2Transaction) async {
-    await logObservedPurchase(
-      ofProductId: transaction.productID,
-      startedOffer: transaction.offer != nil
-    )
-  }
-
   /// Tracks a purchase the app made itself as begun and succeeded, then ends
   /// it, so the next one can be observed.
   ///
