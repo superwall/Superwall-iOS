@@ -56,13 +56,15 @@ files_of() {
   path=${1#https://github.com/}
   repo=${path%/pull/*}
   number=${path##*/}
-  names=$(gh api "repos/$repo/pulls/$number/files?per_page=100" --paginate --jq '.[].filename' 2> /dev/null) || return 1
+  names=$(gh api "repos/$repo/pulls/$number/files?per_page=100" --paginate \
+    --jq '.[] | .filename, (.previous_filename // empty)' 2> /dev/null) || return 1
   jq -Rn '[inputs | select(length > 0)]' <<< "$names"
 }
 
-# The other pull requests this session opened: the log line each was opened on,
-# and its link. A command only counts if it ran `gh pr create` and printed a
-# pull request's link on a line of its own, or was a pull request tool.
+# The pull requests this session opened: the log line each was opened on, and
+# its link. A command only counts if it ran `gh pr create` and printed a pull
+# request's link on a line of its own, or was a pull request tool. One that says
+# the pull request already exists didn't open it.
 earlier_pull_requests() {
   jq -rnR --arg opened_pr "$OPENED_PR" '
     def text:
@@ -76,15 +78,45 @@ earlier_pull_requests() {
     | $lines | to_entries[] | select(.value.type == "assistant") | .key as $index
     | .value.message.content | arrays | .[] | objects | select(.type == "tool_use")
     | ($results[.id // ""] // "") as $result
+    | select($result | test("already exists") | not)
     | (if .name == "Bash" and ((.input.command // "") | split("\n") | any(test($opened_pr))) then
         [$result | split("\n")[]
           | select(test("^\\s*https://github\\.com/[^/\\s]+/[^/\\s]+/pull/[0-9]+\\s*$"))
-          | gsub("\\s"; "")] | last
+          | gsub("\\s"; "")] | unique[]
       elif ((.name // "") | test("pull_request_create|create_pull_request")) then
-        [$result | match("https://github\\.com/[^/\\s\"\\\\]+/[^/\\s\"\\\\]+/pull/[0-9]+"; "g").string] | first
-      else null end)
-    | select(. != null)
+        [$result | match("https://github\\.com/[^/\\s\"\\\\]+/[^/\\s\"\\\\]+/pull/[0-9]+"; "g").string] | first // empty
+      else empty end)
     | [$index, .] | @tsv' "$transcript" 2> /dev/null
+}
+
+# Looks up the session's earlier pull requests once, for every link checked.
+# Sets $earlier to [{start, url, files}] for the latest $MAX_EARLIER, and
+# $floor to the log line of the newest one left out for being older, or -1.
+# A link whose files can't be read is left out.
+earlier=""
+floor=-1
+load_earlier() {
+  local all total index url files
+  if [ -n "$earlier" ]; then
+    return
+  fi
+  earlier='[]'
+  all=$(earlier_pull_requests)
+  if [ -z "$all" ]; then
+    return
+  fi
+  total=$(grep -c . <<< "$all")
+  if [ "$total" -gt "$MAX_EARLIER" ]; then
+    floor=$(sed -n "$((total - MAX_EARLIER))p" <<< "$all" | cut -f 1)
+  fi
+  while read -r index url; do
+    if [ -z "$url" ]; then
+      continue
+    fi
+    files=$(files_of "$url") || continue
+    earlier=$(jq -c --argjson start "$index" --arg url "$url" --argjson files "$files" \
+      '. + [{start: $start, url: $url, files: $files}]' <<< "$earlier")
+  done < <(tail -n "$MAX_EARLIER" <<< "$all")
 }
 
 lowercased() {
@@ -96,31 +128,32 @@ lowercased() {
 #
 # A reply worked on it if one of its tool calls names one of the pull request's
 # files. Work on a file from before the session opened another pull request with
-# that file in it isn't counted. If no reply can be tied to a file, the replies
-# since the last other pull request count.
+# a file of that name in it isn't counted, nor is work from before the earlier
+# pull requests that weren't looked up. If no reply can be tied to a file, the
+# replies since the last other pull request count.
 tally_for() {
-  local files others index url other_files
+  local files others
   files=$(files_of "$1") || files='[]'
-  others='[]'
-  while read -r index url; do
-    if [ -z "$url" ] || [ "$(lowercased "$url")" = "$(lowercased "$1")" ]; then
-      continue
-    fi
-    # One whose files can't be read is taken to share every file.
-    other_files=$(files_of "$url") || other_files=null
-    others=$(jq -c --argjson start "$index" --argjson files "$other_files" \
-      '. + [{start: $start, files: $files}]' <<< "$others")
-  done < <(earlier_pull_requests | tail -n "$MAX_EARLIER")
+  load_earlier
+  others=$(jq -c --arg url "$(lowercased "$1")" \
+    '[.[] | select((.url | ascii_downcase) != $url)]' <<< "$earlier")
 
-  jq -rnR --argjson files "$files" --argjson others "$others" '
+  jq -rnR --argjson files "$files" --argjson others "$others" --argjson floor "$floor" '
+    def name: split("/") | last;
     def tool_calls:
-      [.message.content | arrays | .[] | objects | select(.type == "tool_use") | .input | tostring]
+      [.message.content | arrays | .[] | objects | select(.type == "tool_use") | .input | .. | strings]
       | join("\n");
+    # Whether the text names the file, and not just a longer name ending in it.
+    def names($name):
+      contains($name)
+      and test("(^|[^A-Za-z0-9_.+-])"
+        + ($name | gsub("(?<c>[\\\\.^$|?*+()\\[\\]{}])"; "\\\(.c)"))
+        + "($|[^A-Za-z0-9_])");
     [inputs | fromjson? | select(type == "object") | select(.isSidechain != true)] as $lines
-    | ($others | map(.start) | max // -1) as $last_other
-    | ($files | map(. as $file | {
-        key: $file,
-        value: ([$others[] | select(.files == null or (.files | index($file) != null)) | .start] | max // -1)
+    | ([$floor] + ($others | map(.start)) | max) as $last_other
+    | ($files | map(name) | unique | map(. as $name | {
+        key: $name,
+        value: ([$floor] + [$others[] | select(any(.files[]; name == $name)) | .start] | max)
       }) | from_entries) as $work_starts
     | [$lines | to_entries[]
         | select(.value.type == "assistant")
@@ -128,8 +161,7 @@ tally_for() {
     | [$replies[]
         | .key as $index
         | (.value | tool_calls) as $calls
-        | select(any($files[]; . as $file
-            | $index > $work_starts[$file] and ($calls | contains($file | split("/") | last))))
+        | select(any($work_starts | to_entries[]; $index > .value and (.key as $name | $calls | names($name))))
         | .value] as $on_files
     | (if ($on_files | length) > 0 then $on_files
        else [$replies[] | select(.key > $last_other) | .value] end)
