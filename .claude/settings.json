@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash|mcp__.*(pull_request_create|create_pull_request)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pr-model-check.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
