@@ -1262,7 +1262,7 @@ public final class Superwall: NSObject, ObservableObject {
       }
       dependencyContainer.deepLinkRouter.captureFirstSessionDeepLink(
         beforeRouting: url,
-        after: DeepLinkRouter.pendingDeepLink
+        after: DeepLinkRouter.earliestDeepLink
       )
     }
     return DeepLinkRouter.storeDeepLink(url)

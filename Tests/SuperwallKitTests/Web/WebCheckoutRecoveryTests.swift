@@ -307,6 +307,35 @@ struct WebCheckoutRecoveryTests {
     #expect(await redeemer.dismissPaywallCoveredWhileLoading(paywallVc) == true)
   }
 
+  @Test("A keep-open purchase finished on the paywall just before its open is handled isn't closed as restored")
+  func redeemedBeforeOpenIsHandled_keepOpen_isntClosedAsRestored() async {
+    let superwall = makeSuperwall()
+    mapProductToPro()
+    let network = makeNetwork()
+    network.pollRedemptionResultResponses = [redeemedResponse(entitlements: [pro])]
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+    let evaluatedAt = Date()
+    try? await Task.sleep(nanoseconds: 5_000_000)
+    let paywallVc = await makePaywall(redeemer: redeemer, evaluatedAt: evaluatedAt, onScreenAs: "launch")
+
+    // The return link's poll redeems the checkout on the paywall, after its audience was
+    // evaluated and before its open is handled.
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(
+        checkoutContextId: "ctx_1",
+        productId: "prod_pro",
+        completion: .purchase(productId: "prod_pro", shouldDismiss: false)
+      )
+    )
+    superwall.subscriptionStatus = .active([pro])
+    #expect(await completedPurchase(on: paywallVc) == "prod_pro")
+
+    await paywallVc.settleWebCheckoutOnPaywallOpen()
+
+    #expect(network.pollRedemptionResultCallCount == 1)
+    #expect(await dismissal(of: paywallVc) == nil)
+  }
+
   @Test("A purchase recovered as a paywall opens, set to keep it open, isn't closed as restored")
   func recoveryOnOpen_keepOpen_isntClosedAsRestored() async {
     let superwall = makeSuperwall()
@@ -805,6 +834,87 @@ struct WebCheckoutRecoveryTests {
     #expect(pending?.completion == asPurchase)
     #expect(pending?.productId == "prod_basic")
     #expect(storage.get(PendingTeleportStorage.self)?.checkoutContextId == "ctx_1")
+  }
+
+  @Test("A return link whose identified user logs out while it's handled leaves nothing for the next user")
+  func userLogsOutWhileLinkIsHandled_savesNothing() async {
+    let identityManager = try! #require(dependencyContainer.identityManager)
+    identityManager.identify(userId: "buyer", options: nil)
+    defer { identityManager.reset() }
+    let superwall = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    storage.save(
+      PendingTeleportState(teleportId: "tp_1", productId: "prod_basic"),
+      forType: PendingTeleportStorage.self
+    )
+    let network = makeNetwork()
+    network.teleportStatusResponses = [status("claimed", checkoutContextId: "ctx_1")]
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    // The user logs out while the teleport's checkout is read.
+    network.whileTeleportStatusRequested = {
+      identityManager.reset()
+    }
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(checkoutContextId: "ctx_1", productId: "", completion: .restore)
+    )
+
+    #expect(dependencyContainer.makeAppUserId() == nil)
+    #expect(storage.get(PendingStripeCheckoutPollStorage.self) == nil)
+    #expect(network.pollRedemptionResultCallCount == 0)
+  }
+
+  @Test("An anonymous buyer's return link is still redeemed when the app resets while it's handled")
+  func anonymousResetWhileLinkIsHandled_stillRedeems() async {
+    try! #require(dependencyContainer.makeAppUserId() == nil)
+    let identityManager = try! #require(dependencyContainer.identityManager)
+    let superwall = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    storage.save(
+      PendingTeleportState(teleportId: "tp_1", productId: "prod_basic"),
+      forType: PendingTeleportStorage.self
+    )
+    let network = makeNetwork()
+    network.teleportStatusResponses = [status("claimed", checkoutContextId: "ctx_1")]
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    // The app resets a logged-out user, as some do at launch. The checkout belongs to the device.
+    network.whileTeleportStatusRequested = {
+      identityManager.reset()
+    }
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(checkoutContextId: "ctx_1", productId: "", completion: .restore)
+    )
+
+    #expect(network.pollRedemptionResultCallCount == 1)
+  }
+
+  @Test("A poll's answer isn't used once the identified user it was started for has logged out")
+  func userLogsOutWhilePolling_answerIsDropped() async {
+    let identityManager = try! #require(dependencyContainer.identityManager)
+    identityManager.identify(userId: "buyer", options: nil)
+    defer { identityManager.reset() }
+    let superwall = makeSuperwall()
+    let storage = StorageMock(internalRedeemResponse: nil)
+    let network = makeNetwork()
+    network.pollRedemptionResultResponses = [redeemedResponse()]
+    network.onPollRedemptionResult = {
+      identityManager.reset()
+    }
+    let redeemer = makeRedeemer(storage: storage, network: network, superwall: superwall)
+
+    await redeemer.handlePurchasedReturn(
+      PurchasedReturn(
+        checkoutContextId: "ctx_1",
+        productId: "prod_pro",
+        completion: .purchase(productId: "prod_pro", shouldDismiss: true)
+      )
+    )
+
+    #expect(network.pollRedemptionResultCallCount == 1)
+    #expect(storage.get(LatestRedeemResponse.self) == nil)
   }
 
   @Test("A link for another checkout doesn't take the teleport left open's product or dismissal")

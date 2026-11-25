@@ -546,6 +546,8 @@ enum PaywallViewUpdate: Reducer {
       state.supersedeFinishingDismissal()
       state.phase = .presented(presentation)
       state.earlyDismissal = nil
+      // A purchase belongs to the presentation it was made in.
+      state.completedPurchase = nil
     case .dismissRequested(let dismissal):
       // A sheet swiped away asks to be dismissed after it has gone, so this
       // also reaches a presentation whose dismissal is finishing.
