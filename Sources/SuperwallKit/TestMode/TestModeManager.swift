@@ -72,7 +72,18 @@ enum TestModeReason: Sendable {
 /// faked and entitlements are set directly.
 final class TestModeManager {
   /// Whether the current user is in test mode.
-  private(set) var isTestMode: Bool = false
+  private(set) var isTestMode: Bool {
+    get {
+      lock.lock()
+      defer { lock.unlock() }
+      return lockedIsTestMode
+    }
+    set {
+      lock.lock()
+      lockedIsTestMode = newValue
+      lock.unlock()
+    }
+  }
 
   /// The reason test mode is active, if applicable.
   private(set) var testModeReason: TestModeReason?
@@ -89,7 +100,33 @@ final class TestModeManager {
   /// The subscription status that test mode wants to maintain.
   /// When set, external writes to `subscriptionStatus` are
   /// overridden with this value.
-  var overriddenSubscriptionStatus: SubscriptionStatus?
+  var overriddenSubscriptionStatus: SubscriptionStatus? {
+    get {
+      lock.lock()
+      defer { lock.unlock() }
+      return lockedOverriddenSubscriptionStatus
+    }
+    set {
+      lock.lock()
+      lockedOverriddenSubscriptionStatus = newValue
+      lock.unlock()
+    }
+  }
+
+  /// The status test mode wants published: ``overriddenSubscriptionStatus``
+  /// while test mode is on, otherwise `nil`. Both are read in one step, so a
+  /// status change on another thread never pairs one's old value with the
+  /// other's new one. Never waits on another thread.
+  var subscriptionStatusOverride: SubscriptionStatus? {
+    lock.lock()
+    defer { lock.unlock() }
+    return lockedIsTestMode ? lockedOverriddenSubscriptionStatus : nil
+  }
+
+  /// Guards the values that status changes read on other threads.
+  private let lock = NSLock()
+  private var lockedIsTestMode = false
+  private var lockedOverriddenSubscriptionStatus: SubscriptionStatus?
 
   /// The customer info that test mode wants to maintain.
   /// When set, external writes to `customerInfo` are

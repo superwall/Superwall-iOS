@@ -9,7 +9,9 @@
 import Foundation
 @testable import SuperwallKit
 
-final class CacheMock: Cache {
+class CacheMock: Cache {
+  /// Guards the dictionaries: the SDK reads storage on background queues.
+  private let lock = NSRecursiveLock()
   var internalCache: [String: Data] = [:]
   var internalUserDocuments: [String: Data] = [:]
   var internalAppDocuments: [String: Data] = [:]
@@ -28,6 +30,8 @@ final class CacheMock: Cache {
     _ keyType: Key.Type,
     fromDirectory directory: SearchPathDirectory? = nil
   ) -> Key.Value? where Key: Storable, Key.Value: Decodable {
+    lock.lock()
+    defer { lock.unlock() }
     var internalValue: [String: Data]
     let directory = directory ?? keyType.directory
     switch directory {
@@ -52,6 +56,8 @@ final class CacheMock: Cache {
     _ keyType: Key.Type,
     fromDirectory directory: SearchPathDirectory? = nil
   ) -> Key.Value? where Key : Storable {
+    lock.lock()
+    defer { lock.unlock() }
     var internalValue: [String: Data]
     let directory = directory ?? keyType.directory
     switch directory {
@@ -77,6 +83,8 @@ final class CacheMock: Cache {
     forType keyType: Key.Type,
     inDirectory directory: SearchPathDirectory? = nil
   ) where Key.Value: Encodable {
+    lock.lock()
+    defer { lock.unlock() }
     guard let data = try? JSONEncoder().encode(value) else {
       return
     }
@@ -108,6 +116,8 @@ final class CacheMock: Cache {
     forType keyType: Key.Type,
     inDirectory directory: SearchPathDirectory? = nil
   ) where Key : Storable {
+    lock.lock()
+    defer { lock.unlock() }
     guard let value = value as? NSCoding else {
       return
     }
@@ -141,6 +151,8 @@ final class CacheMock: Cache {
     _ keyType: Key.Type,
     fromDirectory directory: SearchPathDirectory? = nil
   ) where Key : Storable {
+    lock.lock()
+    defer { lock.unlock() }
     var internalValue: [String: Data]
     let directory = directory ?? keyType.directory
     switch directory {

@@ -11,8 +11,8 @@ import Foundation
 ///
 /// The three cases are the only ways the published status can change, and
 /// each carries exactly what that path knows: the two assignments carry a
-/// new status, a grant change carries nothing because it leaves the assigned
-/// status alone and only changes what merges into it.
+/// new status, a grant change carries the new granted entitlements, which
+/// leave the assigned status alone and only change what merges into it.
 enum SubscriptionStatusChange {
   /// The developer assigned ``Superwall/subscriptionStatus`` directly.
   case developerAssignment(SubscriptionStatus)
@@ -23,5 +23,5 @@ enum SubscriptionStatusChange {
 
   /// ``Superwall/grantedEntitlements`` changed, so the status is republished
   /// from the assigned value it already had.
-  case grantChange
+  case grantChange(Set<Entitlement>)
 }

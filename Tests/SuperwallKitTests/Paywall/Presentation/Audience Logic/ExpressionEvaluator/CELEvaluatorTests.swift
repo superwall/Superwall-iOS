@@ -158,7 +158,7 @@ struct CELEvaluatorTests {
   @Test func evaluateExpression_noEntitlements_match() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
-    dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(.inactive)
+    dependencyContainer.entitlementsInfo.publish(.sdkAssignment(.inactive))
     let evaluator = CELEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
@@ -176,7 +176,7 @@ struct CELEvaluatorTests {
   @Test func evaluateExpression_noEntitlements_noMatch() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
-    dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(.active([.stub()]))
+    dependencyContainer.entitlementsInfo.publish(.sdkAssignment(.active([.stub()])))
     let evaluator = CELEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
@@ -193,7 +193,7 @@ struct CELEvaluatorTests {
   @Test func evaluateExpression_containsSpecificEntitlement() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
-    dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(.active([.init(id: "bronze")]))
+    dependencyContainer.entitlementsInfo.publish(.sdkAssignment(.active([.init(id: "bronze")])))
     let evaluator = CELEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer

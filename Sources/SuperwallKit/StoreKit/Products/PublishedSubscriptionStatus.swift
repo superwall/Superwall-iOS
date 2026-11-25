@@ -16,19 +16,20 @@ import Foundation
 /// overrides were applied. The projected value (`$subscriptionStatus`) replays
 /// the latest emitted value to new subscribers, like `@Published`; while
 /// emissions are queued behind a slow subscriber, that replay can trail the
-/// stored value until its turn comes. Reads take the same lock as writes,
-/// so a read on one thread never races an assignment on another.
+/// stored value until its turn comes. The value itself lives in the
+/// entitlements store, so a read on one thread never races an assignment on
+/// another.
 ///
 /// Public only because a public property's wrapper type has to be; nothing
 /// but the projection is meant to be used. The enclosing-instance subscript
 /// is the same mechanism `@Published` itself uses to reach its owner.
 @propertyWrapper
 public struct PublishedSubscriptionStatus {
-  private var storage: SubscriptionStatus
-  private let subject: CurrentValueSubject<SubscriptionStatus, Never>
+  /// Sent each change of the published status, once the entitlements store
+  /// is unlocked.
+  let subject: CurrentValueSubject<SubscriptionStatus, Never>
 
   public init(wrappedValue: SubscriptionStatus) {
-    storage = wrappedValue
     subject = CurrentValueSubject(wrappedValue)
   }
 
@@ -48,24 +49,10 @@ public struct PublishedSubscriptionStatus {
     storage storageKeyPath: ReferenceWritableKeyPath<Superwall, PublishedSubscriptionStatus>
   ) -> SubscriptionStatus {
     get {
-      superwall.subscriptionStatusLock.lock()
-      defer {
-        superwall.subscriptionStatusLock.unlock()
-      }
-      return superwall[keyPath: storageKeyPath].storage
+      return superwall.entitlements.status
     }
     set {
       superwall.publishSubscriptionStatus(.developerAssignment(newValue))
     }
-  }
-
-  /// Stores a merged status without emitting it.
-  mutating func store(_ merged: SubscriptionStatus) {
-    storage = merged
-  }
-
-  /// Emits a stored status to subscribers.
-  func emit(_ status: SubscriptionStatus) {
-    subject.send(status)
   }
 }

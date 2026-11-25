@@ -33,6 +33,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Improves the contrast of text and icons in the Customer Center.
 - Fixes the Customer Center's purchase cards breaking words mid-word at the largest text sizes.
 - Makes the Customer Center's Copy button easier to tap.
+- Fixes `Superwall.shared.entitlements.active` briefly lagging behind a new subscription status, and `entitlements.all` being empty for a moment after launch.
+- Fixes `customerInfo` sometimes keeping an older value than the subscription status when the status changed while customer info was being updated.
+- Fixes the subscription status change event sometimes listing the wrong granted entitlements.
 
 ## 4.19.1
 
