@@ -45,7 +45,7 @@ class CoreDataManager {
     guard let backgroundContext = backgroundContext else {
       return
     }
-    if !Self.isSaved(placementNamed: placementData.name) {
+    guard Self.isSaved(placementNamed: placementData.name) else {
       return
     }
     backgroundContext.perform {
@@ -190,7 +190,7 @@ class CoreDataManager {
     _ placement: PlacementData?,
     request: ComputedPropertyRequest
   ) async -> Int? {
-    if !Self.isSaved(placementNamed: request.placementName) {
+    guard Self.isSaved(placementNamed: request.placementName) else {
       return nil
     }
     let createdAt = await coreDataStack.getLastSavedPlacementDate(
@@ -265,7 +265,7 @@ class CoreDataManager {
     _ placementName: String,
     since startDate: Date?
   ) async -> Int {
-    if !Self.isSaved(placementNamed: placementName) {
+    guard Self.isSaved(placementNamed: placementName) else {
       return 0
     }
     return await coreDataStack.count(
@@ -283,7 +283,7 @@ extension CoreDataManager {
     _ placement: PlacementData?,
     request: ComputedPropertyRequest
   ) -> Int? {
-    if !Self.isSaved(placementNamed: request.placementName) {
+    guard Self.isSaved(placementNamed: request.placementName) else {
       return nil
     }
     let createdAt = coreDataStack.getLastSavedPlacementDateAndWait(
@@ -326,7 +326,7 @@ extension CoreDataManager {
     _ placementName: String,
     since startDate: Date?
   ) -> Int {
-    if !Self.isSaved(placementNamed: placementName) {
+    guard Self.isSaved(placementNamed: placementName) else {
       return 0
     }
     return coreDataStack.countAndWait(
