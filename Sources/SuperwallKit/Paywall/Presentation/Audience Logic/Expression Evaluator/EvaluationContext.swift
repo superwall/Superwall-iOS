@@ -12,8 +12,15 @@ internal import Superscript
 final class EvaluationContext: HostContext {
   let storage: Storage
 
-  init(storage: Storage) {
+  /// The placement the audience filter is being checked for, if there is one.
+  let placement: PlacementData?
+
+  init(
+    storage: Storage,
+    placement: PlacementData?
+  ) {
     self.storage = storage
+    self.placement = placement
   }
 
   func computedProperty(name: String, args: String, callback: ResultCallback) {
@@ -51,17 +58,22 @@ final class EvaluationContext: HostContext {
         since: window.startDate
       )
     } else {
-      number = storage.coreDataManager.getComputedPropertySincePlacementAndWait(
-        PlacementData(
-          name: placementName,
-          parameters: [:],
-          createdAt: Date()
-        ),
+      // The placement being checked has already been saved. Passing it on means
+      // the time since that same placement is measured from the one before it.
+      let timeSince = storage.coreDataManager.getComputedPropertySincePlacementAndWait(
+        placement,
         request: ComputedPropertyRequest(
           type: type,
           placementName: placementName
         )
       )
+      if timeSince == nil, placement?.name == placementName {
+        // The first time a placement happens there's none before it, so it's
+        // measured from itself.
+        number = 0
+      } else {
+        number = timeSince
+      }
     }
 
     guard

@@ -71,7 +71,7 @@ struct EntitlementUnknownFieldsTests {
 
     let output = evaluateWithContext(
       definition: jsonString,
-      context: EvaluationContext(storage: Self.dependencyContainer.storage)
+      context: EvaluationContext(storage: Self.dependencyContainer.storage, placement: nil)
     )
 
     // Decoded rather than compared byte for byte, so a future Superscript bump
