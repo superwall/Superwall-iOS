@@ -17,77 +17,61 @@ final class EvaluationContext: HostContext {
   }
 
   func computedProperty(name: String, args: String, callback: ResultCallback) {
-    evaluateProperty(name: name, args: args, callback: callback)
+    callback.onResult(result: value(ofProperty: name, args: args))
   }
 
   func deviceProperty(name: String, args: String, callback: ResultCallback) {
-    evaluateProperty(name: name, args: args, callback: callback)
+    callback.onResult(result: value(ofProperty: name, args: args))
   }
 
-  private func evaluateProperty(name: String, args: String, callback: ResultCallback) {
-    Task {
-      guard
-        let type = ComputedPropertyRequestType.allCases.first(where: { $0.description == name })
-      else {
-        callback.onResult(result: "")
-        return
-      }
-      guard let argsData = args.data(using: .utf8) else {
-        callback.onResult(result: "")
-        return
-      }
-
-      let decoder = JSONDecoder()
-      guard let passableValues = try? decoder.decode([PassableValue].self, from: argsData) else {
-        callback.onResult(result: "")
-        return
-      }
-
-      guard let firstPassableValue = passableValues.first else {
-        callback.onResult(result: "")
-        return
-      }
-      guard case let .string(name) = firstPassableValue else {
-        callback.onResult(result: "")
-        return
-      }
-
-      let request = ComputedPropertyRequest(
-        type: type,
-        placementName: name
-      )
-
-      let number: Int?
-      if let window = Self.placementCountWindow(for: type) {
-        // We don't add one here because the placement data is saved before
-        // we do the count.
-        number = await storage.coreDataManager.countPlacement(name, since: window.startDate)
-      } else {
-        number = await storage.coreDataManager.getComputedPropertySincePlacement(
-          PlacementData(
-            name: name,
-            parameters: [:],
-            createdAt: Date()
-          ),
-          request: request
-        )
-      }
-
-      guard let number = number else {
-        callback.onResult(result: "")
-        return
-      }
-
-      guard let jsonData = try? JSONEncoder().encode(toPassableValue(from: number)) else {
-        callback.onResult(result: "")
-        return
-      }
-      guard let jsonString = String(data: jsonData, encoding: .utf8) else {
-        callback.onResult(result: "")
-        return
-      }
-      callback.onResult(result: jsonString)
+  /// The property's value as JSON, or an empty string if it has none.
+  ///
+  /// The evaluator holds the thread it was called on until it has the answer, so
+  /// this answers on that thread and never from a `Task`. Evaluations run on Swift
+  /// concurrency's threads, and there are only as many of those as the device has
+  /// cores. With each one held by an evaluation, a task would have none left to
+  /// run on, and every evaluation would wait forever along with all the app's
+  /// other async work.
+  func value(ofProperty name: String, args: String) -> String {
+    guard
+      let type = ComputedPropertyRequestType.allCases.first(where: { $0.description == name }),
+      let argsData = args.data(using: .utf8),
+      let passableValues = try? JSONDecoder().decode([PassableValue].self, from: argsData),
+      case let .string(placementName)? = passableValues.first
+    else {
+      return ""
     }
+
+    let number: Int?
+    if let window = Self.placementCountWindow(for: type) {
+      // We don't add one here because the placement data is saved before
+      // we do the count.
+      number = storage.coreDataManager.countPlacementAndWait(
+        placementName,
+        since: window.startDate
+      )
+    } else {
+      number = storage.coreDataManager.getComputedPropertySincePlacementAndWait(
+        PlacementData(
+          name: placementName,
+          parameters: [:],
+          createdAt: Date()
+        ),
+        request: ComputedPropertyRequest(
+          type: type,
+          placementName: placementName
+        )
+      )
+    }
+
+    guard
+      let number = number,
+      let jsonData = try? JSONEncoder().encode(toPassableValue(from: number)),
+      let jsonString = String(data: jsonData, encoding: .utf8)
+    else {
+      return ""
+    }
+    return jsonString
   }
 
   /// How far back a placement count goes.

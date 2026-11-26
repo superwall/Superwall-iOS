@@ -94,18 +94,39 @@ class CoreDataStack {
       return 0
     }
     return await backgroundContext.perform {
-      do {
-        return try backgroundContext.count(for: fetchRequest)
-      } catch let error as NSError {
-        Logger.debug(
-          logLevel: .error,
-          scope: .coreData,
-          message: "Error counting from Core Data.",
-          info: error.userInfo,
-          error: error
-        )
-        return 0
-      }
+      Self.count(for: fetchRequest, in: backgroundContext)
+    }
+  }
+
+  /// Counts on the calling thread, for a caller that has to answer before it
+  /// returns. Anything that can suspend uses ``count(for:)``.
+  func countAndWait<T: NSFetchRequestResult>(for fetchRequest: NSFetchRequest<T>) -> Int {
+    guard
+      let backgroundContext = backgroundContext,
+      persistentContainer != nil
+    else {
+      return 0
+    }
+    return backgroundContext.performAndWait {
+      Self.count(for: fetchRequest, in: backgroundContext)
+    }
+  }
+
+  private static func count<T: NSFetchRequestResult>(
+    for fetchRequest: NSFetchRequest<T>,
+    in context: NSManagedObjectContext
+  ) -> Int {
+    do {
+      return try context.count(for: fetchRequest)
+    } catch let error as NSError {
+      Logger.debug(
+        logLevel: .error,
+        scope: .coreData,
+        message: "Error counting from Core Data.",
+        info: error.userInfo,
+        error: error
+      )
+      return 0
     }
   }
 
@@ -118,29 +139,50 @@ class CoreDataStack {
     guard let backgroundContext = backgroundContext else {
       return nil
     }
-
     return await backgroundContext.perform {
-      let fetchRequest = ManagedEventData.fetchRequest()
-      if let date = date {
-        fetchRequest.predicate = NSPredicate(format: "name == %@ AND createdAt < %@", name, date as NSDate)
-      } else {
-        fetchRequest.predicate = NSPredicate(format: "name == %@", name)
-      }
-      fetchRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
-      fetchRequest.fetchLimit = 1
+      Self.lastSavedPlacementDate(name: name, before: date, in: backgroundContext)
+    }
+  }
 
-      do {
-        return try backgroundContext.fetch(fetchRequest).first?.createdAt
-      } catch {
-        Logger.debug(
-          logLevel: .error,
-          scope: .coreData,
-          message: "Error getting last saved event from Core Data.",
-          info: ["placement": name],
-          error: error
-        )
-        return nil
-      }
+  /// Looks on the calling thread, for a caller that has to answer before it
+  /// returns. Anything that can suspend uses ``getLastSavedPlacementDate(name:before:)``.
+  func getLastSavedPlacementDateAndWait(
+    name: String,
+    before date: Date?
+  ) -> Date? {
+    guard let backgroundContext = backgroundContext else {
+      return nil
+    }
+    return backgroundContext.performAndWait {
+      Self.lastSavedPlacementDate(name: name, before: date, in: backgroundContext)
+    }
+  }
+
+  private static func lastSavedPlacementDate(
+    name: String,
+    before date: Date?,
+    in context: NSManagedObjectContext
+  ) -> Date? {
+    let fetchRequest = ManagedEventData.fetchRequest()
+    if let date = date {
+      fetchRequest.predicate = NSPredicate(format: "name == %@ AND createdAt < %@", name, date as NSDate)
+    } else {
+      fetchRequest.predicate = NSPredicate(format: "name == %@", name)
+    }
+    fetchRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+    fetchRequest.fetchLimit = 1
+
+    do {
+      return try context.fetch(fetchRequest).first?.createdAt
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .coreData,
+        message: "Error getting last saved event from Core Data.",
+        info: ["placement": name],
+        error: error
+      )
+      return nil
     }
   }
 }
