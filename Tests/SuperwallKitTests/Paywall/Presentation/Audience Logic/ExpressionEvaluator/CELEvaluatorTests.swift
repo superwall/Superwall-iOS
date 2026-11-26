@@ -224,4 +224,35 @@ struct CELEvaluatorTests {
 
     #expect(result == .match(audience: rule))
   }
+
+  @Test(arguments: [(0, true), (2, true), (3, false)])
+  func evaluateExpression_placementCount(savedPlacements: Int, matches: Bool) async {
+    let dependencyContainer = DependencyContainer()
+    let storage = StorageMock()
+    for _ in 0..<savedPlacements {
+      await withCheckedContinuation { continuation in
+        storage.coreDataManager.savePlacementData(
+          PlacementData(name: "freeTrial_start", parameters: [:], createdAt: Date())
+        ) { _ in
+          continuation.resume()
+        }
+      }
+    }
+    let evaluator = CELEvaluator(
+      storage: storage,
+      factory: dependencyContainer
+    )
+    let rule: TriggerRule = .stub()
+      .setting(\.expression, to: "device.placementsSinceInstall(\"freeTrial_start\") <= 2")
+    let result = await evaluator.evaluateExpression(
+      fromAudienceFilter: rule,
+      placementData: PlacementData(name: "ss", parameters: [:], createdAt: Date())
+    )
+
+    if matches {
+      #expect(result == .match(audience: rule))
+    } else {
+      #expect(result == .noMatch(source: .expression, experimentId: rule.experiment.id))
+    }
+  }
 }

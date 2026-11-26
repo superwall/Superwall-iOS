@@ -193,23 +193,11 @@ class CoreDataManager {
     if !Self.isSaved(placementNamed: request.placementName) {
       return nil
     }
-    var lastEventDate: Date?
-    if let placement = placement {
-      lastEventDate = placement.name == request.placementName ? placement.createdAt : nil
-    }
-
-    guard let createdAt = await coreDataStack.getLastSavedPlacementDate(
+    let createdAt = await coreDataStack.getLastSavedPlacementDate(
       name: request.placementName,
-      before: lastEventDate
-    ) else {
-      return nil
-    }
-    let components = Calendar.current.dateComponents(
-      [request.type.calendarComponent],
-      from: createdAt,
-      to: Date()
+      before: Self.cutoff(for: request, evaluating: placement)
     )
-    return request.type.dateComponent(from: components)
+    return Self.time(since: createdAt, for: request)
   }
 
   func countAudienceOccurrences(
@@ -280,6 +268,76 @@ class CoreDataManager {
     if !Self.isSaved(placementNamed: placementName) {
       return 0
     }
+    return await coreDataStack.count(
+      for: Self.placementFetchRequest(placementName, since: startDate)
+    )
+  }
+}
+
+// MARK: - Reading placements
+
+extension CoreDataManager {
+  /// The same answer as ``getComputedPropertySincePlacement(_:request:)``, found
+  /// on the calling thread for a caller that has to answer before it returns.
+  func getComputedPropertySincePlacementAndWait(
+    _ placement: PlacementData?,
+    request: ComputedPropertyRequest
+  ) -> Int? {
+    if !Self.isSaved(placementNamed: request.placementName) {
+      return nil
+    }
+    let createdAt = coreDataStack.getLastSavedPlacementDateAndWait(
+      name: request.placementName,
+      before: Self.cutoff(for: request, evaluating: placement)
+    )
+    return Self.time(since: createdAt, for: request)
+  }
+
+  /// The placement being evaluated has already been saved, so when it's the one
+  /// the request asks about, only the ones before it are looked at.
+  private static func cutoff(
+    for request: ComputedPropertyRequest,
+    evaluating placement: PlacementData?
+  ) -> Date? {
+    guard let placement = placement else {
+      return nil
+    }
+    return placement.name == request.placementName ? placement.createdAt : nil
+  }
+
+  private static func time(
+    since createdAt: Date?,
+    for request: ComputedPropertyRequest
+  ) -> Int? {
+    guard let createdAt = createdAt else {
+      return nil
+    }
+    let components = Calendar.current.dateComponents(
+      [request.type.calendarComponent],
+      from: createdAt,
+      to: Date()
+    )
+    return request.type.dateComponent(from: components)
+  }
+
+  /// The same count as ``countPlacement(_:since:)``, made on the calling thread
+  /// for a caller that has to answer before it returns.
+  func countPlacementAndWait(
+    _ placementName: String,
+    since startDate: Date?
+  ) -> Int {
+    if !Self.isSaved(placementNamed: placementName) {
+      return 0
+    }
+    return coreDataStack.countAndWait(
+      for: Self.placementFetchRequest(placementName, since: startDate)
+    )
+  }
+
+  private static func placementFetchRequest(
+    _ placementName: String,
+    since startDate: Date?
+  ) -> NSFetchRequest<ManagedEventData> {
     let fetchRequest = ManagedEventData.fetchRequest()
 
     if let startDate = startDate {
@@ -291,7 +349,6 @@ class CoreDataManager {
     } else {
       fetchRequest.predicate = NSPredicate(format: "name == %@", placementName)
     }
-
-    return await coreDataStack.count(for: fetchRequest)
+    return fetchRequest
   }
 }

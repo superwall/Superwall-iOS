@@ -170,6 +170,89 @@ struct EvaluationContextTests {
     }
     #expect(count == expectedCount)
   }
+
+  private static func args(_ placementName: String) throws -> String {
+    let data = try JSONEncoder().encode([PassableValue.string(placementName)])
+    return try #require(String(data: data, encoding: .utf8))
+  }
+
+  private static func save(
+    _ placementName: String,
+    secondsAgo: TimeInterval,
+    in storage: Storage
+  ) async {
+    let placementData = PlacementData.stub()
+      .setting(\.name, to: placementName)
+      .setting(\.createdAt, to: Date().addingTimeInterval(-secondsAgo))
+    await withCheckedContinuation { continuation in
+      storage.coreDataManager.savePlacementData(placementData) { _ in
+        continuation.resume()
+      }
+    }
+  }
+
+  /// The evaluator holds its thread until it's answered, so an answer that
+  /// arrives after the call has returned came from another thread, and that
+  /// thread may never be free to give it.
+  @Test(arguments: ["placementsSinceInstall", "placementsInDay", "hoursSince"])
+  func property_isAnsweredBeforeTheCallReturns(property: String) async throws {
+    let storage = StorageMock()
+    await Self.save("article_read", secondsAgo: 3 * Self.hour + 60, in: storage)
+    let args = try Self.args("article_read")
+    let context = EvaluationContext(storage: storage)
+
+    var deviceAnswer: String?
+    context.deviceProperty(
+      name: property,
+      args: args,
+      callback: ResultCallbackFake { deviceAnswer = $0 }
+    )
+    #expect(deviceAnswer?.isEmpty == false)
+
+    var computedAnswer: String?
+    context.computedProperty(
+      name: property,
+      args: args,
+      callback: ResultCallbackFake { computedAnswer = $0 }
+    )
+    #expect(computedAnswer?.isEmpty == false)
+  }
+
+  @Test func timeSincePlacement_isMeasuredFromTheLastOne() async throws {
+    let storage = StorageMock()
+    await Self.save("article_read", secondsAgo: 8 * Self.hour + 60, in: storage)
+    await Self.save("article_read", secondsAgo: 3 * Self.hour + 60, in: storage)
+    let context = EvaluationContext(storage: storage)
+
+    let result = context.value(ofProperty: "hoursSince", args: try Self.args("article_read"))
+
+    let value = try JSONDecoder().decode(PassableValue.self, from: Data(result.utf8))
+    guard case let .int(hours) = value else {
+      Issue.record("Expected an int, got \(result)")
+      return
+    }
+    #expect(hours == 3)
+  }
+
+  @Test func timeSincePlacement_hasNoValueWhenItNeverHappened() throws {
+    let context = EvaluationContext(storage: StorageMock())
+
+    #expect(context.value(ofProperty: "hoursSince", args: try Self.args("article_read")).isEmpty)
+  }
+
+  @Test func unknownProperty_hasNoValue() throws {
+    let context = EvaluationContext(storage: StorageMock())
+
+    #expect(context.value(ofProperty: "notAProperty", args: try Self.args("article_read")).isEmpty)
+  }
+
+  @Test func propertyWithoutAPlacementName_hasNoValue() {
+    let context = EvaluationContext(storage: StorageMock())
+
+    #expect(context.value(ofProperty: "placementsSinceInstall", args: "[]").isEmpty)
+    #expect(context.value(ofProperty: "placementsSinceInstall", args: "[1]").isEmpty)
+    #expect(context.value(ofProperty: "placementsSinceInstall", args: "not json").isEmpty)
+  }
 }
 
 private final class ResultCallbackFake: ResultCallback, @unchecked Sendable {
