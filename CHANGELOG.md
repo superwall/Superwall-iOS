@@ -15,6 +15,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes the app freezing when several audience filters that count a placement, or the time since one, are checked at once.
+- Fixes audience filters for the time since a placement reading zero when they're checked for that same placement. They now measure from the time before it.
 - Fixes a paywall appearing in the wrong window on iPad and Mac Catalyst when several of the app's windows are on screen.
 - Fixes a user identified while the config couldn't load keeping a random `user.seed`, when user ID seeds are turned on for your app.
 - Fixes cached paywalls sometimes being torn down off the main thread when they're cleared, such as on `reset()`.

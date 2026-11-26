@@ -151,7 +151,7 @@ struct EvaluationContextTests {
 
     let argsData = try JSONEncoder().encode([PassableValue.string(placementName)])
     let args = try #require(String(data: argsData, encoding: .utf8))
-    let context = EvaluationContext(storage: storage)
+    let context = EvaluationContext(storage: storage, placement: nil)
 
     let result = await withCheckedContinuation { continuation in
       context.computedProperty(
@@ -176,11 +176,12 @@ struct EvaluationContextTests {
     return try #require(String(data: data, encoding: .utf8))
   }
 
+  @discardableResult
   private static func save(
     _ placementName: String,
     secondsAgo: TimeInterval,
     in storage: Storage
-  ) async {
+  ) async -> PlacementData {
     let placementData = PlacementData.stub()
       .setting(\.name, to: placementName)
       .setting(\.createdAt, to: Date().addingTimeInterval(-secondsAgo))
@@ -189,6 +190,25 @@ struct EvaluationContextTests {
         continuation.resume()
       }
     }
+    return placementData
+  }
+
+  private static func hoursSince(
+    _ placementName: String,
+    whileChecking placement: PlacementData?,
+    in storage: Storage
+  ) throws -> Int? {
+    let context = EvaluationContext(storage: storage, placement: placement)
+    let result = context.value(ofProperty: "hoursSince", args: try args(placementName))
+    if result.isEmpty {
+      return nil
+    }
+    let value = try JSONDecoder().decode(PassableValue.self, from: Data(result.utf8))
+    guard case let .int(hours) = value else {
+      Issue.record("Expected an int, got \(result)")
+      return nil
+    }
+    return hours
   }
 
   /// The evaluator holds its thread until it's answered, so an answer that
@@ -199,7 +219,7 @@ struct EvaluationContextTests {
     let storage = StorageMock()
     await Self.save("article_read", secondsAgo: 3 * Self.hour + 60, in: storage)
     let args = try Self.args("article_read")
-    let context = EvaluationContext(storage: storage)
+    let context = EvaluationContext(storage: storage, placement: nil)
 
     var deviceAnswer: String?
     context.deviceProperty(
@@ -222,32 +242,79 @@ struct EvaluationContextTests {
     let storage = StorageMock()
     await Self.save("article_read", secondsAgo: 8 * Self.hour + 60, in: storage)
     await Self.save("article_read", secondsAgo: 3 * Self.hour + 60, in: storage)
-    let context = EvaluationContext(storage: storage)
 
-    let result = context.value(ofProperty: "hoursSince", args: try Self.args("article_read"))
+    #expect(try Self.hoursSince("article_read", whileChecking: nil, in: storage) == 3)
+  }
+
+  /// The placement being checked is saved before its audience filters are
+  /// checked. Measured from itself, the time since it would always be zero.
+  @Test func timeSincePlacement_skipsThePlacementBeingChecked() async throws {
+    let storage = StorageMock()
+    await Self.save("article_read", secondsAgo: 5 * Self.hour + 60, in: storage)
+    let current = await Self.save("article_read", secondsAgo: 0, in: storage)
+
+    #expect(try Self.hoursSince("article_read", whileChecking: current, in: storage) == 5)
+  }
+
+  @Test func timeSincePlacement_countsTheLatestWhenAnotherPlacementIsBeingChecked() async throws {
+    let storage = StorageMock()
+    await Self.save("article_read", secondsAgo: 6 * Self.hour + 60, in: storage)
+    await Self.save("article_read", secondsAgo: 2 * Self.hour + 60, in: storage)
+    let current = await Self.save("article_closed", secondsAgo: 0, in: storage)
+
+    #expect(try Self.hoursSince("article_read", whileChecking: current, in: storage) == 2)
+  }
+
+  /// There's no placement before the first one, so it's measured from itself.
+  @Test func timeSincePlacement_isZeroTheFirstTimeThePlacementHappens() async throws {
+    let storage = StorageMock()
+    let current = await Self.save("article_read", secondsAgo: 0, in: storage)
+
+    #expect(try Self.hoursSince("article_read", whileChecking: current, in: storage) == 0)
+  }
+
+  @Test func timeSincePlacement_hasNoValueWhenAnotherPlacementNeverHappened() async throws {
+    let storage = StorageMock()
+    let current = await Self.save("article_closed", secondsAgo: 0, in: storage)
+
+    #expect(try Self.hoursSince("article_read", whileChecking: current, in: storage) == nil)
+  }
+
+  /// Counts include the placement being checked, so a limit of "at most twice"
+  /// stops the third one.
+  @Test func placementCount_includesThePlacementBeingChecked() async throws {
+    let storage = StorageMock()
+    await Self.save("article_read", secondsAgo: Self.hour, in: storage)
+    let current = await Self.save("article_read", secondsAgo: 0, in: storage)
+    let context = EvaluationContext(storage: storage, placement: current)
+
+    let result = context.value(
+      ofProperty: "placementsSinceInstall",
+      args: try Self.args("article_read")
+    )
 
     let value = try JSONDecoder().decode(PassableValue.self, from: Data(result.utf8))
-    guard case let .int(hours) = value else {
+    guard case let .int(count) = value else {
       Issue.record("Expected an int, got \(result)")
       return
     }
-    #expect(hours == 3)
+    #expect(count == 2)
   }
 
   @Test func timeSincePlacement_hasNoValueWhenItNeverHappened() throws {
-    let context = EvaluationContext(storage: StorageMock())
+    let context = EvaluationContext(storage: StorageMock(), placement: nil)
 
     #expect(context.value(ofProperty: "hoursSince", args: try Self.args("article_read")).isEmpty)
   }
 
   @Test func unknownProperty_hasNoValue() throws {
-    let context = EvaluationContext(storage: StorageMock())
+    let context = EvaluationContext(storage: StorageMock(), placement: nil)
 
     #expect(context.value(ofProperty: "notAProperty", args: try Self.args("article_read")).isEmpty)
   }
 
   @Test func propertyWithoutAPlacementName_hasNoValue() {
-    let context = EvaluationContext(storage: StorageMock())
+    let context = EvaluationContext(storage: StorageMock(), placement: nil)
 
     #expect(context.value(ofProperty: "placementsSinceInstall", args: "[]").isEmpty)
     #expect(context.value(ofProperty: "placementsSinceInstall", args: "[1]").isEmpty)

@@ -255,4 +255,47 @@ struct CELEvaluatorTests {
       #expect(result == .noMatch(source: .expression, experimentId: rule.experiment.id))
     }
   }
+
+  /// The time since the placement a filter is being checked for is the time since
+  /// the one before it, not since the one that has just been tracked. The first
+  /// time it happens there's none before it, so it reads zero.
+  @Test(arguments: [(true, 5, true), (true, 0, false), (false, 0, true), (false, 5, false)])
+  func evaluateExpression_timeSinceThePlacementBeingChecked(
+    happenedBefore: Bool,
+    hours: Int,
+    matches: Bool
+  ) async {
+    let dependencyContainer = DependencyContainer()
+    let storage = StorageMock()
+    let earlier = PlacementData(
+      name: "paywall_decline",
+      parameters: [:],
+      createdAt: Date().addingTimeInterval(-5 * 60 * 60 - 60)
+    )
+    let current = PlacementData(name: "paywall_decline", parameters: [:], createdAt: Date())
+    for placement in happenedBefore ? [earlier, current] : [current] {
+      await withCheckedContinuation { continuation in
+        storage.coreDataManager.savePlacementData(placement) { _ in
+          continuation.resume()
+        }
+      }
+    }
+    let evaluator = CELEvaluator(
+      storage: storage,
+      factory: dependencyContainer
+    )
+    let rule: TriggerRule = .stub()
+      .setting(\.expression, to: "device.hoursSince(\"paywall_decline\") == \(hours)")
+
+    let result = await evaluator.evaluateExpression(
+      fromAudienceFilter: rule,
+      placementData: current
+    )
+
+    if matches {
+      #expect(result == .match(audience: rule))
+    } else {
+      #expect(result == .noMatch(source: .expression, experimentId: rule.experiment.id))
+    }
+  }
 }

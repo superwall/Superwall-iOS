@@ -20,14 +20,12 @@ struct CELEvaluator: ExpressionEvaluating {
   private unowned let storage: Storage
   private unowned let factory: AudienceFilterAttributesFactory
   private let expressionLogic: ExpressionLogic
-  private let evaluationContext: EvaluationContext
 
   init(
     storage: Storage,
     factory: AudienceFilterAttributesFactory
   ) {
     self.storage = storage
-    self.evaluationContext = EvaluationContext(storage: storage)
     self.factory = factory
     self.expressionLogic = ExpressionLogic(storage: storage)
   }
@@ -82,7 +80,10 @@ struct CELEvaluator: ExpressionEvaluating {
     guard
       let resultData = evaluateWithContext(
         definition: jsonString,
-        context: evaluationContext
+        context: EvaluationContext(
+          storage: storage,
+          placement: placementData
+        )
       ).data(using: .utf8),
       let result = try? JSONDecoder().decode(EvaluationResult.self, from: resultData)
     else {
