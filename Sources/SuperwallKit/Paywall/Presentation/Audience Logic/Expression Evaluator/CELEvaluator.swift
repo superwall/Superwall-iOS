@@ -17,7 +17,9 @@ protocol ExpressionEvaluating {
 }
 
 struct CELEvaluator: ExpressionEvaluating {
-  private unowned let storage: Storage
+  /// Held strongly, since an evaluation can still be running when whatever made
+  /// the evaluator lets go of the storage.
+  private let storage: Storage
   private unowned let factory: AudienceFilterAttributesFactory
   private let expressionLogic: ExpressionLogic
 

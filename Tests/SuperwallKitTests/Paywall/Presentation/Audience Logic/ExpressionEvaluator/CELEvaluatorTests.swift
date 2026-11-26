@@ -298,4 +298,25 @@ struct CELEvaluatorTests {
       #expect(result == .noMatch(source: .expression, experimentId: rule.experiment.id))
     }
   }
+
+  /// An evaluation can still be running when whatever made the evaluator lets go
+  /// of the storage, so the evaluator has to keep the storage itself.
+  @Test func evaluateExpression_keepsItsStorage() async {
+    let dependencyContainer = DependencyContainer()
+    var storage: StorageMock? = StorageMock()
+    let evaluator = CELEvaluator(
+      storage: storage!,
+      factory: dependencyContainer
+    )
+    storage = nil
+    let rule: TriggerRule = .stub()
+      .setting(\.expression, to: "device.placementsSinceInstall(\"freeTrial_start\") == 0")
+
+    let result = await evaluator.evaluateExpression(
+      fromAudienceFilter: rule,
+      placementData: PlacementData(name: "ss", parameters: [:], createdAt: Date())
+    )
+
+    #expect(result == .match(audience: rule))
+  }
 }
