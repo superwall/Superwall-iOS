@@ -747,6 +747,45 @@ struct DeviceHelperTests {
     #expect(await fetches.count == 2)
   }
 
+  private func makeMatchRequest(attStatus: Int?) -> MMPMatchRequest {
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(gate: Gate(true))
+    deviceHelper.attStatusProvider = { attStatus }
+    return dependencyContainer.network.makeMMPMatchRequest(
+      idfa: nil,
+      advertiserTrackingEnabled: false,
+      applicationTrackingEnabled: true,
+      appUserId: nil,
+      vendorId: "vendor-1",
+      deviceHelper: deviceHelper,
+      metadata: [:],
+      ipAttributes: [:]
+    )
+  }
+
+  private func sentBody(of request: MMPMatchRequest) throws -> [String: Any] {
+    let endpoint = Endpoint.matchMMPInstall(request: request)
+    let data = try #require(endpoint.components?.bodyData)
+    return try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+  }
+
+  /// `advertiserTrackingEnabled` is false both before the user is asked and
+  /// after they refuse, so the match request also carries the ATT status.
+  @Test(arguments: [0, 1, 2, 3])
+  func mmpMatchRequest_carriesTheATTStatus(status: Int) throws {
+    let request = makeMatchRequest(attStatus: status)
+
+    #expect(request.attStatus == String(status))
+    #expect(try sentBody(of: request)["attStatus"] as? String == String(status))
+  }
+
+  /// With no ATT status to read, the request leaves it out.
+  @Test func mmpMatchRequest_withNoATTStatus_leavesItOut() throws {
+    let request = makeMatchRequest(attStatus: nil)
+
+    #expect(request.attStatus == nil)
+    #expect(try sentBody(of: request).keys.contains("attStatus") == false)
+  }
+
   /// The lookups only serve install attribution, which the `.none` opt-out
   /// skips, so nothing is looked up or exposed even with the MMP on and an
   /// AppsFlyer ID set.

@@ -468,6 +468,47 @@ class Network {
     }
   }
 
+  /// The body of the install match request, read from the device as it is now.
+  func makeMMPMatchRequest(
+    idfa: String?,
+    advertiserTrackingEnabled: Bool,
+    applicationTrackingEnabled: Bool,
+    appUserId: String?,
+    vendorId: String?,
+    deviceHelper: DeviceHelper,
+    metadata: [String: String],
+    ipAttributes: [String: String]
+  ) -> MMPMatchRequest {
+    return MMPMatchRequest(
+      platform: "ios",
+      appUserId: appUserId,
+      deviceId: factory.makeDeviceId(),
+      vendorId: vendorId,
+      idfa: idfa,
+      idfv: vendorId,
+      advertiserTrackingEnabled: advertiserTrackingEnabled,
+      applicationTrackingEnabled: applicationTrackingEnabled,
+      attStatus: deviceHelper.attStatusProvider().map { String($0) },
+      appVersion: deviceHelper.appVersion,
+      sdkVersion: sdkVersion,
+      osVersion: deviceHelper.osVersion,
+      deviceModel: deviceHelper.model,
+      deviceLocale: deviceHelper.localeIdentifier,
+      deviceLanguageCode: deviceHelper.languageCode,
+      timezoneOffsetSeconds: deviceHelper.timezoneOffsetSeconds,
+      screenWidth: deviceHelper.screenWidth,
+      screenHeight: deviceHelper.screenHeight,
+      devicePixelRatio: deviceHelper.devicePixelRatio,
+      bundleId: deviceHelper.bundleId,
+      clientTimestamp: Date().isoString,
+      metadata: metadata,
+      ipV4: ipAttributes["ipV4"],
+      ipV4ObservedAt: ipAttributes["ipV4ObservedAt"],
+      ipV6: ipAttributes["ipV6"],
+      ipV6ObservedAt: ipAttributes["ipV6ObservedAt"]
+    )
+  }
+
   /// Transport for the MMP install-attribution match. Builds and sends the
   /// request and returns the decoded response; the attribution semantics
   /// (caching, merging attributes, tracking) live in `MMPAttributionManager`.
@@ -527,32 +568,15 @@ class Network {
       throw MMPMatchError.trackingDisabled
     }
 
-    let request = MMPMatchRequest(
-      platform: "ios",
-      appUserId: identityManager.appUserId,
-      deviceId: factory.makeDeviceId(),
-      vendorId: vendorId,
+    let request = makeMMPMatchRequest(
       idfa: idfa,
-      idfv: vendorId,
       advertiserTrackingEnabled: advertiserTrackingEnabled,
       applicationTrackingEnabled: applicationTrackingEnabled,
-      appVersion: deviceHelper.appVersion,
-      sdkVersion: sdkVersion,
-      osVersion: deviceHelper.osVersion,
-      deviceModel: deviceHelper.model,
-      deviceLocale: deviceHelper.localeIdentifier,
-      deviceLanguageCode: deviceHelper.languageCode,
-      timezoneOffsetSeconds: deviceHelper.timezoneOffsetSeconds,
-      screenWidth: deviceHelper.screenWidth,
-      screenHeight: deviceHelper.screenHeight,
-      devicePixelRatio: deviceHelper.devicePixelRatio,
-      bundleId: deviceHelper.bundleId,
-      clientTimestamp: Date().isoString,
+      appUserId: identityManager.appUserId,
+      vendorId: vendorId,
+      deviceHelper: deviceHelper,
       metadata: metadata,
-      ipV4: ipAttributes["ipV4"],
-      ipV4ObservedAt: ipAttributes["ipV4ObservedAt"],
-      ipV6: ipAttributes["ipV6"],
-      ipV6ObservedAt: ipAttributes["ipV6ObservedAt"]
+      ipAttributes: ipAttributes
     )
 
     do {

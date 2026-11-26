@@ -10,6 +10,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds the user's App Tracking Transparency status as the `attStatus` device attribute.
 - Adds `SuperwallOptions.enableUserIdSeed`, which derives `user.seed` from the ID passed to `identify(userId:)`. Users who are already identified keep their current seed.
 - Reports ad user data consent as denied, as well as personalization, when the user has denied App Tracking Transparency or it's restricted, even if you set `adConsent` yourself. If you use the MMP, conversions from these users are no longer sent to Meta or your other ad networks.
+- Sends the App Tracking Transparency status with the MMP install match, so an install from a user who had already refused tracking isn't reported to ad networks.
 
 ### Fixes
 
