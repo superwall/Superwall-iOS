@@ -199,7 +199,7 @@ final class ResponseVerifier: @unchecked Sendable {
     let rootKeyId = Data(bytes[2..<34])
     guard
       let root = roots.first(where: { $0.keyId == rootKeyId }),
-      let rootKey = try? P256.Signing.PublicKey(x963Representation: root.publicKey)
+      let rootKey = Self.uncompressedPoint(root.publicKey)
     else {
       return .failure(.unknownRoot)
     }
@@ -221,7 +221,7 @@ final class ResponseVerifier: @unchecked Sendable {
       !overflow,
       lifetime >= 0,
       lifetime <= Self.maxSigningKeyLifetimeSeconds,
-      let signingKey = try? P256.Signing.PublicKey(x963Representation: Data(bytes[50..<115]))
+      let signingKey = Self.uncompressedPoint(Data(bytes[50..<115]))
     else {
       return .failure(.malformedCredential)
     }
@@ -263,15 +263,105 @@ final class ResponseVerifier: @unchecked Sendable {
     return message
   }
 
-  /// ECDSA P-256 / SHA-256 with a DER signature. Malformed input is `false`.
+  /// A P-256 public key from its 65-byte uncompressed form (`0x04 || x || y`) only. CryptoKit's
+  /// x9.63 parser may also take other forms, which the other platforms refuse.
+  static func uncompressedPoint(_ point: Data) -> P256.Signing.PublicKey? {
+    guard point.count == 65, point.first == 0x04 else {
+      return nil
+    }
+    return try? P256.Signing.PublicKey(x963Representation: point)
+  }
+
+  /// ECDSA P-256 / SHA-256 with a DER signature. Malformed input is `false`. The encoding is
+  /// checked here rather than left to CryptoKit, so every platform accepts exactly the same bytes.
   static func verifyEcdsa(
     _ publicKey: P256.Signing.PublicKey,
     derSignature: Data,
     message: Data
   ) -> Bool {
-    guard let signature = try? P256.Signing.ECDSASignature(derRepresentation: derSignature) else {
+    guard
+      isStrictDerSignature(derSignature),
+      let signature = try? P256.Signing.ECDSASignature(derRepresentation: derSignature)
+    else {
       return false
     }
     return publicKey.isValidSignature(signature, for: message)
+  }
+
+  /// A DER `SEQUENCE { INTEGER r, INTEGER s }` as the spec requires: minimal lengths, each
+  /// integer positive and minimal with at most 32 bytes of magnitude, nothing after it.
+  static func isStrictDerSignature(_ signature: Data) -> Bool {
+    var reader = StrictDerReader(bytes: Array(signature))
+    guard
+      reader.readByte() == 0x30,
+      let length = reader.readLength(),
+      reader.remaining == length,
+      reader.readInteger(),
+      reader.readInteger()
+    else {
+      return false
+    }
+    return reader.remaining == 0
+  }
+}
+
+/// Reads the two DER forms an ECDSA signature uses, refusing anything that isn't minimal.
+private struct StrictDerReader {
+  let bytes: [UInt8]
+  var offset = 0
+
+  var remaining: Int {
+    return bytes.count - offset
+  }
+
+  mutating func readByte() -> UInt8? {
+    guard offset < bytes.count else {
+      return nil
+    }
+    defer { offset += 1 }
+    return bytes[offset]
+  }
+
+  mutating func readLength() -> Int? {
+    guard let first = readByte() else {
+      return nil
+    }
+    if first < 0x80 {
+      return Int(first)
+    }
+    let count = Int(first & 0x7F)
+    guard count > 0, count <= 2, remaining >= count else {
+      return nil
+    }
+    var length = 0
+    for index in 0..<count {
+      guard let byte = readByte(), index > 0 || byte != 0 else {
+        return nil
+      }
+      length = length << 8 | Int(byte)
+    }
+    // The long form only for lengths the short form can't hold.
+    return length >= 0x80 ? length : nil
+  }
+
+  mutating func readInteger() -> Bool {
+    guard
+      readByte() == 0x02,
+      let length = readLength(),
+      length > 0,
+      remaining >= length
+    else {
+      return false
+    }
+    let first = bytes[offset]
+    guard first & 0x80 == 0 else {
+      return false
+    }
+    if length > 1, first == 0, bytes[offset + 1] & 0x80 == 0 {
+      return false
+    }
+    let magnitude = first == 0 ? length - 1 : length
+    offset += length
+    return magnitude <= 32
   }
 }

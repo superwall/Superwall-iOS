@@ -28,21 +28,39 @@ struct SignatureEnvelope: Equatable {
   let signature: Data
 
   /// Returns `nil` for anything malformed.
+  ///
+  /// Parsed as UTF-8 bytes, not `Character`s: a `Character` can join a comma to an accent after
+  /// it. Only visible ASCII, spaces and tabs are allowed, and members are trimmed of spaces and
+  /// tabs only, so every platform splits the header the same way.
   init?(header: String) {
+    let bytes = Array(header.utf8)
+    let space: UInt8 = 0x20
+    let tab: UInt8 = 0x09
+    guard bytes.allSatisfy({ $0 == tab || (space...0x7E).contains($0) }) else {
+      return nil
+    }
     var members: [String: String] = [:]
-    for part in header.split(separator: ",", omittingEmptySubsequences: false) {
-      let member = part.trimmingCharacters(in: .whitespaces)
+    for part in bytes.split(separator: 0x2C, omittingEmptySubsequences: false) {
+      let isWhitespace: (UInt8) -> Bool = { $0 == space || $0 == tab }
       guard
-        let equals = member.firstIndex(of: "="),
+        let first = part.firstIndex(where: { !isWhitespace($0) }),
+        let last = part.lastIndex(where: { !isWhitespace($0) })
+      else {
+        return nil
+      }
+      let member = part[first...last]
+      guard
+        let equals = member.firstIndex(of: 0x3D),
         equals != member.startIndex
       else {
         return nil
       }
-      let key = String(member[..<equals])
+      // ASCII throughout, so these always decode.
+      let key = String(decoding: member[..<equals], as: UTF8.self)
       guard members[key] == nil else {
         return nil
       }
-      members[key] = String(member[member.index(after: equals)...])
+      members[key] = String(decoding: member[(equals + 1)...], as: UTF8.self)
     }
 
     guard
@@ -87,10 +105,19 @@ struct SignatureEnvelope: Equatable {
     else {
       return nil
     }
-    let base64 = String(raw.dropFirst().dropLast())
-    guard base64.count % 4 == 0 else {
+    return canonicalBase64(String(raw.dropFirst().dropLast()))
+  }
+
+  /// Strict, canonical base64: padded, standard alphabet, and the unused bits of the last
+  /// character zero, so each byte string has exactly one encoding (checked by encoding it again).
+  static func canonicalBase64(_ base64: String) -> Data? {
+    guard
+      base64.utf8.count % 4 == 0,
+      let data = Data(base64Encoded: base64),
+      data.base64EncodedString() == base64
+    else {
       return nil
     }
-    return Data(base64Encoded: base64)
+    return data
   }
 }

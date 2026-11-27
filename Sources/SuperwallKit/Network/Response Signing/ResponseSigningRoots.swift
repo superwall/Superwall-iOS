@@ -26,8 +26,8 @@ enum ResponseSigningRoots {
 
   static func decode(_ encoded: [String]) -> [ResponseVerifier.TrustedRoot] {
     encoded
-      .compactMap { Data(base64Encoded: $0) }
-      .filter { (try? P256.Signing.PublicKey(x963Representation: $0)) != nil }
+      .compactMap { SignatureEnvelope.canonicalBase64($0) }
+      .filter { ResponseVerifier.uncompressedPoint($0) != nil }
       .map { ResponseVerifier.TrustedRoot(publicKey: $0) }
   }
 }
