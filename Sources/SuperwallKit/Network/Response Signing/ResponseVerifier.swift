@@ -27,6 +27,10 @@ final class ResponseVerifier: @unchecked Sendable {
   enum Endpoint: String {
     case staticConfig = "static_config"
     case entitlements
+    /// `POST /redeem`; its subject is the request body's hash (``SignedResponse/forRequestBody(_:body:)``).
+    case redeem
+    /// `POST /checkout/session/poll-redemption-result`, bound like ``redeem``.
+    case pollRedemptionResult = "poll_redemption_result"
   }
 
   /// What the response must be about, from the request this SDK sent:
@@ -88,6 +92,11 @@ final class ResponseVerifier: @unchecked Sendable {
   /// Verified credentials, keyed by SHA-256, so a reused credential is checked once.
   private var credentialCache: [String: VerifiedKey] = [:]
   private static let maxCachedCredentials = 8
+
+  /// Whether any root is embedded. Without one nothing can verify.
+  var hasRoots: Bool {
+    return !roots.isEmpty
+  }
 
   init(roots: [TrustedRoot] = ResponseSigningRoots.all) {
     self.roots = roots

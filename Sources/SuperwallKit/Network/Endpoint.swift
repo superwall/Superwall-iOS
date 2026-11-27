@@ -408,7 +408,8 @@ extension Endpoint where
         path: "redeem",
         bodyData: bodyData
       ),
-      method: .post
+      method: .post,
+      signedAs: .forRequestBody(.redeem, body: bodyData)
     )
   }
 
@@ -421,7 +422,8 @@ extension Endpoint where
         path: "checkout/session/poll-redemption-result",
         bodyData: bodyData
       ),
-      method: .post
+      method: .post,
+      signedAs: .forRequestBody(.pollRedemptionResult, body: bodyData)
     )
   }
 }

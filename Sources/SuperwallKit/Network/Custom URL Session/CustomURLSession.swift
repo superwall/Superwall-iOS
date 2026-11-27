@@ -74,6 +74,9 @@ class CustomURLSession {
   private let factory: ApiFactory
   /// Shared so verified signing keys are cached across requests.
   private let responseVerifier = ResponseVerifier()
+  /// Signature failures already reported this session, by endpoint and reason. Config is fetched
+  /// often, and one report of each says enough; enforcement still applies every time.
+  private let reportedSignatureFailures = ReportedSignatureFailures()
 
   init(factory: ApiFactory) {
     self.factory = factory
@@ -122,13 +125,12 @@ class CustomURLSession {
     data: Kind.RequestData,
     isRetryingCallback: ((Int) -> Void)? = nil
   ) async throws -> Response {
-    guard var request = await endpoint.makeRequest(
+    guard let request = await endpoint.makeRequest(
       with: data,
       factory: factory
     ) else {
       throw NetworkError.unknown
     }
-    let nonce = endpoint.signedAs.map { ResponseSignatureCheck.prepare(&request, for: $0) } ?? ""
     let auth = request.allHTTPHeaderFields?["Authorization"]
 
     Logger.debug(
@@ -143,6 +145,12 @@ class CustomURLSession {
 
     let startTime = Date().timeIntervalSince1970
     let canSend = endpoint.canSend
+    let signedAs = endpoint.signedAs
+    // Each attempt gets its own nonce, so a response held back from one attempt can't be
+    // delivered for a later one. The operation still returns `(Data, URLResponse)`, which
+    // `Task.retrying` reads to decide whether to retry; the nonce of the attempt that answered
+    // is kept beside it.
+    let attemptNonce = AttemptNonce()
     let (data, response) = try await Task.retrying(
       maxRetryCount: endpoint.retryCount,
       retryInterval: endpoint.retryInterval,
@@ -153,8 +161,11 @@ class CustomURLSession {
         !canSend() {
         throw NetworkError.trackingDisabled
       }
-      return try await self.urlSession.data(for: request)
+      var attempt = request
+      attemptNonce.value = signedAs.map { ResponseSignatureCheck.prepare(&attempt, for: $0) } ?? ""
+      return try await self.urlSession.data(for: attempt)
     }.value
+    let nonce = attemptNonce.value
 
     let requestDuration = Date().timeIntervalSince1970 - startTime
     let requestId = try getRequestId(
@@ -177,7 +188,7 @@ class CustomURLSession {
       ]
     )
 
-    if let signedAs = endpoint.signedAs {
+    if let signedAs = signedAs {
       try await checkSignature(
         of: response,
         data: data,
@@ -227,7 +238,8 @@ class CustomURLSession {
     let enforce = factory.configManager.options.shouldEnforceResponseSignatures
     let result: ResponseVerifier.Result
     if let context = ResponseSignatureCheck.context(for: signedAs, request: request, nonce: nonce) {
-      // Two headers arrive comma-joined, which the parser rejects as a duplicate member.
+      // Several header lines arrive joined by ", ", which means the same (RFC 9110). Two complete
+      // signatures repeat every member and fail to parse.
       let header = (response as? HTTPURLResponse)?
         .value(forHTTPHeaderField: SignatureEnvelope.signatureHeader)
       result = responseVerifier.verify(
@@ -241,12 +253,26 @@ class CustomURLSession {
     }
 
     let reason: String
-    switch ResponseSignatureCheck.decide(result, enforce: enforce) {
+    switch ResponseSignatureCheck.decide(
+      result,
+      enforce: enforce,
+      reportUnsigned: responseVerifier.hasRoots
+    ) {
     case .accept:
       return
     case .report(let failure),
       .reject(let failure):
       reason = failure
+    }
+    guard reportedSignatureFailures.insert(
+      endpoint: signedAs.endpoint,
+      reason: reason,
+      isEnforced: enforce
+    ) else {
+      if enforce {
+        throw NetworkError.invalidResponseSignature
+      }
+      return
     }
     Logger.debug(
       logLevel: enforce ? .error : .warn,
@@ -301,5 +327,44 @@ class CustomURLSession {
     }
 
     return requestId
+  }
+}
+
+/// The signature failures reported this session, so each endpoint and reason is reported once.
+final class ReportedSignatureFailures: @unchecked Sendable {
+  private struct Key: Hashable {
+    let endpoint: ResponseVerifier.Endpoint
+    let reason: String
+    let isEnforced: Bool
+  }
+
+  private let lock = NSLock()
+  private var reported: Set<Key> = []
+
+  /// Records a failure; `true` if it's the first of its kind this session.
+  func insert(endpoint: ResponseVerifier.Endpoint, reason: String, isEnforced: Bool) -> Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    return reported.insert(Key(endpoint: endpoint, reason: reason, isEnforced: isEnforced)).inserted
+  }
+}
+
+/// The nonce of the latest attempt of a request. Attempts run one after another, so once a
+/// response is back this is the nonce it answered.
+final class AttemptNonce: @unchecked Sendable {
+  private let lock = NSLock()
+  private var stored = ""
+
+  var value: String {
+    get {
+      lock.lock()
+      defer { lock.unlock() }
+      return stored
+    }
+    set {
+      lock.lock()
+      defer { lock.unlock() }
+      stored = newValue
+    }
   }
 }

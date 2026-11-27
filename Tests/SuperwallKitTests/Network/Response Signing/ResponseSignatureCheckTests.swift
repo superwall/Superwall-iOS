@@ -102,6 +102,11 @@ struct ResponseSignatureCheckTests {
     #expect(ResponseSignatureCheck.decide(.verified, enforce: true) == .accept)
     #expect(ResponseSignatureCheck.decide(.unsigned, enforce: false) == .accept)
     #expect(ResponseSignatureCheck.decide(.unsigned, enforce: true) == .reject(reason: "unsigned"))
+    // Once roots are embedded, an unsigned response is reported, so a stripped header shows up.
+    #expect(
+      ResponseSignatureCheck.decide(.unsigned, enforce: false, reportUnsigned: true)
+        == .report(reason: "unsigned")
+    )
     #expect(
       ResponseSignatureCheck.decide(.failed(.invalidSignature), enforce: false)
         == .report(reason: "invalid_signature")
@@ -148,5 +153,72 @@ struct ResponseSignatureCheckTests {
         == SignedResponse(endpoint: .entitlements, subject: "$SuperwallDevice:1", deviceId: "$SuperwallDevice:1")
     )
     #expect(Endpoint<EndpointKinds.Superwall, PostbackAssignmentWrapper>.assignments().signedAs == nil)
+  }
+
+  @Test("redemption responses are bound to the hash of the exact request body, with a nonce")
+  func redemptionEndpoints() throws {
+    let abc = SignedResponse.forRequestBody(.redeem, body: Data("abc".utf8))
+    #expect(abc.subject == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+    #expect(abc.deviceId.isEmpty)
+    #expect(abc.takesNonce)
+    #expect(!SignedResponse.staticConfig.takesNonce)
+
+    let poll = Endpoint<EndpointKinds.SubscriptionsAPI, RedeemResponse>.pollRedemptionResult(
+      request: PollRedemptionResultRequest(checkoutContextId: "ctx", deviceId: "d", appUserId: "u")
+    )
+    let body = try #require(poll.components?.bodyData)
+    #expect(poll.signedAs == .forRequestBody(.pollRedemptionResult, body: body))
+
+    var request = URLRequest(url: try #require(URL(string: "https://example.com/redeem")))
+    let nonce = ResponseSignatureCheck.prepare(&request, for: abc)
+    #expect(nonce.count == 22)
+    #expect(request.value(forHTTPHeaderField: "X-Superwall-Nonce") == nonce)
+  }
+
+  @Test("the shared redeem vectors verify through a context built from the request")
+  func redeemVector() throws {
+    let vectors = try JSONSerialization.jsonObject(
+      with: Data(responseSigningVectorsJSON.utf8)
+    ) as? [String: Any]
+    let roots = try #require(vectors?["roots"] as? [[String: Any]])
+      .compactMap { ($0["publicKey"] as? String).flatMap { Data(base64Encoded: $0) } }
+      .map { ResponseVerifier.TrustedRoot(publicKey: $0) }
+    let cases = try #require(vectors?["cases"] as? [[String: Any]])
+    let expectations: [(String, ResponseVerifier.Result)] = [
+      ("redeem_verified", .verified),
+      ("redeem_request_changed", .failed(.invalidSignature))
+    ]
+    for (name, expected) in expectations {
+      let vector = try #require(cases.first { $0["name"] as? String == name })
+      let context = try #require(vector["context"] as? [String: String])
+      var request = URLRequest(url: try #require(URL(string: "https://example.com/redeem")))
+      request.setValue("Bearer \(context["apiKey"] ?? "")", forHTTPHeaderField: "Authorization")
+      let signed = SignedResponse(endpoint: .redeem, subject: context["subject"] ?? "", deviceId: "")
+      let built = try #require(
+        ResponseSignatureCheck.context(for: signed, request: request, nonce: context["nonce"] ?? "")
+      )
+      let result = ResponseVerifier(roots: roots).verify(
+        header: vector["header"] as? String,
+        context: built,
+        body: Data(base64Encoded: vector["body"] as? String ?? "") ?? Data(),
+        now: (vector["now"] as? NSNumber)?.int64Value ?? 0
+      )
+      #expect(result == expected, "\(name)")
+    }
+  }
+
+  @Test("each endpoint and reason is reported once per session")
+  func reportsOnce() {
+    let reported = ReportedSignatureFailures()
+    #expect(reported.insert(endpoint: .staticConfig, reason: "unsigned", isEnforced: false))
+    #expect(!reported.insert(endpoint: .staticConfig, reason: "unsigned", isEnforced: false))
+    #expect(reported.insert(endpoint: .entitlements, reason: "unsigned", isEnforced: false))
+    #expect(reported.insert(endpoint: .staticConfig, reason: "unknown_root", isEnforced: false))
+    #expect(reported.insert(endpoint: .staticConfig, reason: "unsigned", isEnforced: true))
+  }
+
+  @Test("no embedded roots, so unsigned responses aren't worth reporting yet")
+  func hasRoots() {
+    #expect(!ResponseVerifier(roots: []).hasRoots)
   }
 }
