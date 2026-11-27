@@ -39,10 +39,15 @@ private struct Vectors: Decodable {
   let roots: [Root]
   let cases: [Case]
 
-  static let shared: Vectors = {
+  static let shared = decode(responseSigningVectorsJSON)
+
+  /// Responses the services signed through emulated KMS, recorded rather than written by hand.
+  static let live = decode(responseSigningLiveVectorsJSON)
+
+  private static func decode(_ json: String) -> Vectors {
     // swiftlint:disable:next force_try
-    try! JSONDecoder().decode(Vectors.self, from: Data(responseSigningVectorsJSON.utf8))
-  }()
+    try! JSONDecoder().decode(Vectors.self, from: Data(json.utf8))
+  }
 
   var trustedRoots: [ResponseVerifier.TrustedRoot] {
     roots.map {
@@ -102,6 +107,32 @@ struct ResponseVerifierTests {
       }
       #expect(failure.rawValue == vector.expected.reason)
     }
+  }
+
+  @Test(
+    "responses the services signed through KMS verify, and stop verifying when changed",
+    arguments: Vectors.live.cases.map(\.name)
+  )
+  func liveVector(named name: String) throws {
+    let vector = try #require(Vectors.live.cases.first { $0.name == name })
+    let context = try #require(vector.verifierContext)
+    let body = try #require(Data(base64Encoded: vector.body))
+    let verifier = ResponseVerifier(roots: Vectors.live.trustedRoots)
+    #expect(vector.expected.status == "verified")
+    #expect(verifier.verify(header: vector.header, context: context, body: body, now: vector.now) == .verified)
+
+    var tampered = body
+    tampered[tampered.count / 2] ^= 0x01
+    #expect(
+      verifier.verify(header: vector.header, context: context, body: tampered, now: vector.now)
+        == .failed(.invalidSignature)
+    )
+  }
+
+  @Test("the live vectors cover both signed endpoints")
+  func liveVectorsCoverBothEndpoints() {
+    #expect(Set(Vectors.live.cases.map(\.context.endpoint)) == ["entitlements", "static_config"])
+    #expect(Vectors.live.roots.count == 2)
   }
 
   @Test("a credential that verified once is reused, and still binds the subject")
