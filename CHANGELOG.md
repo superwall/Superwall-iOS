@@ -6,6 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
+- Checks the signature Superwall adds to config and entitlements responses, so the SDK can tell they weren't changed on the way, for example by a proxy on the device's network. A response that doesn't verify is reported to Superwall and used as before. Set `SuperwallOptions.shouldEnforceResponseSignatures` to `true` to reject such responses instead, keeping the config and entitlements the SDK already has; only turn it on once Superwall has confirmed response signing is enabled for your app. Web checkout redemption responses are checked the same way, since they grant access too.
 - Saves the first deep link received during the first app session as the `firstDeepLinkUrl` user attribute. If you assign deep links to your App Store custom product pages, you can use this attribute to break down results and filter audiences by the product page that drove the install. If you've connected App Store Connect, the page's ID and name are saved too, as `customProductPageId` and `customProductPageName`. Requires `Superwall.handleDeepLink(_:)` to be set up.
 - Adds the user's App Tracking Transparency status as the `attStatus` device attribute.
 - Adds `SuperwallOptions.enableUserIdSeed`, which derives `user.seed` from the ID passed to `identify(userId:)`. Users who are already identified keep their current seed.

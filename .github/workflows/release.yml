@@ -7,7 +7,9 @@
 #
 # 1. `version` reads the version from Constants.swift, checks the podspec and
 #    CHANGELOG.md agree, and stops the run if that version is already tagged
-#    (a merge that doesn't bump the version releases nothing).
+#    (a merge that doesn't bump the version releases nothing). A new version
+#    also needs both response-signing roots in ResponseSigningRoots.swift
+#    (scripts/check-response-signing-roots.sh).
 # 2. The unit tests run against this exact commit. The UI tests run too, in
 #    parallel, only if the pull request merged into master has the
 #    `uitests-required` label (or the manual run asks for them): add it for
@@ -94,6 +96,13 @@ jobs:
             release=false
           else
             release=true
+          fi
+
+          # Response signing: a release must embed both roots, or no signed response can verify
+          # (apps that enforce signatures would reject every one).
+          if [[ "$release" == true ]] && ! scripts/check-response-signing-roots.sh; then
+            echo "::error::ResponseSigningRoots has no roots; $version can't be released without them."
+            exit 1
           fi
 
           {

@@ -30,6 +30,9 @@ struct Endpoint<Kind: EndpointKind, Response: Decodable> {
   /// Checked before every attempt, including retries. When it returns `false`
   /// the request isn't sent and fails with ``NetworkError/trackingDisabled``.
   var canSend: (@Sendable () -> Bool)?
+  /// Set for endpoints whose responses the backend signs (`X-Superwall-Signature`), so
+  /// `CustomURLSession` checks them. See ``ResponseSignatureCheck``.
+  var signedAs: SignedResponse?
 
   func makeRequest(
     with data: Kind.RequestData,
@@ -274,7 +277,8 @@ extension Endpoint where
         path: "static_config",
         queryItems: queryItems
       ),
-      method: .get
+      method: .get,
+      signedAs: .staticConfig
     )
   }
 }
@@ -404,7 +408,8 @@ extension Endpoint where
         path: "redeem",
         bodyData: bodyData
       ),
-      method: .post
+      method: .post,
+      signedAs: .forRequestBody(.redeem, body: bodyData)
     )
   }
 
@@ -417,7 +422,8 @@ extension Endpoint where
         path: "checkout/session/poll-redemption-result",
         bodyData: bodyData
       ),
-      method: .post
+      method: .post,
+      signedAs: .forRequestBody(.pollRedemptionResult, body: bodyData)
     )
   }
 }
@@ -475,7 +481,12 @@ extension Endpoint where
         path: "users/\(appUserId ?? deviceId)/entitlements",
         queryItems: queryItems
       ),
-      method: .get
+      method: .get,
+      signedAs: SignedResponse(
+        endpoint: .entitlements,
+        subject: appUserId ?? deviceId,
+        deviceId: deviceId
+      )
     )
   }
 }

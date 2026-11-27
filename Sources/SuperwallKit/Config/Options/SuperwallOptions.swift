@@ -441,6 +441,19 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Disables the app transaction check on SDK launch. Defaults to `false`.
   public var shouldBypassAppTransactionCheck = false
 
+  /// Rejects config and entitlements responses whose Superwall signature doesn't verify.
+  /// Defaults to `false`.
+  ///
+  /// Superwall signs these responses so the SDK can tell they weren't changed on the way, for
+  /// example by a proxy on the device's network. The SDK always checks the signature. With this
+  /// off, a response that doesn't verify is reported to Superwall and used as before. With it on,
+  /// a response that doesn't verify, or isn't signed, fails like a network error: the SDK keeps
+  /// the config and entitlements it already had.
+  ///
+  /// - Warning: Only turn this on once Superwall has confirmed response signing is enabled for
+  ///   your app; until then every response is unsigned and would be rejected.
+  public var shouldEnforceResponseSignatures = false
+
   /// Controls when the SDK enters test mode. Defaults to `.automatic`.
   ///
   /// - `.automatic`: Activates test mode when enabled for a user via the dashboard or when
@@ -576,6 +589,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     case adUserDataConsent
     case adPersonalizationConsent
     case isAdConsentSet
+    case shouldEnforceResponseSignatures
   }
 
   public override init() {
@@ -615,6 +629,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(adConsent.adUserData.description, forKey: .adUserDataConsent)
     try container.encode(adConsent.adPersonalization.description, forKey: .adPersonalizationConsent)
     try container.encode(isAdConsentSet, forKey: .isAdConsentSet)
+    try container.encode(shouldEnforceResponseSignatures, forKey: .shouldEnforceResponseSignatures)
   }
 
   func toDictionary() -> [String: Any] {
