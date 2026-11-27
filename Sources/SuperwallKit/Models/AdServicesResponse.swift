@@ -27,6 +27,11 @@ struct MMPMatchRequest: Encodable {
   let idfv: String?
   let advertiserTrackingEnabled: Bool
   let applicationTrackingEnabled: Bool
+  /// The ATT status as a numeric string, as in the `attStatus` device attribute.
+  /// `advertiserTrackingEnabled` is false both before the user is asked and after
+  /// they refuse, so this is what tells the two apart. Left out where there's no
+  /// status to read.
+  let attStatus: String?
   let appVersion: String
   let sdkVersion: String
   let osVersion: String
@@ -60,6 +65,7 @@ extension MMPMatchRequest {
       idfv: idfv,
       advertiserTrackingEnabled: advertiserTrackingEnabled,
       applicationTrackingEnabled: applicationTrackingEnabled,
+      attStatus: attStatus,
       appVersion: appVersion,
       sdkVersion: sdkVersion,
       osVersion: osVersion,

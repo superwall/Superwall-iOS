@@ -53,10 +53,9 @@ public final class AdConsent: NSObject {
   }
 
   /// The consent to report. Both purposes are denied while `eventTrackingBehavior`
-  /// is ``EventTrackingBehavior/none``, and personalization is denied when the user
-  /// hasn't allowed tracking (`attStatus` is restricted or denied). An undetermined
-  /// or missing ATT status leaves the values in place. Pass `nil` for consent the app
-  /// set itself, which the ATT rule doesn't override.
+  /// is ``EventTrackingBehavior/none``, and when the user has refused tracking
+  /// (`attStatus` is restricted or denied). An undetermined or missing ATT status
+  /// leaves the values in place.
   func reported(
     for eventTrackingBehavior: EventTrackingBehavior,
     attStatus: Int?
@@ -66,7 +65,7 @@ public final class AdConsent: NSObject {
     }
     switch attStatus.flatMap(FakeTrackingAuthorizationStatus.init(rawValue:)) {
     case .restricted, .denied:
-      return AdConsent(adUserData: adUserData, adPersonalization: .denied)
+      return AdConsent(adUserData: .denied, adPersonalization: .denied)
     case .notDetermined, .authorized, nil:
       return self
     }

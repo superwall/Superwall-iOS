@@ -36,10 +36,17 @@ final class NetworkMock: Network {
   var redeemDelay: TimeInterval = 0
   var redeemCallCount = 0
   var pollRedemptionResultCallCount = 0
+  var teleportStatusResponses: [Result<TeleportStatusResponse, Error>] = []
+  var teleportStatusRequests: [String] = []
+  var checkoutStatusResponses: [Result<CheckoutStatusResponse, Error>] = []
+  var checkoutStatusRequests: [String] = []
   var onRedeemEntitlements: (() -> Void)?
   var onPollRedemptionResult: (() -> Void)?
   var getEnrichmentCallCount = 0
   var onGetEnrichment: (() -> Void)?
+  var enrichmentRequests: [EnrichmentRequest] = []
+  var enrichmentResponse = Enrichment(user: JSON([:]), device: JSON(["demandScore": 42]))
+  var enrichmentError: Error?
 
   override func sendEvents(events: EventsRequest) async {
     sentEvents.append(events)
@@ -122,6 +129,29 @@ final class NetworkMock: Network {
     throw NetworkError.unknown
   }
 
+  /// Runs while a teleport status request is in flight, before it answers.
+  var whileTeleportStatusRequested: (() async -> Void)?
+
+  override func getTeleportStatus(teleportId: String) async throws -> TeleportStatusResponse {
+    teleportStatusRequests.append(teleportId)
+    if let whileTeleportStatusRequested {
+      self.whileTeleportStatusRequested = nil
+      await whileTeleportStatusRequested()
+    }
+    guard !teleportStatusResponses.isEmpty else {
+      throw NetworkError.unknown
+    }
+    return try teleportStatusResponses.removeFirst().get()
+  }
+
+  override func getCheckoutStatus(checkoutId: String) async throws -> CheckoutStatusResponse {
+    checkoutStatusRequests.append(checkoutId)
+    guard !checkoutStatusResponses.isEmpty else {
+      throw NetworkError.unknown
+    }
+    return try checkoutStatusResponses.removeFirst().get()
+  }
+
   override func pollRedemptionResult(request: PollRedemptionResultRequest) async throws -> RedeemResponse {
     pollRedemptionResultRequest = request
     pollRedemptionResultCallCount += 1
@@ -153,8 +183,12 @@ final class NetworkMock: Network {
     timeout: Seconds?
   ) async throws -> Enrichment {
     getEnrichmentCallCount += 1
+    enrichmentRequests.append(request)
     onGetEnrichment?()
-    return Enrichment(user: JSON([:]), device: JSON(["demandScore": 42]))
+    if let enrichmentError {
+      throw enrichmentError
+    }
+    return enrichmentResponse
   }
 
   override func getIntroOfferToken(

@@ -291,8 +291,8 @@ struct LiveEnvironment: CustomerCenterEnvironmentProviding {
   /// Deliberately `DeviceHelper`'s detection rather than `ReceiptManager.isSandboxEnvironment`
   /// directly: that static is only ever assigned inside an `#available(iOS 16.0, macOS 13.0, *)` branch, so on
   /// iOS 15 — the Customer Center's own floor — it stays nil and every sandbox check silently
-  /// reads `false`. `DeviceHelper` falls back to the simulator flag and the receipt URL, and also
-  /// accounts for test mode.
+  /// reads `false`. `DeviceHelper` falls back to the simulator flag and the receipt URL (the app's
+  /// signature on a Mac), and also accounts for test mode.
   var isSandbox: Bool { container.deviceHelper.isSandbox == "true" }
   var appStoreURL: URL? {
     let id = container.makeAppId() ?? ReceiptManager.appId.map(String.init)

@@ -43,6 +43,7 @@ struct CustomURLSessionLoggingTests {
       idfv: nil,
       advertiserTrackingEnabled: false,
       applicationTrackingEnabled: true,
+      attStatus: "2",
       appVersion: "1",
       sdkVersion: "4",
       osVersion: "27",
@@ -67,5 +68,6 @@ struct CustomURLSessionLoggingTests {
     #expect(logged.ipV4 == nil)
     #expect(logged.ipV6 == nil)
     #expect(logged.bundleId == "com.example")
+    #expect(logged.attStatus == "2")
   }
 }

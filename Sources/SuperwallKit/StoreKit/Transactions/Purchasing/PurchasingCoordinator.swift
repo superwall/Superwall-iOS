@@ -8,246 +8,266 @@
 import Foundation
 import StoreKit
 
-/// An actor that manages and coordinates the storing of types associated with purchasing.
-actor PurchasingCoordinator {
-  var lastInternalTransaction: StoreTransaction?
-  var purchaseDate: Date?
-  var source: PurchaseSource?
-  var transactions: [String: StoreTransaction] = [:]
-  var isFreeTrialAvailable = false
-  var product: StoreProduct?
-  /// Whether the purchase is a custom store checkout that the paywall runs itself.
-  var isCustomStoreCheckout = false
-  private var completion: ((PurchaseResult) -> Void)?
-  private let factory: StoreTransactionFactory
+/// Holds the purchase flow's state: the purchase in progress and the
+/// transactions the SDK's purchasers got back.
+///
+/// The state lives in a ``StateStore`` and changes only through
+/// ``PurchaseAction``s, so reads and changes are synchronous and safe from any
+/// thread. Nothing waits with the store locked: transaction lookups happen
+/// outside it, and a StoreKit 1 result is handed over once it's unlocked.
+final class PurchasingCoordinator: @unchecked Sendable {
+  let context: PurchaseContext
 
-  init(factory: StoreTransactionFactory) {
-    self.factory = factory
+  var store: PurchaseStore {
+    context.store
   }
 
-  func setIsFreeTrialAvailable(to newValue: Bool) {
-    isFreeTrialAvailable = newValue
+  init(context: PurchaseContext) {
+    self.context = context
   }
 
-  /// A boolean indicating whether the given `date` is within an hour of the `purchaseDate`.
-  func dateIsWithinLastHour(_ transactionDate: Date?) -> Bool {
-    guard
-      let transactionDate = transactionDate,
-      let purchaseDate = purchaseDate
-    else {
-      return false
-    }
-    return transactionDate.isWithinAnHourBefore(purchaseDate)
+  convenience init(factory: StoreTransactionFactory) {
+    self.init(context: StoreKitPurchaseContext(factory: factory))
   }
 
-  func setCompletion(_ completion: @escaping (PurchaseResult) -> Void) {
-    self.completion = completion
+  /// The purchase in progress, read in one go.
+  var purchase: InFlightPurchase? {
+    store.read { $0.purchase }
   }
 
+  /// Whether a purchase is in progress, including a StoreKit 1 purchase
+  /// waiting for its result without one having begun. Reads the store
+  /// without waiting on anything.
+  var hasPurchaseInProgress: Bool {
+    store.read { $0.hasPurchaseInProgress }
+  }
+
+  var lastInternalTransaction: StoreTransaction? {
+    store.read { $0.lastInternalTransaction }
+  }
+
+  var transactions: [String: StoreTransaction] {
+    store.read { $0.transactionsByProductId }
+  }
+
+  /// Starts a purchase, replacing any in progress, and returns it.
+  @discardableResult
   func beginPurchase(
     of product: StoreProduct,
-    source: PurchaseSource,
-    isFreeTrialAvailable: Bool,
-    isCustomStoreCheckout: Bool = false
-  ) {
-    self.purchaseDate = Date()
-    self.source = source
-    self.isFreeTrialAvailable = isFreeTrialAvailable
-    self.product = product
-    self.isCustomStoreCheckout = isCustomStoreCheckout
-  }
-
-  /// A purchase in progress, set aside while another is handled.
-  struct Purchase {
-    let purchaseDate: Date?
-    let source: PurchaseSource?
-    let isFreeTrialAvailable: Bool
-    let product: StoreProduct?
-    let isCustomStoreCheckout: Bool
-    let completion: ((PurchaseResult) -> Void)?
-  }
-
-  /// Takes the purchase in progress out of the coordinator, leaving it free.
-  func setAsidePurchase() -> Purchase {
-    let purchase = Purchase(
-      purchaseDate: purchaseDate,
-      source: source,
-      isFreeTrialAvailable: isFreeTrialAvailable,
+    method: PurchaseMethod,
+    isFreeTrialAvailable: Bool
+  ) -> InFlightPurchase {
+    let purchase = InFlightPurchase(
+      id: UUID(),
       product: product,
-      isCustomStoreCheckout: isCustomStoreCheckout,
-      completion: completion
+      method: method,
+      purchaseDate: Date(),
+      isFreeTrialAvailable: isFreeTrialAvailable
     )
-    reset()
+    store.dispatch(PurchaseAction.begin(purchase), in: context)
     return purchase
   }
 
-  /// Puts back a purchase that was set aside, unless another purchase began meanwhile.
-  func restore(_ purchase: Purchase) {
-    if source != nil {
-      return
+  /// Starts a purchase through StoreKit or the purchase controller.
+  @discardableResult
+  func beginPurchase(
+    of product: StoreProduct,
+    source: PurchaseSource,
+    isFreeTrialAvailable: Bool
+  ) -> InFlightPurchase {
+    return beginPurchase(
+      of: product,
+      method: .storeKit(source),
+      isFreeTrialAvailable: isFreeTrialAvailable
+    )
+  }
+
+  /// Records whether the custom store checkout in progress closes its paywall,
+  /// now that it has ended, and returns it. Returns `nil` if no custom store
+  /// checkout is in progress.
+  func endCheckout(productId: String, shouldDismiss: Bool) -> InFlightPurchase? {
+    let update = PurchaseUpdate.checkoutEnded(productId: productId, shouldDismiss: shouldDismiss)
+    let before = store.dispatch(
+      PurchaseAction.endCheckout(productId: productId, shouldDismiss: shouldDismiss),
+      in: context
+    )
+    guard before.purchase?.isCustomStoreCheckout == true else {
+      return nil
     }
-    purchaseDate = purchase.purchaseDate
-    source = purchase.source
-    isFreeTrialAvailable = purchase.isFreeTrialAvailable
-    product = purchase.product
-    isCustomStoreCheckout = purchase.isCustomStoreCheckout
-    completion = purchase.completion
+    return update.reduce(before).purchase
   }
 
-  /// Replaces the source of the purchase in progress, keeping when it started.
-  func setSource(_ source: PurchaseSource) {
-    self.source = source
+  /// Records whether the observed transaction of the purchase in progress
+  /// started an offer.
+  func observeOffer(_ hasOffer: Bool) {
+    store.dispatch(PurchaseAction.observeOffer(hasOffer), in: context)
   }
 
-  /// Gets the latest transaction of a specified product ID. Used with purchases, including when a purchase has
-  /// resulted in a restore.
-  func getLatestTransaction(
+  /// Waits for the StoreKit 1 result of a purchase of the product with
+  /// `productId`. A purchase already waiting is resumed as cancelled.
+  func awaitResult(
     forProductId productId: String,
-    factory: StoreTransactionFactory
-  ) async -> StoreTransaction? {
-    // Get the date a purchase was initiated. This can never be nil after
-    // a purchase.
-    guard let purchaseDate = purchaseDate else {
-      return nil
-    }
+    _ completion: @escaping PurchaseCompletion
+  ) {
+    store.dispatch(
+      PurchaseAction.awaitResult(productId: productId, completion: completion),
+      in: context
+    )
+  }
 
-    func getLatestSK2Transaction() async -> StoreTransaction? {
-      // Try and get the latest transaction using SK2.
-      if let verificationResult = await Transaction.latest(
-        for: productId,
-        since: purchaseDate
-      ) {
-        // Skip verification step as this has already been done.
-        let transaction = verificationResult.unsafePayloadValue
-        return await factory.makeStoreTransaction(from: transaction)
-      }
-      return nil
-    }
+  /// Ends `purchase`, unless another purchase has begun since.
+  func finish(_ purchase: InFlightPurchase) {
+    store.dispatch(PurchaseAction.finish(id: purchase.id), in: context)
+  }
 
-    func getCurrentEntitlementTransaction() async -> StoreTransaction? {
-      if let verificationResult = await Transaction.currentEntitlement(
-        for: productId,
-        since: purchaseDate
-      ) {
-        let transaction = verificationResult.unsafePayloadValue
-        return await factory.makeStoreTransaction(from: transaction)
-      }
-      return nil
-    }
+  /// Takes the purchase in progress out of the coordinator, leaving it free.
+  /// It can still be finished while it's set aside.
+  func setAsidePurchase() {
+    store.dispatch(PurchaseAction.setAside, in: context)
+  }
 
-    if let transaction = await getLatestSK2Transaction() {
+  /// Puts back the purchase that was set aside, unless it finished or another
+  /// purchase began meanwhile.
+  func putBackPurchase() {
+    store.dispatch(PurchaseAction.putBack, in: context)
+  }
+
+  /// Ends everything in progress.
+  func reset() {
+    store.dispatch(PurchaseAction.clear, in: context)
+  }
+
+  /// Gets the latest transaction of `purchase`'s product. Used with purchases,
+  /// including when a purchase has resulted in a restore.
+  func getLatestTransaction(for purchase: InFlightPurchase) async -> StoreTransaction? {
+    let productId = purchase.product.productIdentifier
+    let purchaseDate = purchase.purchaseDate
+
+    if let transaction = await context.latestTransaction(forProductId: productId, since: purchaseDate) {
       return transaction
     }
 
     // If no transaction retrieved, try to get last transaction if
     // the SDK handled purchasing.
-    if let transaction = lastInternalTransaction {
-      lastInternalTransaction = nil
+    let before = store.dispatch(PurchaseAction.useLastInternalTransaction, in: context)
+    if let transaction = before.lastInternalTransaction {
       return transaction
     }
 
-    func getLastExternalStoreTransaction() async -> StoreTransaction? {
-      if let transaction = transactions[productId],
-        dateIsWithinLastHour(transaction.transactionDate) {
-        return transaction
+    func lastExternalStoreTransaction() -> StoreTransaction? {
+      guard
+        let transaction = transactions[productId],
+        transaction.transactionDate?.isWithinAnHourBefore(purchaseDate) == true
+      else {
+        return nil
       }
-      return nil
-    }
-
-    // Otherwise get the last externally purchased
-    // transaction from the payment queue. This won't work
-    // with a purchase that results in a restore. That
-    // should be caught by the above  instead.
-    if let transaction = await getLastExternalStoreTransaction() {
       return transaction
     }
 
-    if let transaction = await getCurrentEntitlementTransaction() {
+    // Otherwise get the last externally purchased transaction from the
+    // payment queue. This won't work with a purchase that results in a
+    // restore. That should be caught by the above instead.
+    if let transaction = lastExternalStoreTransaction() {
       return transaction
     }
 
-    // If still no transaction, wait 500ms and try again before returning nil.
-    try? await Task.sleep(nanoseconds: 500_000_000)
-
-    if let transaction = await getLastExternalStoreTransaction() {
+    if let transaction = await context.currentEntitlementTransaction(
+      forProductId: productId,
+      since: purchaseDate
+    ) {
       return transaction
     }
 
-    if let transaction = await getLatestSK2Transaction() {
+    // If still no transaction, wait and try again before returning nil.
+    await context.waitBeforeRetrying()
+
+    if let transaction = lastExternalStoreTransaction() {
       return transaction
     }
 
-    // Retry currentEntitlement after the delay,
-    // as the crossgrade transaction may have settled.
-    if let transaction = await getCurrentEntitlementTransaction() {
+    if let transaction = await context.latestTransaction(forProductId: productId, since: purchaseDate) {
       return transaction
     }
 
-    return nil
+    // Retry currentEntitlement after the delay, as the crossgrade
+    // transaction may have settled.
+    return await context.currentEntitlementTransaction(
+      forProductId: productId,
+      since: purchaseDate
+    )
   }
 
-  /// Stores the transaction if purchased and is the latest for a specific product ID.
-  /// This is used as a fallback if we can't retrieve the transaction using SK2.
-  func storeIfPurchased(_ transaction: StoreTransaction) {
-    guard case .purchased = transaction.state else {
-      return
-    }
-    let productId = transaction.payment.productIdentifier
-
-    // If there is an existing transaction, which has a transaction date...
-    if let existingTransaction = transactions[productId],
-      let existingTransactionDate = existingTransaction.transactionDate {
-      // And if the new transaction date was after the stored transaction, update.
-      // Else, ignore.
-      if transaction.transactionDate?.compare(existingTransactionDate) == .orderedDescending {
-        transactions[productId] = transaction
-      }
-    } else {
-      // If there isn't an existing transaction, store.
-      transactions[productId] = transaction
-    }
-  }
-
+  /// Stores the transaction and, if the purchase in progress or the StoreKit 1
+  /// result waiting is of its product, hands `result` to the StoreKit 1
+  /// purchase waiting for it, once.
+  /// A transaction that arrives with nothing in progress, such as a renewal,
+  /// is left alone.
   func completePurchase(
     of transaction: SK1Transaction,
     result: PurchaseResult
   ) async {
+    let productId = transaction.payment.productIdentifier
     // Only complete if the product ID of the transaction is the same as
     // the purchasing transaction.
-    guard product?.productIdentifier == transaction.payment.productIdentifier else {
+    if store.read({ $0.phase.productId }) != productId {
       return
     }
-    let transaction = await factory.makeStoreTransaction(from: transaction)
-    storeTransaction(transaction, result: result)
-
-    completion?(result)
-    completion = nil
+    let storeTransaction = await context.makeStoreTransaction(from: transaction)
+    store.dispatch(PurchaseAction.receiveTransaction(storeTransaction, result: result), in: context)
+    // The purchase may have changed while the transaction was made, so the
+    // product is checked again as the result is handed over.
+    store.dispatch(PurchaseAction.deliverResult(result, productId: productId), in: context)
   }
 
   func storeTransaction(
     _ transaction: SK2Transaction,
     result: PurchaseResult
   ) async {
-    let transaction = await factory.makeStoreTransaction(from: transaction)
-    storeTransaction(transaction, result: result)
+    let storeTransaction = await context.makeStoreTransaction(from: transaction)
+    store.dispatch(PurchaseAction.receiveTransaction(storeTransaction, result: result), in: context)
+  }
+}
+
+/// The purchase flow's real side effects and StoreKit lookups.
+final class StoreKitPurchaseContext: PurchaseContext {
+  let store = PurchaseStore(initial: PurchaseState())
+  private let factory: StoreTransactionFactory
+
+  init(factory: StoreTransactionFactory) {
+    self.factory = factory
   }
 
-  private func storeTransaction(
-    _ transaction: StoreTransaction,
-    result: PurchaseResult
-  ) {
-    if result == .purchased {
-      storeIfPurchased(transaction)
+  func deliver(_ result: PurchaseResult, to completion: @escaping PurchaseCompletion) {
+    completion(result)
+  }
+
+  func makeStoreTransaction(from transaction: SK1Transaction) async -> StoreTransaction {
+    return await factory.makeStoreTransaction(from: transaction)
+  }
+
+  func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction {
+    return await factory.makeStoreTransaction(from: transaction)
+  }
+
+  func latestTransaction(forProductId productId: String, since date: Date) async -> StoreTransaction? {
+    guard let verificationResult = await Transaction.latest(for: productId, since: date) else {
+      return nil
     }
-    lastInternalTransaction = transaction
+    // Skip verification step as this has already been done.
+    return await factory.makeStoreTransaction(from: verificationResult.unsafePayloadValue)
   }
 
-  func reset() {
-    purchaseDate = nil
-    completion = nil
-    product = nil
-    source = nil
-    isFreeTrialAvailable = false
-    isCustomStoreCheckout = false
+  func currentEntitlementTransaction(
+    forProductId productId: String,
+    since date: Date
+  ) async -> StoreTransaction? {
+    guard let verificationResult = await Transaction.currentEntitlement(for: productId, since: date) else {
+      return nil
+    }
+    return await factory.makeStoreTransaction(from: verificationResult.unsafePayloadValue)
+  }
+
+  func waitBeforeRetrying() async {
+    try? await Task.sleep(nanoseconds: 500_000_000)
   }
 }

@@ -49,6 +49,16 @@ enum Seed: Storable {
   typealias Value = Int
 }
 
+/// Whether the identified user's seed is still waiting on the config to say
+/// if it's derived from their id.
+enum SeedAwaitsConfig: Storable {
+  static var key: String {
+    "store.seedAwaitsConfig"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = Bool
+}
+
 enum DidTrackAppInstall: Storable {
   static var key: String {
     "store.didTrackAppInstall"
@@ -111,6 +121,16 @@ enum DidTrackFirstSession: Storable {
   }
   static var directory: SearchPathDirectory = .appSpecificDocuments
   typealias Value = Bool
+}
+
+/// The first deep link of the first app session, for custom product page
+/// attribution. Install-scoped: a new user keeps it across a reset.
+enum FirstSessionDeepLinkURL: Storable {
+  static var key: String {
+    "store.firstSessionDeepLinkUrl"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = String
 }
 
 enum DidCleanUserAttributes: Storable {
@@ -336,6 +356,14 @@ enum PendingStripeCheckoutPollStorage: Storable {
   }
   static var directory: SearchPathDirectory = .userSpecificDocuments
   typealias Value = PendingStripeCheckoutPollState
+}
+
+enum PendingTeleportStorage: Storable {
+  static var key: String {
+    "store.PendingTeleportStorage"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = PendingTeleportState
 }
 
 enum LatestCustomerInfo: Storable {

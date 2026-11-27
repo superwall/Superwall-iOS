@@ -20,7 +20,7 @@ struct IdentityManagerTests {
     let identityManager = IdentityManager(
       deviceHelper: dependencyContainer.deviceHelper,
       storage: dependencyContainer.storage,
-      configManager: dependencyContainer.configManager,
+      sdkContext: AppSdkContext(configManager: dependencyContainer.configManager),
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       notifyUserChange: { attributes in
         notifiedAttributes = attributes
@@ -45,7 +45,7 @@ struct IdentityManagerTests {
     let identityManager = IdentityManager(
       deviceHelper: dependencyContainer.deviceHelper,
       storage: dependencyContainer.storage,
-      configManager: dependencyContainer.configManager,
+      sdkContext: AppSdkContext(configManager: dependencyContainer.configManager),
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       notifyUserChange: { _ in
         notifyCallCount += 1
@@ -69,7 +69,7 @@ struct IdentityManagerTests {
     let identityManager = IdentityManager(
       deviceHelper: dependencyContainer.deviceHelper,
       storage: dependencyContainer.storage,
-      configManager: dependencyContainer.configManager,
+      sdkContext: AppSdkContext(configManager: dependencyContainer.configManager),
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       notifyUserChange: { attributes in
         notifiedAttributes = attributes

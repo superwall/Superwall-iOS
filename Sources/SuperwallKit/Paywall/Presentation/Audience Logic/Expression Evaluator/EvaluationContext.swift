@@ -12,97 +12,130 @@ internal import Superscript
 final class EvaluationContext: HostContext {
   let storage: Storage
 
-  init(storage: Storage) {
+  /// The placement the audience filter is being checked for, if there is one.
+  let placement: PlacementData?
+
+  init(
+    storage: Storage,
+    placement: PlacementData?
+  ) {
     self.storage = storage
+    self.placement = placement
   }
 
   func computedProperty(name: String, args: String, callback: ResultCallback) {
-    evaluateProperty(name: name, args: args, callback: callback)
+    callback.onResult(result: value(ofProperty: name, args: args))
   }
 
   func deviceProperty(name: String, args: String, callback: ResultCallback) {
-    evaluateProperty(name: name, args: args, callback: callback)
+    callback.onResult(result: value(ofProperty: name, args: args))
   }
 
-  private func evaluateProperty(name: String, args: String, callback: ResultCallback) {
-    Task {
-      guard
-        let type = ComputedPropertyRequestType.allCases.first(where: { $0.description == name })
-      else {
-        callback.onResult(result: "")
-        return
-      }
-      guard let argsData = args.data(using: .utf8) else {
-        callback.onResult(result: "")
-        return
-      }
+  /// The property's value as JSON, or an empty string if it has none.
+  ///
+  /// The evaluator holds the thread it was called on until it has the answer, so
+  /// this answers on that thread and never from a `Task`. Evaluations run on Swift
+  /// concurrency's threads, and there are only as many of those as the device has
+  /// cores. With each one held by an evaluation, a task would have none left to
+  /// run on, and every evaluation would wait forever along with all the app's
+  /// other async work.
+  func value(ofProperty name: String, args: String) -> String {
+    guard
+      let type = ComputedPropertyRequestType.allCases.first(where: { $0.description == name }),
+      let argsData = args.data(using: .utf8),
+      let passableValues = try? JSONDecoder().decode([PassableValue].self, from: argsData),
+      case let .string(placementName)? = passableValues.first
+    else {
+      return ""
+    }
 
-      let decoder = JSONDecoder()
-      guard let passableValues = try? decoder.decode([PassableValue].self, from: argsData) else {
-        callback.onResult(result: "")
-        return
-      }
-
-      guard let firstPassableValue = passableValues.first else {
-        callback.onResult(result: "")
-        return
-      }
-      guard case let .string(name) = firstPassableValue else {
-        callback.onResult(result: "")
-        return
-      }
-
-      let request = ComputedPropertyRequest(
-        type: type,
-        placementName: name
+    let number: Int?
+    if let window = Self.placementCountWindow(for: type) {
+      // We don't add one here because the placement data is saved before
+      // we do the count.
+      number = storage.coreDataManager.countPlacementAndWait(
+        placementName,
+        since: window.startDate
       )
-
-      let number: Int?
-      if type.isPlacementCount {
-        let interval: TriggerAudienceOccurrence.Interval
-        switch type {
-        case .placementsInHour:
-          interval = .minutes(60)
-        case .placementsInDay:
-          interval = .minutes(60 * 24)
-        case .placementsInWeek:
-          interval = .minutes(60 * 24 * 7)
-        case .placementsInMonth:
-          interval = .minutes(60 * 24 * 7 * 30)
-        case .placementsSinceInstall:
-          interval = .infinity
-        default:
-          interval = .minutes(0)
-        }
-
-        // We don't add one here because the placement data is saved before
-        // we do the count.
-        number = await storage.coreDataManager.countPlacement(name, interval: interval)
-      } else {
-        number = await storage.coreDataManager.getComputedPropertySincePlacement(
-          PlacementData(
-            name: name,
-            parameters: [:],
-            createdAt: Date()
-          ),
-          request: request
+    } else {
+      // The placement being checked has already been saved. Passing it on means
+      // the time since that same placement is measured from the one before it.
+      let timeSince = storage.coreDataManager.getComputedPropertySincePlacementAndWait(
+        placement,
+        request: ComputedPropertyRequest(
+          type: type,
+          placementName: placementName
         )
+      )
+      if timeSince == nil, placement?.name == placementName {
+        // The first time a placement happens there's none before it, so it's
+        // measured from itself.
+        number = 0
+      } else {
+        number = timeSince
       }
+    }
 
-      guard let number = number else {
-        callback.onResult(result: "")
-        return
-      }
+    guard
+      let number = number,
+      let jsonData = try? JSONEncoder().encode(toPassableValue(from: number)),
+      let jsonString = String(data: jsonData, encoding: .utf8)
+    else {
+      return ""
+    }
+    return jsonString
+  }
 
-      guard let jsonData = try? JSONEncoder().encode(toPassableValue(from: number)) else {
-        callback.onResult(result: "")
-        return
+  /// How far back a placement count goes.
+  enum PlacementCountWindow: Equatable {
+    /// Counts the placements from this date onwards.
+    case since(Date)
+
+    /// Counts every placement.
+    case allTime
+
+    var startDate: Date? {
+      switch self {
+      case .since(let date):
+        return date
+      case .allTime:
+        return nil
       }
-      guard let jsonString = String(data: jsonData, encoding: .utf8) else {
-        callback.onResult(result: "")
-        return
-      }
-      callback.onResult(result: jsonString)
+    }
+  }
+
+  /// The window a placement count covers, ending at `now`, or `nil` if `type`
+  /// isn't a placement count.
+  ///
+  /// A month is one calendar month back from `now`, so it's 28 to 31 days long.
+  /// It's counted on the Gregorian calendar whichever calendar the device uses,
+  /// so that a month is the same length for everyone.
+  static func placementCountWindow(
+    for type: ComputedPropertyRequestType,
+    now: Date = Date(),
+    calendar: Calendar = Calendar(identifier: .gregorian)
+  ) -> PlacementCountWindow? {
+    let hour: TimeInterval = 60 * 60
+    let day = 24 * hour
+
+    switch type {
+    case .placementsInHour:
+      return .since(now.addingTimeInterval(-hour))
+    case .placementsInDay:
+      return .since(now.addingTimeInterval(-day))
+    case .placementsInWeek:
+      return .since(now.addingTimeInterval(-7 * day))
+    case .placementsInMonth:
+      let monthAgo = calendar.date(byAdding: .month, value: -1, to: now)
+      return .since(monthAgo ?? now.addingTimeInterval(-30 * day))
+    case .placementsSinceInstall:
+      return .allTime
+    case .minutesSince,
+      .hoursSince,
+      .daysSince,
+      .monthsSince,
+      .yearsSince:
+      return nil
     }
   }
 }

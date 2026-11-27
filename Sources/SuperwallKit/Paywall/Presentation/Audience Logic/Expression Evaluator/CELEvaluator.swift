@@ -17,17 +17,17 @@ protocol ExpressionEvaluating {
 }
 
 struct CELEvaluator: ExpressionEvaluating {
-  private unowned let storage: Storage
+  /// Held strongly, since an evaluation can still be running when whatever made
+  /// the evaluator lets go of the storage.
+  private let storage: Storage
   private unowned let factory: AudienceFilterAttributesFactory
   private let expressionLogic: ExpressionLogic
-  private let evaluationContext: EvaluationContext
 
   init(
     storage: Storage,
     factory: AudienceFilterAttributesFactory
   ) {
     self.storage = storage
-    self.evaluationContext = EvaluationContext(storage: storage)
     self.factory = factory
     self.expressionLogic = ExpressionLogic(storage: storage)
   }
@@ -82,7 +82,10 @@ struct CELEvaluator: ExpressionEvaluating {
     guard
       let resultData = evaluateWithContext(
         definition: jsonString,
-        context: evaluationContext
+        context: EvaluationContext(
+          storage: storage,
+          placement: placementData
+        )
       ).data(using: .utf8),
       let result = try? JSONDecoder().decode(EvaluationResult.self, from: resultData)
     else {
@@ -93,10 +96,16 @@ struct CELEvaluator: ExpressionEvaluating {
     case .success(let value):
       switch value {
       case .bool(let value) where value == true:
-        return await expressionLogic.tryToMatchOccurrence(
+        let outcome = await expressionLogic.tryToMatchOccurrence(
           from: audience,
           expressionMatched: true
         )
+        guard case .match(var item) = outcome else {
+          return outcome
+        }
+        let device = attributes["device"] as? [String: Any]
+        item.entitlementIdsSeen = (device?["activeEntitlements"] as? [String]).map { Set($0) }
+        return .match(item)
       default:
         return noMatch
       }

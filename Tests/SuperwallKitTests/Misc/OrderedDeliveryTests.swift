@@ -123,6 +123,67 @@ struct OrderedDeliveryTests {
     #expect(recorded.values == ["start a", "end a", "start b", "end b"])
   }
 
+  @Test("With nested delivery, a value the receiver adds is delivered before its deliver call returns")
+  func nestedDelivery() {
+    let recorded = Recorded<String>()
+    var delivery: OrderedDelivery<String>!
+    delivery = OrderedDelivery<String>(deliversNestedValues: true) { value in
+      recorded.start("start \(value)")
+      if value == "a" {
+        delivery.add("b")
+        delivery.deliver()
+        #expect(recorded.values == ["start a", "start b", "end b"])
+      }
+      recorded.start("end \(value)")
+    }
+
+    delivery.add("a")
+    delivery.deliver()
+    #expect(recorded.values == ["start a", "start b", "end b", "end a"])
+
+    // It's free for the next delivery.
+    delivery.add("c")
+    delivery.deliver()
+    #expect(recorded.values.suffix(2) == ["start c", "end c"])
+  }
+
+  @Test("With nested delivery, a deliver call from another thread still doesn't wait")
+  func nestedDeliveryFromAnotherThread() {
+    let recorded = Recorded<Int>()
+    let inReceiver = DispatchSemaphore(value: 0)
+    let release = DispatchSemaphore(value: 0)
+    let delivery = OrderedDelivery<Int>(deliversNestedValues: true) { value in
+      recorded.start(value)
+      if value == 0 {
+        inReceiver.signal()
+        release.wait()
+      }
+    }
+
+    delivery.add(0)
+    let firstDone = DispatchSemaphore(value: 0)
+    Thread {
+      delivery.deliver()
+      firstDone.signal()
+    }
+    .start()
+    inReceiver.wait()
+
+    let secondDone = DispatchSemaphore(value: 0)
+    Thread {
+      delivery.add(1)
+      delivery.deliver()
+      secondDone.signal()
+    }
+    .start()
+    #expect(secondDone.wait(timeout: .now() + 2) == .success)
+    #expect(recorded.values == [0])
+
+    release.signal()
+    #expect(firstDone.wait(timeout: .now() + 2) == .success)
+    #expect(recorded.values == [0, 1])
+  }
+
   @Test("Values added from many threads are each delivered once, never two at a time")
   func concurrentDeliveries() async {
     let recorded = Recorded<Int>()

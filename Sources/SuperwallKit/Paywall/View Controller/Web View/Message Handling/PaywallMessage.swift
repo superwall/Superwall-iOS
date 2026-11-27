@@ -38,6 +38,17 @@ struct PayloadMessages: Decodable {
   }
 }
 
+/// What a page says about the teleport it opens with `open_url_external`, from pages that send it.
+struct TeleportOpening: Equatable {
+  let teleportId: String?
+  let productId: String?
+  let shouldDismiss: Bool?
+
+  var isEmpty: Bool {
+    teleportId == nil && productId == nil && shouldDismiss == nil
+  }
+}
+
 // swiftlint:disable:next type_body_length
 enum PaywallMessage: Decodable, Equatable {
   case onReady(paywallJsVersion: String)
@@ -48,7 +59,8 @@ enum PaywallMessage: Decodable, Equatable {
   case openUrlInSafari(
     _ url: URL,
     drawsWaitingScreen: Bool = false,
-    isTeleport: Bool = false
+    isTeleport: Bool = false,
+    teleport: TeleportOpening? = nil
   )
   case teleportWatchStart(TeleportReturnCover.Watch)
   case teleportWatchEnd
@@ -228,10 +240,16 @@ enum PaywallMessage: Decodable, Equatable {
           let url = URL(string: urlString) {
           let waitingScreen = (try? values.decodeIfPresent(Bool.self, forKey: .waitingScreen)) ?? false
           let teleport = (try? values.decodeIfPresent(Bool.self, forKey: .teleport)) ?? false
+          let opening = TeleportOpening(
+            teleportId: try? values.decodeIfPresent(String.self, forKey: .teleportId),
+            productId: try? values.decodeIfPresent(String.self, forKey: .productId),
+            shouldDismiss: try? values.decodeIfPresent(Bool.self, forKey: .shouldDismiss)
+          )
           self = .openUrlInSafari(
             url,
             drawsWaitingScreen: waitingScreen,
-            isTeleport: teleport
+            isTeleport: teleport,
+            teleport: teleport && !opening.isEmpty ? opening : nil
           )
           return
         }

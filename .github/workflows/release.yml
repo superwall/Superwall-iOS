@@ -67,7 +67,7 @@ jobs:
       release: ${{ steps.version.outputs.release }}
       ui-tests: ${{ steps.ui-tests.outputs.run }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Read and check the version
         id: version
@@ -155,13 +155,13 @@ jobs:
             slug: objc-advanced
     steps:
       - name: Check out the UI tests
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: superwall/Superwall-iOS-UI-tests
           ref: main
           token: ${{ secrets.UI_TESTS_REPO_ACCESS_TOKEN || github.token }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
 
@@ -180,7 +180,7 @@ jobs:
 
       - name: Upload results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ui-tests-${{ matrix.slug }}
           path: limrun-results
@@ -203,7 +203,7 @@ jobs:
       PRERELEASE: ${{ needs.version.outputs.prerelease }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
 
@@ -252,10 +252,10 @@ jobs:
       VERSION: ${{ needs.version.outputs.version }}
       COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Select Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
         with:
           xcode-version: latest-stable
 
@@ -333,7 +333,7 @@ jobs:
       && (needs.wrappers.result == 'success' || needs.wrappers.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Post to Slack
         env:

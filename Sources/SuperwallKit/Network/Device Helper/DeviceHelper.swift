@@ -717,7 +717,7 @@ class DeviceHelper {
   /// Set after initialization to enable test mode sandbox override.
   var testModeManager: TestModeManager?
 
-  /// Returns true if built for the simulator, using TestFlight, or in test mode.
+  /// Returns true if built for the simulator, a TestFlight or development build, or in test mode.
   var isSandbox: String {
     if testModeManager?.isTestMode == true {
       return "true"
@@ -744,11 +744,15 @@ class DeviceHelper {
       return "\(isSandbox)"
     }
 
+    #if os(macOS) || targetEnvironment(macCatalyst)
+    return "\(MacBuildSignature.isSandbox)"
+    #else
     guard let url = Bundle.main.appStoreReceiptURL else {
       return "false"
     }
 
     return "\(url.path.contains("sandboxReceipt"))"
+    #endif
     #endif
   }
 
@@ -1069,6 +1073,9 @@ class DeviceHelper {
     reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
     #endif
     self.sdkVersionPadded = Self.makePaddedVersion(using: sdkVersion)
+    #if os(macOS) || targetEnvironment(macCatalyst)
+    MacBuildSignature.readInBackground()
+    #endif
     self.appVersionPadded = Self.makePaddedVersion(using: appVersion)
     self.isUIKitReadSafe = isUIKitReadSafe
 
@@ -1080,11 +1087,11 @@ class DeviceHelper {
     registerForTraitChanges()
   }
 
-  /// The ATT authorization status, or `nil` where the OS has no such concept.
-  /// Returns `notDetermined` when AppTrackingTransparency isn't linked.
+  /// The ATT authorization status, or `nil` where there is none to read: the OS has
+  /// no such concept, or AppTrackingTransparency isn't in the app.
   static var attStatus: Int? {
-    #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS) || os(visionOS)
-    return TrackingManagerProxy().trackingAuthorizationStatus()
+    #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS) || os(visionOS) || os(tvOS)
+    return TrackingManagerProxy().trackingAuthorizationStatusIfAvailable()
     #else
     return nil
     #endif
@@ -1093,9 +1100,8 @@ class DeviceHelper {
   /// The ad consent device attributes would report right now.
   ///
   /// The app's own ``SuperwallOptions/adConsent`` wins once it's been set, then a
-  /// consent banner's stored answer, then the granted default. The `.none` rule then
-  /// applies to all of them, and the ATT rule to all but the app's own setting,
-  /// which is always trusted.
+  /// consent banner's stored answer, then the granted default. The `.none` and ATT
+  /// rules then apply to all of them.
   var reportedAdConsent: ReportedAdConsent {
     let options = factory.makeSuperwallOptions()
     let consent: AdConsent
@@ -1110,14 +1116,16 @@ class DeviceHelper {
       consent = AdConsent()
       source = .default
     }
+    let attStatus = attStatusProvider()
     let reported = consent.reported(
       for: options.eventTrackingBehavior,
-      attStatus: source == .developer ? nil : attStatusProvider()
+      attStatus: attStatus
     )
     return ReportedAdConsent(
       adUserData: reported.adUserData.description,
       adPersonalization: reported.adPersonalization.description,
-      source: source.rawValue
+      source: source.rawValue,
+      attStatus: attStatus.map { String($0) }
     )
   }
 
@@ -1131,9 +1139,9 @@ class DeviceHelper {
     adConsentLock.unlock()
   }
 
-  /// Whether the ad consent or its source has changed since device attributes were
-  /// last sent, for example because the user answered the ATT prompt or a consent
-  /// banner.
+  /// Whether the ad consent, its source or the ATT status has changed since device
+  /// attributes were last sent, for example because the user answered the ATT prompt
+  /// or a consent banner.
   ///
   /// Returns `false` before the first send, which reports the current value anyway,
   /// and while `eventTrackingBehavior` is ``EventTrackingBehavior/none``, when nothing
@@ -1266,9 +1274,12 @@ class DeviceHelper {
     if isEnrichmentBlockedByTracking() {
       return
     }
+    // Sent with every request until the server has answered it.
+    let deepLink = storage.get(FirstSessionDeepLinkLookup.self)
     let request = EnrichmentRequest(
       user: JSON(identityManager.userAttributes),
-      device: JSON(deviceAttributes)
+      device: JSON(deviceAttributes),
+      deepLink: deepLink
     )
     let response: Enrichment
     do {
@@ -1284,18 +1295,20 @@ class DeviceHelper {
     if isEnrichmentBlockedByTracking() {
       return
     }
+    if deepLink != nil,
+      response.deepLink != nil {
+      // The page's attributes are set with the response's other user attributes below.
+      storage.finishFirstSessionDeepLinkLookup(
+        page: CustomProductPage(userAttributes: response.user)
+      )
+    }
     enrichment = response
 
-    $enrichment.withSnapshot { enrichment in
-      if let enrichment = enrichment {
-        storage.save(enrichment, forType: LatestEnrichment.self)
-      }
-    }
-
-    $enrichment.withSnapshot { enrichment in
-      if let attributes = enrichment?.user.dictionaryObject {
-        Superwall.shared.setUserAttributes(attributes)
-      }
+    // This call's own response, not the shared one: another request can finish
+    // in between and replace it, and its response may not carry the page.
+    storage.save(response, forType: LatestEnrichment.self)
+    if let attributes = response.user.dictionaryObject {
+      Superwall.shared.setUserAttributes(attributes)
     }
   }
 
@@ -1378,7 +1391,8 @@ class DeviceHelper {
       deviceId: factory.makeDeviceId(),
       adUserDataConsent: adConsent.adUserData,
       adPersonalizationConsent: adConsent.adPersonalization,
-      adConsentSource: adConsent.source
+      adConsentSource: adConsent.source,
+      attStatus: adConsent.attStatus
     )
 
     var deviceDictionary = template.toDictionary(

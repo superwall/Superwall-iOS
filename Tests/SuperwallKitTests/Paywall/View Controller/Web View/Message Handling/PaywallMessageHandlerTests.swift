@@ -562,6 +562,16 @@ struct PaywallMessageHandlerTests {
   }
 
   @Test
+  func aReplacingPageTellsTheWebViewDelegateThePageRestarted() {
+    let (_, webView, delegate) = makeHandler()
+    webView.delegate = delegate
+
+    webView.webView(webView, didCommit: nil)
+
+    #expect(delegate.pageRestartCount == 1)
+  }
+
+  @Test
   func close() {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
@@ -1495,6 +1505,32 @@ struct PaywallMessageHandlerTests {
     #expect(delegate.stripeCheckoutComplete == nil)
     #expect(delegate.stripeCheckoutAbandon == nil)
     #expect(delegate.eventDidOccur == nil)
+  }
+
+  @Test
+  func handleStripeCheckoutStart_forwardsToDelegate() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isiOSAppOnMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    messageHandler.handle(.stripeCheckoutStart(checkoutContextId: "ctx_123", productId: "prod_123"))
+
+    #expect(delegate.startedCheckouts == ["ctx_123"])
   }
 
   @Test

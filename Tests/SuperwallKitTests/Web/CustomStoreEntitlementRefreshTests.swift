@@ -160,7 +160,7 @@ struct CustomStoreEntitlementRefreshTests {
       attempts += 1
     }
     #expect(await redeemer.redeemCount == 1)
-    await dependencyContainer.makePurchasingCoordinator().reset()
+    dependencyContainer.makePurchasingCoordinator().reset()
   }
 
   @Test("The post-purchase redeem applies the custom store's entitlements")
@@ -224,7 +224,7 @@ struct CustomStoreEntitlementRefreshTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
-    cache.activePaywallVcKey = "key"
+    cache.markPresented(paywallVc, forKey: "key")
     dependencyContainer.entitlementsInfo.entitlementsByProductId["custom_prod_1"] = [entitlement]
 
     let delegate = MockSuperwallDelegate()
@@ -236,7 +236,10 @@ struct CustomStoreEntitlementRefreshTests {
   }
 
   private func clearPresentedPaywall() {
-    dependencyContainer.paywallManager.cache.activePaywallVcKey = nil
+    let cache = dependencyContainer.paywallManager.cache
+    if let presented = cache.activePaywallViewController {
+      cache.markDismissed(presented)
+    }
     dependencyContainer.entitlementsInfo.entitlementsByProductId["custom_prod_1"] = nil
   }
 
@@ -299,10 +302,10 @@ struct CustomStoreEntitlementRefreshTests {
     let redeemer = makeRedeemer(network: network, superwall: superwall)
     // The user is paying in the custom store's checkout and comes back to the app.
     let product = makeCustomStoreProduct()
-    await coordinator.beginPurchase(of: product, source: .purchaseFunc(product), isFreeTrialAvailable: false)
+    coordinator.beginPurchase(of: product, source: .purchaseFunc(product), isFreeTrialAvailable: false)
 
     await redeemer.pollWebEntitlements()
-    await coordinator.reset()
+    coordinator.reset()
 
     let events = delegate.eventsReceived.map { $0.backingData.objcEvent }
     #expect(!events.contains(SuperwallEventObjc.restoreComplete))

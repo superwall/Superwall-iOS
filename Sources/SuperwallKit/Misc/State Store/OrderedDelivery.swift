@@ -19,14 +19,24 @@ import Foundation
 /// Only one thread delivers at a time. A ``deliver()`` call while another
 /// thread is delivering returns straight away, and that thread delivers the
 /// value after the ones before it. Called from the receiver, it returns
-/// straight away too, and the value is delivered once the receiver returns.
+/// straight away too, and the value is delivered once the receiver returns,
+/// unless the delivery was made with `deliversNestedValues`.
 final class OrderedDelivery<Value>: @unchecked Sendable {
   private let lock = NSLock()
   private var queue: [Value] = []
-  private var isDelivering = false
+  private var deliveringThread: Thread?
+  private let deliversNestedValues: Bool
   private let receive: (Value) -> Void
 
-  init(_ receive: @escaping (Value) -> Void) {
+  /// - Parameter deliversNestedValues: Whether a ``deliver()`` call from the
+  ///   receiver delivers the waiting values before it returns, as a
+  ///   property's `didSet` does when its observer sets the property again.
+  ///   Calls from other threads still return straight away.
+  init(
+    deliversNestedValues: Bool = false,
+    _ receive: @escaping (Value) -> Void
+  ) {
+    self.deliversNestedValues = deliversNestedValues
     self.receive = receive
   }
 
@@ -41,18 +51,22 @@ final class OrderedDelivery<Value>: @unchecked Sendable {
   /// already running, which delivers them instead.
   func deliver() {
     lock.lock()
-    guard !isDelivering else {
+    let isNested = deliveringThread === Thread.current
+    if deliveringThread != nil,
+      !(isNested && deliversNestedValues) {
       lock.unlock()
       return
     }
-    isDelivering = true
+    deliveringThread = Thread.current
     while !queue.isEmpty {
       let value = queue.removeFirst()
       lock.unlock()
       receive(value)
       lock.lock()
     }
-    isDelivering = false
+    if !isNested {
+      deliveringThread = nil
+    }
     lock.unlock()
   }
 }

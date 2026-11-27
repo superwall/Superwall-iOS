@@ -44,7 +44,13 @@ private final class Latch: @unchecked Sendable {
 private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
   let store: IdentityStore
   let userChangeLock = NSRecursiveLock()
+  /// The seeds the config derives, by user id. Other users get `.off`.
   var seeds: [String: Int] = [:]
+  /// The seeds the app's options derive, by user id, known without the
+  /// config.
+  var seedsFromOptions: [String: Int] = [:]
+  /// Whether the config fails to load.
+  var configFails = false
   var configLatch: Latch?
   /// Holds every side effect back until it opens, so a test can decide what
   /// happens before they start.
@@ -122,9 +128,19 @@ private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
     }
   }
 
-  func userIdSeed(for userId: String) async -> Int? {
+  func userIdSeedFromOptions(for userId: String) -> Int? {
+    seedsFromOptions[userId]
+  }
+
+  func userIdSeed(for userId: String) async -> UserIdSeed {
+    if let seed = seedsFromOptions[userId] {
+      return .derived(seed)
+    }
     await configLatch?.wait()
-    return seeds[userId]
+    if configFails {
+      return .unknown
+    }
+    return seeds[userId].map(UserIdSeed.derived) ?? .off
   }
 
   func fetchAssignments() async {
@@ -203,12 +219,14 @@ extension IdentityState {
 
 private func readyState(
   appUserId: String? = nil,
+  seedAwaitsConfig: Bool = false,
   userAttributes: [String: Any] = [:]
 ) -> IdentityState {
   IdentityState(
     appUserId: appUserId,
     aliasId: "$SuperwallAlias:alias-1",
     seed: 42,
+    seedAwaitsConfig: seedAwaitsConfig,
     userAttributes: userAttributes,
     pending: [],
     hasResolved: true,
@@ -540,6 +558,126 @@ struct IdentityActionTests {
     #expect(context.tracked.last?["seed"] as? Int == 7)
   }
 
+  @Test("With seeds turned on in the options, identify sets the seed with the user id, without the config")
+  func seedFromOptions() async {
+    let context = FakeIdentityContext(readyState())
+    context.seedsFromOptions["user-1"] = 7
+    // Never opened: the config isn't needed.
+    context.configLatch = Latch()
+
+    context.dispatch(identify("user-1"))
+
+    // Applied, saved and tracked before dispatch returns.
+    #expect(context.state.seed == 7)
+    #expect(context.state.seedAwaitsConfig == false)
+    #expect(context.state.isReady)
+    #expect(context.persisted.count == 1)
+    #expect(context.persisted.first?.appUserId == "user-1")
+    #expect(context.persisted.first?.seed == 7)
+    #expect(context.tracked.count == 1)
+    #expect(context.tracked.first?["appUserId"] as? String == "user-1")
+    #expect(context.tracked.first?["seed"] as? Int == 7)
+
+    // Only the redeem and the assignments fetch are started.
+    #expect(context.takeSideEffects().count == 2)
+    #expect(context.readiness.isEmpty)
+  }
+
+  @Test("With seeds turned on in the options, switching user gives the new user their own seed")
+  func seedFromOptionsOnSwitch() async {
+    let context = FakeIdentityContext(readyState(appUserId: "user-1"))
+    context.seedsFromOptions["user-2"] = 9
+
+    context.dispatch(identify("user-2", keptAttributes: [:]))
+    await context.settle()
+
+    #expect(context.state.appUserId == "user-2")
+    #expect(context.state.seed == 9)
+    #expect(context.state.userAttributes["seed"] as? Int == 9)
+    #expect(context.persisted.last?.seed == 9)
+    #expect(context.state.isReady)
+  }
+
+  @Test("A seed the config never answered for keeps waiting, and the identity is ready")
+  func seedKeepsWaitingWhenConfigFails() async {
+    let context = FakeIdentityContext(readyState())
+    context.seeds["user-1"] = 7
+    context.configFails = true
+
+    context.dispatch(identify("user-1"))
+    #expect(context.state.seedAwaitsConfig)
+    await context.settle()
+
+    #expect(context.state.seed == 42)
+    #expect(context.state.seedAwaitsConfig)
+    #expect(context.state.isReady)
+  }
+
+  @Test("A seed left waiting by an earlier launch is derived once the config arrives")
+  func resumeSeedDerivesIt() async {
+    let context = FakeIdentityContext(readyState(appUserId: "user-1", seedAwaitsConfig: true))
+    context.seeds["user-1"] = 7
+    let config = Latch()
+    context.configLatch = config
+
+    context.dispatch(.resumeSeed)
+    #expect(context.state.pendingSummary == ["seed:user-1"])
+    #expect(context.state.isReady == false)
+
+    config.open()
+    await context.settle()
+    #expect(context.state.seed == 7)
+    #expect(context.state.seedAwaitsConfig == false)
+    #expect(context.state.isReady)
+    #expect(context.tracked.last?["seed"] as? Int == 7)
+  }
+
+  @Test("A seed left waiting by an earlier launch stops waiting when the config has user id seeds off")
+  func resumeSeedKeepsItWhenOff() async {
+    let context = FakeIdentityContext(readyState(appUserId: "user-1", seedAwaitsConfig: true))
+
+    context.dispatch(.resumeSeed)
+    await context.settle()
+
+    #expect(context.state.seed == 42)
+    #expect(context.state.seedAwaitsConfig == false)
+    #expect(context.state.isReady)
+    #expect(context.tracked.isEmpty)
+  }
+
+  @Test("resumeSeed does nothing for a user whose seed isn't waiting on the config")
+  func resumeSeedLeavesSettledSeedAlone() async {
+    let context = FakeIdentityContext(readyState(appUserId: "user-1"))
+    context.seeds["user-1"] = 7
+
+    context.dispatch(.resumeSeed)
+    await context.settle()
+
+    #expect(context.state.seed == 42)
+    #expect(context.events.isEmpty)
+    #expect(context.readiness.isEmpty)
+  }
+
+  @Test("resumeSeed does nothing while an identify is already waiting for the seed")
+  func resumeSeedDoesNotDoubleUp() async {
+    let context = FakeIdentityContext(readyState())
+    context.seeds["user-1"] = 7
+    let config = Latch()
+    context.configLatch = config
+
+    context.dispatch(identify("user-1"))
+    let sideEffectsBefore = context.events.filter { $0 == "sideEffect" }.count
+    context.dispatch(.resumeSeed)
+
+    #expect(context.state.pendingSummary == ["seed:user-1"])
+    #expect(context.events.filter { $0 == "sideEffect" }.count == sideEffectsBefore)
+
+    config.open()
+    await context.settle()
+    #expect(context.state.seed == 7)
+    #expect(context.state.isReady)
+  }
+
   @Test("Waiting for the config doesn't hold up later changes")
   func mergeIsNotBlockedBySeed() async {
     let context = FakeIdentityContext(readyState())
@@ -698,7 +836,7 @@ struct IdentityActionTests {
 
     let finished = DispatchSemaphore(value: 0)
     Thread {
-      store.update(IdentityUpdate.identify(IdentifyOperation(userId: "user-1")))
+      store.update(IdentityUpdate.identify(IdentifyOperation(userId: "user-1"), seed: nil))
       finished.signal()
     }
     .start()
@@ -902,8 +1040,9 @@ struct IdentityActionTests {
     #expect(String(describing: merge).contains("secret") == false)
     #expect(String(describing: reset).contains("secret") == false)
     #expect(String(describing: merge).contains("email"))
-    #expect(String(describing: IdentityAction.resolveSeed(IdentifyOperation(userId: "secret-user"), seed: 7)) == "resolveSeed(seed: 7)")
-    #expect(String(describing: IdentityAction.resolveSeed(IdentifyOperation(userId: "secret-user"), seed: nil)) == "resolveSeed(seed: nil)")
+    #expect(String(describing: IdentityAction.resolveSeed(IdentifyOperation(userId: "secret-user"), .derived(7))) == "resolveSeed(derived(7))")
+    #expect(String(describing: IdentityAction.resolveSeed(IdentifyOperation(userId: "secret-user"), .unknown)) == "resolveSeed(unknown)")
+    #expect(String(describing: IdentityAction.resumeSeed) == "resumeSeed")
     #expect(String(describing: IdentityAction.persist) == "persist")
   }
 }

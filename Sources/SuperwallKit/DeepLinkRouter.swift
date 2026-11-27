@@ -19,13 +19,24 @@ final class DeepLinkRouter {
   #if canImport(WebKit)
   private unowned let debugManager: DebugManager
   #endif
-  private unowned let configManager: ConfigManager
-  private static var pendingDeepLink: URL?
+  unowned let configManager: ConfigManager
+  unowned let storage: Storage
+  unowned let identityManager: IdentityManager
 
   /// Tracks an event. Replaced in tests to observe what's tracked.
   var trackEvent: (Trackable) async -> Void = { event in
     _ = await Superwall.shared.track(event)
   }
+
+  /// Fetches enrichment, which looks up the custom product page of the first
+  /// deep link. Replaced in tests.
+  var fetchEnrichment: () async -> Void = {
+    try? await Superwall.shared.dependencyContainer.deviceHelper?.getEnrichment()
+  }
+
+  /// Hands a checkout that a return link says was paid for to the redeemer, which keeps it
+  /// pending until its code is redeemed. Replaced in tests.
+  var recordPurchasedReturn: (PurchasedReturn) -> Void
 
   /// The ``PaywallInfo`` of the presented paywall, if one is presented. Replaced in tests.
   var presentedPaywallInfo: () async -> PaywallInfo? = {
@@ -40,21 +51,39 @@ final class DeepLinkRouter {
   init(
     webEntitlementRedeemer: WebEntitlementRedeemer,
     debugManager: DebugManager,
-    configManager: ConfigManager
+    configManager: ConfigManager,
+    storage: Storage,
+    identityManager: IdentityManager
   ) {
     self.webEntitlementRedeemer = webEntitlementRedeemer
     self.debugManager = debugManager
     self.configManager = configManager
+    self.storage = storage
+    self.identityManager = identityManager
+    recordPurchasedReturn = { purchase in
+      Task {
+        await webEntitlementRedeemer.handlePurchasedReturn(purchase)
+      }
+    }
 
     listenToConfig()
   }
   #else
   init(
     webEntitlementRedeemer: WebEntitlementRedeemer,
-    configManager: ConfigManager
+    configManager: ConfigManager,
+    storage: Storage,
+    identityManager: IdentityManager
   ) {
     self.webEntitlementRedeemer = webEntitlementRedeemer
     self.configManager = configManager
+    self.storage = storage
+    self.identityManager = identityManager
+    recordPurchasedReturn = { purchase in
+      Task {
+        await webEntitlementRedeemer.handlePurchasedReturn(purchase)
+      }
+    }
 
     listenToConfig()
   }
@@ -95,6 +124,8 @@ final class DeepLinkRouter {
       deepLinkUrl = url
     }
 
+    captureFirstSessionDeepLink(original: url, resolved: deepLinkUrl)
+
     let trackEvent = self.trackEvent
     Task {
       await trackEvent(InternalSuperwallEvent.DeepLink(url: deepLinkUrl))
@@ -125,6 +156,12 @@ final class DeepLinkRouter {
   }
 
   private func handleReturnLink(_ url: URL) {
+    // The checkout page says the user paid. The paywall that sent them there may be gone (iOS
+    // can end the app while Safari is open), so the SDK finishes the purchase from the link.
+    if let purchase = url.superwallPurchasedReturn {
+      recordPurchasedReturn(purchase)
+    }
+
     // The paywall that teleported takes its waiting screen out of sight at once.
     let userInfo = url.superwallReturnReason.map { ["reason": $0] }
     if Thread.isMainThread {
@@ -168,6 +205,7 @@ final class DeepLinkRouter {
                 self?.route(url: deepLink)
                 Self.pendingDeepLink = nil
               }
+              self?.fetchEnrichmentIfFirstDeepLinkIsUnanswered()
             default:
               break
             }
@@ -319,7 +357,7 @@ extension URL {
   /// Formats the URL for the deep link event, handling both Universal Link and URL Scheme.
   ///
   /// - Note: Assumes the `URL` is already verified to match the expected Superwall deep link format.
-  fileprivate var superwallDeepLinkMappedURL: URL {
+  var superwallDeepLinkMappedURL: URL {
     guard let appLinkRange = absoluteString.range(of: "/app-link/") else {
       return self
     }

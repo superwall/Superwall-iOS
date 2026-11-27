@@ -375,8 +375,8 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// device attribute (`developer`, `tcf` or `default`).
   ///
   /// Both are reported as denied while ``eventTrackingBehavior`` is
-  /// ``EventTrackingBehavior/none``. On iOS, personalization is reported as denied when
-  /// the user hasn't allowed tracking, unless you set `adConsent` yourself.
+  /// ``EventTrackingBehavior/none``. They're also reported as denied when the user has
+  /// denied App Tracking Transparency or it's restricted, whatever `adConsent` is set to.
   ///
   /// You can also change this at runtime via ``Superwall/adConsent``.
   public var adConsent = AdConsent() {
@@ -427,6 +427,16 @@ public final class SuperwallOptions: NSObject, Encodable {
 
   /// Enables experimental device variables. These are subject to change. Defaults to `false`.
   public var enableExperimentalDeviceVariables = false
+
+  /// Derives `user.seed` from the ID passed to `identify(userId:)`. Defaults to `false`.
+  ///
+  /// When `false`, the seed is only derived from the user ID if Superwall has turned this on
+  /// for your app. Set this before configuring the SDK.
+  ///
+  /// ID-derived seeds are numbers from 0 to 99, and the same ID always gets the same seed.
+  /// Anonymous users keep their random seed until identified. Identifying the user who is
+  /// already identified doesn't change their seed.
+  public var enableUserIdSeed = false
 
   /// Disables the app transaction check on SDK launch. Defaults to `false`.
   public var shouldBypassAppTransactionCheck = false
@@ -561,6 +571,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     case maxConfigRetryCount
     case shouldObservePurchases
     case enableExperimentalDeviceVariables
+    case enableUserIdSeed
     case testModeBehavior
     case adUserDataConsent
     case adPersonalizationConsent
@@ -599,6 +610,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(maxConfigRetryCount, forKey: .maxConfigRetryCount)
     try container.encode(shouldObservePurchases, forKey: .shouldObservePurchases)
     try container.encode(enableExperimentalDeviceVariables, forKey: .enableExperimentalDeviceVariables)
+    try container.encode(enableUserIdSeed, forKey: .enableUserIdSeed)
     try container.encode(testModeBehavior.description, forKey: .testModeBehavior)
     try container.encode(adConsent.adUserData.description, forKey: .adUserDataConsent)
     try container.encode(adConsent.adPersonalization.description, forKey: .adPersonalizationConsent)

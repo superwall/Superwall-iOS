@@ -21,7 +21,7 @@ struct NoPurchasesScreenView: View {
             .font(.headline)
           Text(screen.subtitle ?? strings.string("customer_center_no_purchases_subtitle"))
             .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color.customerCenterSecondaryText)
         }
         .padding(.vertical, 4)
         .accessibilityIdentifier("customer_center.no_purchases")

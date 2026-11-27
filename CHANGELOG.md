@@ -2,6 +2,47 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.19.2
+
+### Enhancements
+
+- Saves the first deep link received during the first app session as the `firstDeepLinkUrl` user attribute. If you assign deep links to your App Store custom product pages, you can use this attribute to break down results and filter audiences by the product page that drove the install. If you've connected App Store Connect, the page's ID and name are saved too, as `customProductPageId` and `customProductPageName`. Requires `Superwall.handleDeepLink(_:)` to be set up.
+- Adds the user's App Tracking Transparency status as the `attStatus` device attribute.
+- Adds `SuperwallOptions.enableUserIdSeed`, which derives `user.seed` from the ID passed to `identify(userId:)`. Users who are already identified keep their current seed.
+- Reports ad user data consent as denied, as well as personalization, when the user has denied App Tracking Transparency or it's restricted, even if you set `adConsent` yourself. If you use the MMP, conversions from these users are no longer sent to Meta or your other ad networks.
+- Sends the App Tracking Transparency status with the MMP install match, so an install from a user who had already refused tracking isn't reported to ad networks.
+
+### Fixes
+
+- Fixes the app freezing when several audience filters that count a placement, or the time since one, are checked at once.
+- Fixes audience filters for the time since a placement reading zero when they're checked for that same placement. They now measure from the time before it.
+- Fixes a paywall appearing in the wrong window on iPad and Mac Catalyst when several of the app's windows are on screen.
+- Fixes a user identified while the config couldn't load keeping a random `user.seed`, when user ID seeds are turned on for your app.
+- Fixes cached paywalls sometimes being torn down off the main thread when they're cleared, such as on `reset()`.
+- Fixes the SDK's on-device database growing very large over time. Ones that have already grown shrink the next time the app opens.
+- Audience filters no longer count paywall preloading and loading events.
+- Fixes `presentedViewController` sometimes returning a paywall that isn't on screen, which `reset()` then kept instead of clearing.
+- Fixes a paywall shown again while it was still closing being marked as closed, so its next close wasn't reported.
+- Fixes `presentedViewController` returning `nil` while a paywall is on screen, when it was shown as another paywall finished closing.
+- Fixes a paywall's close sometimes not being reported after it opened a link in the in-app browser.
+- Fixes a StoreKit 1 purchase that ended straight away, such as one the device refused, sometimes never returning its result.
+- Fixes a purchase never finishing, with its loading spinner left up, when another purchase started before it returned.
+- Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.
+- Fixes a teleport checkout paid on the web not being credited when the return to the app launches it from scratch. Pass your app's launch URL to `Superwall.handleDeepLink(_:)` so the return link is handled on a cold launch too.
+- Fixes a web checkout that was paid for not being credited when redeeming it failed and the app was opened again more than a minute later.
+- Fixes a paywall staying up for a user whose web entitlements arrived while it was loading. It now closes as restored when it opens, so a user who already paid isn't asked to pay again. Paywalls you show to subscribed users on purpose aren't affected.
+- Fixes the "Occurrences in the last month" audience filter counting the last 30 weeks instead of the last month.
+- Fixes paywalls showing the status bar in apps that hide it, such as Unity games.
+- Fixes only the first StoreKit 2 purchase of a session being tracked when observing purchases.
+- Fixes a failed purchase sometimes being tracked after the events that follow it.
+- Fixes the product missing from the event tracked when a purchase is waiting for approval, such as with Ask to Buy.
+- Fixes a paywall's loading spinner staying up when a purchase or restore fails while something else is showing over the paywall.
+- Fixes a crash when a paywall is presented from a view controller that takes its orientations from whatever it presents.
+- Improves the contrast of text and icons in the Customer Center.
+- Fixes the Customer Center's purchase cards breaking words mid-word at the largest text sizes.
+- Makes the Customer Center's Copy button easier to tap.
+- Fixes `device.isSandbox` being `false` in TestFlight and development builds of Mac apps.
+
 ## 4.19.1
 
 ### Enhancements
